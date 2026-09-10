@@ -11,6 +11,12 @@ Read `docs/CAPABILITIES.md`. Use `a11y_publish_invoke` with action `publish`,
 a stable operationId, context.head, and the target PR/repository, description
 and approved evidence references required by the publication connection.
 
+For an existing ADO Draft PR, `attach-evidence` uses the built-in ADO connection:
+upload hash-bound files, update only the description and confirm live Draft/HEAD.
+Read `docs/NATIVE-CAPABILITIES.md`. This narrower operation does not create a PR
+or verify media playback/behavior; return its scope honestly and do not treat it
+as completion of the broader `publish` contract.
+
 The caller owns review/approval policy and sequencing. Do not require a run
 journal or completed stages from this repository, create another writer, modify
 source, run capture, or manufacture missing approvals. The connection must verify

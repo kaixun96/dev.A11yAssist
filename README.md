@@ -96,6 +96,13 @@ those files directly; it does not need to call or separately install
 `a11y-knowledge`. The full workflow also bundles its stage tools, so installing
 all the smaller plugins is unnecessary.
 
+**Native execution in v0.5:** `read-item` retrieves a real ADO work item and all
+discussion pages; `attach-evidence` uploads hash-bound files to an existing Draft
+PR, verifies downloaded bytes, and updates/readbacks its description and HEAD.
+These operations use the built-in ADO connection, not a custom provider program.
+They do not interpret discussion, review attachment content, create a PR or
+verify media playback. See [native capabilities](docs/NATIVE-CAPABILITIES.md).
+
 ## Optional complete workflow
 
 **Use `a11y-workflow` only when you want our complete orchestration.** It calls
@@ -153,6 +160,12 @@ The evidence-v1 validator is maintained here in `runtime/evidence-v1.mjs`.
 AgentOW can consume a commit-pinned generated copy at its existing tool path,
 preserving offline operation without maintaining another implementation.
 See [the consumer integration](integrations/agentow/README.md).
+
+Additional canonical execution sources live in `native/`: Windows host setup,
+ADO evidence attachments and PR-description budgeting. The retained personal
+browser/campaign implementation is explicitly an AgentOW integration under
+`integrations/agentow/runtime/`. Reviewed AgentOW consumers use pinned generated
+copies; installed workers are not switched by a source release.
 
 Knowledge migration is currently **copy first**: the shared topics are available
 here; other original AgentOW references and the live runtime are retained.

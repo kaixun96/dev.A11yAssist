@@ -11,6 +11,8 @@ use. Its stricter phase ordering is local to that workflow.
 
 | Plugin | Independent tool | Context needed |
 |---|---|---|
+| a11y-intake | `a11y_intake_invoke`, action `read-item` | `subject`; built-in ADO connection and input.itemId |
+| a11y-publish | `a11y_publish_invoke`, action `attach-evidence` | Exact `head`; built-in ADO connection, existing Draft PR and hash-bound files |
 | a11y-knowledge | `/a11y-knowledge` | Supplied code/question; source-only guidance |
 | a11y-intake | `a11y_intake_invoke`, action `intake` | `subject`: authorized item reference |
 | a11y-capture | `a11y_capture_invoke`, action `before` or `after` | `scenarioHash`, `evaluator`; AFTER also `head` |
@@ -74,6 +76,10 @@ Use the evaluation connection for those responsibilities; do not turn
 `valid: true` into an accessibility PASS.
 
 ## External tool connections
+
+The native ADO connection implements `read-item` and `attach-evidence` directly;
+see [native execution](NATIVE-CAPABILITIES.md). These narrower operations do not
+certify complete intake or publication stages.
 
 For an external-effect or independent-evaluation operation, configure only the
 needed connection using [example.capability.json](../config/example.capability.json).

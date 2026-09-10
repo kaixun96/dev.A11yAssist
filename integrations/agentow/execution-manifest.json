@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "repository": "kaixun96/dev.A11yAssist",
+  "version": "0.5.0",
+  "files": [
+    {
+      "source": "native/windows-host.ps1",
+      "targets": [
+        "copilot/skills/ow-a11y-host-setup/scripts/setup-windows-a11y.ps1"
+      ],
+      "sha256": "e08192a06f1d1d8db60bfb852c728749d3ecbce213116670d42776cca1c9a739"
+    },
+    {
+      "source": "integrations/agentow/runtime/personal-evaluator-browser.py",
+      "targets": [
+        "tools/personal-evaluator-browser.py",
+        "copilot/tools/personal-evaluator-browser.py"
+      ],
+      "sha256": "97757237c3f9c1823b1111d3d1378ab0345d45c736cdc9b7e936592c8c970947"
+    },
+    {
+      "source": "native/ado-attachments.mjs",
+      "targets": [
+        "ts/src/ow/tools/shared-a11y/ado-attachments.mjs"
+      ],
+      "sha256": "8be17d46071e10c7c704bec6dbd831b520767b68d086b879d10f2eb0d52ec194"
+    },
+    {
+      "source": "native/ado-attachments.d.mts",
+      "targets": [
+        "ts/src/ow/tools/shared-a11y/ado-attachments.d.mts"
+      ],
+      "sha256": "0e68234f8714b41a926c53ce8974ae549a0a20ebb788d569076e45c3cbfaf480"
+    },
+    {
+      "source": "native/pr-description.mjs",
+      "targets": [
+        "ts/src/ow/tools/shared-a11y/pr-description.mjs"
+      ],
+      "sha256": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf"
+    }
+  ]
+}

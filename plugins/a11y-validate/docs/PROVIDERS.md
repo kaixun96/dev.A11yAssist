@@ -139,6 +139,10 @@ The terminal can exit after a pending receipt; reopen the same run and reconcile
 runtime.json endpoint. It checks exact enabled conversation identity, never
 uses sendAsUserId, resets a binding or disguises the event as the owner.
 Persist notification intent before calling it and reconcile ambiguous sends.
+`checkTwinDestination` performs the same read-only destination check without
+posting a notification. Use it before advertising callback readiness; its
+`ready` result is not proof of original-worker execution or continued future
+availability. `notifyTwin` repeats the check at delivery time.
 
 Neither adapter owns the resource pool. Both use the same provider and run
 identity. Normal responses use the host's own UI; a notification is never proof

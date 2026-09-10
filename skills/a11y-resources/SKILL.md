@@ -1,6 +1,6 @@
 ---
 name: a11y-resources
-description: Inspect authorized shared resource health and ownership for any caller workflow, without acquiring or releasing resources.
+description: Inspect resource health or explicitly release one completed evaluator assignment through its authoritative owner-bound connection.
 ---
 
 Read `docs/CAPABILITIES.md`. Call `a11y_resources_resources` for the configured
@@ -11,6 +11,15 @@ Distinguish available, occupied and unhealthy resources. A running process,
 powered-on machine or configured executable is not evidence of authenticated
 interactive readiness. Use the existing authoritative registry; never create
 another registry or infer ownership from process presence.
+
+For explicit completed-assignment release, call `a11y_resources_invoke` with
+action `release-evaluator`, a stable `operationId`, context `subject`/`evaluator`,
+and only `input.nativeRunId` (32 lowercase hex characters). The configured
+connection must authorize that exact assignment and keep its token private.
+Reconcile unknown responses using the same operation; never execute again or
+substitute another ID. A release PASS covers only that completed assignment,
+not process shutdown, audio restoration, other releases or full cleanup.
+Perform the caller's required actual cleanup and ordering before requesting it.
 
 Return public resource IDs, health, ownership and limitations. The caller decides
 what follows. This capability does not acquire, force-release, auto-expire,

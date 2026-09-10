@@ -74,7 +74,7 @@ the full workflow, an AgentOW session or unrelated earlier stages.
 |---|---|---|
 | `a11y-knowledge` | Code-generation guidance, static review and accessibility questions | Usable without providers |
 | `a11y-intake` | Work-item intake, acceptance criteria and scenarios | An authorized work-item tool connection |
-| `a11y-resources` | Inspect shared resource ownership and readiness | Status interface; not a general acquisition tool |
+| `a11y-resources` | Inspect resource ownership/readiness or release one completed evaluator assignment | Explicit owner-bound connection; not general acquisition or full cleanup |
 | `a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Authorized Windows capture connection and owned evaluator |
 | `a11y-validate` | Check existing evidence; optionally obtain independent behavior evaluation | Evidence-v1 structural checks work directly; behavior evaluation needs an evaluation connection |
 | `a11y-publish` | Reviewer-safe Draft PR and evidence publication | Authorized PR/media publication connection |

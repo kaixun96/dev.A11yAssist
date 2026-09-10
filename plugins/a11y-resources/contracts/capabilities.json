@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "operations": {
+    "release-evaluator": {"plugin": "a11y-resources", "provider": "resources", "context": ["subject", "evaluator"], "gates": ["completedRunMatched", "leaseReleased"]},
     "read-item": {"plugin": "a11y-intake", "provider": "intake", "context": ["subject"], "gates": ["itemRead", "commentsFetched", "attachmentsIndexed"]},
     "attach-evidence": {"plugin": "a11y-publish", "provider": "publish", "context": ["head"], "gates": ["exactHeadMatched", "draftPrVerified", "artifactsUploaded", "noPrComments"]},
     "intake": {"plugin": "a11y-intake", "provider": "intake", "context": ["subject"], "gates": ["itemRead", "commentsReviewed", "attachmentsReviewed", "acceptanceDefined"]},

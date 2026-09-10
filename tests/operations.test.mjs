@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { fileHash, readConfig, createRun, executeStage, workflow, loadRun, reconcile, assessProgress } from '../runtime/core.mjs';
-import { capabilities } from '../runtime/capability.mjs';
+import { fileHash, hash, readConfig, createRun, executeStage, workflow, loadRun, reconcile, assessProgress } from '../runtime/core.mjs';
+import { capabilities, invokeCapability, validateCapabilityReceipt } from '../runtime/capability.mjs';
 import { executeOperation, operationStatus, reconcileOperation } from '../runtime/operations.mjs';
 import { computeScenarioHash } from '../runtime/evidence-v1.mjs';
 
@@ -33,7 +33,8 @@ test('each capability operates without a Bug journal, host roster, previous stag
     await assert.rejects(readConfig(path), /Unsupported configuration\/mode/);
     for (const [action, definition] of Object.entries(capabilities.operations)) {
       if (!definition.plugin) continue;
-      const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, context);
+      const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, context,
+        action === 'release-evaluator' ? { nativeRunId: 'd'.repeat(32) } : {});
       assert.equal(result.status, 'finished');
       assert.equal(result.receipt.outcome, 'pass');
       assert.equal(result.receipt.gates.claimOwned, undefined);
@@ -41,6 +42,39 @@ test('each capability operates without a Bug journal, host roster, previous stag
       assert.equal(result.nextStage, undefined);
     }
     await assert.rejects(access(join(dir, 'runs')), { code: 'ENOENT' });
+  });
+});
+
+test('completed evaluator release binds its native run without declaring full cleanup', async () => {
+  await fixture(async (config, dir) => {
+    const input = { nativeRunId: 'd'.repeat(32) };
+    const binding = { subject: context.subject, evaluator: context.evaluator };
+    for (const invalid of [{}, { nativeRunId: '../foreign' }, { nativeRunId: new String(input.nativeRunId) },
+      { ...input, token: 'never-transport-tokens' }]) {
+      await assert.rejects(executeOperation(config, 'a11y-resources', 'bad-release', 'release-evaluator',
+        binding, invalid), /requires only input.nativeRunId/);
+    }
+    await assert.rejects(access(join(dir, 'operations/bad-release')), { code: 'ENOENT' });
+    const released = await executeOperation(config, 'a11y-resources', 'release', 'release-evaluator', binding, input);
+    assert.equal(released.receipt.nativeRunId, input.nativeRunId);
+    assert.equal(released.receipt.gates.ownedProcessesStopped, undefined);
+    assert.equal(released.receipt.gates.audioRestored, undefined);
+    assert.deepEqual(await executeOperation(config, 'a11y-resources', 'release', 'release-evaluator', binding, input), released);
+    const request = JSON.parse(await readFile(join(dir, 'operations/release/operation.json'), 'utf8')).request;
+    for (const receipt of [
+      { ...released.receipt, nativeRunId: 'e'.repeat(32) },
+      { ...released.receipt, releaseMode: 'legacy-token-only' }
+    ]) {
+      await assert.rejects(invokeCapability(config, 'release-evaluator', request,
+        async () => ({ state: 'finished', receipt })), /exact requested native run/);
+      assert.throws(() => validateCapabilityReceipt('release-evaluator', receipt, binding, input), /exact requested native run/);
+    }
+    const path = join(dir, 'operations/release/operation.json');
+    const changed = JSON.parse(await readFile(path, 'utf8'));
+    changed.receipt.nativeRunId = 'e'.repeat(32);
+    changed.receiptSha256 = hash(JSON.stringify(changed.receipt));
+    await writeFile(path, JSON.stringify(changed));
+    await assert.rejects(operationStatus(config, 'a11y-resources', 'release'), /exact requested native run/);
   });
 });
 

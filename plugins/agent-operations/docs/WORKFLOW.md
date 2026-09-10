@@ -1,6 +1,6 @@
 # Evidence-first workflow contract
 
-Version: 0.4.0. This is the OPTIONAL full-workflow contract, not a prerequisite
+Version: 0.6.0. This is the OPTIONAL full-workflow contract, not a prerequisite
 for small capabilities. See `CAPABILITIES.md` for caller-owned composition.
 During migration the
 existing deployment's canonical execution contract remains authoritative;
@@ -60,6 +60,13 @@ files. Before calling a provider, persist its exact request ID as submitted-
 unknown. Timeout or an invalid response retains that identity; only reconcile
 is permitted next. A provider must make execute idempotent by request ID and
 make reconcile observe the existing action, not start another one.
+
+For CLI, explicitly configured caller polling uses the same shared pending
+contract as independent capabilities. Persist its absolute deadline before the
+first RPC; never refresh it on reconcile. The caller owns a bounded scheduler.
+Default/Twin callbacks remain required. Expiry preserves unknown execution and
+all resource ownership; it does not advance to cleanup or authorize replay.
+See `PROVIDERS.md` for the negotiated request/response and late reconciliation.
 
 A mutation.lock serializes cross-plugin writes on shared storage. A process crash
 may leave this lock: do not auto-expire it. An operator must verify the holder

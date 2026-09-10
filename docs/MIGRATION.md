@@ -2,6 +2,13 @@
 
 ## Current delivery
 
+v0.6 adds explicit bounded caller-owned polling to the shared capability and
+optional CLI-workflow protocol. Provider configuration, original request and
+absolute deadline remain bound across restart. Default/Twin callbacks do not
+change. This release does not qualify a live recorder, install a caller scheduler
+or switch existing pinned AgentOW/native consumers whose exported implementations
+are unchanged. Real provider polling support still requires its own integration.
+
 v0.5 moves public Windows host setup, the retained AgentOW personal-browser
 profile, PR attachment execution and description budgeting into canonical shared
 sources. Native ADO `read-item` and `attach-evidence` are independently executable

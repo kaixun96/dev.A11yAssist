@@ -110,7 +110,13 @@ Unknown/pending results stay pending. Use `<prefix>_operation_status` and
 `<prefix>_operation_reconcile` with the same ID. Do not retry with another ID,
 change executors to evade a failure, auto-expire a lock or duplicate a remote
 operation. Pending connections must provide real progress, a resume condition
-and completion callback.
+and completion callback by default. In v0.6 an independent caller or CLI
+workflow can explicitly select bounded `caller-poll` in its trusted provider
+configuration. The original interval/deadline is persisted before execution;
+the caller owns scheduling and reconciles that same ID. No Twin connection or
+automatic timer is added. See [the waiting contract](PROVIDERS.md#explicit-caller-owned-polling-v06);
+callback failures never silently become polling, and an expired deadline does
+not cancel native work or authorize replay.
 
 `status: "finished"` means this operation returned, not that it passed or that
 the caller's task is complete. Inspect `receipt.outcome`, reason and artifacts.

@@ -90,6 +90,12 @@ and input. Their operation journal prevents duplicate effects; it does not impos
 a global workflow. The caller decides what follows, including after a nonpass
 result. See [capability inputs and examples](docs/CAPABILITIES.md).
 
+**v0.6 caller-owned waiting:** a CLI or independent caller can explicitly
+configure bounded polling instead of a completion callback. The caller schedules
+reconciliation of the original operation; no Twin connection is required.
+Callbacks remain the default, and timeout never authorizes duplicate execution.
+See [provider waiting](docs/PROVIDERS.md#explicit-caller-owned-polling-v06).
+
 Each execution plugin bundles the same generic knowledge snapshot and a separate
 profile for its existing execution integration. It reads
 those files directly; it does not need to call or separately install

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { fileHash, readConfig, createRun, executeStage, workflow, loadRun } from '../runtime/core.mjs';
+import { fileHash, readConfig, createRun, executeStage, workflow, loadRun, reconcile, assessProgress } from '../runtime/core.mjs';
 import { capabilities } from '../runtime/capability.mjs';
 import { executeOperation, operationStatus, reconcileOperation } from '../runtime/operations.mjs';
 import { computeScenarioHash } from '../runtime/evidence-v1.mjs';
@@ -148,6 +148,75 @@ test('explicit legacy profile retains model, host and source gates without forci
       await executeStage(config, 'a11y-workflow', accepted.runId, stage.id, { legacyProfile: true });
     }
     assert.equal((await loadRun(config, accepted.runId)).status, 'terminal');
+  });
+});
+
+test('caller polling persists original policy, survives restart and never permits changed config or execution replay', async () => {
+  await fixture(async (config, dir) => {
+    config.providers.capture.waiting = { mode: 'caller-poll', pollIntervalSeconds: 1, timeoutSeconds: 60 };
+    const pending = await executeOperation(config, 'a11y-capture', 'poll', 'before', context, { pending: true });
+    assert.equal(pending.pending.completionCallback, undefined);
+    assert.deepEqual(pending.waiting, pending.pending.waiting);
+    const before = JSON.parse(await readFile(join(dir, 'operations/poll/operation.json'), 'utf8'));
+    assert.deepEqual(before.request.waiting, pending.waiting);
+    const changed = structuredClone(config);
+    changed.providers.capture.waiting.timeoutSeconds++;
+    await assert.rejects(reconcileOperation(changed, 'a11y-capture', 'poll'), /provider changed/);
+    delete changed.providers.capture.waiting;
+    await assert.rejects(reconcileOperation(changed, 'a11y-capture', 'poll'), /provider changed/);
+    await assert.rejects(executeOperation(config, 'a11y-capture', 'poll', 'before', context, { pending: true }), /pending/);
+    const done = await reconcileOperation(structuredClone(config), 'a11y-capture', 'poll');
+    assert.equal(done.requestId, pending.requestId);
+    assert.equal(done.status, 'finished');
+    const after = JSON.parse(await readFile(join(dir, 'operations/poll/operation.json'), 'utf8'));
+    assert.deepEqual(after.request, before.request);
+  });
+});
+
+test('optional workflow shares original polling deadline, exposes progress and preserves phase gates', async () => {
+  await fixture(async config => {
+    config.mode = 'cli'; config.devboxes = ['box-one'];
+    config.providers.intake.waiting = { mode: 'caller-poll', pollIntervalSeconds: 1, timeoutSeconds: 60 };
+    const run = await createRun(config, 'poll-workflow');
+    const pending = await executeStage(config, 'a11y-workflow', run.runId, 'intake', { pending: true });
+    assert.equal(pending.pending.waiting.mode, 'caller-poll');
+    assert(pending.pending.progressPath);
+    assert.equal(assessProgress(pending, Date.parse(pending.updatedAt)).action, 'await-caller-poll-interval');
+    assert.equal(assessProgress(pending, Date.parse(pending.updatedAt) + 1000).action, 'reconcile-original-request');
+    assert.equal(assessProgress(pending, Date.parse(pending.pending.waiting.deadlineAt)).action,
+      'polling-deadline-exceeded-reconcile-original-request');
+    await assert.rejects(executeStage(config, 'a11y-workflow', run.runId, 'before'), /pending/);
+    const done = await reconcile(config, 'a11y-workflow', run.runId);
+    assert.equal(done.nextStage, 'before');
+    assert.equal(done.receipts[0].requestId, pending.pending.requestId);
+  });
+});
+
+test('copied capture CLI can exit, reopen and reconcile after its original waiting deadline without Twin', async () => {
+  await fixture(async (config, dir) => {
+    config.providers.capture.waiting = { mode: 'caller-poll', pollIntervalSeconds: 1, timeoutSeconds: 3 };
+    const copied = join(dir, 'standalone');
+    await cp(join(root, 'plugins/a11y-capture'), copied, { recursive: true });
+    const configPath = join(dir, 'config.json'), requestPath = join(dir, 'request.json');
+    await writeFile(configPath, JSON.stringify(config));
+    await writeFile(requestPath, JSON.stringify({ context, input: { pending: true, outcome: 'inconclusive' } }));
+    const runCli = args => {
+      const child = spawnSync(process.execPath, [join(copied, 'runtime/cli.mjs'), ...args], {
+        encoding: 'utf8', env: { ...process.env, A11Y_ASSIST_CONFIG: configPath }, timeout: 15000
+      });
+      assert.equal(child.status, 0, child.stderr);
+      return JSON.parse(child.stdout);
+    };
+    const pending = runCli(['invoke', 'a11y-capture', 'cli-poll', 'before', requestPath]);
+    assert.equal(pending.status, 'pending');
+    assert.equal(pending.pending.completionCallback, undefined);
+    await new Promise(resolve => setTimeout(resolve, Math.max(0, Date.parse(pending.waiting.deadlineAt) - Date.now()) + 10));
+    assert.deepEqual(runCli(['operation-status', 'a11y-capture', 'cli-poll']).waiting, pending.waiting);
+    const done = runCli(['operation-reconcile', 'a11y-capture', 'cli-poll']);
+    assert.equal(done.status, 'finished');
+    assert.equal(done.receipt.outcome, 'inconclusive');
+    assert.equal(done.requestId, pending.requestId);
+    await assert.rejects(access(join(dir, 'runs')), { code: 'ENOENT' });
   });
 });
 

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { VERSION, atomicJson, withDirectoryLock, verifyArtifactFiles, hash, callProvider } from './core.mjs';
 import { operationDefinition, validateContext, providerFor, invokeCapability, validateCapabilityReceipt } from './capability.mjs';
+import { createWaiting, pendingDetails, validateWaitingConfig } from './waiting.mjs';
 
 function demand(condition, message) { if (!condition) throw new Error(message); }
 function directory(config, operationId) {
@@ -19,6 +20,7 @@ function canonical(value) {
 function binding(config, action) {
   const name = providerFor(config, action);
   demand(config.providers?.[name], `Missing ${name} provider; capability not started`);
+  validateWaitingConfig(config.providers[name], config.mode);
   return hash(JSON.stringify(canonical({ name, definition: config.providers[name], profile: config.workflowProfile ?? 'generic' })));
 }
 async function readState(dir) {
@@ -41,17 +43,15 @@ function publicOperation(state) {
   return {
     operationId: state.operationId, action: state.action, status: state.status,
     requestId: state.request.requestId, updatedAt: state.updatedAt,
-    receipt: state.receipt, receiptSha256: state.receiptSha256, pending: state.pending
+    receipt: state.receipt, receiptSha256: state.receiptSha256, pending: state.pending,
+    waiting: state.status === 'pending' ? state.request.waiting : undefined
   };
 }
 async function consume(config, dir, state, operation) {
   demand(binding(config, state.action) === state.providerBinding, 'Operation provider changed; do not replay with a different executor');
   const response = await invokeCapability(config, state.action, { ...state.request, operation }, callProvider);
   if (response.state === 'pending') {
-    state.pending = {
-      resumeCondition: response.resumeCondition, progressPath: response.progressPath,
-      completionCallback: response.completionCallback
-    };
+    state.pending = pendingDetails(state.request, response);
   } else {
     await verifyArtifactFiles(dir, response.receipt);
     state.receipt = response.receipt;
@@ -87,6 +87,8 @@ export async function executeOperation(config, plugin, operationId, action, cont
       request: {
         schemaVersion: 1, version: VERSION, operation: 'execute', requestId: randomUUID(),
         stage: action, invocation: 'capability', stateDirectory: dir, input,
+        ...(config.providers[providerFor(config, action)].waiting?.mode === 'caller-poll'
+          ? { waiting: createWaiting(config, providerFor(config, action)) } : {}),
         run: { ...context, runId: operationId, owner: config.owner, receipts: [] }
       }
     };

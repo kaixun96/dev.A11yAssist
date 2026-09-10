@@ -70,7 +70,8 @@ bounded diagnostics; core only reports the byte count, not raw diagnostic data.
 
 `operation: reconcile` uses the SAME request ID. Do not treat it as execute.
 Long-lived work must live in a provider-owned detached executor with durable
-progress and a completion callback, not in the short-lived RPC process.
+progress, not in the short-lived RPC process. A completion callback remains
+required unless the caller explicitly selects the polling contract below.
 
 Independent requests include `invocation: "capability"`. Their `run` object is
 only the transport identity/context envelope: `runId` is the caller's operation
@@ -83,8 +84,9 @@ under the supplied private `stateDirectory`. Do not look up `runs/<runId>`.
 Echo `schemaVersion`, `requestId`, `runId`, `owner` at top level.
 
 - `state: pending` additionally requires `resumeCondition`, `progressPath` and
-  `completionCallback`. These must identify real deployed monitoring, not prose
-  saying that monitoring is planned.
+  `completionCallback` by default. These must identify real deployed monitoring,
+  not prose saying that monitoring is planned. Explicit caller polling replaces
+  only the callback, not durable progress or native executor supervision.
 - `state: finished` requires a `receipt` with the same identity, `stage`, outcome
   and directory-relative artifacts with SHA-256. A pass must include its local
   capability gates from `contracts/capabilities.json` and echo the supplied
@@ -111,6 +113,58 @@ For full-workflow AFTER provide the accepted BEFORE receipt SHA from run.receipt
 For independent AFTER echo context.beforeReceiptSha256 when supplied.
 Publish pass requires `pr: { url: "https://...", isDraft: true }`.
 
+## Explicit caller-owned polling (v0.6)
+
+For an independent caller or `mode: "cli"`, a trusted executable provider may
+opt in through its private configuration:
+
+```json
+"waiting": {
+  "mode": "caller-poll",
+  "pollIntervalSeconds": 30,
+  "timeoutSeconds": 3600
+}
+```
+
+This is a field on the provider mapping, not model-supplied input. Omit it (or
+use `{"mode":"callback"}`) to retain the existing callback contract. Twin mode
+requires callbacks; the native ADO connection does not negotiate this protocol.
+The poll interval must be 1-3600 seconds; the waiting budget must cover one
+interval and be no greater than 86400 seconds.
+
+Before execution, the runtime durably binds `waiting` to the original request:
+
+```json
+"waiting": {
+  "mode": "caller-poll",
+  "pollIntervalSeconds": 30,
+  "deadlineAt": "<absolute UTC ISO8601 timestamp>"
+}
+```
+
+Every pending response must echo this exact object, include a real `progressPath`
+and `resumeCondition`, and omit `completionCallback`. The provider must explicitly
+support polling; a missing/mismatched echo is an error, not negotiated fallback.
+Changing provider policy during a pending operation is rejected. Reconciliation
+preserves the original request ID and absolute deadline across process restarts.
+Callback failure never silently switches to polling, and polling never advertises
+a fictitious callback.
+
+The caller must persist and run its own bounded scheduler/watch loop; the plugin
+does not install a timer or a Twin connection. After each interval, call
+`operation-reconcile` with the SAME operation ID (or `reconcile` for a workflow).
+`operation-status` only reads the local journal; it does not poll the provider.
+The original descriptor is visible in operation status even after an unknown
+RPC result; workflow status includes it under `pending.waiting`. Workflow
+`progress` reports the appropriate interval/deadline action.
+
+At the original deadline, another pending response is an explicit unknown-outcome
+error. Preserve the request and stop the regular waiting loop; do not cancel,
+release, infer failure, create a fresh ID or execute again. A separately authorized
+read-only reconciliation can still recover the original finished receipt after
+the deadline. This deadline bounds caller waiting, not native execution; providers
+must independently enforce their actual execution and cleanup budgets.
+
 ## Provider responsibility mapping
 
 | Provider | Existing capability to wrap/qualify |
@@ -134,7 +188,8 @@ automatically takes over the caller's workflow or changes another operation.
 ## Entry adapters
 
 `adapters/cli.mjs` renders progress and declares detached-executor requirements.
-The terminal can exit after a pending receipt; reopen the same run and reconcile.
+The terminal can exit after a pending receipt; reopen the same operation/run and
+reconcile. In caller-poll mode the caller's scheduler must survive that terminal.
 `adapters/twin.mjs` offers scoped system notifications through the actual
 runtime.json endpoint. It checks exact enabled conversation identity, never
 uses sendAsUserId, resets a binding or disguises the event as the owner.

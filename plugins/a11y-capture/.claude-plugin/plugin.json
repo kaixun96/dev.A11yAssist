@@ -1,0 +1,18 @@
+{
+  "name": "a11y-capture",
+  "version": "0.1.0",
+  "description": "Real Windows assistive-technology BEFORE/AFTER evidence under exclusive ownership.",
+  "author": {
+    "name": "kaixun96"
+  },
+  "license": "Microsoft Internal",
+  "mcpServers": {
+    "a11y_capture": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "a11y-capture"
+      ]
+    }
+  }
+}

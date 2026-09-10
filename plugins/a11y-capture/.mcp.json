@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "a11y_capture": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "a11y-capture"
+      ]
+    }
+  }
+}

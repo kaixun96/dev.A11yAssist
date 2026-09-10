@@ -1,0 +1,9 @@
+{
+  "a11y-intake": {"description": "Claim-aware work-item intake, acceptance and canonical scenario preparation.", "stages": ["intake"]},
+  "a11y-resources": {"description": "Shared DevBox/Codespace ownership, health and scoped resource operations.", "stages": []},
+  "a11y-capture": {"description": "Real Windows assistive-technology BEFORE/AFTER evidence under exclusive ownership.", "stages": ["before", "after"]},
+  "a11y-validate": {"description": "Deterministic integrity gates plus independent accessibility evaluation.", "stages": ["validate"]},
+  "a11y-publish": {"description": "Reviewer-safe Draft PR evidence and live publication validation.", "stages": ["publish"]},
+  "agent-operations": {"description": "Durable task continuation, cleanup, progress assessment and Run Insights.", "stages": ["cleanup"]},
+  "a11y-workflow": {"description": "Complete evidence-first workflow orchestrator with AgentOW integration.", "stages": ["intake", "before", "source", "after", "validate", "review", "publish", "cleanup"]}
+}

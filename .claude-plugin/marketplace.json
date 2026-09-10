@@ -1,0 +1,75 @@
+{
+  "name": "a11y-assist",
+  "owner": {
+    "name": "kaixun96"
+  },
+  "metadata": {
+    "version": "0.1.0",
+    "description": "Modular internal accessibility workflow for Copilot CLI and Twinbot with Windows DevBoxes"
+  },
+  "plugins": [
+    {
+      "name": "a11y-intake",
+      "source": "./plugins/a11y-intake",
+      "description": "Claim-aware work-item intake, acceptance and canonical scenario preparation.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
+      "name": "a11y-resources",
+      "source": "./plugins/a11y-resources",
+      "description": "Shared DevBox/Codespace ownership, health and scoped resource operations.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
+      "name": "a11y-capture",
+      "source": "./plugins/a11y-capture",
+      "description": "Real Windows assistive-technology BEFORE/AFTER evidence under exclusive ownership.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
+      "name": "a11y-validate",
+      "source": "./plugins/a11y-validate",
+      "description": "Deterministic integrity gates plus independent accessibility evaluation.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
+      "name": "a11y-publish",
+      "source": "./plugins/a11y-publish",
+      "description": "Reviewer-safe Draft PR evidence and live publication validation.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
+      "name": "agent-operations",
+      "source": "./plugins/agent-operations",
+      "description": "Durable task continuation, cleanup, progress assessment and Run Insights.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
+      "name": "a11y-workflow",
+      "source": "./plugins/a11y-workflow",
+      "description": "Complete evidence-first workflow orchestrator with AgentOW integration.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    }
+  ]
+}

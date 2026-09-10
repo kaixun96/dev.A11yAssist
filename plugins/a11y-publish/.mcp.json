@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "a11y_publish": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "a11y-publish"
+      ]
+    }
+  }
+}

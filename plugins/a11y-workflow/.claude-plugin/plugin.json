@@ -1,0 +1,18 @@
+{
+  "name": "a11y-workflow",
+  "version": "0.1.0",
+  "description": "Complete evidence-first workflow orchestrator with AgentOW integration.",
+  "author": {
+    "name": "kaixun96"
+  },
+  "license": "Microsoft Internal",
+  "mcpServers": {
+    "a11y_workflow": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "a11y-workflow"
+      ]
+    }
+  }
+}

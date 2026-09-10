@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "version": "0.1.0",
+  "marketplace": "a11y-assist",
+  "plugins": [
+    "a11y-intake",
+    "a11y-resources",
+    "a11y-capture",
+    "a11y-validate",
+    "a11y-publish",
+    "agent-operations",
+    "a11y-workflow"
+  ],
+  "externalDependencies": [
+    {
+      "name": "agentow-copilot",
+      "marketplace": "agentOW",
+      "repository": "kaixun96/dev.AgentOW",
+      "entrypoint": "/agentow-a11y",
+      "note": "Verify freshness on the leased execution host; stricter BEFORE/PR gates apply."
+    }
+  ],
+  "hashes": {
+    "runtime/cli.mjs": "9d3e6fad01007fc7a2040dd49da107de97f297c8889388471da95e87bca69e81",
+    "runtime/core.mjs": "b4616912adbe22eee78a3700adbf35606d593153bacab248bcc79042f7b979ea",
+    "runtime/mcp.mjs": "e74ea489e8d30055c6aee346ea4e9db1dcd9987b9d23cef9627b017ba6946d4f",
+    "contracts/plugins.json": "4be9460ee05a70995964d2198f908130cd7aab35845639ea9b5d2c57c0dc61e6",
+    "contracts/workflow.json": "7e64d1816cc9144de9f0e54dd036a4feef4d237489b82e8a86add0f50839a989",
+    "adapters/cli.mjs": "487ca63b21df4649ca0e5778b91a7638563d758dda6af5adb642a1d3ddeeaf79",
+    "adapters/twin.mjs": "b3feed026acbff525374fb5af09d6673de8a4ef7498b381f059b4d91cb22fd19"
+  }
+}

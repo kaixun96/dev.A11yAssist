@@ -1,0 +1,6 @@
+node_modules/
+.a11y-assist/
+*.log
+*.tmp
+config.local.json
+coverage/

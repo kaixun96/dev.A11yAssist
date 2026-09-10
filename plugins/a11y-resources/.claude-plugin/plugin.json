@@ -1,0 +1,18 @@
+{
+  "name": "a11y-resources",
+  "version": "0.1.0",
+  "description": "Shared DevBox/Codespace ownership, health and scoped resource operations.",
+  "author": {
+    "name": "kaixun96"
+  },
+  "license": "Microsoft Internal",
+  "mcpServers": {
+    "a11y_resources": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "a11y-resources"
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "agent_operations": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "agent-operations"
+      ]
+    }
+  }
+}

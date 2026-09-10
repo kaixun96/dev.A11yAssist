@@ -1,5 +1,7 @@
 # A11y Assist
 
+[![English](docs/assets/language-en.svg)](README.md) [![简体中文](docs/assets/language-zh-cn.svg)](README.zh-CN.md)
+
 Accessibility knowledge and modular workflow plugins for Copilot CLI.
 Use accessibility guidance while generating or reviewing code, or configure
 individual capabilities for an evidence-first bug-fixing workflow.
@@ -58,16 +60,18 @@ See the [knowledge index](knowledge/README.md).
 
 ## Choose a plugin
 
-| Plugin / entry command | Use it for | Current availability |
+Invoke a plugin with `/<plugin-name>` after installation.
+
+| Plugin | Use it for | Current availability |
 |---|---|---|
-| `a11y-knowledge` / `/a11y-knowledge` | Code-generation guidance, static review and accessibility questions | Usable without providers |
-| `a11y-intake` / `/a11y-intake` | Bug intake, acceptance criteria and canonical scenarios | Requires a qualified provider |
-| `a11y-resources` / `/a11y-resources` | Inspect shared resource ownership and readiness | Status interface; not a general acquisition tool |
-| `a11y-capture` / `/a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Requires a qualified provider |
-| `a11y-validate` / `/a11y-validate` | Evidence integrity and independent behavior evaluation | Requires a qualified provider |
-| `a11y-publish` / `/a11y-publish` | Reviewer-safe Draft PR and evidence publication | Requires a qualified provider |
-| `agent-operations` / `/agent-operations` | Durable progress, reconciliation and owned cleanup | Requires a qualified provider |
-| `a11y-workflow` / `/a11y-workflow` | Coordinate the complete evidence-first workflow | Requires qualified providers, including AgentOW integration |
+| `a11y-knowledge` | Code-generation guidance, static review and accessibility questions | Usable without providers |
+| `a11y-intake` | Bug intake, acceptance criteria and canonical scenarios | Requires a qualified provider |
+| `a11y-resources` | Inspect shared resource ownership and readiness | Status interface; not a general acquisition tool |
+| `a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Requires a qualified provider |
+| `a11y-validate` | Evidence integrity and independent behavior evaluation | Requires a qualified provider |
+| `a11y-publish` | Reviewer-safe Draft PR and evidence publication | Requires a qualified provider |
+| `agent-operations` | Durable progress, reconciliation and owned cleanup | Requires a qualified provider |
+| `a11y-workflow` | Coordinate the complete evidence-first workflow | Requires qualified providers, including AgentOW integration |
 
 Each execution plugin bundles the same versioned knowledge snapshot. It reads
 those files directly; it does not need to call or separately install

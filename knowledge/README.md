@@ -1,62 +1,51 @@
-# Shared accessibility knowledge
+# Accessibility knowledge for code generation and static review
 
-This directory in **kaixun96/dev.A11yAssist** is the destination for shared
-accessibility knowledge. This is the **copy-first migration stage**: AgentOW's
-original files, references and runtime are retained unchanged for compatibility.
-AgentOW does not yet consume these packages or receive automatic knowledge updates.
-Provenance and topic triggers are recorded in [index.json](index.json); build generates
-`manifest.json` with hashes.
+Use these rules with any coding assistant or project. No particular framework,
+component library, operating system, repository layout or development workflow
+is required.
 
-## Read by trigger
+The default is **read-only, source-based analysis**. Read relevant supplied code
+and documentation, explain risks and suggest minimal corrections. Do not edit
+files, run commands or scanners, launch applications or browsers, control
+assistive technology, or start another task. The calling coding assistant can
+apply recommendations as part of its separately requested code-generation work.
+
+## Choose by the changed behavior
 
 | When | Read |
 |---|---|
-| Classifying impact, selecting criteria or evidence | [Foundations](foundations.md) |
-| Implementing/reviewing semantics, announcements, focus, keyboard or visual accessibility | [Component accessibility](component-accessibility.md) |
-| Producing/validating AgentOW bridge-v1 request/result JSON | [Evidence contract](evidence-contract.md) |
-| Authorized Windows AT preflight, audio and recording | [Windows host testing](windows-host-testing.md) |
-| BEFORE/AFTER screenshots, recordings, annotations or PR publication | [PR evidence capture](pr-evidence-capture-guide.md) |
-| Persistent authenticated Chromium screenshots | [Personal evaluator browser](personal-evaluator-browser.md) |
+| Starting a review, choosing standards or expressing uncertainty | [Foundations](foundations.md) |
+| Elements, components, names, roles, states, structure or relationships change | [Component semantics](component-accessibility.md) |
+| Keyboard interaction, dialogs, navigation or focus can change | [Keyboard and focus](keyboard-focus.md) |
+| Inputs, validation, images, icons, tables or media change | [Forms and content](forms-and-content.md) |
+| Loading, results, errors, notifications or asynchronous updates change | [Dynamic content](dynamic-content.md) |
+| CSS, themes, focus styling, contrast, layout, zoom or motion change | [Visual accessibility](visual-accessibility.md) |
 
-Read the matching complete topic before acting; do not load every topic by default.
-All packages contain a self-contained snapshot so the index never points to a
-missing sibling plugin. Their entry skills select the relevant starting topics.
+Read foundations and only the complete topics relevant to the request. Styles
+and dynamic updates need review even when no accessibility attribute appears in
+the diff. Do not expand a small review into an audit of the whole project.
 
-## Knowledge is not execution authority
+## Adapt to the project
 
-The knowledge-only plugin has no MCP server, provider, resource lease or automatic
-side effect. Commands in reference documents describe prerequisites or integration
-procedures; the knowledge package does not install those executables or authorize
-running them.
+Identify the actual platform and component behavior from the available source
+and documentation. Prefer native semantics or an existing accessible component.
+Reuse a library's documented behavior rather than adding competing focus or
+announcement logic. Never assume a specific library or invent an API.
 
-The source extraction preserves AgentOW-specific integration profiles explicitly:
+Examples use standard HTML/CSS for web UI. In native UI, apply the analogous
+platform accessibility concepts only when its APIs are known; do not recommend
+HTML or ARIA attributes to a non-web control.
 
-- `evidence-contract.md` describes AgentOW bridge-v1 JSON and its existing delivery
-  policy. It is **not** the A11y Assist provider RPC. Its unverified Draft fallback
-  never overrides A11y Assist's strict BEFORE/AFTER and publication gates.
-- `windows-host-testing.md` references AgentOW's `/ow-a11y-host-setup`. Twin-managed
-  machines remain under Twin control; reading the guide grants no direct AT access.
-- `personal-evaluator-browser.md` references AgentOW's browser script and its
-  standalone Codespace fallback. This does not add a new A11y Assist deployment
-  mode: only Twin + multiple Windows DevBoxes or CLI + one/multiple Windows
-  DevBoxes are supported.
-- Component APIs are an odsp-web / SPDS / Fluent profile, not dependencies available
-  in every project. ADO attachment instructions apply to ADO, not arbitrary hosts.
+## Report what the source supports
 
-The active workflow owns claims, leases, stage ordering, consent, recovery, source
-work and PR eligibility. Keep its existing stricter restrictions. Stop on an
-unresolved contract conflict rather than choosing a weaker interpretation.
+Distinguish **source-supported issues**, **context needed**, and **runtime not
+verified**. Explain the user impact, exact code evidence and minimal suggested
+correction. Cite the relevant topic; include a criterion only when its mapping
+is justified. Missing context is not proof of a defect.
 
-## Updating knowledge
+If no definite issue is found, say so for the reviewed scope. Do not say that
+accessibility passed, that assistive technology was tested, or that the UI
+conforms to a standard. Do not initiate runtime verification to fill a gap.
 
-Edit topics here, update their triggers/scope when needed, and rebuild the packages.
-Publish through review. Do not delete or replace AgentOW's originals during this
-stage. At the later coordinated cutover, compare both current trees against the
-recorded origin, reconcile intervening changes, and qualify pinned consumption
-before removing redundant authoring copies. No cross-repository synchronization
-is implemented yet. An active run retains its installed snapshot; repository
-publication is not hot loading.
-
-The original public AgentOW paths and commit are retained in `index.json`.
-Extraction does not change licensing: see the repository/package `LICENSE`.
-No private notes, machine roster, credentials or production evidence belong here.
+`index.json` selects topics; `manifest.json` records this snapshot's version and
+content hashes. Neither is a runtime test result.

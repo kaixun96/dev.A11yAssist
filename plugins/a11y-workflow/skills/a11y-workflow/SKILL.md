@@ -3,7 +3,8 @@ name: a11y-workflow
 description: Orchestrate the complete evidence-first accessibility workflow across configured Windows DevBoxes and AgentOW without weakening stage gates.
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` before execution. Select the applicable complete topics: `knowledge/foundations.md`, `knowledge/component-accessibility.md`, `knowledge/evidence-contract.md`, `knowledge/windows-host-testing.md`, `knowledge/pr-evidence-capture-guide.md`, `knowledge/personal-evaluator-browser.md`. Knowledge never overrides this workflow's authorization or stricter evidence gates.
+Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` for static guidance: `knowledge/foundations.md`, `knowledge/component-accessibility.md`, `knowledge/keyboard-focus.md`, `knowledge/forms-and-content.md`, `knowledge/dynamic-content.md`, `knowledge/visual-accessibility.md`.
+For this execution integration, also read `${CLAUDE_PLUGIN_ROOT}/integrations/agentow/knowledge/README.md` and the applicable complete topics: `integrations/agentow/knowledge/foundations.md`, `integrations/agentow/knowledge/component-accessibility.md`, `integrations/agentow/knowledge/evidence-contract.md`, `integrations/agentow/knowledge/windows-host-testing.md`, `integrations/agentow/knowledge/pr-evidence-capture-guide.md`, `integrations/agentow/knowledge/personal-evaluator-browser.md`. Static guidance does not replace authorized execution; integration references never override this workflow's stricter gates.
 
 This is the complete entrypoint. It includes the shared runtime; sibling small
 plugins need not be installed just to run this package. AgentOW remains an

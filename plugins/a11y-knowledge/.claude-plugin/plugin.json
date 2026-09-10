@@ -1,7 +1,7 @@
 {
   "name": "a11y-knowledge",
-  "description": "Read-only accessibility knowledge: criteria, component semantics, real-AT evidence, Windows capture and reviewer media.",
-  "version": "0.2.0",
+  "description": "Framework-independent accessibility guidance for code generation and read-only static review of semantics, keyboard/focus, forms, dynamic content and visual styles.",
+  "version": "0.3.0",
   "author": {
     "name": "kaixun96"
   },

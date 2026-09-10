@@ -47,16 +47,21 @@ source remains unverified.
 
 | Topic | Covers |
 |---|---|
-| Foundations | User impact, WCAG classification and evidence selection |
-| Component accessibility | Semantics, names/roles/states, announcements, focus, keyboard, contrast and reflow; includes an odsp-web / SPDS / Fluent profile |
-| Evidence contract | AgentOW's versioned BEFORE/AFTER artifacts, scenario identity and exact-commit binding |
-| Windows host testing | NVDA, Narrator, Voice Access, recording prerequisites and cleanup procedures |
-| PR evidence | Matched screenshots, annotations, real recordings, heading context, Voice Access overlays and media publication |
-| Persistent evaluator browser | Dedicated Chromium profile, authentication and matched screenshots |
+| Foundations | Source-based reasoning, applicable standards, concrete findings and uncertainty |
+| Component semantics | Native elements, names/roles/states, structure, relationships and component contracts |
+| Keyboard and focus | Keyboard operation, dialogs, navigation, focus retention and restoration |
+| Forms and content | Labels, validation, groups, image alternatives, tables and media semantics |
+| Dynamic content | Loading/results/errors, status messages, announcement ownership and stable focus |
+| Visual accessibility | Source-visible contrast, focus styling, reflow, text, targets and motion risks |
 
-Topics are loaded by relevance, not all at once. Operational reference documents
-are knowledge, not permission to execute their commands.
+Topics are loaded by relevance, not all at once. No framework, operating system,
+repository or coding-workflow dependency is assumed. Examples use standard web
+markup; apply platform equivalents only when their actual contracts are known.
 See the [knowledge index](knowledge/README.md).
+
+The knowledge-only package does not include AgentOW protocols, host setup or
+PR-publication instructions. Those retained execution references live separately
+in [integrations/agentow/](integrations/agentow/README.md).
 
 ## Choose a plugin
 
@@ -73,7 +78,8 @@ Invoke a plugin with `/<plugin-name>` after installation.
 | `agent-operations` | Durable progress, reconciliation and owned cleanup | Requires a qualified provider |
 | `a11y-workflow` | Coordinate the complete evidence-first workflow | Requires qualified providers, including AgentOW integration |
 
-Each execution plugin bundles the same versioned knowledge snapshot. It reads
+Each execution plugin bundles the same generic knowledge snapshot and a separate
+profile for its existing execution integration. It reads
 those files directly; it does not need to call or separately install
 `a11y-knowledge`. The full workflow also bundles its stage tools, so installing
 all the smaller plugins is unnecessary.
@@ -122,6 +128,9 @@ automatically call these plugins.**
 
 Knowledge migration is currently **copy first**: the shared topics are available
 here, while AgentOW's original files, references and runtime remain unchanged.
+Generic static-review knowledge is separate from the preserved operational and
+project-specific material under `integrations/agentow/`. Only execution packages
+include that profile; `a11y-knowledge` neither packages nor reads it.
 Cross-repository integration and redundancy cleanup are deferred until the
 complete integration is ready. Installing this repository does not switch
 AgentOW's dependencies or update existing workers.
@@ -140,10 +149,13 @@ Update plugins through your host's supported plugin manager and restart when
 required, at a safe point. A repository push does not hot-update active sessions.
 Keep the installed versions used by an active workflow pinned.
 
-Source lives in `skills/`, `knowledge/`, `runtime/`, `contracts/` and `adapters/`.
+Source lives in `skills/`, `knowledge/`, `integrations/`, `runtime/`, `contracts/`
+and `adapters/`.
 `plugins/`, the marketplace and release manifests are generated; do not hand-edit
 them. Self-contained package copies are distribution artifacts, not separate
 implementations.
+Build removes retired files from generated packages so obsolete operational
+instructions cannot remain inside a knowledge-only package after an update.
 
 With Node.js 22+:
 

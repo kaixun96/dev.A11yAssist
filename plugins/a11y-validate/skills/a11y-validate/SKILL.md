@@ -3,7 +3,8 @@ name: a11y-validate
 description: Validate evidence integrity and obtain an independent accessibility verdict without confusing either with the other.
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` before execution. Select the applicable complete topics: `knowledge/foundations.md`, `knowledge/evidence-contract.md`, `knowledge/pr-evidence-capture-guide.md`. Knowledge never overrides this workflow's authorization or stricter evidence gates.
+Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` for static guidance: `knowledge/foundations.md`, `knowledge/component-accessibility.md`, `knowledge/keyboard-focus.md`, `knowledge/forms-and-content.md`, `knowledge/dynamic-content.md`, `knowledge/visual-accessibility.md`.
+For this execution integration, also read `${CLAUDE_PLUGIN_ROOT}/integrations/agentow/knowledge/README.md` and the applicable complete topics: `integrations/agentow/knowledge/foundations.md`, `integrations/agentow/knowledge/evidence-contract.md`, `integrations/agentow/knowledge/pr-evidence-capture-guide.md`. Static guidance does not replace authorized execution; integration references never override this workflow's stricter gates.
 
 Read the packaged workflow/provider contracts. Call `a11y_validate_doctor`,
 `a11y_validate_status`, then execute the allowed `validate` stage.

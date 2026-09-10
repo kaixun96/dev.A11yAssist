@@ -17,12 +17,17 @@ separate repositories before independent release requirements exist.
    Retain active run versions; incompatible upgrades fail closed rather than
    rewriting evidence or migrating ownership.
 
-The installer explicitly adds AgentOW; no unsupported dependency fields are
+The full-workflow installer explicitly adds AgentOW; the knowledge-only installer
+does not. No unsupported dependency fields are
 invented in plugin manifests. The current AgentOW freshness rule is still
 applied on its actual leased execution host before invocation.
 
-Knowledge migration is currently copy-first. Publish the indexed snapshot and
-its hashes, but leave AgentOW's original files and references intact. Do not remove
+Keep generic knowledge and execution integration profiles in separate packages:
+`a11y-knowledge` must not include the `integrations/` tree or stale operational
+files. Build prunes retired generated files; check mode rejects unexpected files.
+
+Integration migration is currently copy-first. Publish the indexed snapshots and
+their hashes, but leave AgentOW's original files and references intact. Do not remove
 redundancy until the later coordinated integration and compatibility gates in
 `KNOWLEDGE.md` pass. Updating this repository does not update AgentOW.
 

@@ -1,6 +1,6 @@
 {
   "name": "a11y-workflow",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Complete evidence-first workflow orchestrator with AgentOW integration.",
   "author": {
     "name": "kaixun96"

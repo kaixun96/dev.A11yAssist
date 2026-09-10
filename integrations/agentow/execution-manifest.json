@@ -30,7 +30,7 @@
       "targets": [
         "ts/src/ow/tools/shared-a11y/ado-attachments.d.mts"
       ],
-      "sha256": "44afc6a6d1773c147421ed106adac667c99f4d18b988c5bb7dee92c8fa3b66fc"
+      "sha256": "0e68234f8714b41a926c53ce8974ae549a0a20ebb788d569076e45c3cbfaf480"
     },
     {
       "source": "native/pr-description.mjs",

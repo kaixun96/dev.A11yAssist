@@ -19,7 +19,7 @@ export function attachPrEvidence(
   options?: {
     signal?: AbortSignal;
     fetchImpl?: typeof fetch;
-    readFetch?: typeof fetch;
+    readFetch?: (input: string, init?: RequestInit) => Promise<Response>;
     log?: (message: string) => void;
   },
 ): Promise<AttachmentResult>;

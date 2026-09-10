@@ -1,0 +1,9 @@
+{
+  "name": "a11y-knowledge",
+  "description": "Read-only accessibility knowledge: criteria, component semantics, real-AT evidence, Windows capture and reviewer media.",
+  "version": "0.2.0",
+  "author": {
+    "name": "kaixun96"
+  },
+  "license": "Microsoft Internal"
+}

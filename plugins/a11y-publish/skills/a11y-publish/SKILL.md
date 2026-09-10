@@ -3,6 +3,8 @@ name: a11y-publish
 description: Publish reviewed exact-HEAD accessibility evidence to a verified Draft PR with live media checks and no PR comments.
 ---
 
+Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` before execution. Select the applicable complete topics: `knowledge/pr-evidence-capture-guide.md`. Knowledge never overrides this workflow's authorization or stricter evidence gates.
+
 Read `docs/WORKFLOW.md` and `docs/PROVIDERS.md`. Call `a11y_publish_doctor` and
 `a11y_publish_status`; execute only `publish` when the actual current HEAD has
 passed AFTER, both evaluators and adversarial review.

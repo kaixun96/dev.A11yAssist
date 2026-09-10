@@ -3,6 +3,8 @@ name: a11y-capture
 description: Capture real Windows assistive-technology BEFORE/AFTER evidence with canonical scenario, ownership and exact-HEAD gates.
 ---
 
+Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` before execution. Select the applicable complete topics: `knowledge/foundations.md`, `knowledge/windows-host-testing.md`, `knowledge/personal-evaluator-browser.md`, `knowledge/pr-evidence-capture-guide.md`. Knowledge never overrides this workflow's authorization or stricter evidence gates.
+
 Read `docs/WORKFLOW.md` and `docs/PROVIDERS.md`. Call `a11y_capture_doctor` and
 `a11y_capture_status`. Require a run that actually passed intake. Do not create
 a substitute run when the original is pending.

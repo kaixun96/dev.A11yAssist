@@ -8,9 +8,9 @@ Public repository access does not grant access to Azure DevOps, Dev Center,
 Codespaces, or an evaluator pool. Those require your own authorized environment.
 Public visibility also does not grant an open-source license; see [LICENSE](LICENSE).
 
-## v0.1 status: installable foundation, staged migration
+## v0.2 status: shared knowledge plus an installable workflow foundation
 
-Seven independently packaged plugins, real MCP tools, shared executable phase
+Seven execution plugins plus a read-only knowledge plugin, real MCP tools, shared executable phase
 gates, persistent run/request state, artifact hashing, provider RPC, two entry
 adapters and tests are implemented. This is **not yet a drop-in replacement
 for the existing live A11y deployment**: platform-specific ADO/Dev Center/AT
@@ -29,6 +29,22 @@ working evaluator. Existing workers and their canonical pool remain untouched.
 | a11y-publish | `/a11y-publish` | Reviewed Draft PR/media publication |
 | agent-operations | `/agent-operations` | Progress, reconciliation, owned cleanup |
 | a11y-workflow | `/a11y-workflow` | Full gated orchestration and AgentOW handoff |
+| a11y-knowledge | `/a11y-knowledge` | Shared criteria, component review, AT/evidence and media knowledge; no MCP or resource access |
+
+## Use knowledge only
+
+```powershell
+copilot plugin marketplace add kaixun96/dev.A11yAssist
+copilot plugin install a11y-knowledge@a11y-assist
+```
+
+Restart Copilot, then use `/a11y-knowledge`. No provider configuration or AgentOW
+installation is needed to read the knowledge. [knowledge/](knowledge/README.md)
+is the destination for the extracted AgentOW A11y references. Migration is
+copy-first: AgentOW's original files and references remain unchanged until the
+later coordinated integration and redundancy cleanup.
+Every execution plugin also bundles the same versioned snapshot and selects topics
+by trigger; the complete workflow needs no separate knowledge-plugin installation.
 
 ## Install one capability
 
@@ -53,7 +69,7 @@ The full plugin is independently packaged and exposes all stage tools. It does
 not need to load six sibling MCP servers. Install small plugins when you want
 their narrower scope. We do not assume undocumented native transitive plugin
 dependencies; `tools/install.ps1` prints the exact commands, with `-Execute`
-performing them and `-Plugin all` installing all seven.
+performing them and `-Plugin all` installing all eight.
 
 Copy a template from `config/` to a private location, fill in your shared state
 root and trusted providers, and set:
@@ -68,8 +84,12 @@ update already-running workers. Then invoke the chosen skill and its doctor.
 
 ## Using these plugins with AgentOW
 
-**Co-installation is supported; automatic AgentOW integration is not implemented
-in v0.1.** Skills and MCP tools become available to the Copilot session that loads
+**Knowledge sharing and workflow execution are separate integrations.**
+This release copies knowledge into the plugin repository without switching
+AgentOW's current documentation dependencies. Pinned AgentOW consumption and
+redundancy cleanup are deferred; see [knowledge migration](docs/KNOWLEDGE.md).
+Automatic cross-host workflow execution is not implemented.
+Skills and MCP tools become available to the Copilot session that loads
 them. AgentOW does not discover or invoke this repository merely from its URL,
 and its workflows are not automatically rewritten by installing these packages.
 
@@ -116,6 +136,7 @@ Source of truth:
 
 - `skills/`: user-facing capability instructions.
 - `runtime/`, `contracts/`, `adapters/`: shared implementation.
+- `knowledge/`: indexed shared knowledge destination and generated content-hash manifest.
 - `plugins/`: generated, self-contained install units.
 - `.claude-plugin/marketplace.json`: generated marketplace.
 - `release.json`: version and shared source hashes.

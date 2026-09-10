@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -9,8 +9,13 @@
     "a11y-validate",
     "a11y-publish",
     "agent-operations",
-    "a11y-workflow"
+    "a11y-workflow",
+    "a11y-knowledge"
   ],
+  "knowledge": {
+    "manifest": "knowledge/manifest.json",
+    "sha256": "779cac09fe6a4f240e1b1451f86120edb82c2e4c531a7f82a5a375642b4ff36a"
+  },
   "externalDependencies": [
     {
       "name": "agentow-copilot",
@@ -25,7 +30,7 @@
     "runtime/core.mjs": "60d616036ccbecf73a1a1b30087240c74c6d851b74484f5551954b64818c54c2",
     "runtime/mcp.mjs": "ce4918604350d32e6f206d11c9fee43a50b4361704cf4c8aaa72cfca185877b6",
     "contracts/plugins.json": "28e694fb8755cce188766f721804386112da5114ac728ef6d61e15a06002d1e0",
-    "contracts/workflow.json": "29be9d2b5098e77ad15974cb9921241c7798fe66c4fd968ebffea2c2da40e70e",
+    "contracts/workflow.json": "103276d7f11727b4d74a99306a1fba55d7ba1a378ee9b55c10ce335c89a9304b",
     "adapters/cli.mjs": "94eb4a5455a4528a8085a9dc5e87796b34718906e7fbb2b90297300312d1534a",
     "adapters/twin.mjs": "51399e75b2d04a8bf5c0ca1cc8c31f6190e03f6172c7569b03cdbfd3353ac1dd"
   }

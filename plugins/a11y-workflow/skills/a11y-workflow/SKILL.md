@@ -1,14 +1,16 @@
 ---
 name: a11y-workflow
-description: Orchestrate the complete evidence-first accessibility workflow across configured Windows DevBoxes and AgentOW without weakening stage gates.
+description: Optionally compose the shared capabilities into a complete evidence-first accessibility workflow with a caller-selected source and review implementation.
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` for static guidance: `knowledge/foundations.md`, `knowledge/component-accessibility.md`, `knowledge/keyboard-focus.md`, `knowledge/forms-and-content.md`, `knowledge/dynamic-content.md`, `knowledge/visual-accessibility.md`.
-For this execution integration, also read `${CLAUDE_PLUGIN_ROOT}/integrations/agentow/knowledge/README.md` and the applicable complete topics: `integrations/agentow/knowledge/foundations.md`, `integrations/agentow/knowledge/component-accessibility.md`, `integrations/agentow/knowledge/evidence-contract.md`, `integrations/agentow/knowledge/windows-host-testing.md`, `integrations/agentow/knowledge/pr-evidence-capture-guide.md`, `integrations/agentow/knowledge/personal-evaluator-browser.md`. Static guidance does not replace authorized execution; integration references never override this workflow's stricter gates.
+Read `${CLAUDE_PLUGIN_ROOT}/docs/CAPABILITIES.md`. The caller owns composition; a small capability does not require the full workflow.
+For static guidance use `knowledge/README.md` and applicable topics: `knowledge/foundations.md`, `knowledge/component-accessibility.md`, `knowledge/keyboard-focus.md`, `knowledge/forms-and-content.md`, `knowledge/dynamic-content.md`, `knowledge/visual-accessibility.md`.
+Only when the caller selects the applicable execution integration, consult `integrations/agentow/knowledge/README.md` and its topic routing. Do not load that profile as a generic prerequisite.
 
 This is the complete entrypoint. It includes the shared runtime; sibling small
-plugins need not be installed just to run this package. AgentOW remains an
-external plugin dependency, installed separately by the documented installer.
+plugins need not be installed just to run this package. Source and review
+connections are selected by the caller; AgentOW is an optional integration.
+Other callers may compose small plugins in their own workflow instead.
 
 Read packaged `docs/WORKFLOW.md`, `docs/PROVIDERS.md` and `contracts/workflow.json`.
 Call `a11y_workflow_doctor`. Missing providers mean incomplete environment setup,
@@ -20,9 +22,11 @@ not permission to run a mock or copy someone else's private infrastructure.
 2. Inspect `a11y_workflow_status`, then call `a11y_workflow_execute` ONLY for its
    returned nextStage. Do not skip stages using another small plugin.
 3. BEFORE must establish reproduced+PASS using real AT and independent decisions.
-   No source branch or PR without that. Source provider uses the existing
-   `/agentow-a11y` in an exclusively leased allowed Codespace, verifies freshness
-   on that host and effective GPT-6 Astra, and binds changed resources to HEAD.
+   No source branch or PR without that. The source connection must own its
+   worktree, verify the executor, and bind changed resources to exact HEAD.
+   When `workflowProfile=agentow-odsp` is selected, retain the existing
+   AgentOW entrypoint, exclusive Codespace, execution-host freshness and
+   effective-model requirements. Never recursively re-enter this workflow.
 4. AFTER uses the same scenario/evaluator and accepted BEFORE hash. Validate,
    review, and if changes are requested repeat source->AFTER->validate->review.
 5. Publish only actual reviewed HEAD to a verified Draft PR with live media

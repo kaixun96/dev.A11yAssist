@@ -2,6 +2,9 @@
 import { createInterface } from 'node:readline';
 import { plugins, VERSION, readConfig, doctor, createRun, loadRun, publicRun,
   executeStage, reconcile, resourceStatus, assessProgress, abandonRun } from './core.mjs';
+import { capabilities } from './capability.mjs';
+import { executeOperation, operationStatus, reconcileOperation } from './operations.mjs';
+import { validateEvidenceFiles } from './evidence-files.mjs';
 
 const plugin = process.argv[2];
 if (!plugins[plugin]) throw new Error('Expected a registered plugin name');
@@ -14,9 +17,33 @@ const tools = [
   { name: `${prefix}_status`, description: 'Read original run state without exposing provider credentials.', inputSchema: runSchema },
   { name: `${prefix}_reconcile`, description: 'Observe the same pending provider request; never resubmit execution.', inputSchema: runSchema }
 ];
+if (['a11y-validate', 'a11y-workflow'].includes(plugin)) tools.push({
+  name: `${prefix}_evidence`,
+  description: 'Read-only evidence-v1 structural/scenario/baseline/HEAD checks. No provider or workflow run required. Does not inspect media, verify evidence-URI bytes or claim an independent behavior PASS.',
+  inputSchema: { type: 'object', properties: {
+    phase: { type: 'string', enum: ['reproduce', 'verify'] },
+    requestPath: { type: 'string' }, resultPath: { type: 'string' },
+    baselineRequestPath: { type: 'string' }, baselineResultPath: { type: 'string' }, repoRoot: { type: 'string' }
+  }, required: ['phase', 'requestPath', 'resultPath'], additionalProperties: false }
+});
+const actions = Object.entries(capabilities.operations).filter(([, value]) => value.plugin === plugin).map(([action]) => action);
+const operationSchema = { type: 'object', properties: { operationId: { type: 'string' } },
+  required: ['operationId'], additionalProperties: false };
+if (actions.length) {
+  tools.push({
+    name: `${prefix}_invoke`,
+    description: 'Invoke one independent capability inside the caller workflow. No shared workflow run or earlier phases required. Retain operationId to reconcile unknown outcomes.',
+    inputSchema: { type: 'object', properties: {
+      operationId: { type: 'string' }, action: { type: 'string', enum: actions },
+      context: { type: 'object' }, input: { type: 'object' }
+    }, required: ['operationId', 'action', 'context'], additionalProperties: false }
+  });
+  tools.push({ name: `${prefix}_operation_status`, description: 'Read this capability operation without a workflow journal.', inputSchema: operationSchema });
+  tools.push({ name: `${prefix}_operation_reconcile`, description: 'Observe the SAME pending capability operation; never repeat its external effect.', inputSchema: operationSchema });
+}
 if (['a11y-intake', 'a11y-workflow'].includes(plugin)) tools.push({
   name: `${prefix}_create`, description: 'Create a durable run, not a Bug claim; intake provider must acquire canonical ownership.',
-  inputSchema: { type: 'object', properties: { bug: { type: 'string', pattern: '^[1-9][0-9]*$' } }, required: ['bug'], additionalProperties: false }
+  inputSchema: { type: 'object', properties: { bug: { type: 'string' } }, required: ['bug'], additionalProperties: false }
 });
 if (plugins[plugin].stages.length) tools.push({
   name: `${prefix}_execute`, description: 'Execute only the next permitted phase through a configured trusted provider. No evidence bypass.',
@@ -62,10 +89,16 @@ async function handle(request) {
   const args = request.params.arguments ?? {};
   validateArguments(tool, args);
   try {
-    const config = await readConfig();
     const action = tool.name.slice(prefix.length + 1);
+    const fullWorkflow = plugin === 'a11y-workflow' ||
+      ['create', 'status', 'reconcile', 'execute', 'progress', 'abandon'].includes(action);
+    const config = action === 'evidence' ? null : await readConfig(undefined, { fullWorkflow });
     let result;
-    if (action === 'doctor') result = await doctor(config);
+    if (action === 'evidence') result = validateEvidenceFiles(args);
+    else if (action === 'invoke') result = await executeOperation(config, plugin, args.operationId, args.action, args.context, args.input ?? {});
+    else if (action === 'operation_status') result = await operationStatus(config, plugin, args.operationId);
+    else if (action === 'operation_reconcile') result = await reconcileOperation(config, plugin, args.operationId);
+    else if (action === 'doctor') result = await doctor(config);
     else if (action === 'create') result = await createRun(config, args.bug);
     else if (action === 'status') result = publicRun(await loadRun(config, args.runId));
     else if (action === 'execute') result = await executeStage(config, plugin, args.runId, args.stage, args.input ?? {});

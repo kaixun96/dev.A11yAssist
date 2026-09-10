@@ -17,8 +17,8 @@ separate repositories before independent release requirements exist.
    Retain active run versions; incompatible upgrades fail closed rather than
    rewriting evidence or migrating ownership.
 
-The full-workflow installer explicitly adds AgentOW; the knowledge-only installer
-does not. No unsupported dependency fields are
+The installer adds AgentOW only with explicit `-WithAgentOW`; the default full
+workflow does not require it. No unsupported dependency fields are
 invented in plugin manifests. The current AgentOW freshness rule is still
 applied on its actual leased execution host before invocation.
 
@@ -30,6 +30,11 @@ Integration migration is currently copy-first. Publish the indexed snapshots and
 their hashes, but leave AgentOW's original files and references intact. Do not remove
 redundancy until the later coordinated integration and compatibility gates in
 `KNOWLEDGE.md` pass. Updating this repository does not update AgentOW.
+
+The evidence-v1 runtime export has its own pinned consumer path. Release the
+canonical source first, then update AgentOW's generated validator copies and
+source lock through its reviewed updater. Never maintain separate validator
+implementations or silently refresh an active run.
 
 Rollback selects a previously qualified plugin/provider release for a compatible
 run. It must not reset session bindings, remove claims, discard new evidence,

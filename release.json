@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -14,13 +14,13 @@
   ],
   "knowledge": {
     "manifest": "knowledge/manifest.json",
-    "sha256": "2ce05889516e99a3c71927d149936b7b2d964413d086c8cdd32cf70a6971404f"
+    "sha256": "75233716aad0fbb89fddb0331256271f77258485c8816c3868d7e97c37665e07"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "951e05c9ff05ca30e47869ad672b8893129921751a10d6042001fdbfe1128df9",
+      "sha256": "7f41fb600f347c017dc6b8d1fe263dc1526f3e23b57c3a49b7923f8441c24983",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -37,16 +37,24 @@
       "name": "agentow-copilot",
       "marketplace": "agentOW",
       "repository": "kaixun96/dev.AgentOW",
+      "optional": true,
+      "profile": "agentow-odsp",
       "entrypoint": "/agentow-a11y",
-      "note": "Verify freshness on the leased execution host; stricter BEFORE/PR gates apply."
+      "note": "Only the explicitly selected integration requires AgentOW; generic source/review connections do not."
     }
   ],
   "hashes": {
-    "runtime/cli.mjs": "e018c3c802c728869a7d13286f3b752fee595c1b93fb457dce6b4038d6b62248",
-    "runtime/core.mjs": "60d616036ccbecf73a1a1b30087240c74c6d851b74484f5551954b64818c54c2",
-    "runtime/mcp.mjs": "ce4918604350d32e6f206d11c9fee43a50b4361704cf4c8aaa72cfca185877b6",
-    "contracts/plugins.json": "28e694fb8755cce188766f721804386112da5114ac728ef6d61e15a06002d1e0",
-    "contracts/workflow.json": "cea092c2cec0edc36749a4a94c965dc1a77e721f35bcf141ad127973897b5023",
+    "runtime/capability.mjs": "f0c7fdfcdd3c4626215c5698d850d27926733ff41b350433e157f5f80b2e44cf",
+    "runtime/cli.mjs": "be6b9b977ab6ff801b47a998db47fd9d11e668a72633c9846b92daee4e5adf46",
+    "runtime/core.mjs": "84292288cdcd9601b429cf91496f4e8dcac0371945a434c8f775685a399b61ef",
+    "runtime/evidence-files.mjs": "f8b3282fcde0f0168fec985defd5d4576c85d5bf88a0bff520e00e849c0c5667",
+    "runtime/evidence-v1.mjs": "be6191c09d21c84baaf0e04cd4576fe84545836c81a1ae34124b7870403c6f6f",
+    "runtime/mcp.mjs": "3ff4e90a65bc51ee63edbecad615c9826a49547c10bf8f87c5c2aa1fb341968c",
+    "runtime/operations.mjs": "8d284f449904d64786008b28e1480f4927423b524d799ed3d0aad619345fd516",
+    "runtime/profiles.mjs": "635cb32b7f7d2e26d7f975fbe622727a2d8f35fc9aa82e83b91f8d31aaeedb2d",
+    "contracts/capabilities.json": "96a2e322b7f7c1e33d4e94d5e4e55aa590e980f9e68c1328b90756912e3be1fe",
+    "contracts/plugins.json": "c3219e6885d9a5957b391df0c5015d4c03e3007126aba9345c5f07a323407b3d",
+    "contracts/workflow.json": "3a32c95623ca2ceaf0c7f9d031fb985f510da5607b105fbd4698ff0fd448f7c6",
     "adapters/cli.mjs": "94eb4a5455a4528a8085a9dc5e87796b34718906e7fbb2b90297300312d1534a",
     "adapters/twin.mjs": "51399e75b2d04a8bf5c0ca1cc8c31f6190e03f6172c7569b03cdbfd3353ac1dd"
   }

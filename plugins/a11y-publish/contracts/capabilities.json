@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "operations": {
+    "intake": {"plugin": "a11y-intake", "provider": "intake", "context": ["subject"], "gates": ["itemRead", "commentsReviewed", "attachmentsReviewed", "acceptanceDefined"]},
+    "before": {"plugin": "a11y-capture", "provider": "capture", "context": ["scenarioHash", "evaluator"], "gates": ["evaluatorOwned", "runtimeVerified", "realAssistiveTechnology", "scenarioMatched", "artifactsHashed"]},
+    "after": {"plugin": "a11y-capture", "provider": "capture", "context": ["scenarioHash", "evaluator", "head"], "gates": ["evaluatorOwned", "runtimeVerified", "realAssistiveTechnology", "scenarioMatched", "exactHeadMatched", "artifactsHashed"]},
+    "validate": {"plugin": "a11y-validate", "provider": "validate", "context": ["scenarioHash"], "gates": ["validatorPass", "independentEvaluatorPass"]},
+    "publish": {"plugin": "a11y-publish", "provider": "publish", "context": ["head"], "gates": ["exactHeadMatched", "draftPrVerified", "descriptionComplete", "liveMediaVerified", "noPrComments"]},
+    "cleanup": {"plugin": "agent-operations", "provider": "operations", "context": ["subject"], "gates": ["ownedProcessesStopped", "artifactsPreserved"]},
+    "source": {"plugin": null, "provider": "source", "context": ["scenarioHash", "evaluator"], "gates": ["worktreeOwned", "sourceExecutorVerified", "targetedValidation", "commitSealed", "changedResourceLoaded"]},
+    "review": {"plugin": null, "provider": "review", "context": ["head"], "gates": ["exactHeadMatched", "adversarialReviewPass", "noCriticalOrImportantFindings"]}
+  }
+}

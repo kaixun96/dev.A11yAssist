@@ -13,7 +13,7 @@ async function fixture(run) {
   const cfg = { schemaVersion: 1, mode: 'cli', owner: 'test-owner', stateRoot: dir,
     devboxes: ['box-one'], providers: {} };
   const executableSha256 = await fileHash(process.execPath);
-  for (const name of ['intake', 'capture', 'agentow', 'validate', 'publish', 'operations', 'resources']) {
+  for (const name of ['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources']) {
     cfg.providers[name] = { executable: process.execPath, args: [provider], executableSha256, timeoutSeconds: 10 };
   }
   try { await run(cfg, dir); } finally { await rm(dir, { recursive: true }); }

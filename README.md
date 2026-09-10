@@ -63,20 +63,32 @@ The knowledge-only package does not include AgentOW protocols, host setup or
 PR-publication instructions. Those retained execution references live separately
 in [integrations/agentow/](integrations/agentow/README.md).
 
-## Choose a plugin
+## Use capabilities inside your own workflow
 
 Invoke a plugin with `/<plugin-name>` after installation.
 
-| Plugin | Use it for | Current availability |
+Small plugins accept their own inputs and return results. They do not require
+the full workflow, an AgentOW session or unrelated earlier stages.
+
+| Plugin | Use it for | Prerequisites |
 |---|---|---|
 | `a11y-knowledge` | Code-generation guidance, static review and accessibility questions | Usable without providers |
-| `a11y-intake` | Bug intake, acceptance criteria and canonical scenarios | Requires a qualified provider |
+| `a11y-intake` | Work-item intake, acceptance criteria and scenarios | An authorized work-item tool connection |
 | `a11y-resources` | Inspect shared resource ownership and readiness | Status interface; not a general acquisition tool |
-| `a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Requires a qualified provider |
-| `a11y-validate` | Evidence integrity and independent behavior evaluation | Requires a qualified provider |
-| `a11y-publish` | Reviewer-safe Draft PR and evidence publication | Requires a qualified provider |
-| `agent-operations` | Durable progress, reconciliation and owned cleanup | Requires a qualified provider |
-| `a11y-workflow` | Coordinate the complete evidence-first workflow | Requires qualified providers, including AgentOW integration |
+| `a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Authorized Windows capture connection and owned evaluator |
+| `a11y-validate` | Check existing evidence; optionally obtain independent behavior evaluation | Evidence-v1 structural checks work directly; behavior evaluation needs an evaluation connection |
+| `a11y-publish` | Reviewer-safe Draft PR and evidence publication | Authorized PR/media publication connection |
+| `agent-operations` | Explicitly scoped cleanup and operation reconciliation | Connection authorized for the specified owned resources |
+| `a11y-workflow` | Optional complete evidence-first composition | Relevant execution connections plus a chosen source/review implementation |
+
+For example, call `a11y_validate_evidence` to check existing request/result files
+without creating a Bug run or configuring an external service. It validates the
+artifact contract, not the media's actual behavior.
+
+External operations use `<prefix>_invoke` with an `operationId`, action, context
+and input. Their operation journal prevents duplicate effects; it does not impose
+a global workflow. The caller decides what follows, including after a nonpass
+result. See [capability inputs and examples](docs/CAPABILITIES.md).
 
 Each execution plugin bundles the same generic knowledge snapshot and a separate
 profile for its existing execution integration. It reads
@@ -84,28 +96,37 @@ those files directly; it does not need to call or separately install
 `a11y-knowledge`. The full workflow also bundles its stage tools, so installing
 all the smaller plugins is unnecessary.
 
-## Execution workflows
+## Optional complete workflow
 
-**The execution plugins are an installable foundation, not a turnkey live
-deployment.** This repository provides the shared runtime and gates. You must
-configure and qualify the providers that actually access work items, manage
-resources, collect evidence and publish PRs. Missing providers stop execution;
+**Use `a11y-workflow` only when you want our complete orchestration.** It calls
+the same capability implementation and adds phase ordering, BEFORE/AFTER,
+review, failure and cleanup policy. AgentOW and other callers may retain their
+own workflows and call small plugins directly.
+
+Connections to external tools still need configuration; installing a plugin
+does not grant work-item, machine or PR access. The current connection mechanism
+wraps trusted executables; tools in another MCP server are not automatically
+connected. Missing connections stop the requested operation;
 `doctor` reports configuration, not proof of a working evaluator.
 
 Supported execution setups are **Twinbot + multiple Windows DevBoxes** or
 **Copilot CLI + one/multiple Windows DevBoxes**. These host requirements do not
-apply to read-only knowledge use. Execution plugins require Node.js 22+.
+apply to knowledge, structural evidence checking or independent non-capture
+operations. Execution plugins require Node.js 22+.
 
 For the full entrypoint:
 
 ```powershell
 copilot plugin marketplace add kaixun96/dev.A11yAssist
 copilot plugin install a11y-workflow@a11y-assist
-copilot plugin marketplace add kaixun96/dev.AgentOW
-copilot plugin install agentow-copilot@agentOW
 ```
 
-Use a template from [config/](config/) to create your private provider
+Choose `source` and `review` connections for your coding environment. AgentOW is
+optional, not installed by default. To use the existing AgentOW/odsp-web profile,
+install `agentow-copilot@agentOW` separately and explicitly select
+`workflowProfile: "agentow-odsp"` with its `agentow` connection.
+
+Use a template from [config/](config/) to create your private tool-connection
 configuration, then set its absolute path before restarting Copilot:
 
 ```powershell
@@ -120,20 +141,27 @@ To install one execution capability instead, use
 `copilot plugin install <plugin-name>@a11y-assist`.
 [tools/install.ps1](tools/install.ps1) can print the install commands;
 `-Execute` runs them and `-Plugin all` installs all eight packages.
+Add `-WithAgentOW` only when you explicitly want that separate plugin too.
 
 ## Relationship with AgentOW
 
-AgentOW is a separate plugin. **Its existing `/agentow-a11y` flow does not
-automatically call these plugins.**
+AgentOW is a separate caller, not the required parent of these plugins.
+It can call loaded capability MCP tools while retaining its own workflow.
+Its existing `/agentow-a11y` orchestration is not silently replaced.
+
+The evidence-v1 validator is maintained here in `runtime/evidence-v1.mjs`.
+AgentOW can consume a commit-pinned generated copy at its existing tool path,
+preserving offline operation without maintaining another implementation.
+See [the consumer integration](integrations/agentow/README.md).
 
 Knowledge migration is currently **copy first**: the shared topics are available
-here, while AgentOW's original files, references and runtime remain unchanged.
+here; other original AgentOW references and the live runtime are retained.
 Generic static-review knowledge is separate from the preserved operational and
 project-specific material under `integrations/agentow/`. Only execution packages
 include that profile; `a11y-knowledge` neither packages nor reads it.
-Cross-repository integration and redundancy cleanup are deferred until the
-complete integration is ready. Installing this repository does not switch
-AgentOW's dependencies or update existing workers.
+Remaining cross-repository migration and redundant-authoring cleanup are deferred
+until their compatibility gates pass. Installing this repository does not update
+existing workers.
 
 The intended full-workflow integration keeps source work with AgentOW and real
 AT control with the Windows evidence provider. It must not recursively call

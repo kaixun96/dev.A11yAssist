@@ -5,5 +5,5 @@
   "a11y-validate": {"description": "Deterministic integrity gates plus independent accessibility evaluation.", "stages": ["validate"]},
   "a11y-publish": {"description": "Reviewer-safe Draft PR evidence and live publication validation.", "stages": ["publish"]},
   "agent-operations": {"description": "Durable task continuation, cleanup, progress assessment and Run Insights.", "stages": ["cleanup"]},
-  "a11y-workflow": {"description": "Complete evidence-first workflow orchestrator with AgentOW integration.", "stages": ["intake", "before", "source", "after", "validate", "review", "publish", "cleanup"]}
+  "a11y-workflow": {"description": "Optional complete evidence-first composition of shared capabilities with caller-selected source and review tools.", "stages": ["intake", "before", "source", "after", "validate", "review", "publish", "cleanup"]}
 }

@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { invokeCapability, providerFor } from './capability.mjs';
 import { validateProfileReceipt } from './profiles.mjs';
+import { validateAdoProvider, callAdoProvider } from './builtin-ado.mjs';
 
 const contractDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../contracts');
 export const workflow = JSON.parse(await readFile(join(contractDirectory, 'workflow.json'), 'utf8'));
@@ -41,6 +42,11 @@ export async function readConfig(path = process.env.A11Y_ASSIST_CONFIG, { fullWo
   }
   for (const [name, provider] of Object.entries(config.providers)) {
     demand(['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources'].includes(name), 'Unknown provider');
+    if (provider?.kind === 'ado') {
+      demand(['intake', 'publish'].includes(name), 'ADO built-in connection supports only intake/publication');
+      validateAdoProvider(provider);
+      continue;
+    }
     demand(provider && typeof provider.executable === 'string' && isAbsolute(provider.executable) &&
       Array.isArray(provider.args) && provider.args.every(a => typeof a === 'string') &&
       shaPattern.test(provider.executableSha256 ?? ''), `Invalid pinned provider: ${name}`);
@@ -61,6 +67,11 @@ export async function doctor(config) {
   for (const name of ['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources']) {
     const provider = config.providers[name];
     if (!provider) { capabilities[name] = 'not-configured'; continue; }
+    if (provider.kind === 'ado') {
+      capabilities[name] = process.env[provider.authorizationEnvironmentVariable]
+        ? 'configured-not-live-verified' : 'authorization-unavailable';
+      continue;
+    }
     try {
       capabilities[name] = (await fileHash(provider.executable)) === provider.executableSha256
         ? 'configured-not-live-verified' : 'executable-hash-mismatch';
@@ -136,6 +147,7 @@ export async function createRun(config, bug) {
 export async function callProvider(config, providerName, request) {
   const provider = config.providers[providerName];
   demand(provider, `Provider ${providerName} is not configured; no live operation performed`);
+  if (provider.kind === 'ado') return callAdoProvider(provider, request);
   demand(await fileHash(provider.executable) === provider.executableSha256, 'Provider executable hash changed');
   return new Promise((resolveResult, reject) => {
     const child = spawn(provider.executable, provider.args, {

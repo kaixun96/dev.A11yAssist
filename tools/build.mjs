@@ -58,12 +58,12 @@ for (const [name, definition] of Object.entries(plugins)) {
     author: { name: 'kaixun96' }, license: 'Microsoft Internal', mcpServers: { [server]: launch }
   }));
   await emit(`${base}/.mcp.json`, json({ mcpServers: { [server]: launch } }));
-  for (const dir of ['runtime', 'contracts', 'adapters']) {
+  for (const dir of ['runtime', 'contracts', 'adapters', 'native']) {
     for (const file of await readdir(join(root, dir))) {
       await emit(`${base}/${dir}/${file}`, await text(join(root, dir, file)));
     }
   }
-  for (const file of ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md']) {
+  for (const file of ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md', 'NATIVE-CAPABILITIES.md']) {
     await emit(`${base}/docs/${file}`, await text(join(root, 'docs', file)));
   }
   const topics = knowledge.consumers[name];
@@ -79,6 +79,8 @@ for (const [name, definition] of Object.entries(plugins)) {
   await bundleKnowledge(base, genericSet);
   await bundleKnowledge(base, integrationSet);
   await emit(`${base}/integrations/agentow/README.md`, await text(join(root, 'integrations/agentow/README.md')));
+  await emit(`${base}/integrations/agentow/runtime/personal-evaluator-browser.py`,
+    await text(join(root, 'integrations/agentow/runtime/personal-evaluator-browser.py')));
   await emit(`${base}/AGENTS.md`, `# ${name}\n\nRead docs/CAPABILITIES.md and knowledge/README.md.\n${name === 'a11y-workflow' ? 'This optional composition also follows docs/WORKFLOW.md.' : 'The caller owns sequencing. Use independent capability operations; do not create a full workflow run unless explicitly requested.'}\nUse only authorized configured tool connections for external effects; missing capability fails explicitly.\n${definition.description}\n`);
   entries.push({ name, source: `./${base}`, description: definition.description, version: pkg.version,
     author: { name: 'kaixun96' } });
@@ -100,10 +102,17 @@ await emit('.claude-plugin/marketplace.json', json({
   plugins: entries
 }));
 const hashes = {};
-for (const dir of ['runtime', 'contracts', 'adapters']) {
+for (const dir of ['runtime', 'contracts', 'adapters', 'native']) {
   for (const file of await readdir(join(root, dir))) {
     hashes[`${dir}/${file}`] = createHash('sha256').update(await text(join(root, dir, file))).digest('hex');
   }
+  const executionExports = JSON.parse(await text(join(root, 'integrations/agentow/execution-exports.json')));
+  await emit('integrations/agentow/execution-manifest.json', json({
+    schemaVersion: 1, repository: 'kaixun96/dev.A11yAssist', version: pkg.version,
+    files: await Promise.all(executionExports.files.map(async entry => ({
+      ...entry, sha256: createHash('sha256').update(await text(join(root, entry.source))).digest('hex')
+    })))
+  }));
   await emit('integrations/agentow/exports.json', json({
     schemaVersion: 1, repository: 'kaixun96/dev.A11yAssist', version: pkg.version,
     files: [{ source: 'runtime/evidence-v1.mjs', target: 'tools/validate-a11y-evidence.mjs', sha256: hashes['runtime/evidence-v1.mjs'] }]

@@ -2,6 +2,14 @@
 
 ## Current delivery
 
+v0.5 moves public Windows host setup, the retained AgentOW personal-browser
+profile, PR attachment execution and description budgeting into canonical shared
+sources. Native ADO `read-item` and `attach-evidence` are independently executable
+through configured authentication. Their narrower receipts do not satisfy
+the complete intake/publication stage contracts. See `NATIVE-CAPABILITIES.md`.
+Actual AT, resource recovery/release and independent behavior/media providers
+still require the deployment qualification below.
+
 v0.4 provides independent capability operations, a provider-free evidence-v1
 structural checker and an optional workflow that calls the same capabilities.
 Generic source/review connections do not require AgentOW; the explicit

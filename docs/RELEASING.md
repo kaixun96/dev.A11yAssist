@@ -36,6 +36,13 @@ canonical source first, then update AgentOW's generated validator copies and
 source lock through its reviewed updater. Never maintain separate validator
 implementations or silently refresh an active run.
 
+The additional execution export is `integrations/agentow/execution-manifest.json`,
+generated from the explicit allowlist in `execution-exports.json`. Its consumers
+use AgentOW's `--update-execution <exact-commit>` updater and independent
+`a11y-execution.lock.json`. Publish and qualify the source before advancing that
+pin. Retain the original command/API paths through generated copies or thin
+wrappers; never hand-maintain the copied execution bodies.
+
 Rollback selects a previously qualified plugin/provider release for a compatible
 run. It must not reset session bindings, remove claims, discard new evidence,
 undo remote effects or bypass a service refusal.

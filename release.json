@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -14,13 +14,13 @@
   ],
   "knowledge": {
     "manifest": "knowledge/manifest.json",
-    "sha256": "75233716aad0fbb89fddb0331256271f77258485c8816c3868d7e97c37665e07"
+    "sha256": "634d6a75395ff152eca0834ccb2f6f9842010eee3eabe3fbe697a6d171495b8c"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "7f41fb600f347c017dc6b8d1fe263dc1526f3e23b57c3a49b7923f8441c24983",
+      "sha256": "72d0fa3e68c73f3e931df1dee6b4398df40e18e48e43a261a3ea9072405eced6",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -44,18 +44,25 @@
     }
   ],
   "hashes": {
+    "runtime/builtin-ado.mjs": "0c6c559936b24c4549f30484d79bd4620acf2d3b9046d89d9c60371fee73bfda",
     "runtime/capability.mjs": "f0c7fdfcdd3c4626215c5698d850d27926733ff41b350433e157f5f80b2e44cf",
     "runtime/cli.mjs": "be6b9b977ab6ff801b47a998db47fd9d11e668a72633c9846b92daee4e5adf46",
-    "runtime/core.mjs": "84292288cdcd9601b429cf91496f4e8dcac0371945a434c8f775685a399b61ef",
+    "runtime/core.mjs": "9e88fe8c6959bb6cc3e3c38ddca5c48c794bebf7bd0380aff96fdeba2c74149e",
     "runtime/evidence-files.mjs": "f8b3282fcde0f0168fec985defd5d4576c85d5bf88a0bff520e00e849c0c5667",
     "runtime/evidence-v1.mjs": "be6191c09d21c84baaf0e04cd4576fe84545836c81a1ae34124b7870403c6f6f",
     "runtime/mcp.mjs": "3ff4e90a65bc51ee63edbecad615c9826a49547c10bf8f87c5c2aa1fb341968c",
     "runtime/operations.mjs": "8d284f449904d64786008b28e1480f4927423b524d799ed3d0aad619345fd516",
     "runtime/profiles.mjs": "635cb32b7f7d2e26d7f975fbe622727a2d8f35fc9aa82e83b91f8d31aaeedb2d",
-    "contracts/capabilities.json": "96a2e322b7f7c1e33d4e94d5e4e55aa590e980f9e68c1328b90756912e3be1fe",
+    "contracts/capabilities.json": "94b31dd0c0e2c9c0fc733f8c503febb66963ea2288c5369c51bd4b94306a5439",
     "contracts/plugins.json": "c3219e6885d9a5957b391df0c5015d4c03e3007126aba9345c5f07a323407b3d",
-    "contracts/workflow.json": "3a32c95623ca2ceaf0c7f9d031fb985f510da5607b105fbd4698ff0fd448f7c6",
+    "contracts/workflow.json": "d48c8d2758826cae37e91c5be7006861c36b864189f1b3671a42c0d842475289",
     "adapters/cli.mjs": "94eb4a5455a4528a8085a9dc5e87796b34718906e7fbb2b90297300312d1534a",
-    "adapters/twin.mjs": "51399e75b2d04a8bf5c0ca1cc8c31f6190e03f6172c7569b03cdbfd3353ac1dd"
+    "adapters/twin.mjs": "51399e75b2d04a8bf5c0ca1cc8c31f6190e03f6172c7569b03cdbfd3353ac1dd",
+    "native/ado-attachments.d.mts": "44afc6a6d1773c147421ed106adac667c99f4d18b988c5bb7dee92c8fa3b66fc",
+    "native/ado-attachments.mjs": "8be17d46071e10c7c704bec6dbd831b520767b68d086b879d10f2eb0d52ec194",
+    "native/ado-intake.mjs": "b2646283bd1e20af8dc96bb3ca92b4513a4705d9b83b85559449225d7e6b53af",
+    "native/pr-description.mjs": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf",
+    "native/provenance.json": "eb9bfb249f1620d36ca1ea401e51ce312b1e5555bfb8953695f85ded4816dd2d",
+    "native/windows-host.ps1": "e08192a06f1d1d8db60bfb852c728749d3ecbce213116670d42776cca1c9a739"
   }
 }

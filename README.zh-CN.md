@@ -1,5 +1,13 @@
 # A11y Assist
 
+**v0.5 原生执行能力：**`read-item` 可以实际读取 ADO 工作项和完整分页讨论；
+`attach-evidence` 可以向已有 Draft PR 上传哈希绑定的文件、下载核对字节，
+并更新及回读 PR 描述、HEAD 和 Draft 状态。它们使用内置 ADO 连接，
+不需要另写 provider 程序，但不代表已解释讨论、完成验收或验证媒体行为。
+Windows 主机准备、附件发布和描述预算实现也已移入公共源码；
+AgentOW 的专用浏览器场景保留在独立集成目录。
+具体配置和未迁移边界见 [原生能力](docs/NATIVE-CAPABILITIES.md)。
+
 [![English](docs/assets/language-en.svg)](README.md) [![简体中文](docs/assets/language-zh-cn.svg)](README.zh-CN.md)
 
 面向 Copilot CLI 的无障碍知识与模块化工作流插件。可以在代码生成和审查时使用

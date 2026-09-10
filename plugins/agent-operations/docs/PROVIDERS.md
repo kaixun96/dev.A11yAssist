@@ -2,6 +2,11 @@
 
 ## What is executable today
 
+Version 0.5 additionally ships native ADO work-item/discussion retrieval and
+Draft PR evidence upload/description update. These use `kind: "ado"` connections
+instead of external executables. See [native capabilities](NATIVE-CAPABILITIES.md)
+for the exact narrower actions, authentication and non-verification boundaries.
+
 The packages contain actual MCP tools, independent capability operations, an
 optional persistent workflow state machine,
 stage gates, artifact hashing, version/owner fencing, bounded subprocess RPC,

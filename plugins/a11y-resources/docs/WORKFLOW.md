@@ -1,6 +1,6 @@
 # Evidence-first workflow contract
 
-Version: 0.6.0. This is the OPTIONAL full-workflow contract, not a prerequisite
+Version: 0.7.0. This is the OPTIONAL full-workflow contract, not a prerequisite
 for small capabilities. See `CAPABILITIES.md` for caller-owned composition.
 During migration the
 existing deployment's canonical execution contract remains authoritative;

@@ -1,6 +1,6 @@
 {
   "name": "a11y-validate",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Deterministic integrity gates plus independent accessibility evaluation.",
   "author": {
     "name": "kaixun96"

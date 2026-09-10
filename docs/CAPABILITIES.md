@@ -48,7 +48,7 @@ an A11y Assist run:
 Send that input to `a11y_validate_invoke`. The caller supplies the real hashes
 and its connection's evidence input schema; the placeholders are not valid data.
 
-## Read-only structural evidence checking
+## Read-only evidence checking
 
 `a11y_validate_evidence` needs no provider configuration or operation journal.
 It calls the shared `runtime/evidence-v1.mjs` implementation:
@@ -68,12 +68,42 @@ The retained [version-1 schema](../integrations/agentow/knowledge/evidence-contr
 describes the artifact shape. Its legacy workflow policy is not a prerequisite
 for this read-only operation.
 
-The result explicitly sets `independentBehaviorVerified: false` and
+Without artifact roots, the result sets `independentBehaviorVerified: false` and
 `artifactUriBytesVerified: false`. The checker validates structure, required
 evidence declarations, scenario and applicable baseline/HEAD bindings. It does
 not fetch every evidence URI, inspect media or independently judge behavior.
 Use the evaluation connection for those responsibilities; do not turn
 `valid: true` into an accessibility PASS.
+
+### Optional local artifact bytes (v0.7)
+
+Add an absolute `artifactRoot` to hash every result evidence file. For verify,
+also provide an absolute `baselineArtifactRoot`; both BEFORE and AFTER files
+must pass. A missing/invalid root or any missing/changed artifact rejects the
+operation, never silently downgrades to structural-only. `baselineArtifactRoot`
+is not accepted without verify and `artifactRoot`.
+
+In this mode each evidence `uri` must be an unencoded relative local path such
+as `images/target.png`, confined to its selected root. Backslashes are accepted
+as separators. Absolute paths, traversal, URI schemes, percent escapes, query/
+fragment syntax and alternate streams are rejected; symlinks cannot escape the
+root. No network URI is fetched, decoded or mapped to a guessed local filename.
+Prepare the original evidence contract with local references before acceptance;
+do not rewrite an accepted baseline to enable this option.
+
+The same `verifyArtifactFiles` implementation used by capability/workflow receipts
+checks all evidence entries, including ones not linked by a step. Request/result
+documents are parsed and hashed from the same single reads. The response includes
+`documentSha256`, `artifactFileCount`, scope
+`evidence-v1-structural-and-local-artifact-validation`, and
+`artifactUriBytesVerified: true` only after all selected files pass.
+This proves sampled local bytes match the declared hashes, not immutable storage,
+their origin, deployed runtime, real AT, media quality or product behavior.
+`independentBehaviorVerified` stays false and no workflow stage advances.
+
+The independently installed validation plugin and the full package's
+`a11y_workflow_evidence` tool call this same implementation without a provider,
+claim, operation journal or running workflow.
 
 ## External tool connections
 

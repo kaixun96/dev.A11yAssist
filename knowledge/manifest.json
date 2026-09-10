@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "kaixun96/dev.A11yAssist",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "scope": "generic-static-accessibility",
   "hashes": {
     "README.md": "87b9cca220b5c9e5a3bd3af14eb880386b569e66876e203a9cccc4b95ba7c67b",

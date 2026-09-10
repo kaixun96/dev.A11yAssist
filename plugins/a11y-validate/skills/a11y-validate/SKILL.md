@@ -12,6 +12,10 @@ Read `docs/CAPABILITIES.md`. For evidence-v1 structural checking, use
 inputs for verify. It needs no provider configuration, Bug claim or run journal.
 Its result says whether the artifact contract is valid, not whether an
 independent accessibility evaluator has accepted the observed behavior.
+For local evidence bytes, explicitly supply `artifactRoot` and, for verify,
+`baselineArtifactRoot`. Every evidence URI must then be an unencoded root-relative
+local path. Missing/mismatched files reject; remote URIs are never fetched.
+This does not establish media quality or independent behavior acceptance.
 
 For an independent behavior evaluation, use `a11y_validate_invoke` with action
 `validate`, a stable operationId, context.scenarioHash and the actual evidence

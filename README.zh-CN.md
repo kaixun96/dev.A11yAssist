@@ -83,6 +83,11 @@ copilot plugin install a11y-knowledge@a11y-assist
 例如，`a11y_validate_evidence` 可直接检查已有的请求/结果文件，不需要创建 Bug run
 或配置外部服务。它检查证据契约，不代表实际媒体中的行为已经通过验证。
 
+**v0.7 本地证据文件核验：** 显式提供 `artifactRoot`，verify 时再提供
+`baselineArtifactRoot`，即可核对所有根目录内相对路径证据的实际哈希。
+文件缺失、变化或越界都会拒绝；不会下载远程 URI，也不代表独立行为验收。
+小插件和完整包复用[同一核验实现](docs/CAPABILITIES.md#optional-local-artifact-bytes-v07)。
+
 外部操作通过 `<prefix>_invoke` 接收 `operationId`、action、context 和 input。
 操作记录用于防止重复执行，不会强加完整工作流。包括结果未通过时，下一步也由调用方决定。
 详见[能力输入与示例](docs/CAPABILITIES.md)。

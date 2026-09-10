@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -14,13 +14,13 @@
   ],
   "knowledge": {
     "manifest": "knowledge/manifest.json",
-    "sha256": "4e78c165fbe6cffa3fa06433719de8b45b2cb0fc0cefc11209ce64c54fd8361a"
+    "sha256": "3fcfa9b8c4404e318f3b878d7e5ecb2af8a61b5892fac101baab75d89cac92d9"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "c2bc525d3ebe608ffe3dce49ac0382e1178bbb488370c71fb386d7f2bee5983b",
+      "sha256": "2391acacc2963dda06be6c829738274725dfa46b9ba4b76f9ba2a00bcaf610cb",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -48,9 +48,9 @@
     "runtime/capability.mjs": "14bde1a728c73052d6cf4071a65354f29696ba34841e44c1317574a720a78179",
     "runtime/cli.mjs": "be6b9b977ab6ff801b47a998db47fd9d11e668a72633c9846b92daee4e5adf46",
     "runtime/core.mjs": "33070030f70fd88fc087d6f25a1404407a39c6a689813bbb1a0291d82c358368",
-    "runtime/evidence-files.mjs": "f8b3282fcde0f0168fec985defd5d4576c85d5bf88a0bff520e00e849c0c5667",
-    "runtime/evidence-v1.mjs": "be6191c09d21c84baaf0e04cd4576fe84545836c81a1ae34124b7870403c6f6f",
-    "runtime/mcp.mjs": "3ff4e90a65bc51ee63edbecad615c9826a49547c10bf8f87c5c2aa1fb341968c",
+    "runtime/evidence-files.mjs": "fe5d5a59e7a953ed838777aef2b8923f5f8f3b7b3503b5d349d169744a23877f",
+    "runtime/evidence-v1.mjs": "6a087bd37a4e83ef3f71fead22a88cc83160776bc671fdaf8e93afc2792b1ff2",
+    "runtime/mcp.mjs": "6ac8414e4b807d07b1054e838480c37a97a09db979f3336ba6fc2a4951bce2b7",
     "runtime/operations.mjs": "4dceb0fefabf5d3ea567b6608a3468cc33a6d8a0001f4f97aa84c6a4889ae68a",
     "runtime/profiles.mjs": "635cb32b7f7d2e26d7f975fbe622727a2d8f35fc9aa82e83b91f8d31aaeedb2d",
     "runtime/waiting.mjs": "364bfb314e9ccd459365741d857b281f00362a8bc9562d1ce64c5d30c23ce893",

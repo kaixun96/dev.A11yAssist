@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "repository": "kaixun96/dev.A11yAssist",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "files": [
     {
       "source": "runtime/evidence-v1.mjs",
       "target": "tools/validate-a11y-evidence.mjs",
-      "sha256": "be6191c09d21c84baaf0e04cd4576fe84545836c81a1ae34124b7870403c6f6f"
+      "sha256": "6a087bd37a4e83ef3f71fead22a88cc83160776bc671fdaf8e93afc2792b1ff2"
     }
   ]
 }

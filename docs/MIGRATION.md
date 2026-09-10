@@ -2,6 +2,14 @@
 
 ## Current delivery
 
+v0.7 adds explicit root-confined local evidence artifact hashing to the read-only
+checker. It reuses the existing receipt artifact verifier and a single-read
+evidence-v1 document loader; both small and complete packages call the same code.
+Default structural-only calls and the exported validator CLI retain their
+behavior. Both baseline and current artifacts are required in opt-in verify mode.
+This is not real AT, protected-runtime qualification, independent media/behavior
+acceptance, resource release or a live cutover.
+
 v0.6 adds explicit bounded caller-owned polling to the shared capability and
 optional CLI-workflow protocol. Provider configuration, original request and
 absolute deadline remain bound across restart. Default/Twin callbacks do not

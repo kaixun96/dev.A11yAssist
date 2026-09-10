@@ -85,6 +85,12 @@ For example, call `a11y_validate_evidence` to check existing request/result file
 without creating a Bug run or configuring an external service. It validates the
 artifact contract, not the media's actual behavior.
 
+**v0.7 local artifact checking:** explicitly supply `artifactRoot` (and
+`baselineArtifactRoot` for verify) to hash every root-relative evidence file.
+Missing, changed or escaping files reject; no remote URI is fetched and
+independent behavior remains unverified. Both small and full packages reuse the
+[same checker](docs/CAPABILITIES.md#optional-local-artifact-bytes-v07).
+
 External operations use `<prefix>_invoke` with an `operationId`, action, context
 and input. Their operation journal prevents duplicate effects; it does not impose
 a global workflow. The caller decides what follows, including after a nonpass

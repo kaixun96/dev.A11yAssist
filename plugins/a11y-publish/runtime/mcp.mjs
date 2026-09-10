@@ -19,11 +19,12 @@ const tools = [
 ];
 if (['a11y-validate', 'a11y-workflow'].includes(plugin)) tools.push({
   name: `${prefix}_evidence`,
-  description: 'Read-only evidence-v1 structural/scenario/baseline/HEAD checks. No provider or workflow run required. Does not inspect media, verify evidence-URI bytes or claim an independent behavior PASS.',
+  description: 'Read-only evidence-v1 structural/scenario/baseline/HEAD checks, with optional root-confined local artifact hashing. No provider or workflow run required. Never downloads remote URIs, inspects media or claims an independent behavior PASS.',
   inputSchema: { type: 'object', properties: {
     phase: { type: 'string', enum: ['reproduce', 'verify'] },
     requestPath: { type: 'string' }, resultPath: { type: 'string' },
-    baselineRequestPath: { type: 'string' }, baselineResultPath: { type: 'string' }, repoRoot: { type: 'string' }
+    baselineRequestPath: { type: 'string' }, baselineResultPath: { type: 'string' }, repoRoot: { type: 'string' },
+    artifactRoot: { type: 'string' }, baselineArtifactRoot: { type: 'string' }
   }, required: ['phase', 'requestPath', 'resultPath'], additionalProperties: false }
 });
 const actions = Object.entries(capabilities.operations).filter(([, value]) => value.plugin === plugin).map(([action]) => action);
@@ -94,7 +95,7 @@ async function handle(request) {
       ['create', 'status', 'reconcile', 'execute', 'progress', 'abandon'].includes(action);
     const config = action === 'evidence' ? null : await readConfig(undefined, { fullWorkflow });
     let result;
-    if (action === 'evidence') result = validateEvidenceFiles(args);
+    if (action === 'evidence') result = await validateEvidenceFiles(args);
     else if (action === 'invoke') result = await executeOperation(config, plugin, args.operationId, args.action, args.context, args.input ?? {});
     else if (action === 'operation_status') result = await operationStatus(config, plugin, args.operationId);
     else if (action === 'operation_reconcile') result = await reconcileOperation(config, plugin, args.operationId);

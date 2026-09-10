@@ -1,5 +1,6 @@
 # a11y-workflow
 
-Read knowledge/README.md, integrations/agentow/knowledge/README.md, docs/WORKFLOW.md and docs/PROVIDERS.md before execution.
-Only configured trusted providers may operate machines. Missing providers fail closed.
-Complete evidence-first workflow orchestrator with AgentOW integration.
+Read docs/CAPABILITIES.md and knowledge/README.md.
+This optional composition also follows docs/WORKFLOW.md.
+Use only authorized configured tool connections for external effects; missing capability fails explicitly.
+Optional complete evidence-first composition of shared capabilities with caller-selected source and review tools.

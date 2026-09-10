@@ -55,34 +55,48 @@ copilot plugin install a11y-knowledge@a11y-assist
 独立知识包不包含 AgentOW 协议、主机配置或 PR 发布指令。
 保留的执行参考文档单独放在 [integrations/agentow/](integrations/agentow/README.md)。
 
-## 选择插件
+## 在自己的工作流中按需调用
 
 安装后，通过 `/<插件名>` 调用。
 
-| 插件 | 用途 | 当前可用性 |
+小插件接收各自需要的输入并返回结果，不要求完整工作流、AgentOW 会话或无关的前置阶段。
+
+| 插件 | 用途 | 使用前提 |
 |---|---|---|
 | `a11y-knowledge` | 代码生成指导、静态审查和无障碍问题咨询 | 无需 provider 即可使用 |
-| `a11y-intake` | Bug 接收、验收条件和标准复现场景 | 需要经过验证的 provider |
+| `a11y-intake` | 工作项读取、验收条件和复现场景 | 接通有权限的工作项读取工具 |
 | `a11y-resources` | 查看共享资源的归属和就绪状态 | 状态接口，不是通用资源申请工具 |
-| `a11y-capture` | 真实 Windows AT 的 BEFORE/AFTER 取证 | 需要经过验证的 provider |
-| `a11y-validate` | 证据完整性与独立行为评估 | 需要经过验证的 provider |
-| `a11y-publish` | 面向 reviewer 的 Draft PR 和证据发布 | 需要经过验证的 provider |
-| `agent-operations` | 持久化进度、核对已有请求和清理自有资源 | 需要经过验证的 provider |
-| `a11y-workflow` | 编排完整的证据驱动工作流 | 需要经过验证的 providers，包括 AgentOW 集成 |
+| `a11y-capture` | 真实 Windows AT 的 BEFORE/AFTER 取证 | 接通获授权的 Windows 采集工具，并持有评估机使用权 |
+| `a11y-validate` | 检查已有证据；按需进行独立行为评估 | evidence-v1 结构检查可直接使用；行为评估需接通评估工具 |
+| `a11y-publish` | 面向 reviewer 的 Draft PR 和证据发布 | 接通有权限的 PR 与媒体发布工具 |
+| `agent-operations` | 按明确范围清理自有资源、核对已有操作 | 接通有权限操作指定自有资源的工具 |
+| `a11y-workflow` | 可选的完整证据驱动流程 | 接通所需执行工具，并选择源码实现与 review 工具 |
+
+例如，`a11y_validate_evidence` 可直接检查已有的请求/结果文件，不需要创建 Bug run
+或配置外部服务。它检查证据契约，不代表实际媒体中的行为已经通过验证。
+
+外部操作通过 `<prefix>_invoke` 接收 `operationId`、action、context 和 input。
+操作记录用于防止重复执行，不会强加完整工作流。包括结果未通过时，下一步也由调用方决定。
+详见[能力输入与示例](docs/CAPABILITIES.md)。
 
 各执行插件自带同版本的通用知识副本，以及独立存放的现有执行集成说明，
 直接读取这些文件，不需要调用或单独安装
 `a11y-knowledge`。完整工作流也自带各阶段工具，无需把所有小插件都安装一遍。
 
-## 执行工作流
+## 可选的完整工作流
 
-**执行插件目前是可安装的基础框架，不是开箱即用的生产部署。**
-本仓库提供共享运行时和门禁；实际访问工作项、管理资源、采集证据和发布 PR 的
-providers（执行适配器）需要自行配置并验证。缺少 provider 时停止执行；
+**只有需要我们提供的完整编排时，才使用 `a11y-workflow`。**
+它调用同一套能力实现，叠加阶段顺序、BEFORE/AFTER、review、失败处理和清理策略。
+AgentOW 或其他调用方可以保留自己的工作流，只调用需要的小插件。
+
+外部工具连接仍需配置；安装插件不会自动获得工作项、机器或 PR 权限。
+当前通过可信可执行程序接通现有工具，不会自动连接其他 MCP server 中的工具。
+缺少连接时，该操作不会启动；
 `doctor` 只报告配置情况，不代表评估环境已经可用。
 
 支持的执行环境为 **Twinbot + 多台 Windows DevBox**，或
-**Copilot CLI + 单台/多台 Windows DevBox**。只读知识使用不受这些主机要求限制。
+**Copilot CLI + 单台/多台 Windows DevBox**。知识、证据结构检查及独立的非采集操作
+不需要这些主机配置。
 执行插件需要 Node.js 22+。
 
 安装完整入口：
@@ -90,11 +104,13 @@ providers（执行适配器）需要自行配置并验证。缺少 provider 时�
 ```powershell
 copilot plugin marketplace add kaixun96/dev.A11yAssist
 copilot plugin install a11y-workflow@a11y-assist
-copilot plugin marketplace add kaixun96/dev.AgentOW
-copilot plugin install agentow-copilot@agentOW
 ```
 
-使用 [config/](config/) 中的模板创建私有 provider 配置，并在重启 Copilot 前设置其绝对路径：
+为自己的编码环境选择 `source` 和 `review` 连接。AgentOW 是可选项，不再默认安装。
+需要现有 AgentOW/odsp-web 集成时，单独安装 `agentow-copilot@agentOW`，
+并明确设置 `workflowProfile: "agentow-odsp"` 及其 `agentow` 连接。
+
+使用 [config/](config/) 中的模板创建私有工具连接配置，并在重启 Copilot 前设置其绝对路径：
 
 ```powershell
 $env:A11Y_ASSIST_CONFIG = 'C:\YourPrivateDirectory\a11y-config.json'
@@ -107,16 +123,22 @@ $env:A11Y_ASSIST_CONFIG = 'C:\YourPrivateDirectory\a11y-config.json'
 `copilot plugin install <plugin-name>@a11y-assist`。
 [tools/install.ps1](tools/install.ps1) 可以打印安装命令；
 `-Execute` 执行命令，`-Plugin all` 安装全部八个插件。
+只有明确需要同时安装 AgentOW 时才添加 `-WithAgentOW`。
 
 ## 与 AgentOW 的关系
 
-AgentOW 是独立插件。**它现有的 `/agentow-a11y` 流程不会自动调用这些插件。**
+AgentOW 是独立调用方，不是这些插件的必需父级。它可以在保留自身工作流的同时，
+调用已加载的能力 MCP 工具；现有 `/agentow-a11y` 编排不会被静默替换。
+
+evidence-v1 校验器统一维护在本仓库的 `runtime/evidence-v1.mjs`。
+AgentOW 可以在原工具路径使用按提交固定、自动生成的副本，保留离线使用能力，
+而不是另维护一份实现。详见[调用方集成](integrations/agentow/README.md)。
 
 知识迁移目前采用**先复制、后统一切换**的方式：共享主题已放入本仓库，
-AgentOW 原有文件、引用和运行时保持不变。等完整集成就绪后，再统一接入并清理冗余。
+其余 AgentOW 原始引用和现有运行环境保留，后续迁移及冗余清理在相应兼容门禁通过后进行。
 通用静态审查知识与 `integrations/agentow/` 中保留的操作和项目专项内容分开；
 只有执行插件打包该目录，`a11y-knowledge` 不打包也不读取它。
-安装本仓库不会切换 AgentOW 的依赖，也不会更新正在运行的 worker。
+安装本仓库不会更新正在运行的 worker。
 
 未来完整工作流的集成仍由 AgentOW 负责源码，Windows 证据 provider 负责真实 AT。
 不能在 AgentOW 源码步骤中递归调用 `a11y-workflow`，也不能借用 AgentOW 的

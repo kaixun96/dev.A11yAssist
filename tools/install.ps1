@@ -2,14 +2,15 @@
 param(
     [ValidateSet('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','agent-operations','a11y-workflow','a11y-knowledge','all')]
     [string]$Plugin = 'a11y-workflow',
-    [switch]$Execute
+    [switch]$Execute,
+    [switch]$WithAgentOW
 )
 $ErrorActionPreference = 'Stop'
 $names = if ($Plugin -eq 'all') {
     @('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','agent-operations','a11y-workflow','a11y-knowledge')
 } else { @($Plugin) }
 $commands = ,@('plugin','marketplace','add','kaixun96/dev.A11yAssist')
-if ($Plugin -in @('all','a11y-workflow')) {
+if ($WithAgentOW) {
     $commands += ,@('plugin','marketplace','add','kaixun96/dev.AgentOW')
     $commands += ,@('plugin','install','agentow-copilot@agentOW')
 }

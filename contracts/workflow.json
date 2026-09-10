@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "modes": ["twin", "cli"],
   "stages": [
     {"id": "intake", "phase": "0-1", "plugin": "a11y-intake", "provider": "intake", "gates": ["claimOwned", "commentsReviewed", "attachmentsReviewed", "acceptanceDefined", "scenarioSealed"]},
     {"id": "before", "phase": "2", "plugin": "a11y-capture", "provider": "capture", "gates": ["claimOwned", "evaluatorOwned", "runtimeVerified", "realAssistiveTechnology", "scenarioMatched", "artifactsHashed", "validatorPass", "independentEvaluatorPass", "reproduced"]},
-    {"id": "source", "phase": "3-5", "plugin": "a11y-workflow", "provider": "agentow", "gates": ["claimOwned", "evaluatorOwned", "codespaceOwned", "freshnessVerifiedOnExecutionHost", "agentowA11yMode", "effectiveModelVerified", "targetedValidation", "commitSealed", "changedResourceLoaded"]},
-    {"id": "after", "phase": "6", "plugin": "a11y-capture", "provider": "capture", "gates": ["claimOwned", "evaluatorOwned", "codespaceOwned", "runtimeVerified", "realAssistiveTechnology", "scenarioMatched", "exactHeadMatched", "artifactsHashed"]},
+    {"id": "source", "phase": "3-5", "plugin": "a11y-workflow", "provider": "source", "gates": ["claimOwned", "evaluatorOwned", "worktreeOwned", "sourceExecutorVerified", "targetedValidation", "commitSealed", "changedResourceLoaded"]},
+    {"id": "after", "phase": "6", "plugin": "a11y-capture", "provider": "capture", "gates": ["claimOwned", "evaluatorOwned", "worktreeOwned", "runtimeVerified", "realAssistiveTechnology", "scenarioMatched", "exactHeadMatched", "artifactsHashed"]},
     {"id": "validate", "phase": "7", "plugin": "a11y-validate", "provider": "validate", "gates": ["scenarioEquivalent", "exactHeadMatched", "validatorPass", "independentEvaluatorPass"]},
-    {"id": "review", "phase": "8", "plugin": "a11y-workflow", "provider": "agentow", "gates": ["exactHeadMatched", "adversarialReviewPass", "noCriticalOrImportantFindings"]},
+    {"id": "review", "phase": "8", "plugin": "a11y-workflow", "provider": "review", "gates": ["exactHeadMatched", "adversarialReviewPass", "noCriticalOrImportantFindings"]},
     {"id": "publish", "phase": "9", "plugin": "a11y-publish", "provider": "publish", "gates": ["exactHeadMatched", "reviewedHeadPushed", "draftPrVerified", "descriptionComplete", "liveMediaVerified", "noPrComments"]},
-    {"id": "cleanup", "phase": "10", "plugin": "agent-operations", "provider": "operations", "gates": ["ownedProcessesStopped", "audioRestored", "debugPortsClosed", "artifactsPreserved", "codespaceReleased", "evaluatorReleased", "claimReleased", "insightsWritten", "ownerSummaryDelivered"]}
+    {"id": "cleanup", "phase": "10", "plugin": "agent-operations", "provider": "operations", "gates": ["ownedProcessesStopped", "audioRestored", "debugPortsClosed", "artifactsPreserved", "worktreeReleased", "evaluatorReleased", "claimReleased", "insightsWritten", "ownerSummaryDelivered"]}
   ],
   "terminalOutcomes": ["completed", "not-reproduced", "blocked", "inconclusive", "invalid-evidence", "abandoned"]
 }

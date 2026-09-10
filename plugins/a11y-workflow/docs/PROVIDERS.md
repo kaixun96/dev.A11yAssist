@@ -2,7 +2,8 @@
 
 ## What is executable today
 
-The v0.1 packages contain actual MCP tools, a shared persistent state machine,
+The packages contain actual MCP tools, independent capability operations, an
+optional persistent workflow state machine,
 stage gates, artifact hashing, version/owner fencing, bounded subprocess RPC,
 request reconciliation, progress assessment, packaging checks and tests.
 
@@ -17,6 +18,11 @@ Installing the full workflow is not yet proof that a fresh user's environment
 can autonomously complete a real A11y Bug.
 
 ## Configuration
+
+Independent operations use `config/example.capability.json`: only owner,
+stateRoot and the needed provider mapping are required. The full workflow
+additionally requires its supported mode and host configuration. No global run
+or prior stage is required for a standalone invocation.
 
 Set the absolute environment variable `A11Y_ASSIST_CONFIG` before starting
 Copilot. Use `config/example.cli.json` or `config/example.twin.json` as a template
@@ -40,7 +46,7 @@ bounded diagnostics; core only reports the byte count, not raw diagnostic data.
 ```json
 {
   "schemaVersion": 1,
-  "version": "0.1.0",
+  "version": "0.4.0",
   "operation": "execute",
   "requestId": "<stable-uuid>",
   "stage": "before",
@@ -61,6 +67,12 @@ bounded diagnostics; core only reports the byte count, not raw diagnostic data.
 Long-lived work must live in a provider-owned detached executor with durable
 progress and a completion callback, not in the short-lived RPC process.
 
+Independent requests include `invocation: "capability"`. Their `run` object is
+only the transport identity/context envelope: `runId` is the caller's operation
+ID, `subject` is an optional caller reference, and `receipts` is empty. It is
+not a workflow journal and has no prior-stage requirement. Write artifacts
+under the supplied private `stateDirectory`. Do not look up `runs/<runId>`.
+
 ## Response
 
 Echo `schemaVersion`, `requestId`, `runId`, `owner` at top level.
@@ -69,9 +81,10 @@ Echo `schemaVersion`, `requestId`, `runId`, `owner` at top level.
   `completionCallback`. These must identify real deployed monitoring, not prose
   saying that monitoring is planned.
 - `state: finished` requires a `receipt` with the same identity, `stage`, outcome
-  and run-relative artifacts with SHA-256. A pass must include every stage gate
-  as an explicit boolean true and the scenario/HEAD/evaluator binding described
-  in `workflow.json` and `WORKFLOW.md`.
+  and directory-relative artifacts with SHA-256. A pass must include its local
+  capability gates from `contracts/capabilities.json` and echo the supplied
+  subject/scenario/evaluator/HEAD/baseline bindings. Workflow requests additionally
+  require their stage gates from `workflow.json` and `WORKFLOW.md`.
 
 The provider is the trusted evidence authority; the model cannot submit a
 fabricated receipt directly to advance the runtime. Boolean gates are not
@@ -81,31 +94,37 @@ The core checks the shape, provenance identity, hashes and phase consistency;
 provider qualification supplies the underlying behavior correctness.
 
 Nonpass receipt outcomes require a reason and artifacts; `not-reproduced`,
-`blocked`, `inconclusive`, `invalid-evidence`, `abandoned` all lead to cleanup.
-`changes-requested` is allowed only from review/validate and reopens source.
+`blocked`, `inconclusive`, `invalid-evidence`, `abandoned` are returned to the
+independent caller without choosing another operation. In the optional full
+workflow they lead to cleanup. `changes-requested` is allowed only from
+review/validate; the full workflow uses it to reopen source.
 
-For source pass provide `/agentow-a11y`, `model: gpt-6-astra`, exact 40-character
-`head`, same `scenarioHash/evaluator`, and `prCreated: false`.
-For AFTER pass provide the accepted BEFORE receipt SHA from run.receipts.
+For source pass provide exact 40-character `head`, matching scenario/evaluator
+and `prCreated: false`. Only the explicit `agentow-odsp` profile also requires
+`/agentow-a11y`, `model: gpt-6-astra` and its Codespace/freshness gates.
+For full-workflow AFTER provide the accepted BEFORE receipt SHA from run.receipts.
+For independent AFTER echo context.beforeReceiptSha256 when supplied.
 Publish pass requires `pr: { url: "https://...", isDraft: true }`.
 
 ## Provider responsibility mapping
 
 | Provider | Existing capability to wrap/qualify |
 |---|---|
-| intake | ADO query/item/comment/attachment intake plus canonical Bug claim |
+| intake | Authorized item/comment/attachment intake; claim only when the caller's deployment policy requires it |
 | resources | authoritative evaluator/Codespace/recovery registries; status exposes public fields only |
 | capture | validated worker requests, deployed hash checks, real Windows AT and evidence artifacts |
 | validate | deterministic validator and independent accessibility evaluator |
 | agentow | Copilot AgentOW in the leased Codespace, freshness and exact-HEAD handoff |
+| source / review | Generic caller-selected source implementation and independent code review |
 | publish | actual ADO Draft PR operations, evidence upload and live media checks; no comments |
 | operations | cleanup/release, insights, original-entrypoint notification and continuation watchers |
 
-Resource mutations belong inside the stage provider that owns their timing
+In the full workflow, resource mutations belong inside the stage provider that owns their timing
 (intake claims, BEFORE evaluator acquisition, source Codespace acquisition,
 cleanup token-bound release). The standalone resources plugin exposes status
-and ownership diagnosis in v0.1; it does not expose a generic early-acquire
-button that would bypass phase ordering.
+and ownership diagnosis; it does not acquire or release resources. Independent
+cleanup follows only the caller's explicitly authorized owned scope. No capability
+automatically takes over the caller's workflow or changes another operation.
 
 ## Entry adapters
 

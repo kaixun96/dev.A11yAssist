@@ -2,8 +2,10 @@
 
 ## Current delivery
 
-v0.1 provides the modular marketplace, independently packaged skills/MCP tools,
-shared gates and provider contracts. Existing actual A11y automation remains
+v0.4 provides independent capability operations, a provider-free evidence-v1
+structural checker and an optional workflow that calls the same capabilities.
+Generic source/review connections do not require AgentOW; the explicit
+`agentow-odsp` profile preserves existing deployment policy. Existing actual A11y automation remains
 the production authority until each provider passes its qualification.
 
 No installed production plugin is replaced, no existing session is rebound,
@@ -25,16 +27,18 @@ creation or installation.
 4. **Validator and publication providers**: prove same verdict/hash equivalence,
    exact-HEAD invalidation, independent evaluator separation, actual Draft
    status and live media behavior.
-5. **AgentOW bridge**: reuse existing `/agentow-a11y` source implementation and
-   actual-host freshness gate. Reject source/PR calls before accepted BEFORE.
+5. **AgentOW consumer**: keep its orchestration, consume shared capabilities
+   through MCP or pinned generated runtime exports, and retain the actual-host
+   freshness gate. Do not force its entrypoint through another full workflow.
 6. **Entry adapters**: execute the same fixture serially through Twin+multi,
    CLI+single and CLI+multi. Inject restart, timeout, pending result, duplicate
    delivery, busy resource and configuration/version mismatch.
-7. **Cutover**: change old commands to thin wrappers; new runs use the qualified
+7. **Cutover**: change duplicate capability implementations to thin consumers; new runs use the qualified
    provider set. Keep existing runs on their recorded versions until a tested
    state migration preserves run/owner/request/evidence identity.
-8. **Authority move**: only after equivalent behavior is proven, move the single
-   canonical workflow to this repo and leave a pointer in the old knowledge base.
+8. **Capability authority move**: only after equivalent behavior is proven,
+   maintain one implementation per shared capability here. Different caller
+   workflows may coexist; the complete A11y Assist workflow remains optional.
 
 ## Required qualification matrix
 
@@ -48,7 +52,8 @@ creation or installation.
 | review changes | full source/AFTER/validate/review loop |
 | partial or external artifact | hash/path failure, no phase advancement |
 | stale runtime or model mismatch | freshness failure, no silent fallback |
-| caller invokes a small plugin early | same executable phase gate rejects |
+| caller invokes a small plugin independently | local inputs/permission/evidence gates apply; no unrelated prior-stage requirement |
+| caller invokes a full-workflow stage early | the workflow's phase gate rejects |
 | cleanup/notification failure | retained state, not completed |
 | interrupted storage mutation | preserve lock/journal; no automatic ownership expiry |
 | original worker only replies | no false claim of execution recovery |

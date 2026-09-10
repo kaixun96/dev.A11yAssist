@@ -63,14 +63,14 @@ for (const [name, definition] of Object.entries(plugins)) {
       await emit(`${base}/${dir}/${file}`, await text(join(root, dir, file)));
     }
   }
-  for (const file of ['WORKFLOW.md', 'PROVIDERS.md']) {
+  for (const file of ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md']) {
     await emit(`${base}/docs/${file}`, await text(join(root, 'docs', file)));
   }
   const topics = knowledge.consumers[name];
   const profileTopics = profile.consumers[name];
   assert(topics?.length && topics.every(file => genericSet.files.includes(file)), `Missing knowledge routing: ${name}`);
   assert(profileTopics?.length && profileTopics.every(file => integrationSet.files.includes(file)), `Missing integration routing: ${name}`);
-  const routing = `Read \`\${CLAUDE_PLUGIN_ROOT}/knowledge/README.md\` for static guidance: ${topics.map(file => `\`knowledge/${file}\``).join(', ')}.\nFor this execution integration, also read \`\${CLAUDE_PLUGIN_ROOT}/${profileDirectory}/README.md\` and the applicable complete topics: ${profileTopics.map(file => `\`${profileDirectory}/${file}\``).join(', ')}. Static guidance does not replace authorized execution; integration references never override this workflow's stricter gates.\n\n`;
+  const routing = `Read \`\${CLAUDE_PLUGIN_ROOT}/docs/CAPABILITIES.md\`. The caller owns composition; a small capability does not require the full workflow.\nFor static guidance use \`knowledge/README.md\` and applicable topics: ${topics.map(file => `\`knowledge/${file}\``).join(', ')}.\nOnly when the caller selects the applicable execution integration, consult \`${profileDirectory}/README.md\` and its topic routing. Do not load that profile as a generic prerequisite.\n\n`;
   const sourceSkill = await text(join(root, 'skills', name, 'SKILL.md'));
   assert.match(sourceSkill, /\n---\n\n/, `Missing skill frontmatter boundary: ${name}`);
   const skill = sourceSkill.replace(/\n---\n\n/, `\n---\n\n${routing}`);
@@ -79,7 +79,7 @@ for (const [name, definition] of Object.entries(plugins)) {
   await bundleKnowledge(base, genericSet);
   await bundleKnowledge(base, integrationSet);
   await emit(`${base}/integrations/agentow/README.md`, await text(join(root, 'integrations/agentow/README.md')));
-  await emit(`${base}/AGENTS.md`, `# ${name}\n\nRead knowledge/README.md, ${profileDirectory}/README.md, docs/WORKFLOW.md and docs/PROVIDERS.md before execution.\nOnly configured trusted providers may operate machines. Missing providers fail closed.\n${definition.description}\n`);
+  await emit(`${base}/AGENTS.md`, `# ${name}\n\nRead docs/CAPABILITIES.md and knowledge/README.md.\n${name === 'a11y-workflow' ? 'This optional composition also follows docs/WORKFLOW.md.' : 'The caller owns sequencing. Use independent capability operations; do not create a full workflow run unless explicitly requested.'}\nUse only authorized configured tool connections for external effects; missing capability fails explicitly.\n${definition.description}\n`);
   entries.push({ name, source: `./${base}`, description: definition.description, version: pkg.version,
     author: { name: 'kaixun96' } });
 }
@@ -104,6 +104,10 @@ for (const dir of ['runtime', 'contracts', 'adapters']) {
   for (const file of await readdir(join(root, dir))) {
     hashes[`${dir}/${file}`] = createHash('sha256').update(await text(join(root, dir, file))).digest('hex');
   }
+  await emit('integrations/agentow/exports.json', json({
+    schemaVersion: 1, repository: 'kaixun96/dev.A11yAssist', version: pkg.version,
+    files: [{ source: 'runtime/evidence-v1.mjs', target: 'tools/validate-a11y-evidence.mjs', sha256: hashes['runtime/evidence-v1.mjs'] }]
+  }));
 }
 await emit('release.json', json({
   schemaVersion: 1, version: pkg.version, marketplace: 'a11y-assist', plugins: entries.map(entry => entry.name),
@@ -112,7 +116,8 @@ await emit('release.json', json({
     sha256: createHash('sha256').update(integrationSet.manifest).digest('hex'),
     plugins: Object.keys(plugins) }],
   externalDependencies: [{ name: 'agentow-copilot', marketplace: 'agentOW', repository: 'kaixun96/dev.AgentOW',
-    entrypoint: '/agentow-a11y', note: 'Verify freshness on the leased execution host; stricter BEFORE/PR gates apply.' }],
+    optional: true, profile: 'agentow-odsp', entrypoint: '/agentow-a11y',
+    note: 'Only the explicitly selected integration requires AgentOW; generic source/review connections do not.' }],
   hashes
 }));
 await pruneGenerated(join(root, 'plugins'), generatedFiles, check);

@@ -10,6 +10,35 @@ It is not another plugin or an automatic integration. Execution packages include
 these references to retain their existing instructions. The independently
 installable `a11y-knowledge` package excludes this entire directory.
 
-AgentOW's original files and behavior remain untouched. Final dependency
-switching and redundant-authoring cleanup are deferred until the complete
-integration is ready.
+AgentOW's orchestration and original document bodies are retained. The shared
+validator has the explicit runtime-consumer path below; remaining dependency
+switching and redundant-authoring cleanup wait for their compatibility gates.
+
+## Shared runtime consumer
+
+`runtime/evidence-v1.mjs` in the repository root is the single authoring source
+for the existing version-1 deterministic evidence validator. Build publishes its
+path/hash in `exports.json`. This is distinct from the retained document snapshot.
+
+AgentOW's consumer update command is:
+
+```powershell
+node ts/scripts/sync-a11y-capabilities.mjs --update <reviewed-dev.A11yAssist-commit>
+```
+
+It verifies the export manifest and source hash before generating the root and
+installed-plugin tool copies. Its lock pins the exact source commit; validation
+rejects mirror edits. AgentOW keeps its workflow, old tool path, CLI and module
+exports. No runtime network fetch or second manual implementation is needed.
+
+## Calling plugins in AgentOW's own workflow
+
+Install only the desired capability into the executing Copilot session and
+restart at an authorized safe point. AgentOW may then call its advertised MCP
+tools, for example `a11y_validate_evidence` for provided evidence files, or
+`a11y_capture_invoke` through the caller's authorized capture connection.
+Do not invent a peer-plugin path or assume a Codespace can control a DevBox
+merely because a tool was installed.
+
+The full `a11y-workflow` is optional. AgentOW does not have to delegate its
+orchestration to it; both callers can reuse the same capability implementation.

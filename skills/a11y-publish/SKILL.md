@@ -1,24 +1,22 @@
 ---
 name: a11y-publish
-description: Publish reviewed exact-HEAD accessibility evidence to a verified Draft PR with live media checks and no PR comments.
+description: Publish caller-approved exact-HEAD accessibility evidence to a Draft PR without orchestrating upstream work.
 ---
 
-Read `docs/WORKFLOW.md` and `docs/PROVIDERS.md`. Call `a11y_publish_doctor` and
-`a11y_publish_status`; execute only `publish` when the actual current HEAD has
-passed AFTER, both evaluators and adversarial review.
+Read `docs/CAPABILITIES.md`. Use `a11y_publish_invoke` with action `publish`,
+a stable operationId, context.head, and the target PR/repository, description
+and approved evidence references required by the publication connection.
 
-The trusted publish provider coordinates with AgentOW: never create competing
-PR writers. Supply acceptance, root cause/change, killswitch/rollout context,
-validation, BEFORE/AFTER evidence, exact HEAD and honest limitations.
+The caller owns review/approval policy and sequencing. Do not require a run
+journal or completed stages from this repository, create another writer, modify
+source, run capture, or manufacture missing approvals. The connection must verify
+actual permission and any deployment-specific publication policy.
 
-Use reviewer-accessible approved storage. Do not publish private local paths,
-personal notes, credentials, transient broken media or unredacted desktop data.
-Re-read the current AgentOW evidence-capture guide before formatting attachments.
+Publish only truthful reviewer-safe evidence bound to the supplied HEAD.
+Verify the resulting PR is Draft and media is accessible and matches accepted
+artifacts. Never expose credentials, private profiles or unrelated data, post
+PR comments, or silently promote the PR to Ready.
 
-Verify the actual PR is Draft, images load, required video/audio plays and seeks,
-and live attachment hashes match accepted evidence. Preserve evidence ordering.
-Never post PR comments or automatically mark Ready for review.
-
-There is NO unverified Draft PR fallback in this workflow, even if a downstream
-AgentOW version offers it. On missing gates, fail closed. Reconcile pending
-publication rather than blindly retrying a POST and creating a second PR.
+Return the actual PR and artifact receipt; do not declare the caller's task
+complete. On unknown delivery, retain the same operationId and use
+`a11y_publish_operation_reconcile`, never create a second PR by blind retry.

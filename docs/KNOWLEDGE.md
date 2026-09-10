@@ -9,9 +9,10 @@ including operational contracts and project-specific rules. Source provenance
 and original snapshot hashes live in that profile's index, not in generic
 user-facing knowledge. Domain knowledge is distinct from workflow authorization.
 
-The current stage is **copy first, retain compatibility**. AgentOW's original
-documents, references, skills and runtime are unchanged. Do not remove redundant
-files or switch AgentOW's dependency as part of this stage.
+The document migration remains **copy first, retain compatibility**. AgentOW's
+original documents and orchestration are retained. The shared evidence validator
+has a separate explicit, pinned runtime-consumer path; that does not authorize
+deleting other original documents or switching installed workers.
 
 ## Distribution
 
@@ -29,9 +30,10 @@ files or switch AgentOW's dependency as part of this stage.
 - Build prunes retired files only from the generated `plugins/` tree; check mode
   rejects unexpected files. Package isolation tests scan the entire knowledge
   package, not only its index, to prevent stale instructions leaking back in.
-- AgentOW retains its existing documentation, skill, evaluator, validator and host
-  scripts. It continues reading its original files. This release does not introduce
-  a knowledge-package dependency or require existing AgentOW installations to change.
+- AgentOW retains its documentation, skill, evaluator and host procedures.
+  The evidence-validator implementation is exported from this repository for a
+  pinned generated copy at its original tool path. There is no runtime network
+  fetch or knowledge-package dependency.
 
 ## Later coordinated cutover (not implemented)
 

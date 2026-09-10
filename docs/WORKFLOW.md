@@ -1,6 +1,8 @@
 # Evidence-first workflow contract
 
-Version: 0.1.0. This is the portable plugin contract. During migration the
+Version: 0.4.0. This is the OPTIONAL full-workflow contract, not a prerequisite
+for small capabilities. See `CAPABILITIES.md` for caller-owned composition.
+During migration the
 existing deployment's canonical execution contract remains authoritative;
 do not silently change running tasks to this runtime or create a second claim.
 
@@ -21,18 +23,19 @@ The executable gate list is `contracts/workflow.json`.
 |---|---|
 | intake (0-1) | Atomically claim the exact Bug; inspect complete comments then attachments; define acceptance and seal scenario. No branch, evaluator or Codespace acquired early. |
 | before (2) | Validated request, healthy exclusive evaluator, real required AT, stable canonical fixture and preserved evidence. Deterministic validation plus independent evaluator must establish reproduced+PASS. |
-| source (3-5) | Exclusive Codespace, fresh AgentOW on the actual execution host, `/agentow-a11y`, verified GPT-6 Astra. Minimal implementation, targeted validation, exact HEAD, externally loaded affected resource. No PR yet. |
+| source (3-5) | Caller-selected source connection, owned worktree and verified executor. Minimal implementation, targeted validation, exact HEAD and loaded affected resource. No PR yet. The explicit `agentow-odsp` profile additionally enforces its Codespace, AgentOW entrypoint, model and freshness contract. |
 | after (6) | Same evaluator/scenario/viewport/fixture/AT; fresh real evidence bound to actual HEAD and accepted BEFORE receipt hash. |
 | validate (7) | Independent deterministic integrity and accessibility behavior decisions. Neither substitutes for the other. |
 | review (8) | Actual-HEAD adversarial review; important findings reopen source, invalidate old AFTER and force full AFTER/validate/review again. |
 | publish (9) | Push only reviewed HEAD, actual Draft PR, self-contained reviewer-safe description, live media playback/hash verification. No PR comments. |
-| cleanup (10) | Stop owned AT/browser/recorders, restore audio, close debug ports, preserve artifacts, release Codespace then evaluator then Bug with tokens, write insights and deliver owner summary. |
+| cleanup (10) | Stop owned AT/browser/recorders, restore audio, close debug ports, preserve artifacts, release source worktree then evaluator then work-item claim with the applicable ownership proof, write insights and deliver owner summary. The AgentOW profile also requires token-bound Codespace release. |
 
 `changes-requested` from review or validation returns to source. Other non-pass
 outcomes enter needs-cleanup; none can proceed to source or publication.
 There is no unverified-PR fallback even if a downstream AgentOW version supports
-one. Standalone plugins enforce the same order against the shared run, not a
-parallel reduced workflow.
+one. The workflow APIs enforce this order against the shared run. Independent
+capability APIs enforce their own local contracts without this phase ordering;
+callers using the full workflow must not bypass its policy with an unrelated operation.
 
 ## Ownership and recovery
 
@@ -70,12 +73,12 @@ not proof of task progress or execution recovery.
 
 ## Compatibility and rollout
 
-Existing runs are NOT migrated automatically in v0.1. Existing script providers
+Existing runs are NOT migrated automatically. Existing script providers
 must be qualified against contract tests before production use. Keep old command
 entrypoints as wrappers during rollout, never execute both implementations on
 one Bug to compare side effects.
 
-At each AgentOW invocation retain the current execution-host freshness gate:
+When the AgentOW integration is explicitly selected, retain its execution-host freshness gate:
 fetch upstream, verify marketplace and installed plugin commit/version, restart
 if required, then re-read installed state. Record effective versions in receipts.
 Within evidence stages record the actual version and hashes. Any upgrade that

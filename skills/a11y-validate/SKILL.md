@@ -1,23 +1,24 @@
 ---
 name: a11y-validate
-description: Validate evidence integrity and obtain an independent accessibility verdict without confusing either with the other.
+description: Validate caller-supplied accessibility evidence independently, without requiring this repository's full workflow or fixing product code.
 ---
 
-Read the packaged workflow/provider contracts. Call `a11y_validate_doctor`,
-`a11y_validate_status`, then execute the allowed `validate` stage.
+Read `docs/CAPABILITIES.md`. For evidence-v1 structural checking, use
+`a11y_validate_evidence` with request/result files and the required baseline/HEAD
+inputs for verify. It needs no provider configuration, Bug claim or run journal.
+Its result says whether the artifact contract is valid, not whether an
+independent accessibility evaluator has accepted the observed behavior.
 
-The provider must independently perform:
+For an independent behavior evaluation, use `a11y_validate_invoke` with action
+`validate`, a stable operationId, context.scenarioHash and the actual evidence
+input expected by the configured evaluation connection. Include context.head
+and context.beforeReceiptSha256 when those are part of the requested comparison.
 
-- deterministic identity/hash, scenario-equivalence, actual resource/HEAD and
-  capture-completeness validation;
-- accessibility evaluation against the Bug's acceptance contract using actual
-  evidence, not the implementer's prose.
+Do not require earlier stages in this repository. The caller owns sequencing.
+Reject missing, mismatched or ambiguous evidence; never manufacture a PASS from
+source reasoning, file existence or a successful process exit.
 
-Both must pass. A screenshot, timestamp, successful shell exit or running
-process is not sufficient. Missing/ambiguous media is inconclusive or invalid,
-not guessed PASS. Do not fix source or control AT from this evaluation step.
-
-When actual findings require source changes, return the documented
-changes-requested receipt, reopening the source/AFTER/validate/review loop.
-Pending analysis must be reconciled using `a11y_validate_reconcile`; never
-advance the workflow by manually editing run.json or inventing a receipt.
+Return the verdict, supporting artifacts, limitations and any requested changes.
+Do not edit source, operate AT, publish a PR, or restart the caller's workflow.
+For pending evaluations reconcile the same operationId through
+`a11y_validate_operation_reconcile`.

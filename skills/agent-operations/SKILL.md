@@ -1,25 +1,22 @@
 ---
 name: agent-operations
-description: Inspect durable progress, reconcile pending work and perform owned cleanup without mistaking a reply for execution recovery.
+description: Perform explicitly scoped owned cleanup for the caller, with durable operation identity and reconciliation.
 ---
 
-Read `docs/WORKFLOW.md` and `docs/PROVIDERS.md`. Call `agent_operations_doctor`,
-`agent_operations_status` and `agent_operations_progress`.
+Read `docs/CAPABILITIES.md`. Use `agent_operations_invoke` with action `cleanup`,
+a stable operationId, context.subject and the owned resource/process scope
+required by the cleanup connection. No full workflow journal is required.
 
-For pending work use `agent_operations_reconcile` on the original request ID.
-A new message, accepted trigger or busy process is not proof that work advanced.
-Require an actual new phase/artifact/action or a concrete monitored wait with a
-completion callback. An idle nonpaused task may continue its next allowed stage;
-never duplicate active work or resume an explicitly paused/safety-denied task.
+Clean only the resources explicitly included and authorized for this operation.
+Preserve evidence and restore owned temporary settings where applicable.
+Do not infer permission to release all resources associated with a person or
+machine. Shared resource release still requires the original ownership token.
+Never delete another session's history or restart shared workers.
 
-Use `agent_operations_execute` for cleanup only when the shared state requires
-it. Stop only owned browsers/AT/recorders/servers, restore audio, preserve evidence,
-release Codespace then evaluator then Bug with the provider's retained tokens,
-write end-to-end Run Insights, and deliver a final summary through the original
-entrypoint. If abandoned, record the reason using `agent_operations_abandon`;
-it still requires cleanup and does not release resources itself.
+Return the actual cleanup receipt and unresolved items. Do not decide that the
+caller's full task is complete or start another task. Use
+`agent_operations_operation_status` / `_operation_reconcile` for this operation.
 
-Do not copy a host-specific session-history mutator to other runtimes. v0.1
-exposes run progress/reconciliation/cleanup contracts, not a universal Copilot
-history compressor or a new autonomous scheduler. Retain existing qualified
-per-host monitoring until explicitly migrated.
+The legacy progress/abandon/reconcile tools concern the optional full workflow
+only. A message, busy process or accepted trigger is not proof of work completed.
+Explicit pauses and safety refusals are not permission for an execution retry.

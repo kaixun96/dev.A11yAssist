@@ -4,6 +4,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { invokeCapability, providerFor } from './capability.mjs';
+import { validateProfileReceipt } from './profiles.mjs';
 
 const contractDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../contracts');
 export const workflow = JSON.parse(await readFile(join(contractDirectory, 'workflow.json'), 'utf8'));
@@ -18,24 +20,27 @@ function demand(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-export async function readConfig(path = process.env.A11Y_ASSIST_CONFIG) {
+export async function readConfig(path = process.env.A11Y_ASSIST_CONFIG, { fullWorkflow = true } = {}) {
   demand(path && isAbsolute(path), 'A11Y_ASSIST_CONFIG must name an absolute private configuration file');
   const config = JSON.parse(await readFile(path, 'utf8'));
-  demand(config.schemaVersion === 1 && workflow.modes.includes(config.mode), 'Unsupported configuration/mode');
+  demand(config.schemaVersion === 1, 'Unsupported configuration');
+  demand(config.workflowProfile === undefined || ['generic', 'agentow-odsp'].includes(config.workflowProfile),
+    'Unsupported workflow profile');
+  if (fullWorkflow) demand(workflow.modes.includes(config.mode), 'Unsupported configuration/mode');
   demand(typeof config.owner === 'string' && idPattern.test(config.owner), 'Configuration requires an auditable owner namespace');
   demand(typeof config.stateRoot === 'string' && isAbsolute(config.stateRoot), 'stateRoot must be absolute shared storage');
-  demand(Array.isArray(config.devboxes) && config.devboxes.length > 0 &&
+  if (fullWorkflow) demand(Array.isArray(config.devboxes) && config.devboxes.length > 0 &&
     config.devboxes.every(id => typeof id === 'string' && idPattern.test(id)) &&
     new Set(config.devboxes).size === config.devboxes.length, 'Provide unique Windows DevBox identifiers');
-  demand(config.mode !== 'twin' || config.devboxes.length >= 2, 'Twin mode requires multiple DevBoxes');
+  if (fullWorkflow) demand(config.mode !== 'twin' || config.devboxes.length >= 2, 'Twin mode requires multiple DevBoxes');
   demand(config.providers && typeof config.providers === 'object', 'Explicit trusted providers are required');
-  if (config.mode === 'twin') {
+  if (fullWorkflow && config.mode === 'twin') {
     demand(typeof config.twin?.conversationId === 'string' && config.twin.conversationId &&
       typeof config.twin?.runtimePath === 'string' && isAbsolute(config.twin.runtimePath),
     'Twin mode requires an exact conversation binding and local runtime metadata path');
   }
   for (const [name, provider] of Object.entries(config.providers)) {
-    demand(['intake', 'capture', 'agentow', 'validate', 'publish', 'operations', 'resources'].includes(name), 'Unknown provider');
+    demand(['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources'].includes(name), 'Unknown provider');
     demand(provider && typeof provider.executable === 'string' && isAbsolute(provider.executable) &&
       Array.isArray(provider.args) && provider.args.every(a => typeof a === 'string') &&
       shaPattern.test(provider.executableSha256 ?? ''), `Invalid pinned provider: ${name}`);
@@ -53,7 +58,7 @@ export async function fileHash(path) {
 
 export async function doctor(config) {
   const capabilities = {};
-  for (const name of ['intake', 'capture', 'agentow', 'validate', 'publish', 'operations', 'resources']) {
+  for (const name of ['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources']) {
     const provider = config.providers[name];
     if (!provider) { capabilities[name] = 'not-configured'; continue; }
     try {
@@ -64,7 +69,7 @@ export async function doctor(config) {
       capabilities[name] = 'executable-missing';
     }
   }
-  return { version: VERSION, mode: config.mode, devboxCount: config.devboxes.length,
+  return { version: VERSION, mode: config.mode, devboxCount: config.devboxes?.length ?? 0,
     capabilities, liveReady: false,
     note: 'Configuration is not runtime/AT/auth readiness. Execute provider preflight under the correct resource owner.' };
 }
@@ -74,7 +79,7 @@ function pathFor(config, runId) {
   return join(config.stateRoot, 'runs', runId);
 }
 
-async function atomicJson(path, value) {
+export async function atomicJson(path, value) {
   const temp = `${path}.${randomUUID()}.tmp`;
   const file = await open(temp, 'wx');
   try { await file.writeFile(JSON.stringify(value, null, 2)); await file.sync(); }
@@ -84,8 +89,11 @@ async function atomicJson(path, value) {
 
 async function exclusive(config, runId, operation) {
   const dir = pathFor(config, runId);
+  return withDirectoryLock(dir, () => operation(dir));
+}
+export async function withDirectoryLock(dir, operation) {
   const lock = await open(join(dir, 'mutation.lock'), 'wx');
-  try { return await operation(dir); }
+  try { return await operation(); }
   finally {
     await lock.close();
     const { unlink } = await import('node:fs/promises');
@@ -98,11 +106,12 @@ export async function loadRun(config, runId) {
   demand(state.owner === config.owner && state.version === VERSION && state.schemaVersion === 1,
     'Foreign owner or incompatible run version; do not mutate it');
   demand(state.mode === config.mode, 'Run mode changed; explicit migration required');
+  demand(state.workflowProfile === (config.workflowProfile ?? 'generic'), 'Run workflow profile changed');
   return state;
 }
 
 export function publicRun(state) {
-  return { runId: state.runId, bug: state.bug, mode: state.mode, owner: state.owner,
+  return { runId: state.runId, bug: state.bug, subject: state.bug, mode: state.mode, owner: state.owner,
     status: state.status, nextStage: state.nextStage, revision: state.revision,
     scenarioHash: state.scenarioHash, evaluator: state.evaluator, head: state.head,
     pending: state.pending && { requestId: state.pending.requestId, stage: state.pending.stage,
@@ -112,12 +121,12 @@ export function publicRun(state) {
 }
 
 export async function createRun(config, bug) {
-  demand(typeof bug === 'string' && /^\d+$/.test(bug) && bug !== '0', 'A numeric Bug ID is required');
-  const runId = `bug-${bug}-${randomUUID()}`;
+  demand(typeof bug === 'string' && bug.trim().length > 0 && bug.length <= 2048, 'A non-empty work item reference is required');
+  const runId = `run-${randomUUID()}`;
   const directory = pathFor(config, runId);
   await mkdir(directory, { recursive: true });
   const state = { schemaVersion: 1, version: VERSION, runId, bug, owner: config.owner,
-    mode: config.mode, status: 'ready', nextStage: 'intake', revision: 0,
+    mode: config.mode, workflowProfile: config.workflowProfile ?? 'generic', status: 'ready', nextStage: 'intake', revision: 0,
     scenarioHash: null, evaluator: null, head: null, receipts: [], pending: null,
     outcome: null, updatedAt: new Date().toISOString() };
   await atomicJson(join(directory, 'run.json'), state);
@@ -191,6 +200,7 @@ export function validateReceipt(state, receipt) {
     return;
   }
   for (const gate of stage.gates) demand(receipt.gates?.[gate] === true, `Missing gate: ${gate}`);
+  validateProfileReceipt(state.workflowProfile, receipt);
   if (stage.id === 'intake') demand(shaPattern.test(receipt.scenarioHash ?? ''), 'Intake must seal canonical scenario');
   if (['before', 'source', 'after', 'validate', 'review', 'publish'].includes(stage.id)) {
     demand(receipt.scenarioHash === state.scenarioHash, 'Canonical scenario changed');
@@ -201,8 +211,6 @@ export function validateReceipt(state, receipt) {
     demand(receipt.evaluator === state.evaluator, 'Evaluator affinity changed');
   }
   if (stage.id === 'source') {
-    demand(receipt.entrypoint === '/agentow-a11y' && receipt.model === 'gpt-6-astra',
-      'AgentOW must use the A11y entrypoint and verified effective model');
     demand(commitPattern.test(receipt.head ?? ''), 'Exact source HEAD required');
     demand(receipt.prCreated === false, 'Source phase must explicitly prove no premature PR');
   }
@@ -219,6 +227,9 @@ export function validateReceipt(state, receipt) {
 
 async function verifyArtifacts(config, runId, receipt) {
   const base = pathFor(config, runId);
+  return verifyArtifactFiles(base, receipt);
+}
+export async function verifyArtifactFiles(base, receipt) {
   for (const artifact of receipt.artifacts) {
     demand(typeof artifact.path === 'string' && !isAbsolute(artifact.path) && shaPattern.test(artifact.sha256 ?? ''),
       'Artifact must be a run-relative path and SHA-256');
@@ -300,16 +311,17 @@ export async function executeStage(config, plugin, runId, stage, input = {}) {
     const state = await loadRun(config, runId);
     demand(!state.pending, 'An operation is pending; reconcile it instead of resubmitting');
     demand(state.status !== 'terminal' && state.nextStage === stage, 'Phase ordering gate rejected');
-    const definition = workflow.stages.find(s => s.id === stage);
-    demand(config.providers[definition.provider], `Missing ${definition.provider} provider; stage not started`);
-    state.pending = { requestId: randomUUID(), stage, provider: definition.provider,
+    const provider = providerFor(config, stage);
+    demand(config.providers[provider], `Missing ${provider} provider; stage not started`);
+    state.pending = { requestId: randomUUID(), stage, provider,
+      providerBinding: hash(JSON.stringify(config.providers[provider])),
       state: 'submitted-unknown', startedAt: new Date().toISOString() };
     state.updatedAt = state.pending.startedAt;
     await atomicJson(join(dir, 'run.json'), state);
     const request = { schemaVersion: 1, version: VERSION, operation: 'execute',
       requestId: state.pending.requestId, stage, run: publicRun(state),
       stateDirectory: dir, input };
-    const response = await callProvider(config, definition.provider, request);
+    const response = await invokeCapability(config, stage, request, callProvider);
     return commitResponse(config, dir, state, response);
   });
 }
@@ -320,11 +332,15 @@ export async function reconcile(config, plugin, runId) {
     demand(state.pending, 'No pending operation');
     demand(plugin === 'agent-operations' || plugin === 'a11y-workflow' ||
       plugins[plugin]?.stages.includes(state.pending.stage), 'Plugin cannot reconcile this operation');
-    const response = await callProvider(config, state.pending.provider, {
+    demand(config.providers[state.pending.provider] &&
+      providerFor(config, state.pending.stage) === state.pending.provider &&
+      hash(JSON.stringify(config.providers[state.pending.provider])) === state.pending.providerBinding,
+    'Pending workflow provider changed; do not replay with a different executor');
+    const response = await invokeCapability(config, state.pending.stage, {
       schemaVersion: 1, version: VERSION, operation: 'reconcile',
       requestId: state.pending.requestId, stage: state.pending.stage,
       run: publicRun(state), stateDirectory: dir, input: {}
-    });
+    }, callProvider);
     return commitResponse(config, dir, state, response);
   });
 }

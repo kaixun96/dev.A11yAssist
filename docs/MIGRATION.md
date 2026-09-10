@@ -2,6 +2,14 @@
 
 ## Current delivery
 
+v0.9 adds explicitly scoped `recover-media` to the shared independent operation
+implementation and both small/full packages. Its exact assignment and limited
+recorder/default-endpoint contract cannot satisfy general or workflow cleanup.
+The deployment connection must use the original owned controller, single-flight
+guard and no-replay response journal. Contract/package qualification is not
+installation, real audio/AT acceptance, resource release or a production cutover.
+The envelope version and existing AgentOW native/evidence exports are unchanged.
+
 v0.7 adds explicit root-confined local evidence artifact hashing to the read-only
 checker. It reuses the existing receipt artifact verifier and a single-read
 evidence-v1 document loader; both small and complete packages call the same code.

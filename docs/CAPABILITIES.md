@@ -20,6 +20,7 @@ use. Its stricter phase ordering is local to that workflow.
 | a11y-validate | `a11y_validate_invoke`, action `validate` | `scenarioHash`; include HEAD/baseline binding when requested |
 | a11y-publish | `a11y_publish_invoke`, action `publish` | Exact `head` and caller-authorized publication input |
 | agent-operations | `agent_operations_invoke`, action `cleanup` | `subject` and explicitly owned cleanup scope |
+| agent-operations | `agent_operations_invoke`, action `recover-media` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original media recovery connection |
 | a11y-resources | `a11y_resources_resources` | Authorized resource connection; read-only status |
 | a11y-resources | `a11y_resources_invoke`, action `release-evaluator` | `subject`, `evaluator`, exact `input.nativeRunId`; explicitly authorized completed assignment |
 
@@ -48,6 +49,34 @@ an A11y Assist run:
 
 Send that input to `a11y_validate_invoke`. The caller supplies the real hashes
 and its connection's evidence input schema; the placeholders are not valid data.
+
+## Scoped media recovery (v0.9)
+
+`recover-media` uses the same independent operation journal as other effects.
+Supply only `input.nativeRunId` (32 lowercase hex characters), plus the subject
+and evaluator. Ownership credentials stay inside the trusted connection, never
+in tool inputs or receipts. Configure only the relevant `operations` connection;
+no unrelated intake/source/review stages or full workflow run are required.
+
+A successful receipt binds that exact assignment and scope
+`tracked-recorder-and-default-audio-endpoints`, with an observed recorder result
+(`terminated` or `observed-exited`) and verified default endpoints. It always
+sets `fullCleanupVerified: false`. Missing/historical state, an untracked recorder,
+or a legacy restoration acknowledgement cannot establish these two gates.
+They remain nonpass with a reason and durable diagnostic artifacts.
+
+This is not general `cleanup`, evidence acceptance, all-process/all-audio-role
+verification, artifact preservation or resource release. The optional full
+package exposes the same operation for composition; its workflow cleanup stage
+still requires every original, broader cleanup gate. Do not replace that stage's
+receipt with this narrow result or dispatch evidence capture as a cleanup transport.
+
+The connection must bind the actual execution host, original ownership and source,
+serialize against competing assignment mutations, and preserve a one-shot intent
+and original response. Timeout or a missing response permits read-only
+reconciliation only, not another execution. Existing run outcome is unchanged.
+Deployment-specific connections and real audio/AT qualification are separate from
+the generic package's contract tests.
 
 ## Read-only evidence checking
 

@@ -31,10 +31,10 @@ export function providerFor(config, action) {
 }
 export function validateCapabilityInput(action, input) {
   requireValue(input && typeof input === 'object' && !Array.isArray(input), 'Capability input must be an object');
-  if (action === 'release-evaluator') {
+  if (['release-evaluator', 'recover-media'].includes(action)) {
     requireValue(Object.keys(input).join(',') === 'nativeRunId' && typeof input.nativeRunId === 'string' &&
       /^[a-f0-9]{32}$/.test(input.nativeRunId),
-      'Completed evaluator release requires only input.nativeRunId (32 lowercase hex characters)');
+      `${action} requires only input.nativeRunId (32 lowercase hex characters)`);
   }
 }
 export function validateCapabilityReceipt(action, receipt, context, input = {}) {
@@ -42,6 +42,14 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
   requireValue(receipt && receipt.stage === action, 'Capability receipt operation mismatch');
   requireValue(outcomes.has(receipt.outcome), 'Unsupported capability outcome');
   requireValue(Array.isArray(receipt.artifacts) && receipt.artifacts.length > 0, 'Durable capability artifacts required');
+  if (action === 'recover-media') {
+    validateCapabilityInput(action, input);
+    requireValue(receipt.nativeRunId === input.nativeRunId &&
+      receipt.recoveryScope === 'tracked-recorder-and-default-audio-endpoints' &&
+      receipt.fullCleanupVerified === false && receipt.subject === context.subject &&
+      receipt.evaluator === context.evaluator,
+    'Media recovery receipt must match the exact original assignment and limited scope');
+  }
   if (receipt.outcome !== 'pass') {
     requireValue(typeof receipt.reason === 'string' && receipt.reason.trim(), 'Non-pass capability requires a reason');
     requireValue(receipt.outcome !== 'changes-requested' || ['validate', 'review'].includes(action),
@@ -49,6 +57,10 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
     return;
   }
   for (const gate of definition.gates) requireValue(receipt.gates?.[gate] === true, `Missing capability gate: ${gate}`);
+  if (action === 'recover-media') {
+    requireValue(['terminated', 'observed-exited'].includes(receipt.recorderResult),
+      'Media recovery requires an observed tracked-recorder exit, not missing or historical state');
+  }
   if (action === 'release-evaluator') {
     validateCapabilityInput(action, input);
     requireValue(receipt.nativeRunId === input.nativeRunId && receipt.releaseMode === 'completed-owned-run',
@@ -67,7 +79,7 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
   }
 }
 export async function invokeCapability(config, action, request, transport) {
-  if (action === 'release-evaluator') validateCapabilityInput(action, request.input);
+  if (['release-evaluator', 'recover-media'].includes(action)) validateCapabilityInput(action, request.input);
   const provider = providerFor(config, action);
   validateRequestWaiting(config, provider, request);
   const response = await transport(config, provider, request);

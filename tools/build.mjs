@@ -8,10 +8,11 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
 const plugins = JSON.parse(await readFile(join(root, 'contracts/plugins.json'), 'utf8'));
 const check = process.argv.includes('--check');
+const text = async path => (await readFile(path, 'utf8')).replaceAll('\r\n', '\n');
 async function emit(path, data) {
   const absolute = join(root, path);
   if (check) {
-    assert.equal(await readFile(absolute, 'utf8'), data, `Generated file drift: ${path}`);
+    assert.equal(await text(absolute), data, `Generated file drift: ${path}`);
   } else {
     await mkdir(dirname(absolute), { recursive: true });
     await writeFile(absolute, data);
@@ -30,14 +31,14 @@ for (const [name, definition] of Object.entries(plugins)) {
   await emit(`${base}/.mcp.json`, json({ mcpServers: { [server]: launch } }));
   for (const dir of ['runtime', 'contracts', 'adapters']) {
     for (const file of await readdir(join(root, dir))) {
-      await emit(`${base}/${dir}/${file}`, await readFile(join(root, dir, file), 'utf8'));
+      await emit(`${base}/${dir}/${file}`, await text(join(root, dir, file)));
     }
   }
   for (const file of ['WORKFLOW.md', 'PROVIDERS.md']) {
-    await emit(`${base}/docs/${file}`, await readFile(join(root, 'docs', file), 'utf8'));
+    await emit(`${base}/docs/${file}`, await text(join(root, 'docs', file)));
   }
-  const skill = await readFile(join(root, 'skills', name, 'SKILL.md'), 'utf8');
-  await emit(`${base}/LICENSE`, await readFile(join(root, 'LICENSE'), 'utf8'));
+  const skill = await text(join(root, 'skills', name, 'SKILL.md'));
+  await emit(`${base}/LICENSE`, await text(join(root, 'LICENSE')));
   await emit(`${base}/skills/${name}/SKILL.md`, skill);
   await emit(`${base}/AGENTS.md`, `# ${name}\n\nRead docs/WORKFLOW.md and docs/PROVIDERS.md before execution.\nOnly configured trusted providers may operate machines. Missing providers fail closed.\n${definition.description}\n`);
   entries.push({ name, source: `./${base}`, description: definition.description, version: pkg.version,
@@ -51,7 +52,7 @@ await emit('.claude-plugin/marketplace.json', json({
 const hashes = {};
 for (const dir of ['runtime', 'contracts', 'adapters']) {
   for (const file of await readdir(join(root, dir))) {
-    hashes[`${dir}/${file}`] = createHash('sha256').update(await readFile(join(root, dir, file))).digest('hex');
+    hashes[`${dir}/${file}`] = createHash('sha256').update(await text(join(root, dir, file))).digest('hex');
   }
 }
 await emit('release.json', json({

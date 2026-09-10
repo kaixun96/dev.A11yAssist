@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.5.1",
+  "version": "0.6.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -14,13 +14,13 @@
   ],
   "knowledge": {
     "manifest": "knowledge/manifest.json",
-    "sha256": "a828dabccea76908856ba83ac3b0fab4d33358ee4db4bca7df28e61e0b7f74c4"
+    "sha256": "4e78c165fbe6cffa3fa06433719de8b45b2cb0fc0cefc11209ce64c54fd8361a"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "3738a2702acdd346c6ef1f37b13724c3d6288da4c77c2ed44a6f367ba2577351",
+      "sha256": "c2bc525d3ebe608ffe3dce49ac0382e1178bbb488370c71fb386d7f2bee5983b",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -45,18 +45,19 @@
   ],
   "hashes": {
     "runtime/builtin-ado.mjs": "0c6c559936b24c4549f30484d79bd4620acf2d3b9046d89d9c60371fee73bfda",
-    "runtime/capability.mjs": "f0c7fdfcdd3c4626215c5698d850d27926733ff41b350433e157f5f80b2e44cf",
+    "runtime/capability.mjs": "14bde1a728c73052d6cf4071a65354f29696ba34841e44c1317574a720a78179",
     "runtime/cli.mjs": "be6b9b977ab6ff801b47a998db47fd9d11e668a72633c9846b92daee4e5adf46",
-    "runtime/core.mjs": "9e88fe8c6959bb6cc3e3c38ddca5c48c794bebf7bd0380aff96fdeba2c74149e",
+    "runtime/core.mjs": "33070030f70fd88fc087d6f25a1404407a39c6a689813bbb1a0291d82c358368",
     "runtime/evidence-files.mjs": "f8b3282fcde0f0168fec985defd5d4576c85d5bf88a0bff520e00e849c0c5667",
     "runtime/evidence-v1.mjs": "be6191c09d21c84baaf0e04cd4576fe84545836c81a1ae34124b7870403c6f6f",
     "runtime/mcp.mjs": "3ff4e90a65bc51ee63edbecad615c9826a49547c10bf8f87c5c2aa1fb341968c",
-    "runtime/operations.mjs": "8d284f449904d64786008b28e1480f4927423b524d799ed3d0aad619345fd516",
+    "runtime/operations.mjs": "4dceb0fefabf5d3ea567b6608a3468cc33a6d8a0001f4f97aa84c6a4889ae68a",
     "runtime/profiles.mjs": "635cb32b7f7d2e26d7f975fbe622727a2d8f35fc9aa82e83b91f8d31aaeedb2d",
+    "runtime/waiting.mjs": "364bfb314e9ccd459365741d857b281f00362a8bc9562d1ce64c5d30c23ce893",
     "contracts/capabilities.json": "94b31dd0c0e2c9c0fc733f8c503febb66963ea2288c5369c51bd4b94306a5439",
     "contracts/plugins.json": "c3219e6885d9a5957b391df0c5015d4c03e3007126aba9345c5f07a323407b3d",
-    "contracts/workflow.json": "749c518775728f89b7af3acf7cdf592756daf7cf2284ef964453e23d7c653ec6",
-    "adapters/cli.mjs": "94eb4a5455a4528a8085a9dc5e87796b34718906e7fbb2b90297300312d1534a",
+    "contracts/workflow.json": "b955a2dd96718dbaea236888a040124d33daae1d78c2cc420826ba8b23d8aaa3",
+    "adapters/cli.mjs": "612cb28a5c94f31bf27e6afeb5c4b33d77c6ebcf16272baf567abd0503ea076a",
     "adapters/twin.mjs": "9f3288b06c581b280280e4994aa97aaf841da68a3a94174e62d7b066822e2897",
     "native/ado-attachments.d.mts": "0e68234f8714b41a926c53ce8974ae549a0a20ebb788d569076e45c3cbfaf480",
     "native/ado-attachments.mjs": "8be17d46071e10c7c704bec6dbd831b520767b68d086b879d10f2eb0d52ec194",

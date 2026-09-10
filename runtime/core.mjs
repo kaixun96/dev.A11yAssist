@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { invokeCapability, providerFor } from './capability.mjs';
 import { validateProfileReceipt } from './profiles.mjs';
 import { validateAdoProvider, callAdoProvider } from './builtin-ado.mjs';
+import { createWaiting, pendingDetails, validateWaitingConfig } from './waiting.mjs';
 
 const contractDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../contracts');
 export const workflow = JSON.parse(await readFile(join(contractDirectory, 'workflow.json'), 'utf8'));
@@ -42,6 +43,7 @@ export async function readConfig(path = process.env.A11Y_ASSIST_CONFIG, { fullWo
   }
   for (const [name, provider] of Object.entries(config.providers)) {
     demand(['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources'].includes(name), 'Unknown provider');
+    validateWaitingConfig(provider, config.mode);
     if (provider?.kind === 'ado') {
       demand(['intake', 'publish'].includes(name), 'ADO built-in connection supports only intake/publication');
       validateAdoProvider(provider);
@@ -126,7 +128,10 @@ export function publicRun(state) {
     status: state.status, nextStage: state.nextStage, revision: state.revision,
     scenarioHash: state.scenarioHash, evaluator: state.evaluator, head: state.head,
     pending: state.pending && { requestId: state.pending.requestId, stage: state.pending.stage,
-      state: state.pending.state, startedAt: state.pending.startedAt },
+      state: state.pending.state, startedAt: state.pending.startedAt,
+      ...(state.pending.waiting ? { waiting: state.pending.waiting } : {}),
+      resumeCondition: state.pending.resumeCondition, progressPath: state.pending.progressPath,
+      completionCallback: state.pending.completionCallback },
     updatedAt: state.updatedAt, outcome: state.outcome,
     receipts: state.receipts.map(r => ({ stage: r.stage, requestId: r.requestId, sha256: r.sha256 })) };
 }
@@ -259,14 +264,9 @@ export async function verifyArtifactFiles(base, receipt) {
 
 async function commitResponse(config, dir, state, response) {
   if (response.state === 'pending') {
-    demand(typeof response.resumeCondition === 'string' && response.resumeCondition &&
-      typeof response.progressPath === 'string' && response.progressPath &&
-      typeof response.completionCallback === 'string' && response.completionCallback,
-    'Pending provider must supply progress, resume condition and completion callback');
+    const details = pendingDetails({ waiting: state.pending.waiting }, response);
     state.pending.state = 'awaiting-provider';
-    state.pending.resumeCondition = response.resumeCondition;
-    state.pending.progressPath = response.progressPath;
-    state.pending.completionCallback = response.completionCallback;
+    Object.assign(state.pending, details);
     state.updatedAt = new Date().toISOString();
     await atomicJson(join(dir, 'run.json'), state);
     return publicRun(state);
@@ -325,13 +325,16 @@ export async function executeStage(config, plugin, runId, stage, input = {}) {
     demand(state.status !== 'terminal' && state.nextStage === stage, 'Phase ordering gate rejected');
     const provider = providerFor(config, stage);
     demand(config.providers[provider], `Missing ${provider} provider; stage not started`);
+    const waiting = createWaiting(config, provider);
     state.pending = { requestId: randomUUID(), stage, provider,
       providerBinding: hash(JSON.stringify(config.providers[provider])),
+      ...(waiting ? { waiting } : {}),
       state: 'submitted-unknown', startedAt: new Date().toISOString() };
     state.updatedAt = state.pending.startedAt;
     await atomicJson(join(dir, 'run.json'), state);
     const request = { schemaVersion: 1, version: VERSION, operation: 'execute',
       requestId: state.pending.requestId, stage, run: publicRun(state),
+      ...(waiting ? { waiting } : {}),
       stateDirectory: dir, input };
     const response = await invokeCapability(config, stage, request, callProvider);
     return commitResponse(config, dir, state, response);
@@ -351,6 +354,7 @@ export async function reconcile(config, plugin, runId) {
     const response = await invokeCapability(config, state.pending.stage, {
       schemaVersion: 1, version: VERSION, operation: 'reconcile',
       requestId: state.pending.requestId, stage: state.pending.stage,
+      ...(state.pending.waiting ? { waiting: state.pending.waiting } : {}),
       run: publicRun(state), stateDirectory: dir, input: {}
     }, callProvider);
     return commitResponse(config, dir, state, response);
@@ -390,7 +394,10 @@ export function assessProgress(state, now = Date.now()) {
   return { runId: state.runId, status: state.status, nextStage: state.nextStage,
     pendingRequestId: state.pending?.requestId ?? null,
     action: state.status === 'terminal' ? 'none' : state.pending
-      ? (age >= 30 * 60_000 ? 'reconcile-original-request' : 'await-original-callback')
+      ? (state.pending.waiting
+        ? (now >= Date.parse(state.pending.waiting.deadlineAt) ? 'polling-deadline-exceeded-reconcile-original-request'
+          : age >= state.pending.waiting.pollIntervalSeconds * 1000 ? 'reconcile-original-request' : 'await-caller-poll-interval')
+        : age >= 30 * 60_000 ? 'reconcile-original-request' : 'await-original-callback')
       : 'continue-next-permitted-stage',
     idleMilliseconds: age, executionRecovered: false };
 }

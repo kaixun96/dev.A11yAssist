@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { pendingDetails, validateRequestWaiting } from './waiting.mjs';
 
 export const capabilities = JSON.parse(await readFile(new URL('../contracts/capabilities.json', import.meta.url), 'utf8'));
 const outcomes = new Set(['pass', 'changes-requested', 'not-reproduced', 'blocked', 'inconclusive', 'invalid-evidence', 'abandoned']);
@@ -53,11 +54,11 @@ export function validateCapabilityReceipt(action, receipt, context) {
   }
 }
 export async function invokeCapability(config, action, request, transport) {
-  const response = await transport(config, providerFor(config, action), request);
+  const provider = providerFor(config, action);
+  validateRequestWaiting(config, provider, request);
+  const response = await transport(config, provider, request);
   if (response.state === 'pending') {
-    for (const field of ['resumeCondition', 'progressPath', 'completionCallback']) {
-      requireValue(typeof response[field] === 'string' && response[field].trim(), `Pending capability requires ${field}`);
-    }
+    pendingDetails(request, response);
     return response;
   }
   requireValue(response.state === 'finished' && response.receipt, 'Capability must return pending or a finished receipt');

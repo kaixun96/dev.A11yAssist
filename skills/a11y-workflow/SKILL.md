@@ -32,7 +32,10 @@ not permission to run a mock or copy someone else's private infrastructure.
 
 When a provider is pending or times out, persist the request and call
 `a11y_workflow_reconcile`; never start a second implementation. Long tasks use
-the provider's detached executor, actual callback and durable progress. If no
-next safe action is available, surface exact blocker and resume condition.
+the provider's detached executor and durable progress, with an actual callback
+by default. Only explicitly configured CLI caller polling substitutes a
+caller-owned bounded scheduler; retain the original deadline and never downgrade
+a failed callback. Deadline expiry is not cancellation or permission to replay.
+If no next safe action is available, surface exact blocker and resume condition.
 Do not restart shared Copilot, impersonate an owner, release a foreign lease,
 or delete history/change accounts to evade service safety controls.

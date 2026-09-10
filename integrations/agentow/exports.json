@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "kaixun96/dev.A11yAssist",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "files": [
     {
       "source": "runtime/evidence-v1.mjs",

@@ -2,6 +2,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
 
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
@@ -14,9 +15,12 @@ if (request.operation === 'status') {
   console.log(JSON.stringify({ ...identity, state: 'finished',
     resources: [{ id: 'box-one', kind: 'evaluator', health: 'test-fixture', secret: 'must-not-leak' }] }));
 } else if (request.operation === 'reconcile') {
+  const original = JSON.parse(await readFile(join(request.stateDirectory, `request-${request.requestId}.json`), 'utf8'));
+  assert.deepEqual(request.waiting, original.waiting, 'Reconciliation changed original waiting policy');
   const receipt = JSON.parse(await readFile(join(request.stateDirectory, `provider-${request.requestId}.json`), 'utf8'));
   console.log(JSON.stringify({ ...identity, state: 'finished', receipt }));
 } else {
+  await writeFile(join(request.stateDirectory, `request-${request.requestId}.json`), JSON.stringify(request), { flag: 'wx' });
   const artifact = `evidence-${request.requestId}.json`;
   const data = JSON.stringify({ fixture: true, stage: request.stage, requestId: request.requestId });
   await writeFile(join(request.stateDirectory, artifact), data, { flag: 'wx' });
@@ -47,6 +51,6 @@ if (request.operation === 'status') {
   if (request.input.pending) {
     console.log(JSON.stringify({ ...identity, state: 'pending',
       resumeCondition: 'Test fixture is ready for reconciliation',
-      progressPath: artifact, completionCallback: 'test-only-callback' }));
+      progressPath: artifact, ...(request.waiting ? { waiting: request.waiting } : { completionCallback: 'test-only-callback' }) }));
   } else console.log(JSON.stringify({ ...identity, state: 'finished', receipt }));
 }

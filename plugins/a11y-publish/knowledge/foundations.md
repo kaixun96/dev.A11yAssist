@@ -1,57 +1,77 @@
-# Accessibility foundations
+# Static accessibility review foundations
 
-Extracted from the AgentOW accessibility knowledge index. This document classifies
-requirements and evidence; it does not authorize source changes, resource control
-or PR publication.
+## Scope and evidence
 
-## Source priority
+Start from the requested behavior, changed source and available context. Read
+nearby definitions only when needed to understand a control or transition.
+Do not run the application, tests, scanners, browser automation or assistive
+technology. Reading source is not observing rendered behavior.
 
-Read sources applicable to the defect in this order:
+For code-generation guidance, describe the semantic element, name, state,
+keyboard behavior, focus destination and feedback needed by the interaction.
+Offer a minimal code suggestion when helpful; do not edit the project from this
+read-only skill or add runtime/deployment prerequisites.
 
-1. The bug's exact expected behavior and reproduction steps.
-2. The existing implementation and predecessor behavior, including load-bearing
-   accessibility comments and timing.
-3. The native component's accessibility contract. In odsp-web, prefer SPDS/Fluent
-   behavior before hand-writing ARIA, announcements or focus management.
-4. The applicable authorized host setup and evidence procedures.
-5. WCAG 2.2 AA success criteria and Microsoft platform guidance.
+Use the project's stated accessibility target. If none is provided, use WCAG
+2.2 A/AA as a review reference, not an asserted legal or product requirement.
+WAI-ARIA Authoring Practices are implementation guidance, not a conformance
+certificate or a requirement to use ARIA where native HTML already works.
 
-Do not transfer private team or owner documents into a repository or PR. Cite only
-shareable sources and portable rules. Record the actual documents and versions
-used in the run's immutable knowledge manifest.
+## Reasoning order
 
-## Evidence hierarchy
+1. Identify the user action and information the UI must convey.
+2. Identify the actual rendered primitive or component contract when known.
+3. Follow values, labels, IDs, state updates and event handlers relevant to it.
+4. Account for semantics and behavior already supplied by the native element or
+   library. Absence of explicit ARIA or a focus handler is not inherently a bug.
+5. Report a concrete issue only when source evidence supports the causal chain.
+   Otherwise name the missing context without guessing or starting a live check.
 
-- NVDA with captured speech supports repeatable screen-reader regression.
-- Narrator-specific behavior requires Narrator/UIAutomationCore/Speech-TTS ETW.
-- Unattended screen-reader recordings require the composed Windows desktop,
-  persistent audio, speech-aware focus timing and validated video/focus frames.
-- Voice Access requires real recognition, captured audio and visible-state proof.
-- Real OS keyboard input is required to establish screen-reader focus/navigation.
-  CDP keyboard injection is not equivalent evidence of Win32/UIA event behavior.
-- Accessibility trees, axe and source inspection are supporting diagnostics, not
-  substitutes for real assistive-technology evidence.
+Keep changes behavior-preserving and use the project's existing localization,
+styling and component conventions. Do not invent a package, require a framework
+migration, duplicate an announcer or impose a repository-specific artifact.
 
-Never run NVDA and Narrator simultaneously. WCAG mapping, a running process,
-installation success or an existing media file does not prove a behavior passed.
+## Common criterion mappings
 
-## Rule selection
-
-Map the observed user impact to the most precise applicable criterion. These are
-common mappings, not automatic findings:
-
-| Failure | Typical WCAG criterion |
+| Source concern | Possible WCAG mapping |
 |---|---|
-| Missing/wrong name, role, state or value | 4.1.2 |
-| Broken structural relationship or reading order | 1.3.1 |
-| Visible label not contained in accessible name | 2.5.3 |
-| Ambiguous heading or control label | 2.4.6 |
-| Focus missing, obscured, trapped or restored incorrectly | 2.4.3, 2.4.7, 2.4.11 |
-| Status/error/loading change not announced | 4.1.3 |
-| Keyboard operation unavailable | 2.1.1 |
-| Reflow/zoom loss | 1.4.10 |
-| Contrast failure | 1.4.3 or 1.4.11 |
+| Missing or conflicting name, role, state or value | 4.1.2 |
+| Relationships or meaningful sequence are lost | 1.3.1, 1.3.2 |
+| Visible label is absent from the accessible name | 2.5.3 |
+| Labels or instructions are missing/unclear | 2.4.6, 3.3.2 |
+| Keyboard operation or escape is unavailable | 2.1.1, 2.1.2 |
+| Focus order, visibility or obscuration | 2.4.3, 2.4.7, 2.4.11 |
+| Status messages have no programmatic exposure | 4.1.3 |
+| Color alone, text contrast or UI contrast | 1.4.1, 1.4.3, 1.4.11 |
+| Text resizing, reflow or text-spacing loss | 1.4.4, 1.4.10, 1.4.12 |
+| Drag-only operation or small pointer targets | 2.5.7, 2.5.8 |
+| Non-text content lacks an appropriate alternative | 1.1.1 |
 
-Classification is not proof of reproduction or repair. Evaluate the reported
-expected behavior; if it is ambiguous or inconsistent, record the uncertainty
-rather than silently changing the acceptance criterion.
+These are candidate mappings. Check the criterion's applicability and exceptions;
+do not turn every coding preference into a WCAG violation.
+
+## Output contract
+
+Keep the response proportional to the source scope:
+
+- **Source-supported issue:** location or quoted snippet, affected user behavior,
+  relevant rule, causal source evidence and smallest suggested correction.
+- **Context needed:** the missing wrapper, state, page structure, platform API
+  or component contract that prevents a sound conclusion. No fabricated line
+  numbers or assumed runtime values.
+- **Runtime not verified:** behaviors the source cannot establish, such as actual
+  speech, focus movement, computed names, layout or theme contrast. Record the
+  uncertainty only; do not execute tools to resolve it.
+
+Do not invent a finding when the provided source already uses a valid pattern.
+If no definite issues are found, report that narrowly rather than saying
+"accessible", "PASS" or "WCAG compliant".
+
+## Primary references
+
+- [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
+- [Understanding WCAG 2.2](https://www.w3.org/WAI/WCAG22/Understanding/)
+- [WAI-ARIA 1.2](https://www.w3.org/TR/wai-aria-1.2/)
+- [ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)
+
+These are reference links, not instructions to start a browser or run a test.

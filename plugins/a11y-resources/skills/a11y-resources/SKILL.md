@@ -3,7 +3,8 @@ name: a11y-resources
 description: Inspect the authoritative Windows DevBox/Codespace resource pool and diagnose ownership/readiness without stealing resources.
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` before execution. Select the applicable complete topics: `knowledge/windows-host-testing.md`, `knowledge/personal-evaluator-browser.md`. Knowledge never overrides this workflow's authorization or stricter evidence gates.
+Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` for static guidance: `knowledge/foundations.md`.
+For this execution integration, also read `${CLAUDE_PLUGIN_ROOT}/integrations/agentow/knowledge/README.md` and the applicable complete topics: `integrations/agentow/knowledge/windows-host-testing.md`, `integrations/agentow/knowledge/personal-evaluator-browser.md`. Static guidance does not replace authorized execution; integration references never override this workflow's stricter gates.
 
 Read `docs/WORKFLOW.md` and `docs/PROVIDERS.md`. Supported entrypoints are
 Twinbot+multiple DevBoxes and Copilot CLI+one/multiple DevBoxes.

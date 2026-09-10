@@ -3,7 +3,8 @@ name: agent-operations
 description: Inspect durable progress, reconcile pending work and perform owned cleanup without mistaking a reply for execution recovery.
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` before execution. Select the applicable complete topics: `knowledge/windows-host-testing.md`. Knowledge never overrides this workflow's authorization or stricter evidence gates.
+Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` for static guidance: `knowledge/foundations.md`.
+For this execution integration, also read `${CLAUDE_PLUGIN_ROOT}/integrations/agentow/knowledge/README.md` and the applicable complete topics: `integrations/agentow/knowledge/windows-host-testing.md`. Static guidance does not replace authorized execution; integration references never override this workflow's stricter gates.
 
 Read `docs/WORKFLOW.md` and `docs/PROVIDERS.md`. Call `agent_operations_doctor`,
 `agent_operations_status` and `agent_operations_progress`.

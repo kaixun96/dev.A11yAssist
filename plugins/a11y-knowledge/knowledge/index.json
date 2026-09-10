@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "migrationStage": "copy-first-original-agentow-files-retained",
+  "plugin": {
+    "name": "a11y-knowledge",
+    "description": "Read-only accessibility knowledge: criteria, component semantics, real-AT evidence, Windows capture and reviewer media."
+  },
+  "origin": {
+    "repository": "kaixun96/dev.AgentOW",
+    "commit": "aedfe50402acf7d314cab285b786a7a4d64cdeb5"
+  },
+  "topics": [
+    {
+      "file": "foundations.md",
+      "trigger": "Classifying user impact, selecting criteria or distinguishing real AT from supporting diagnostics.",
+      "scope": "Shared criteria and evidence reasoning; not workflow authorization.",
+      "originPath": "copilot/docs/a11y/README.md"
+    },
+    {
+      "file": "component-accessibility.md",
+      "trigger": "Implementing or reviewing rendered UI, names, roles, states, announcements, focus, keyboard, contrast or reflow.",
+      "scope": "General review principles with an explicit odsp-web / SPDS / Fluent implementation profile.",
+      "originPath": "skills/ow-review/references/accessibility.md"
+    },
+    {
+      "file": "evidence-contract.md",
+      "trigger": "Producing or validating AgentOW version-1 reproduce/verify request and result artifacts.",
+      "scope": "AgentOW bridge-v1 integration profile, not the A11y Assist provider RPC or its delivery policy.",
+      "originPath": "copilot/docs/a11y/evidence-contract.md"
+    },
+    {
+      "file": "windows-host-testing.md",
+      "trigger": "Preparing authorized Windows AT capture, audio, console rendering or scenario-specific host readiness.",
+      "scope": "Windows evidence producer procedures; referenced setup commands are supplied by AgentOW, not this knowledge package.",
+      "originPath": "copilot/docs/a11y/windows-host-testing.md"
+    },
+    {
+      "file": "pr-evidence-capture-guide.md",
+      "trigger": "Selecting, capturing, reviewing or publishing screenshots, recordings, annotations, headings or Voice Access evidence.",
+      "scope": "Evidence quality rules with an ADO publication profile.",
+      "originPath": "copilot/docs/a11y/pr-evidence-capture-guide.md"
+    },
+    {
+      "file": "personal-evaluator-browser.md",
+      "trigger": "Using the approved persistent Chromium profile for authenticated BEFORE/AFTER screenshots.",
+      "scope": "AgentOW browser integration profile; scripts and host authorization remain external.",
+      "originPath": "docs/personal-evaluator-browser.md"
+    }
+  ],
+  "consumers": {
+    "a11y-intake": ["foundations.md", "pr-evidence-capture-guide.md"],
+    "a11y-resources": ["windows-host-testing.md", "personal-evaluator-browser.md"],
+    "a11y-capture": ["foundations.md", "windows-host-testing.md", "personal-evaluator-browser.md", "pr-evidence-capture-guide.md"],
+    "a11y-validate": ["foundations.md", "evidence-contract.md", "pr-evidence-capture-guide.md"],
+    "a11y-publish": ["pr-evidence-capture-guide.md"],
+    "agent-operations": ["windows-host-testing.md"],
+    "a11y-workflow": ["foundations.md", "component-accessibility.md", "evidence-contract.md", "windows-host-testing.md", "pr-evidence-capture-guide.md", "personal-evaluator-browser.md"],
+    "a11y-knowledge": ["foundations.md", "component-accessibility.md", "evidence-contract.md", "windows-host-testing.md", "pr-evidence-capture-guide.md", "personal-evaluator-browser.md"]
+  }
+}

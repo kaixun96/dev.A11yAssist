@@ -1,7 +1,7 @@
 # Releases and freshness
 
 Use a single repository and compatible release set first; do not split into
-seven repositories before independent release requirements exist.
+separate repositories before independent release requirements exist.
 
 1. Change shared source and skills; do not hand-edit generated packages.
 2. Bump package.json and contracts/workflow.json together.
@@ -20,6 +20,11 @@ seven repositories before independent release requirements exist.
 The installer explicitly adds AgentOW; no unsupported dependency fields are
 invented in plugin manifests. The current AgentOW freshness rule is still
 applied on its actual leased execution host before invocation.
+
+Knowledge migration is currently copy-first. Publish the indexed snapshot and
+its hashes, but leave AgentOW's original files and references intact. Do not remove
+redundancy until the later coordinated integration and compatibility gates in
+`KNOWLEDGE.md` pass. Updating this repository does not update AgentOW.
 
 Rollback selects a previously qualified plugin/provider release for a compatible
 run. It must not reset session bindings, remove claims, discard new evidence,

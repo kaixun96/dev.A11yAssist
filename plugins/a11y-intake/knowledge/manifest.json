@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "repository": "kaixun96/dev.A11yAssist",
+  "version": "0.2.0",
+  "origin": {
+    "repository": "kaixun96/dev.AgentOW",
+    "commit": "aedfe50402acf7d314cab285b786a7a4d64cdeb5"
+  },
+  "hashes": {
+    "README.md": "b4c54bb13fe79a643fa5c9f422e2a1ca54cd4fa06959535d8a27e498b3e4dc51",
+    "index.json": "a66e817fbeb61e7fb1c76059f4aebaa03bae70d493dca031341563fe1e0dd0a5",
+    "foundations.md": "694b4a5ec8660354da44cf61a6e87d3c3312bae81f88bd8f0d4556d321d9d0bc",
+    "component-accessibility.md": "fc28fa277426d17d6a04ed8d78390bcbecb02c832b07069db45470274b750e50",
+    "evidence-contract.md": "66b2954c46b3141b38b9774de0efae147eb386bfe4acf914f2a8f2f656272374",
+    "windows-host-testing.md": "e3fa18eded6d3f2dc92f71ed7e6d72f89116dce3487efe8aa6d1ea18d442521e",
+    "pr-evidence-capture-guide.md": "5f174cd802c7b13d11869ff2adc91be3a856b0de6f05499a6e269e403598b299",
+    "personal-evaluator-browser.md": "0ef63476940b540d94e307fb29f97dcfa8aa74baab4cee0e0f7af0ee796e232f"
+  }
+}

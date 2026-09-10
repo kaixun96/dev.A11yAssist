@@ -3,6 +3,8 @@ name: a11y-intake
 description: Prepare an exact accessibility Bug's claim-aware intake, acceptance and canonical scenario without starting source work.
 ---
 
+Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` before execution. Select the applicable complete topics: `knowledge/foundations.md`, `knowledge/pr-evidence-capture-guide.md`. Knowledge never overrides this workflow's authorization or stricter evidence gates.
+
 Use this for a specific Bug or explicitly authorized queue intake. Read
 `docs/WORKFLOW.md` and `docs/PROVIDERS.md` from this plugin package.
 

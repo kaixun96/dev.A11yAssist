@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "modes": ["twin", "cli"],
   "stages": [
     {"id": "intake", "phase": "0-1", "plugin": "a11y-intake", "provider": "intake", "gates": ["claimOwned", "commentsReviewed", "attachmentsReviewed", "acceptanceDefined", "scenarioSealed"]},

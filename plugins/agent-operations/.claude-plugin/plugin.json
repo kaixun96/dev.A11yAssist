@@ -1,6 +1,6 @@
 {
   "name": "agent-operations",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Durable task continuation, cleanup, progress assessment and Run Insights.",
   "author": {
     "name": "kaixun96"

@@ -21,6 +21,7 @@ use. Its stricter phase ordering is local to that workflow.
 | a11y-publish | `a11y_publish_invoke`, action `publish` | Exact `head` and caller-authorized publication input |
 | agent-operations | `agent_operations_invoke`, action `cleanup` | `subject` and explicitly owned cleanup scope |
 | a11y-resources | `a11y_resources_resources` | Authorized resource connection; read-only status |
+| a11y-resources | `a11y_resources_invoke`, action `release-evaluator` | `subject`, `evaluator`, exact `input.nativeRunId`; explicitly authorized completed assignment |
 
 `context` may contain `subject`, `scenarioHash`, `evaluator`, `head` and
 `beforeReceiptSha256`. Supplied bindings must match a successful receipt.
@@ -152,6 +153,33 @@ not cancel native work or authorize replay.
 the caller's task is complete. Inspect `receipt.outcome`, reason and artifacts.
 Nonpass does not automatically start cleanup, source work or another stage.
 The caller decides the next authorized action.
+
+## Completed evaluator release (v0.8)
+
+`release-evaluator` is narrower than `cleanup`. Supply only `nativeRunId`
+(32 lowercase hex characters) in `input`; never send a lease token. A successful
+receipt must match that native run, supplied subject/evaluator, original operation
+identity, `releaseMode: completed-owned-run`, and the `completedRunMatched` and
+`leaseReleased` gates, with hash-verified durable artifacts.
+
+The trusted resource connection must validate original ownership and authenticated
+completion and perform the release in the original authority's mutation lock.
+It must persist intent before the effect and reconcile only that intent's durable
+response. Missing leases, unrelated historical release records, timeouts and
+missing responses are not proof this operation succeeded. No execution retry,
+force release, alternate identity or fallback to token-only release is allowed.
+Existing resource status stays read-only; an unconfigured release fails closed.
+
+Caller-owned sequencing still applies. Actual process/audio/port cleanup and
+any required resource-release ordering must precede the call. This receipt
+does not satisfy `cleanup`, finish a workflow, release other resources, or prove
+assistive-technology/product acceptance. The optional workflow can call the same
+small capability at its authorized cleanup step, but must separately establish
+every remaining cleanup gate. No automatic phase transition was added.
+
+Private deployment implementations/configuration remain outside this package.
+The unchanged workflow/envelope version remains 0.6; this additive capability
+does not migrate active journals, replace pinned source or update installed workers.
 
 ## Full workflow and compatibility
 

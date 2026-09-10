@@ -2,7 +2,7 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { VERSION, atomicJson, withDirectoryLock, verifyArtifactFiles, hash, callProvider } from './core.mjs';
-import { operationDefinition, validateContext, providerFor, invokeCapability, validateCapabilityReceipt } from './capability.mjs';
+import { operationDefinition, validateContext, validateCapabilityInput, providerFor, invokeCapability, validateCapabilityReceipt } from './capability.mjs';
 import { createWaiting, pendingDetails, validateWaitingConfig } from './waiting.mjs';
 
 function demand(condition, message) { if (!condition) throw new Error(message); }
@@ -36,7 +36,7 @@ async function verifyFinished(dir, state) {
   demand(state.receipt && hash(JSON.stringify(state.receipt)) === state.receiptSha256, 'Recorded capability receipt hash mismatch');
   demand(state.receipt.owner === state.owner && state.receipt.runId === state.operationId &&
     state.receipt.requestId === state.request.requestId, 'Recorded capability receipt identity mismatch');
-  validateCapabilityReceipt(state.action, state.receipt, state.request.run);
+  validateCapabilityReceipt(state.action, state.receipt, state.request.run, state.request.input);
   await verifyArtifactFiles(dir, state.receipt);
 }
 function publicOperation(state) {
@@ -66,7 +66,7 @@ async function consume(config, dir, state, operation) {
 export async function executeOperation(config, plugin, operationId, action, context, input = {}) {
   operationDefinition(action, plugin);
   validateContext(action, context);
-  demand(input && typeof input === 'object' && !Array.isArray(input), 'Capability input must be an object');
+  validateCapabilityInput(action, input);
   const providerBinding = binding(config, action);
   const dir = directory(config, operationId);
   await mkdir(dir, { recursive: true });

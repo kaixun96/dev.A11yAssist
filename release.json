@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -14,13 +14,13 @@
   ],
   "knowledge": {
     "manifest": "knowledge/manifest.json",
-    "sha256": "3fcfa9b8c4404e318f3b878d7e5ecb2af8a61b5892fac101baab75d89cac92d9"
+    "sha256": "695f359ad11eda0054ae7e9126d925e691b852e4d4aa55187021ffc0df4c22a4"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "2391acacc2963dda06be6c829738274725dfa46b9ba4b76f9ba2a00bcaf610cb",
+      "sha256": "63c693061ef69c039d6a968ebfd470fdec066c4eac8e2ba3d8767ce0fb8ce764",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -45,16 +45,16 @@
   ],
   "hashes": {
     "runtime/builtin-ado.mjs": "0c6c559936b24c4549f30484d79bd4620acf2d3b9046d89d9c60371fee73bfda",
-    "runtime/capability.mjs": "14bde1a728c73052d6cf4071a65354f29696ba34841e44c1317574a720a78179",
+    "runtime/capability.mjs": "41f1a3959924d2c3228121560bbf3dfd7f80762d64d6476e70f3dcf5941e0dd7",
     "runtime/cli.mjs": "be6b9b977ab6ff801b47a998db47fd9d11e668a72633c9846b92daee4e5adf46",
     "runtime/core.mjs": "33070030f70fd88fc087d6f25a1404407a39c6a689813bbb1a0291d82c358368",
     "runtime/evidence-files.mjs": "fe5d5a59e7a953ed838777aef2b8923f5f8f3b7b3503b5d349d169744a23877f",
     "runtime/evidence-v1.mjs": "6a087bd37a4e83ef3f71fead22a88cc83160776bc671fdaf8e93afc2792b1ff2",
     "runtime/mcp.mjs": "6ac8414e4b807d07b1054e838480c37a97a09db979f3336ba6fc2a4951bce2b7",
-    "runtime/operations.mjs": "4dceb0fefabf5d3ea567b6608a3468cc33a6d8a0001f4f97aa84c6a4889ae68a",
+    "runtime/operations.mjs": "7ac8aac89de65c849a3dee9aaa18aa97d0bb42cf619d9a307b68bf210dd4297c",
     "runtime/profiles.mjs": "635cb32b7f7d2e26d7f975fbe622727a2d8f35fc9aa82e83b91f8d31aaeedb2d",
     "runtime/waiting.mjs": "364bfb314e9ccd459365741d857b281f00362a8bc9562d1ce64c5d30c23ce893",
-    "contracts/capabilities.json": "94b31dd0c0e2c9c0fc733f8c503febb66963ea2288c5369c51bd4b94306a5439",
+    "contracts/capabilities.json": "6befdb5b76588b580f86c4462b0f27fa70f02f754ee8262f4f9e375bc0a4a3ef",
     "contracts/plugins.json": "c3219e6885d9a5957b391df0c5015d4c03e3007126aba9345c5f07a323407b3d",
     "contracts/workflow.json": "b955a2dd96718dbaea236888a040124d33daae1d78c2cc420826ba8b23d8aaa3",
     "adapters/cli.mjs": "612cb28a5c94f31bf27e6afeb5c4b33d77c6ebcf16272baf567abd0503ea076a",

@@ -29,7 +29,15 @@ export function providerFor(config, action) {
   return config.workflowProfile === 'agentow-odsp' && ['source', 'review'].includes(action)
     ? 'agentow' : definition.provider;
 }
-export function validateCapabilityReceipt(action, receipt, context) {
+export function validateCapabilityInput(action, input) {
+  requireValue(input && typeof input === 'object' && !Array.isArray(input), 'Capability input must be an object');
+  if (action === 'release-evaluator') {
+    requireValue(Object.keys(input).join(',') === 'nativeRunId' && typeof input.nativeRunId === 'string' &&
+      /^[a-f0-9]{32}$/.test(input.nativeRunId),
+      'Completed evaluator release requires only input.nativeRunId (32 lowercase hex characters)');
+  }
+}
+export function validateCapabilityReceipt(action, receipt, context, input = {}) {
   const definition = operationDefinition(action);
   requireValue(receipt && receipt.stage === action, 'Capability receipt operation mismatch');
   requireValue(outcomes.has(receipt.outcome), 'Unsupported capability outcome');
@@ -41,6 +49,11 @@ export function validateCapabilityReceipt(action, receipt, context) {
     return;
   }
   for (const gate of definition.gates) requireValue(receipt.gates?.[gate] === true, `Missing capability gate: ${gate}`);
+  if (action === 'release-evaluator') {
+    validateCapabilityInput(action, input);
+    requireValue(receipt.nativeRunId === input.nativeRunId && receipt.releaseMode === 'completed-owned-run',
+      'Completed evaluator release receipt must match the exact requested native run and release mode');
+  }
   for (const field of ['subject', 'scenarioHash', 'evaluator', 'head', 'beforeReceiptSha256']) {
     if (context[field] && !(action === 'source' && field === 'head')) {
       requireValue(receipt[field] === context[field], `Capability ${field === 'head' ? 'HEAD' : field} mismatch`);
@@ -54,6 +67,7 @@ export function validateCapabilityReceipt(action, receipt, context) {
   }
 }
 export async function invokeCapability(config, action, request, transport) {
+  if (action === 'release-evaluator') validateCapabilityInput(action, request.input);
   const provider = providerFor(config, action);
   validateRequestWaiting(config, provider, request);
   const response = await transport(config, provider, request);
@@ -65,6 +79,6 @@ export async function invokeCapability(config, action, request, transport) {
   const receipt = response.receipt;
   requireValue(receipt.requestId === request.requestId && receipt.runId === request.run.runId &&
     receipt.owner === request.run.owner, 'Capability receipt identity mismatch');
-  validateCapabilityReceipt(action, receipt, request.run);
+  validateCapabilityReceipt(action, receipt, request.run, request.input);
   return response;
 }

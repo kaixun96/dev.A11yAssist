@@ -181,7 +181,12 @@ must independently enforce their actual execution and cleanup budgets.
 In the full workflow, resource mutations belong inside the stage provider that owns their timing
 (intake claims, BEFORE evaluator acquisition, source Codespace acquisition,
 cleanup token-bound release). The standalone resources plugin exposes status
-and ownership diagnosis; it does not acquire or release resources. Independent
+and ownership diagnosis plus explicit `release-evaluator` for one exact completed
+native assignment. It does not acquire resources. That release must use the
+original authority's token/lock/completion validation with durable no-replay
+intent and same-request reconciliation; tokens stay inside the trusted connection.
+A missing lease or historical audit alone is not a successful receipt.
+This narrow result is not complete cleanup or permission to skip other gates. Independent
 cleanup follows only the caller's explicitly authorized owned scope. No capability
 automatically takes over the caller's workflow or changes another operation.
 

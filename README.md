@@ -1,62 +1,92 @@
-# A11y Assist plugins
+# A11y Assist
 
-A public repository of modular Copilot CLI plugins for **Twinbot + multiple
-Windows DevBoxes** or **Copilot CLI + one/multiple Windows DevBoxes**.
-Install one capability or the complete workflow entrypoint.
+Accessibility knowledge and modular workflow plugins for Copilot CLI.
+Use accessibility guidance while generating or reviewing code, or configure
+individual capabilities for an evidence-first bug-fixing workflow.
 
-Public repository access does not grant access to Azure DevOps, Dev Center,
-Codespaces, or an evaluator pool. Those require your own authorized environment.
-Public visibility also does not grant an open-source license; see [LICENSE](LICENSE).
+**Just want to avoid common accessibility mistakes in generated code? Start with
+`a11y-knowledge`.** You do not need AgentOW, a DevBox or workflow configuration.
 
-## v0.2 status: shared knowledge plus an installable workflow foundation
+## Quick start: accessibility guidance and static code review
 
-Seven execution plugins plus a read-only knowledge plugin, real MCP tools, shared executable phase
-gates, persistent run/request state, artifact hashing, provider RPC, two entry
-adapters and tests are implemented. This is **not yet a drop-in replacement
-for the existing live A11y deployment**: platform-specific ADO/Dev Center/AT
-providers must be configured and qualified. No personal machine roster, tenant
-credentials, browser profile or production evidence is included.
-
-Missing providers fail closed. `doctor` reports configuration, not a fabricated
-working evaluator. Existing workers and their canonical pool remain untouched.
-
-| Plugin | Entry command | Scope |
-|---|---|---|
-| a11y-intake | `/a11y-intake` | Claim-aware intake, acceptance, canonical scenario |
-| a11y-resources | `/a11y-resources` | Public ownership/readiness inspection |
-| a11y-capture | `/a11y-capture` | Real AT BEFORE/AFTER via trusted providers |
-| a11y-validate | `/a11y-validate` | Integrity plus independent behavior evaluation |
-| a11y-publish | `/a11y-publish` | Reviewed Draft PR/media publication |
-| agent-operations | `/agent-operations` | Progress, reconciliation, owned cleanup |
-| a11y-workflow | `/a11y-workflow` | Full gated orchestration and AgentOW handoff |
-| a11y-knowledge | `/a11y-knowledge` | Shared criteria, component review, AT/evidence and media knowledge; no MCP or resource access |
-
-## Use knowledge only
+In Copilot CLI:
 
 ```powershell
 copilot plugin marketplace add kaixun96/dev.A11yAssist
 copilot plugin install a11y-knowledge@a11y-assist
 ```
 
-Restart Copilot, then use `/a11y-knowledge`. No provider configuration or AgentOW
-installation is needed to read the knowledge. [knowledge/](knowledge/README.md)
-is the destination for the extracted AgentOW A11y references. Migration is
-copy-first: AgentOW's original files and references remain unchanged until the
-later coordinated integration and redundancy cleanup.
-Every execution plugin also bundles the same versioned snapshot and selects topics
-by trigger; the complete workflow needs no separate knowledge-plugin installation.
+Restart Copilot to load the plugin, then ask:
 
-## Install one capability
-
-The marketplace is public; no repository invitation is required. Use Copilot CLI
-with Node.js 22+ available to its plugin processes.
-
-```powershell
-copilot plugin marketplace add kaixun96/dev.A11yAssist
-copilot plugin install a11y-intake@a11y-assist
+```text
+/a11y-knowledge Review this component for potential accessibility issues.
 ```
 
-## Install the complete entrypoint
+Or ask your coding assistant:
+
+```text
+Use /a11y-knowledge to guide this component's implementation and statically
+review the generated code for accessibility issues.
+```
+
+The plugin supplies rules and read-only review guidance; your coding assistant
+remains responsible for generating or changing code. It helps identify issues
+with native semantics, accessible names, ARIA, keyboard handling, focus and
+announcements. Apply framework-specific guidance only where it fits your project.
+
+**Read-only is the default.** You do not need to repeat "do not run a browser or
+assistive technology" in every prompt. The knowledge plugin does not start a
+remediation workflow, launch browsers, operate AT or run detection tools.
+Its review is model-based source reasoning, not an automated scanner or a
+guarantee of accessibility conformance. Behavior that cannot be established from
+source remains unverified.
+
+### What knowledge is included?
+
+| Topic | Covers |
+|---|---|
+| Foundations | User impact, WCAG classification and evidence selection |
+| Component accessibility | Semantics, names/roles/states, announcements, focus, keyboard, contrast and reflow; includes an odsp-web / SPDS / Fluent profile |
+| Evidence contract | AgentOW's versioned BEFORE/AFTER artifacts, scenario identity and exact-commit binding |
+| Windows host testing | NVDA, Narrator, Voice Access, recording prerequisites and cleanup procedures |
+| PR evidence | Matched screenshots, annotations, real recordings, heading context, Voice Access overlays and media publication |
+| Persistent evaluator browser | Dedicated Chromium profile, authentication and matched screenshots |
+
+Topics are loaded by relevance, not all at once. Operational reference documents
+are knowledge, not permission to execute their commands.
+See the [knowledge index](knowledge/README.md).
+
+## Choose a plugin
+
+| Plugin / entry command | Use it for | Current availability |
+|---|---|---|
+| `a11y-knowledge` / `/a11y-knowledge` | Code-generation guidance, static review and accessibility questions | Usable without providers |
+| `a11y-intake` / `/a11y-intake` | Bug intake, acceptance criteria and canonical scenarios | Requires a qualified provider |
+| `a11y-resources` / `/a11y-resources` | Inspect shared resource ownership and readiness | Status interface; not a general acquisition tool |
+| `a11y-capture` / `/a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Requires a qualified provider |
+| `a11y-validate` / `/a11y-validate` | Evidence integrity and independent behavior evaluation | Requires a qualified provider |
+| `a11y-publish` / `/a11y-publish` | Reviewer-safe Draft PR and evidence publication | Requires a qualified provider |
+| `agent-operations` / `/agent-operations` | Durable progress, reconciliation and owned cleanup | Requires a qualified provider |
+| `a11y-workflow` / `/a11y-workflow` | Coordinate the complete evidence-first workflow | Requires qualified providers, including AgentOW integration |
+
+Each execution plugin bundles the same versioned knowledge snapshot. It reads
+those files directly; it does not need to call or separately install
+`a11y-knowledge`. The full workflow also bundles its stage tools, so installing
+all the smaller plugins is unnecessary.
+
+## Execution workflows
+
+**The execution plugins are an installable foundation, not a turnkey live
+deployment.** This repository provides the shared runtime and gates. You must
+configure and qualify the providers that actually access work items, manage
+resources, collect evidence and publish PRs. Missing providers stop execution;
+`doctor` reports configuration, not proof of a working evaluator.
+
+Supported execution setups are **Twinbot + multiple Windows DevBoxes** or
+**Copilot CLI + one/multiple Windows DevBoxes**. These host requirements do not
+apply to read-only knowledge use. Execution plugins require Node.js 22+.
+
+For the full entrypoint:
 
 ```powershell
 copilot plugin marketplace add kaixun96/dev.A11yAssist
@@ -65,88 +95,53 @@ copilot plugin marketplace add kaixun96/dev.AgentOW
 copilot plugin install agentow-copilot@agentOW
 ```
 
-The full plugin is independently packaged and exposes all stage tools. It does
-not need to load six sibling MCP servers. Install small plugins when you want
-their narrower scope. We do not assume undocumented native transitive plugin
-dependencies; `tools/install.ps1` prints the exact commands, with `-Execute`
-performing them and `-Plugin all` installing all eight.
-
-Copy a template from `config/` to a private location, fill in your shared state
-root and trusted providers, and set:
+Use a template from [config/](config/) to create your private provider
+configuration, then set its absolute path before restarting Copilot:
 
 ```powershell
 $env:A11Y_ASSIST_CONFIG = 'C:\YourPrivateDirectory\a11y-config.json'
 ```
 
-Restart Copilot to load new plugins/environment. In Twin use its **Restart
-Copilot** control only at an authorized safe point; installing files does not
-update already-running workers. Then invoke the chosen skill and its doctor.
+Read the [workflow contract](docs/WORKFLOW.md) and
+[provider setup](docs/PROVIDERS.md) before execution. Real BEFORE/AFTER evidence
+and applicable gates are mandatory; static code review is not a substitute.
 
-## Using these plugins with AgentOW
+To install one execution capability instead, use
+`copilot plugin install <plugin-name>@a11y-assist`.
+[tools/install.ps1](tools/install.ps1) can print the install commands;
+`-Execute` runs them and `-Plugin all` installs all eight packages.
 
-**Knowledge sharing and workflow execution are separate integrations.**
-This release copies knowledge into the plugin repository without switching
-AgentOW's current documentation dependencies. Pinned AgentOW consumption and
-redundancy cleanup are deferred; see [knowledge migration](docs/KNOWLEDGE.md).
-Automatic cross-host workflow execution is not implemented.
-Skills and MCP tools become available to the Copilot session that loads
-them. AgentOW does not discover or invoke this repository merely from its URL,
-and its workflows are not automatically rewritten by installing these packages.
+## Relationship with AgentOW
 
-The intended direction is:
+AgentOW is a separate plugin. **Its existing `/agentow-a11y` flow does not
+automatically call these plugins.**
 
-```text
-a11y-workflow -> qualified AgentOW provider -> /agentow-a11y (source work)
-             -> capture / validation / publication providers
-```
+Knowledge migration is currently **copy first**: the shared topics are available
+here, while AgentOW's original files, references and runtime remain unchanged.
+Cross-repository integration and redundancy cleanup are deferred until the
+complete integration is ready. Installing this repository does not switch
+AgentOW's dependencies or update existing workers.
 
-AgentOW integration can use a narrowly scoped capability's MCP tools where that
-plugin is loaded and its trusted provider is configured. A plugin installed on a
-Windows DevBox is not automatically available in a Codespace, nor does installing
-it in a Codespace grant remote DevBox control. Providers must implement the
-authorized cross-host handoff and preserve original ownership and evidence gates.
+The intended full-workflow integration keeps source work with AgentOW and real
+AT control with the Windows evidence provider. It must not recursively call
+`a11y-workflow` from an AgentOW source step or use AgentOW's unverified Draft
+fallback to bypass A11y Assist's stricter gates.
 
-Do not call the complete `a11y-workflow` recursively from an AgentOW source step.
-BEFORE/AFTER and real assistive-technology control remain with the Windows
-evaluator provider; AgentOW performs source work in its leased Codespace.
-The stricter A11y Assist contract rejects an unverified Draft PR fallback.
-See [provider integration](docs/PROVIDERS.md) and [migration gates](docs/MIGRATION.md).
+See [knowledge migration](docs/KNOWLEDGE.md) and
+[execution rollout](docs/MIGRATION.md).
 
-## Updates
+## Updates and development
 
-Repository changes are not hot-loaded into active sessions. Update installed
-plugins through the host's supported plugin manager and restart when required,
-at a safe point. Keep compatible plugin/provider versions pinned for an active
-run; do not silently upgrade its evidence or ownership state.
-See [release process](docs/RELEASING.md).
+Update plugins through your host's supported plugin manager and restart when
+required, at a safe point. A repository push does not hot-update active sessions.
+Keep the installed versions used by an active workflow pinned.
 
-## Architecture
+Source lives in `skills/`, `knowledge/`, `runtime/`, `contracts/` and `adapters/`.
+`plugins/`, the marketplace and release manifests are generated; do not hand-edit
+them. Self-contained package copies are distribution artifacts, not separate
+implementations.
 
-```text
-Twin/CLI entry -> capability plugin -> shared runtime/phase gates
-                                      |
-                            configured trusted providers
-                                      |
-                   canonical resource pool + Windows DevBoxes
-                                      |
-                         leased Codespace + AgentOW
-```
-
-Source of truth:
-
-- `skills/`: user-facing capability instructions.
-- `runtime/`, `contracts/`, `adapters/`: shared implementation.
-- `knowledge/`: indexed shared knowledge destination and generated content-hash manifest.
-- `plugins/`: generated, self-contained install units.
-- `.claude-plugin/marketplace.json`: generated marketplace.
-- `release.json`: version and shared source hashes.
-
-Read [workflow](docs/WORKFLOW.md), [provider protocol](docs/PROVIDERS.md),
-[migration plan](docs/MIGRATION.md) and [release process](docs/RELEASING.md).
-
-## Develop
-
-Node 22+; no npm runtime dependencies.
+With Node.js 22+:
 
 ```powershell
 npm run build
@@ -154,14 +149,11 @@ npm test
 npm run check
 ```
 
-Build copies shared source into each package so separately installed plugins
-never depend on repository-relative sibling paths. Generated duplication is a
-packaging artifact, not separate implementations.
+See the [release process](docs/RELEASING.md).
 
-Without Copilot, run `node runtime/cli.mjs doctor` or `create <bug>`, `status
-<run>`, `execute <run> <stage>`, `reconcile <run>`, `progress <run>`. These use
-the same gates as the MCP tools and require the same private configuration.
+## Access and license
 
-Keep credentials, tenant configuration, private scripts and production evidence
-out of this public repository. Only contribute material you are authorized to
-publish. Repository visibility does not change the terms in [LICENSE](LICENSE).
+The repository is public, but public visibility does not grant an open-source
+license; see [LICENSE](LICENSE). Access to operational services is separate.
+Do not contribute credentials, browser profiles, private environment
+configuration or production evidence.

@@ -1,7 +1,12 @@
 # A11y Assist plugins
 
-Private/internal Copilot CLI plugins for **Twinbot + multiple Windows DevBoxes**
-or **Copilot CLI + one/multiple Windows DevBoxes**.
+A public repository of modular Copilot CLI plugins for **Twinbot + multiple
+Windows DevBoxes** or **Copilot CLI + one/multiple Windows DevBoxes**.
+Install one capability or the complete workflow entrypoint.
+
+Public repository access does not grant access to Azure DevOps, Dev Center,
+Codespaces, or an evaluator pool. Those require your own authorized environment.
+Public visibility also does not grant an open-source license; see [LICENSE](LICENSE).
 
 ## v0.1 status: installable foundation, staged migration
 
@@ -27,7 +32,8 @@ working evaluator. Existing workers and their canonical pool remain untouched.
 
 ## Install one capability
 
-Repository access is required while the marketplace is private.
+The marketplace is public; no repository invitation is required. Use Copilot CLI
+with Node.js 22+ available to its plugin processes.
 
 ```powershell
 copilot plugin marketplace add kaixun96/dev.A11yAssist
@@ -59,6 +65,40 @@ $env:A11Y_ASSIST_CONFIG = 'C:\YourPrivateDirectory\a11y-config.json'
 Restart Copilot to load new plugins/environment. In Twin use its **Restart
 Copilot** control only at an authorized safe point; installing files does not
 update already-running workers. Then invoke the chosen skill and its doctor.
+
+## Using these plugins with AgentOW
+
+**Co-installation is supported; automatic AgentOW integration is not implemented
+in v0.1.** Skills and MCP tools become available to the Copilot session that loads
+them. AgentOW does not discover or invoke this repository merely from its URL,
+and its workflows are not automatically rewritten by installing these packages.
+
+The intended direction is:
+
+```text
+a11y-workflow -> qualified AgentOW provider -> /agentow-a11y (source work)
+             -> capture / validation / publication providers
+```
+
+AgentOW integration can use a narrowly scoped capability's MCP tools where that
+plugin is loaded and its trusted provider is configured. A plugin installed on a
+Windows DevBox is not automatically available in a Codespace, nor does installing
+it in a Codespace grant remote DevBox control. Providers must implement the
+authorized cross-host handoff and preserve original ownership and evidence gates.
+
+Do not call the complete `a11y-workflow` recursively from an AgentOW source step.
+BEFORE/AFTER and real assistive-technology control remain with the Windows
+evaluator provider; AgentOW performs source work in its leased Codespace.
+The stricter A11y Assist contract rejects an unverified Draft PR fallback.
+See [provider integration](docs/PROVIDERS.md) and [migration gates](docs/MIGRATION.md).
+
+## Updates
+
+Repository changes are not hot-loaded into active sessions. Update installed
+plugins through the host's supported plugin manager and restart when required,
+at a safe point. Keep compatible plugin/provider versions pinned for an active
+run; do not silently upgrade its evidence or ownership state.
+See [release process](docs/RELEASING.md).
 
 ## Architecture
 
@@ -101,5 +141,6 @@ Without Copilot, run `node runtime/cli.mjs doctor` or `create <bug>`, `status
 <run>`, `execute <run> <stage>`, `reconcile <run>`, `progress <run>`. These use
 the same gates as the MCP tools and require the same private configuration.
 
-Do not publish this repository or port private scripts/evidence without the
-applicable internal authorization. See [LICENSE](LICENSE).
+Keep credentials, tenant configuration, private scripts and production evidence
+out of this public repository. Only contribute material you are authorized to
+publish. Repository visibility does not change the terms in [LICENSE](LICENSE).

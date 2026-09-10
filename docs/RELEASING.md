@@ -9,7 +9,8 @@ seven repositories before independent release requirements exist.
 4. Review for embedded credentials, personal identifiers, machine roster,
    evidence and absolute private paths. Test fixtures must be synthetic.
 5. Commit generated packages, marketplace and release.json. Create a reviewed
-   version tag. Copilot marketplace consumers need access to this private repo.
+   version tag. The marketplace repository is public; operational platform
+   access and the repository's license terms remain separate requirements.
 6. Update through the host's supported plugin manager and restart when required.
    A git push alone does not hot-update installed/running plugins.
 7. Record package version and provider implementation hashes with each run.

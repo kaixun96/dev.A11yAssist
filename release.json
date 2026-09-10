@@ -57,7 +57,7 @@
     "contracts/plugins.json": "c3219e6885d9a5957b391df0c5015d4c03e3007126aba9345c5f07a323407b3d",
     "contracts/workflow.json": "749c518775728f89b7af3acf7cdf592756daf7cf2284ef964453e23d7c653ec6",
     "adapters/cli.mjs": "94eb4a5455a4528a8085a9dc5e87796b34718906e7fbb2b90297300312d1534a",
-    "adapters/twin.mjs": "a35841a7220cc40f4d722ae884b5872847e41795f41a03975bede3d0bcf30320",
+    "adapters/twin.mjs": "9f3288b06c581b280280e4994aa97aaf841da68a3a94174e62d7b066822e2897",
     "native/ado-attachments.d.mts": "0e68234f8714b41a926c53ce8974ae549a0a20ebb788d569076e45c3cbfaf480",
     "native/ado-attachments.mjs": "8be17d46071e10c7c704bec6dbd831b520767b68d086b879d10f2eb0d52ec194",
     "native/ado-intake.mjs": "b2646283bd1e20af8dc96bb3ca92b4513a4705d9b83b85559449225d7e6b53af",

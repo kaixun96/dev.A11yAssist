@@ -43,6 +43,15 @@ test('destination preflight is read-only and delivery rechecks the exact enabled
     });
     assert.equal(messages.length, 0);
     assert.equal(lookups, 1);
+    for (const pid of [0, -1]) {
+      await writeFile(runtimePath, JSON.stringify({ pid, port: server.address().port }));
+      await assert.rejects(checkTwinDestination(config), /Invalid Twin runtime/);
+    }
+    await assert.rejects(checkTwinDestination({ mode: 'twin', twin: {
+      conversationId: 'synthetic-scope', runtimePath: 'relative-runtime.json'
+    } }), /absolute runtime/);
+    assert.equal(lookups, 1);
+    await writeFile(runtimePath, JSON.stringify({ pid: process.pid, port: server.address().port }));
     enabled = false;
     await assert.rejects(notifyTwin(config, 'Synthetic observation'), /missing or disabled/);
     assert.equal(messages.length, 0);

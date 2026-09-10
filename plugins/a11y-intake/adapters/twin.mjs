@@ -1,14 +1,17 @@
 import { readFile } from 'node:fs/promises';
+import { isAbsolute } from 'node:path';
 
 // Only notifications/explicit safe continuation coordination use this adapter.
 // It never fabricates a human actor or rebinds a conversation.
 async function resolveTwinDestination(config) {
-  if (config.mode !== 'twin' || !config.twin?.conversationId) {
-    throw new Error('A configured Twin scope is required');
+  if (config?.mode !== 'twin' || typeof config.twin?.conversationId !== 'string' ||
+      !config.twin.conversationId.trim() || typeof config.twin.runtimePath !== 'string' ||
+      !isAbsolute(config.twin.runtimePath)) {
+    throw new Error('A configured Twin scope and absolute runtime metadata path are required');
   }
   const runtime = JSON.parse(await readFile(config.twin.runtimePath, 'utf8'));
   if (!Number.isInteger(runtime.port) || runtime.port < 1 || runtime.port > 65535 ||
-      !Number.isInteger(runtime.pid)) throw new Error('Invalid Twin runtime metadata');
+      !Number.isInteger(runtime.pid) || runtime.pid <= 0) throw new Error('Invalid Twin runtime metadata');
   process.kill(runtime.pid, 0);
   const base = `http://127.0.0.1:${runtime.port}`;
   const detailResponse = await fetch(`${base}/api/twin/conversations/${encodeURIComponent(config.twin.conversationId)}`,

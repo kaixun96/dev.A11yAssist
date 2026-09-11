@@ -167,6 +167,17 @@ must independently enforce their actual execution and cleanup budgets.
 
 ## Provider responsibility mapping
 
+`recover-media` is a narrow operations action, not the workflow cleanup stage.
+Successful receipts must match subject/evaluator/input.nativeRunId and scope
+`tracked-recorder-and-default-audio-endpoints`, set `fullCleanupVerified: false`,
+and prove `trackedRecorderExitVerified` and `defaultEndpointsVerified`.
+`recorderResult` must be `terminated` or `observed-exited`. Nonpass receipts also
+retain exact assignment/scope and require a reason. Persist the original native
+response before acknowledging completion; reconciliation must never repeat the
+native effect, reconstruct missing proof from absent state, or release resources.
+The original media credential belongs in the protected connection, not argv,
+public configuration, operation inputs or output.
+
 | Provider | Existing capability to wrap/qualify |
 |---|---|
 | intake | Authorized item/comment/attachment intake; claim only when the caller's deployment policy requires it |

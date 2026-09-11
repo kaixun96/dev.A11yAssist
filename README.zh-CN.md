@@ -77,7 +77,7 @@ copilot plugin install a11y-knowledge@a11y-assist
 | `a11y-capture` | 真实 Windows AT 的 BEFORE/AFTER 取证 | 接通获授权的 Windows 采集工具，并持有评估机使用权 |
 | `a11y-validate` | 检查已有证据；按需进行独立行为评估 | evidence-v1 结构检查可直接使用；行为评估需接通评估工具 |
 | `a11y-publish` | 面向 reviewer 的 Draft PR 和证据发布 | 接通有权限的 PR 与媒体发布工具 |
-| `agent-operations` | 按明确范围清理自有资源、核对已有操作 | 接通有权限操作指定自有资源的工具 |
+| `agent-operations` | 按明确范围清理自有资源、恢复录制进程和默认音频端点、核对已有操作 | 接通有权限操作指定自有资源的工具 |
 | `a11y-workflow` | 可选的完整证据驱动流程 | 接通所需执行工具，并选择源码实现与 review 工具 |
 
 例如，`a11y_validate_evidence` 可直接检查已有的请求/结果文件，不需要创建 Bug run

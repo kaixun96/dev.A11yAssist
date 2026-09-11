@@ -44,6 +44,12 @@ if (request.operation === 'status') {
     receipt.nativeRunId = request.input.nativeRunId;
     receipt.releaseMode = 'completed-owned-run';
   }
+  if (request.stage === 'recover-media') {
+    receipt.nativeRunId = request.input.nativeRunId;
+    receipt.recoveryScope = 'tracked-recorder-and-default-audio-endpoints';
+    receipt.recorderResult = 'observed-exited';
+    receipt.fullCleanupVerified = false;
+  }
   if (request.input.badGate) receipt.gates[request.input.badGate] = false;
   if (request.input.badHead) receipt.head = 'c'.repeat(40);
   if (request.input.badArtifact) receipt.artifacts[0].sha256 = '0'.repeat(64);

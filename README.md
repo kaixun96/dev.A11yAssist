@@ -78,7 +78,7 @@ the full workflow, an AgentOW session or unrelated earlier stages.
 | `a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Authorized Windows capture connection and owned evaluator |
 | `a11y-validate` | Check existing evidence; optionally obtain independent behavior evaluation | Evidence-v1 structural checks work directly; behavior evaluation needs an evaluation connection |
 | `a11y-publish` | Reviewer-safe Draft PR and evidence publication | Authorized PR/media publication connection |
-| `agent-operations` | Explicitly scoped cleanup and operation reconciliation | Connection authorized for the specified owned resources |
+| `agent-operations` | Explicitly scoped cleanup, tracked-media recovery and reconciliation | Connection authorized for the specified owned resources |
 | `a11y-workflow` | Optional complete evidence-first composition | Relevant execution connections plus a chosen source/review implementation |
 
 For example, call `a11y_validate_evidence` to check existing request/result files

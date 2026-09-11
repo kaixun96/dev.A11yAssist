@@ -34,7 +34,7 @@ test('each capability operates without a Bug journal, host roster, previous stag
     for (const [action, definition] of Object.entries(capabilities.operations)) {
       if (!definition.plugin) continue;
       const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, context,
-        action === 'release-evaluator' ? { nativeRunId: 'd'.repeat(32) } : {});
+        ['release-evaluator', 'recover-media'].includes(action) ? { nativeRunId: 'd'.repeat(32) } : {});
       assert.equal(result.status, 'finished');
       assert.equal(result.receipt.outcome, 'pass');
       assert.equal(result.receipt.gates.claimOwned, undefined);
@@ -75,6 +75,41 @@ test('completed evaluator release binds its native run without declaring full cl
     changed.receiptSha256 = hash(JSON.stringify(changed.receipt));
     await writeFile(path, JSON.stringify(changed));
     await assert.rejects(operationStatus(config, 'a11y-resources', 'release'), /exact requested native run/);
+  });
+});
+
+test('narrow media recovery preserves native assignment and cannot stand for whole cleanup', async () => {
+  await fixture(async (config, dir) => {
+    const input = { nativeRunId: 'd'.repeat(32) };
+    const binding = { subject: context.subject, evaluator: context.evaluator };
+    for (const invalid of [{}, { nativeRunId: 'wrong' }, { ...input, token: 'forbidden' }]) {
+      await assert.rejects(executeOperation(config, 'agent-operations', 'invalid-media', 'recover-media',
+        binding, invalid), /requires only input.nativeRunId/);
+    }
+    await assert.rejects(access(join(dir, 'operations/invalid-media')), { code: 'ENOENT' });
+    const result = await executeOperation(config, 'agent-operations', 'media', 'recover-media', binding, input);
+    assert.equal(result.receipt.fullCleanupVerified, false);
+    assert.equal(result.receipt.gates.ownedProcessesStopped, undefined);
+    assert.equal(result.receipt.gates.artifactsPreserved, undefined);
+    for (const patch of [
+      { nativeRunId: 'e'.repeat(32) }, { recoveryScope: 'all-resources' }, { fullCleanupVerified: true },
+      { subject: 'foreign' }, { evaluator: 'foreign' }, { recorderResult: 'not-present' },
+      { recorderResult: 'no-tracked-process' }, { recorderResult: null },
+      { gates: { ...result.receipt.gates, defaultEndpointsVerified: false } }
+    ]) assert.throws(() => validateCapabilityReceipt('recover-media',
+      { ...result.receipt, ...patch }, binding, input));
+    for (const outcome of ['inconclusive', 'blocked']) {
+      const receipt = { ...result.receipt, outcome, reason: 'No current observation', recorderResult: null, gates: {} };
+      validateCapabilityReceipt('recover-media', receipt, binding, input);
+      assert.throws(() => validateCapabilityReceipt('recover-media',
+        { ...receipt, nativeRunId: 'e'.repeat(32) }, binding, input), /exact original assignment/);
+    }
+    const path = join(dir, 'operations/media/operation.json');
+    const changed = JSON.parse(await readFile(path, 'utf8'));
+    changed.receipt.fullCleanupVerified = true;
+    changed.receiptSha256 = hash(JSON.stringify(changed.receipt));
+    await writeFile(path, JSON.stringify(changed));
+    await assert.rejects(operationStatus(config, 'agent-operations', 'media'), /limited scope/);
   });
 });
 

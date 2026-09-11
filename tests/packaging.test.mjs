@@ -46,7 +46,7 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
   const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
   assert.equal(marketplace.name, 'a11y-assist');
   assert.equal(marketplace.metadata.version, pkg.version);
-  assert.equal(marketplace.plugins.length, 9);
+  assert.equal(marketplace.plugins.length, 10);
   await assert.rejects(access(join(root, '.claude-plugin/marketplace.json')), { code: 'ENOENT' });
   for (const entry of marketplace.plugins) {
     const dir = join(root, entry.source);
@@ -66,7 +66,8 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
     for (const path of ['knowledge/README.md',
       ...(manifest.mcpServers ? ['docs/CAPABILITIES.md'] : []),
       ...(entry.name !== 'a11y-knowledge' ? ['integrations/agentow/knowledge/README.md'] : [])]) {
-      await access(join(dir, path));
+      const contentRoot = entry.name === 'a11y-bug-bash' ? join(dir, 'modules/a11y-knowledge') : dir;
+      await access(join(contentRoot, path));
     }
   }
 });

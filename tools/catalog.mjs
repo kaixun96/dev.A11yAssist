@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 
 const repository = 'https://github.com/kaixun96/dev.A11yAssist';
 const referenceTitles = {
+  'docs/BUG-BASH.md': { en: 'Bug Bash workflow and boundaries', zh: 'Bug Bash 流程与边界' },
+  'bug-bash/context.template.md': { en: 'Feature context template', zh: 'Feature context 模板' },
+  'bug-bash/report.template.md': { en: 'Findings and coverage report template', zh: '问题与覆盖率报告模板' },
+  'modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md': { en: 'Reused internal knowledge review', zh: '内部复用的知识审查' },
+  'modules/a11y-knowledge/integrations/agentow/knowledge/README.md': { en: 'Included project knowledge', zh: '随包项目知识' },
   'skills/a11y-knowledge-odsp/SKILL.md': { en: 'Built-in ODSP submodule', zh: '内置 ODSP 子模块' },
   'knowledge/README.md': { en: 'General accessibility topics', zh: '通用无障碍知识' },
   'integrations/agentow/knowledge/README.md': { en: 'Project knowledge index', zh: '项目知识索引' },
@@ -19,7 +24,7 @@ const labels = {
     language: '[简体中文](README.zh-CN.md)',
     intro: 'Pick the accessibility plugin you need, install it in Copilot CLI, and use it in your own workflow. You do not need the whole suite.',
     choose: 'Choose a plugin',
-    groups: { knowledge: 'Knowledge and static review', capability: 'Individual capabilities', workflow: 'Optional complete workflow', compatibility: 'Existing installations only' },
+    groups: { discovery: 'Feature bug bash', knowledge: 'Knowledge and static review', capability: 'Individual capabilities', workflow: 'Optional complete workflow', compatibility: 'Existing installations only' },
     columns: '| Plugin and instructions | What it does | What you need |',
     install: 'Install your selection',
     installation: 'Register this marketplace once, then install only your chosen plugin:',
@@ -46,7 +51,7 @@ const labels = {
     language: '[English](README.md)',
     intro: '挑选需要的无障碍插件，安装到 Copilot CLI，在你自己的工作流里使用。无需安装整套插件。',
     choose: '挑选插件',
-    groups: { knowledge: '知识与静态审查', capability: '单项能力', workflow: '可选的完整工作流', compatibility: '仅兼容已有安装' },
+    groups: { discovery: 'Feature Bug Bash', knowledge: '知识与静态审查', capability: '单项能力', workflow: '可选的完整工作流', compatibility: '仅兼容已有安装' },
     columns: '| 插件与使用说明 | 解决什么问题 | 使用前提 |',
     install: '安装你选中的插件',
     installation: '先注册一次插件市场，再安装你选中的插件：',
@@ -75,7 +80,7 @@ export function validateCatalog(catalog, names) {
   assert(Array.isArray(catalog) && catalog.length === names.length, 'Catalog must cover every plugin');
   assert.deepEqual(catalog.map(entry => entry.name).sort(), [...names].sort(), 'Catalog names must match installable plugins');
   for (const entry of catalog) {
-    assert(['knowledge', 'capability', 'workflow', 'compatibility'].includes(entry.group), `Invalid catalog group: ${entry.name}`);
+    assert(['discovery', 'knowledge', 'capability', 'workflow', 'compatibility'].includes(entry.group), `Invalid catalog group: ${entry.name}`);
     assert(Array.isArray(entry.docs) && entry.docs.length, `Missing reference links: ${entry.name}`);
     for (const path of entry.docs) {
       assert(/^[a-zA-Z0-9._/-]+\.md$/.test(path) && !path.startsWith('/') && !path.split('/').includes('..'),

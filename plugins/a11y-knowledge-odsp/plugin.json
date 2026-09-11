@@ -1,7 +1,7 @@
 {
   "name": "a11y-knowledge-odsp",
   "description": "Compatibility installation for existing ODSP knowledge users. New users install a11y-knowledge, which includes this read-only submodule and all references.",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "author": {
     "name": "kaixun96"
   },

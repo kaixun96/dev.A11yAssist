@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.13.0",
+  "version": "0.14.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -11,17 +11,18 @@
     "agent-operations",
     "a11y-workflow",
     "a11y-knowledge",
-    "a11y-knowledge-odsp"
+    "a11y-knowledge-odsp",
+    "a11y-bug-bash"
   ],
   "knowledge": {
     "manifest": "src/knowledge/manifest.json",
-    "sha256": "76b4b86bdf263c4b3a9278679fb523932e2902957fe55d85ba4fe6cea7143b53"
+    "sha256": "3804bc365b8b0a6ef53f8405de496e0a26fa882b9468ad3bfef54d40eec17a2d"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "f9405380ddd5066b82ca8029cee0d5622640457061ed16f6bd5d43143323b508",
+      "sha256": "a2c53ab63320eea02673ec1036896296f1d4ecdb19376f5e18161e4b4df101ac",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -31,7 +32,8 @@
         "agent-operations",
         "a11y-workflow",
         "a11y-knowledge",
-        "a11y-knowledge-odsp"
+        "a11y-knowledge-odsp",
+        "a11y-bug-bash"
       ]
     }
   ],

@@ -40,7 +40,7 @@ test('knowledge is indexed, versioned and bound to the release', async () => {
     assert(topic.trigger && topic.scope);
     assert.equal(manifest.hashes[topic.file], digest(await text(join(root, 'src/knowledge', topic.file))));
   }
-  for (const name of [...Object.keys(plugins), 'a11y-knowledge']) {
+  for (const name of [...Object.keys(plugins), 'a11y-knowledge', 'a11y-bug-bash']) {
     assert(index.consumers[name]?.length);
     assert(index.consumers[name].every(file => files.has(file)));
   }
@@ -97,7 +97,7 @@ test('every independently copied plugin retains a complete offline knowledge sna
 
 test('marketplace exposes knowledge separately without making it an execution capability', async () => {
   const marketplace = await load(join(root, '.github/plugin/marketplace.json'));
-  assert.equal(marketplace.plugins.length, 9);
+  assert.equal(marketplace.plugins.length, 10);
   assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge').length, 1);
   assert.equal(plugins['a11y-knowledge'], undefined);
   assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge-odsp').length, 1);
@@ -116,7 +116,7 @@ test('original references survive unchanged and include the unified knowledge co
   assert.equal(profile.migrationStage, 'copy-first-original-agentow-files-retained');
   assert.deepEqual(profile.consumers['a11y-knowledge'], profile.consumers['a11y-knowledge-odsp']);
   assert.equal(release.integrations[0].sha256, digest(await text(join(root, release.integrations[0].manifest))));
-  assert.deepEqual(release.integrations[0].plugins, [...Object.keys(plugins), 'a11y-knowledge', 'a11y-knowledge-odsp']);
+  assert.deepEqual(release.integrations[0].plugins, [...Object.keys(plugins), 'a11y-knowledge', 'a11y-knowledge-odsp', 'a11y-bug-bash']);
   const legacyTopics = profile.topics.filter(topic => profile.preservedSnapshot.hashes[topic.file]);
   assert.equal(legacyTopics.length, 6);
   assert.equal(profile.topics.length, 9);

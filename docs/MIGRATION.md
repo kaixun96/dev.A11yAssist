@@ -2,6 +2,15 @@
 
 ## Current delivery
 
+v0.14 adds the independently installable `a11y-bug-bash` discovery framework.
+It plans from feature context and verification steps, coordinates available
+authorized page tools and reuses the exact knowledge skills internally for
+read-only source review. It reports runtime findings, source risks and coverage
+gaps separately. There is no new browser/scanner/AT runtime, automatic filing or
+remediation. Ten package names are installable; the helper's `all` selects nine
+non-compatibility packages. Existing protocols, exports and workers are unchanged.
+See [the framework and usage](BUG-BASH.md).
+
 v0.13 makes `a11y-knowledge` the single recommended knowledge installation.
 It includes the ODSP subskill and complete preserved project references; matching
 SPDS/Fluent/SharePoint questions route there, while unrelated projects use generic

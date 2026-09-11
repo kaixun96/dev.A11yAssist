@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.11.0",
+  "version": "0.11.1",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -15,13 +15,13 @@
   ],
   "knowledge": {
     "manifest": "knowledge/manifest.json",
-    "sha256": "08f07b73d70b912d4841ef3ef9151d09de59ae9e6342a1918ba111e4c82755e3"
+    "sha256": "81ff0792e97f754619f7f981f3efe106cadeb5088479ac330d0cb41ae7fd3af6"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "a3f18249c6c53e6d5a93e75c401e973bb55bbaeb2b7aa00371774b65afa28a6b",
+      "sha256": "02b22109d83b7b264350cacd8f8da72fc1c8cc83e8fdb6fdd31af43d4b97f8d1",
       "plugins": [
         "a11y-intake",
         "a11y-resources",

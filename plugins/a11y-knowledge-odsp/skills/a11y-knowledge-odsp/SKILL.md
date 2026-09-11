@@ -3,7 +3,9 @@ name: a11y-knowledge-odsp
 description: Read-only accessibility guidance for SPDS, Fluent V8/V9 and SharePoint/ODSP, including complete original references and source coverage.
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/integrations/agentow/knowledge/README.md`, then the
+Resolve bundled paths from the plugin root, two directories above this SKILL.md,
+not the user's working directory.
+Read `integrations/agentow/knowledge/README.md`, then the
 matching complete source documents routed by `fluent-spds.md`, `sharepoint.md`
 or `complete-source-guide.md`. Use `knowledge/README.md` for generic principles.
 All references are bundled; do not require AgentOW, another plugin, a provider,

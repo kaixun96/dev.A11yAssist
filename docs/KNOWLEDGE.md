@@ -19,6 +19,12 @@ New questions follow `complete-source-guide.md`, not a stale compatibility body.
 Neither snapshot claims to mirror external product APIs or private ODSP source.
 Domain knowledge is distinct from workflow authorization.
 
+Preserved source bodies and their provenance may contain historical Claude
+names, manifest paths or command examples. They remain reference data, not
+current launch instructions. Active package manifests, MCP launch paths and
+skill entrypoints use Copilot/neutral conventions; do not rewrite an immutable
+source body or its hash to apply an active packaging change.
+
 The document migration remains **copy first, retain compatibility**. AgentOW's
 original documents and orchestration are retained. The shared evidence validator
 has a separate explicit, pinned runtime-consumer path; that does not authorize

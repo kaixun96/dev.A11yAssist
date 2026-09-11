@@ -3,7 +3,9 @@ name: a11y-knowledge
 description: Guide code generation and perform read-only static accessibility review for any project. Check semantics, names/roles/states, keyboard/focus, forms, dynamic content and visual styles without running scanners, browsers or assistive technology.
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/knowledge/README.md` and `knowledge/foundations.md`,
+Resolve bundled paths from the plugin root, two directories above this SKILL.md,
+not the user's working directory.
+Read `knowledge/README.md` and `knowledge/foundations.md`,
 then select only the complete topics relevant to the supplied code or request.
 
 Default to read-only source inspection. Use supplied snippets and, when available,

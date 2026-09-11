@@ -1,6 +1,6 @@
 {
   "name": "a11y-resources",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Shared DevBox/Codespace ownership, health and scoped resource operations.",
   "author": {
     "name": "kaixun96"
@@ -10,7 +10,7 @@
     "a11y_resources": {
       "command": "node",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "${PLUGIN_ROOT}/runtime/mcp.mjs",
         "a11y-resources"
       ]
     }

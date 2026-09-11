@@ -8,7 +8,7 @@
       "targets": [
         "copilot/skills/ow-a11y-host-setup/scripts/setup-windows-a11y.ps1"
       ],
-      "sha256": "f12b5ae77fd1b3c3d17efd34943cd0692684da5e535ee12189fdeac56e8cabab"
+      "sha256": "c4e8f8a343e63e4c279c4f867aab94b47c4a8df9a0158bfe53e15b9dc3e631e0"
     },
     {
       "source": "integrations/agentow/runtime/personal-evaluator-browser.py",

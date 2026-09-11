@@ -32,17 +32,22 @@ parallel registry, or use capture as an installation/recovery transport.
 
 ## 2. Check and plan
 
-Run `Probe` using the documentation's private-path recipe. Save the raw inventory
+Select the required profiles from `setup/profiles.json` first. Run `Probe` with
+their explicit `-Dependency` array using the documentation's private-path recipe,
+not the legacy full-inventory default. Save the raw inventory
 separately from the report. Inspect actual Copilot plugins/MCP connections and
 their versions with the available host tools; a file, marketplace registration,
 process or historical scenario boolean is not a callable connection.
 
-Select only the required profiles from `setup/profiles.json`. For each dependency
+For each selected dependency
 record installed version/path, missing installation, missing configuration,
 missing authorization, restart-required, or runtime-unverified. Record optional
 scanner, Narrator/ETW and capture/validate connections separately; the bundled
 installer does not install these automatically. No unrelated audio or Voice
 Access requirement may block browser-only work.
+Treat `probeScope.unrequestedDependencies` and `assessment: not-requested` as
+unassessed, not missing or installed. Do not launch unrelated version probes
+or expand permissions to make an unrelated tool pass.
 
 In check mode, stop with the plan/report: do not install packages, copy the
 browser helper, open a browser/AT, change NVDA settings, accept agreements,
@@ -86,7 +91,8 @@ or automatic MCP-to-MCP connection is introduced by this plugin.
 
 ## 4. Re-probe, qualify and hand back
 
-Re-run Probe after changes and after each manual step/restart. Preserve separate
+Re-run Probe with the same selected dependencies after changes and after each
+manual step/restart. Preserve separate
 raw reports and actual exit codes. Do not interpret `scenarios.*` booleans as
 live readiness: the inherited probe uses legacy browser assumptions and cannot
 prove Chromium launch, current target authentication, AT output or audio behavior.

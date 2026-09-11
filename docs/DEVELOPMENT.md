@@ -11,7 +11,7 @@ Keep migration history and implementation details off the main selection path.
 |---|---|
 | `src/catalog.json` | Single catalog for both homepages and all plugin READMEs |
 | `src/skills/`, `src/knowledge/` | Authored instructions and generic reference topics |
-| `src/bug-bash/` | Feature discovery context/coverage/report templates, not another rule engine |
+| `src/bug-bash/` | Feature discovery templates and opt-in disposable fixture qualification, not a rule engine |
 | `src/setup/` | Scenario-scoped dependency profiles and readiness report |
 | `src/runtime/`, `src/contracts/`, `src/adapters/`, `src/native/` | Shared implementation |
 | `src/integrations/` | Integration-specific executable source |
@@ -45,6 +45,9 @@ every installable plugin and that all bundled reference targets exist. Tests
 check standalone packages, navigation, read-only boundaries and compatibility
 exports. `npm run check` rejects generated drift, including homepages and READMEs.
 No dependency installation is needed for the existing built-in Node test runner.
+Fixture request/host-gate tests also use Python 3, but never import Playwright or
+open a browser. Actual fixture qualification is separately authorized Windows
+evaluator work, not a headless CI test or a controller-side shortcut.
 
 Use `npm run doctor` for source-level configuration diagnostics, or the installed
 plugin's own doctor tool. Neither replaces live qualification.

@@ -15,6 +15,9 @@ certification service. No sibling plugin is required.
 - A staged skill that coordinates page inspection and read-only source review.
 - The same setup skill, profiles and shared host installer as `a11y-setup`,
   privately bundled under `modules/a11y-setup/` for environment preparation.
+- An opt-in disposable browser fixture runner for qualifying the page-observation
+  path, with healthy controls and deliberately broken variants. It is not a
+  generic product scanner, AT recorder or replacement for the supplied feature.
 
 The internal module has no plugin manifest and is not a nested installed plugin.
 Its skills are read as instructions for the source-review substep, not registered
@@ -85,10 +88,57 @@ automatic MCP-to-MCP calls or prerequisites for source review. In particular:
   Missing AT blocks AT rows, not unrelated browser observations. Mark the
   uncovered scope explicitly rather than assuming success or disabling all work.
 
-No runtime adapters are newly implemented or qualified by this framework.
+No generic product runtime adapter is implemented or qualified by this framework.
 Connected execution capabilities retain their existing configuration/protocol
 requirements; see [providers](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/PROVIDERS.md). No live feature has been evaluated
 merely by installing this package.
+
+### Opt-in disposable fixture qualification
+
+Use this only when explicitly asked to qualify the tooling on an owned Windows
+evaluator, not as a substitute for a user's feature. The bundled
+`bug-bash/fixture_runner.py` needs the setup module's browser prerequisites:
+Python, Playwright and its installed Chromium. It opens one **headed**, isolated
+browser, loads only `bug-bash/dialog-form.html` and blocks other page requests.
+It never borrows an authenticated profile, files a Bug, installs dependencies or
+touches product data. The caller must obtain actual exclusive execution authority
+before starting it; setup/recovery ownership is not that authority.
+
+Save this request in a private file:
+
+```json
+{
+  "schemaVersion": 1,
+  "taskId": "my-fixture-qualification",
+  "fixture": "dialog-form-v1",
+  "repetitions": 2
+}
+```
+
+From the installed plugin root, with real paths outside the plugin/repository:
+
+```powershell
+python -B .\bug-bash\fixture_runner.py --request C:\private\request.json --validate-only
+python -B .\bug-bash\fixture_runner.py --request C:\private\request.json --output C:\private\unique-run
+```
+
+Request validation never imports Playwright or opens a browser. Execution accepts
+only this fixed fixture and 1-3 repetitions, refuses Codespaces/non-Windows hosts,
+and refuses an existing `fixture` output directory. An interruption preserves the
+original directory and row states: reconcile the original operation and cleanup
+before authorizing another run; never delete the marker to replay unknown effects.
+
+`fixture/report.json` accounts for every planned row, observed focus/DOM values,
+exact keyboard steps, screenshot/ARIA-snapshot paths and hashes, tool versions
+and source hashes. Partial rows remain explicit on errors. The runner closes only
+its own browser. A fixture qualification **passed** result means the healthy
+controls and deliberately broken variants behaved as expected, not accessibility
+conformance or a completed feature Bug Bash. The seeded defects are not product
+bugs. Source review, real AT, scanner, contrast and zoom/reflow remain separate
+checks/gaps; combine the observations with the normal report template.
+
+This opt-in harness requires a live dedicated-host pilot before claiming runtime
+qualification; its packaging and request tests alone provide no such evidence.
 
 ## Coverage and evidence
 

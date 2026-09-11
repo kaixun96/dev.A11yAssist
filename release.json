@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.9.0",
+  "version": "0.10.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -14,13 +14,13 @@
   ],
   "knowledge": {
     "manifest": "knowledge/manifest.json",
-    "sha256": "8b250cc168a8ee0976f0af725d6a4a00bb71516365fc29440d33ba9952a0f946"
+    "sha256": "0b7d2b2ba8069b95f939fa6d7c327157273249ef99e46a0845c658de41ed4f9b"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "7531c80aabb021b7b2f6141a3385ece2035ff4625ff1319f713ccdc76ce8913c",
+      "sha256": "61af77027b76091821b2036dc650a6adb16416a29ff0b567f286538b94db7616",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -45,7 +45,7 @@
   ],
   "hashes": {
     "runtime/builtin-ado.mjs": "0c6c559936b24c4549f30484d79bd4620acf2d3b9046d89d9c60371fee73bfda",
-    "runtime/capability.mjs": "c2449d03c2ae45c1152754953d42ca5f97e11f6510a0e3d510128f62aefe0c08",
+    "runtime/capability.mjs": "df5483a0dd47bc3b599c6989acc726c121d495f4a77f17ae3e63864c29764bcc",
     "runtime/cli.mjs": "be6b9b977ab6ff801b47a998db47fd9d11e668a72633c9846b92daee4e5adf46",
     "runtime/core.mjs": "33070030f70fd88fc087d6f25a1404407a39c6a689813bbb1a0291d82c358368",
     "runtime/evidence-files.mjs": "fe5d5a59e7a953ed838777aef2b8923f5f8f3b7b3503b5d349d169744a23877f",
@@ -54,7 +54,7 @@
     "runtime/operations.mjs": "7ac8aac89de65c849a3dee9aaa18aa97d0bb42cf619d9a307b68bf210dd4297c",
     "runtime/profiles.mjs": "635cb32b7f7d2e26d7f975fbe622727a2d8f35fc9aa82e83b91f8d31aaeedb2d",
     "runtime/waiting.mjs": "364bfb314e9ccd459365741d857b281f00362a8bc9562d1ce64c5d30c23ce893",
-    "contracts/capabilities.json": "4d4750caa876e2a6e568092d690fe01326c22f0d11edbbeae9c8f0ba60c05022",
+    "contracts/capabilities.json": "71080653d8214337bedda2a33a0063de9cd950b40500e560f43c1cc91e9f11b8",
     "contracts/plugins.json": "c3219e6885d9a5957b391df0c5015d4c03e3007126aba9345c5f07a323407b3d",
     "contracts/workflow.json": "b955a2dd96718dbaea236888a040124d33daae1d78c2cc420826ba8b23d8aaa3",
     "adapters/cli.mjs": "612cb28a5c94f31bf27e6afeb5c4b33d77c6ebcf16272baf567abd0503ea076a",

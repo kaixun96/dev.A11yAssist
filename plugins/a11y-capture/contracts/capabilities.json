@@ -3,6 +3,7 @@
   "operations": {
     "release-evaluator": {"plugin": "a11y-resources", "provider": "resources", "context": ["subject", "evaluator"], "gates": ["completedRunMatched", "leaseReleased"]},
     "recover-media": {"plugin": "agent-operations", "provider": "operations", "context": ["subject", "evaluator"], "gates": ["trackedRecorderExitVerified", "defaultEndpointsVerified"]},
+    "recover-nvda": {"plugin": "agent-operations", "provider": "operations", "context": ["subject", "evaluator"], "gates": ["startedProcessExitVerified"]},
     "read-item": {"plugin": "a11y-intake", "provider": "intake", "context": ["subject"], "gates": ["itemRead", "commentsFetched", "attachmentsIndexed"]},
     "attach-evidence": {"plugin": "a11y-publish", "provider": "publish", "context": ["head"], "gates": ["exactHeadMatched", "draftPrVerified", "artifactsUploaded", "noPrComments"]},
     "intake": {"plugin": "a11y-intake", "provider": "intake", "context": ["subject"], "gates": ["itemRead", "commentsReviewed", "attachmentsReviewed", "acceptanceDefined"]},

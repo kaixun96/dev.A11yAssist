@@ -50,6 +50,13 @@ if (request.operation === 'status') {
     receipt.recorderResult = 'observed-exited';
     receipt.fullCleanupVerified = false;
   }
+  if (request.stage === 'recover-nvda') {
+    receipt.nativeRunId = request.input.nativeRunId;
+    receipt.recoveryScope = 'started-main-process';
+    receipt.processResult = 'observed-exited';
+    receipt.recoveryBasis = 'original-stop-result';
+    receipt.fullCleanupVerified = false;
+  }
   if (request.input.badGate) receipt.gates[request.input.badGate] = false;
   if (request.input.badHead) receipt.head = 'c'.repeat(40);
   if (request.input.badArtifact) receipt.artifacts[0].sha256 = '0'.repeat(64);

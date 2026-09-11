@@ -167,6 +167,20 @@ must independently enforce their actual execution and cleanup budgets.
 
 ## Provider responsibility mapping
 
+`recover-nvda` connects only the original recorded NVDA main process. Its receipt
+binds subject/evaluator/input.nativeRunId, scope `started-main-process`,
+`fullCleanupVerified: false`, and `startedProcessExitVerified`. Report the actual
+`processResult` (`terminated` or `observed-exited`) and `recoveryBasis`
+(`stopped-now` or `original-stop-result`); reading prior stop proof is not a new
+stop. Preserve the original native response before acknowledging success.
+Ownership, source and original execution identity belong to the protected
+connection, not caller-supplied process targets. Missing original binding,
+uncompleted/busy assignments and unknown stop results cannot authorize adoption,
+worker takeover or execution replay. The original completed-assignment guard and
+native controller are reused; this action is not a new resource allocator or
+general cleanup implementation. Reconciliation observes the existing operation
+result only, without another native invocation.
+
 `recover-media` is a narrow operations action, not the workflow cleanup stage.
 Successful receipts must match subject/evaluator/input.nativeRunId and scope
 `tracked-recorder-and-default-audio-endpoints`, set `fullCleanupVerified: false`,

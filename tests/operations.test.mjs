@@ -34,7 +34,7 @@ test('each capability operates without a Bug journal, host roster, previous stag
     for (const [action, definition] of Object.entries(capabilities.operations)) {
       if (!definition.plugin) continue;
       const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, context,
-        ['release-evaluator', 'recover-media'].includes(action) ? { nativeRunId: 'd'.repeat(32) } : {});
+        ['release-evaluator', 'recover-media', 'recover-nvda'].includes(action) ? { nativeRunId: 'd'.repeat(32) } : {});
       assert.equal(result.status, 'finished');
       assert.equal(result.receipt.outcome, 'pass');
       assert.equal(result.receipt.gates.claimOwned, undefined);
@@ -110,6 +110,41 @@ test('narrow media recovery preserves native assignment and cannot stand for who
     changed.receiptSha256 = hash(JSON.stringify(changed.receipt));
     await writeFile(path, JSON.stringify(changed));
     await assert.rejects(operationStatus(config, 'agent-operations', 'media'), /limited scope/);
+  });
+});
+
+test('NVDA recovery accepts only its original assignment and narrow exit proof', async () => {
+  await fixture(async (config, dir) => {
+    const input = { nativeRunId: 'd'.repeat(32) };
+    const binding = { subject: context.subject, evaluator: context.evaluator };
+    for (const invalid of [{}, { nativeRunId: 'wrong' }, { ...input, processId: 42 },
+      { ...input, token: 'forbidden' }, { ...input, contextPath: 'caller-selected' }]) {
+      await assert.rejects(executeOperation(config, 'agent-operations', 'invalid-nvda', 'recover-nvda',
+        binding, invalid), /requires only input.nativeRunId/);
+    }
+    await assert.rejects(access(join(dir, 'operations/invalid-nvda')), { code: 'ENOENT' });
+    const result = await executeOperation(config, 'agent-operations', 'nvda', 'recover-nvda', binding, input);
+    assert.equal(result.receipt.fullCleanupVerified, false);
+    assert.equal(result.receipt.gates.ownedProcessesStopped, undefined);
+    for (const patch of [
+      { nativeRunId: 'e'.repeat(32) }, { recoveryScope: 'all-processes' }, { fullCleanupVerified: true },
+      { subject: 'foreign' }, { evaluator: 'foreign' }, { processResult: 'not-present' },
+      { recoveryBasis: 'guessed' }, { gates: {} }
+    ]) assert.throws(() => validateCapabilityReceipt('recover-nvda',
+      { ...result.receipt, ...patch }, binding, input));
+    for (const recoveryBasis of ['stopped-now', 'original-stop-result']) {
+      validateCapabilityReceipt('recover-nvda', { ...result.receipt, recoveryBasis }, binding, input);
+    }
+    const receipt = { ...result.receipt, outcome: 'inconclusive', reason: 'Missing original binding', gates: {} };
+    validateCapabilityReceipt('recover-nvda', receipt, binding, input);
+    assert.throws(() => validateCapabilityReceipt('recover-nvda', { ...receipt, nativeRunId: 'e'.repeat(32) },
+      binding, input), /exact original assignment/);
+    const path = join(dir, 'operations/nvda/operation.json');
+    const changed = JSON.parse(await readFile(path, 'utf8'));
+    changed.receipt.recoveryScope = 'all-processes';
+    changed.receiptSha256 = hash(JSON.stringify(changed.receipt));
+    await writeFile(path, JSON.stringify(changed));
+    await assert.rejects(operationStatus(config, 'agent-operations', 'nvda'), /limited scope/);
   });
 });
 

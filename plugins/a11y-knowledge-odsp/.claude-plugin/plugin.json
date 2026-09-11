@@ -1,0 +1,9 @@
+{
+  "name": "a11y-knowledge-odsp",
+  "description": "Read-only SPDS, Fluent V8/V9 and SharePoint accessibility knowledge with a complete traceable AgentOW source snapshot; no execution or AgentOW dependency.",
+  "version": "0.11.0",
+  "author": {
+    "name": "kaixun96"
+  },
+  "license": "Microsoft Internal"
+}

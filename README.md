@@ -59,9 +59,30 @@ repository or coding-workflow dependency is assumed. Examples use standard web
 markup; apply platform equivalents only when their actual contracts are known.
 See the [knowledge index](knowledge/README.md).
 
-The knowledge-only package does not include AgentOW protocols, host setup or
-PR-publication instructions. Those retained execution references live separately
-in [integrations/agentow/](integrations/agentow/README.md).
+The generic knowledge-only package does not include project or operational rules.
+
+### SPDS, Fluent V8/V9 and SharePoint knowledge
+
+Use the independent read-only project knowledge package:
+
+```powershell
+copilot plugin install a11y-knowledge-odsp@a11y-assist
+```
+
+After restarting Copilot, use `/a11y-knowledge-odsp` for the actual component stack.
+It includes generic foundations plus the complete original project references:
+SPDS/Fluent component and MessageBar contracts, V8/V9 focus/announcements,
+component selection and composition, SharePoint utilities and page/canvas focus,
+themes, import routes, review rules and the original A11y reference context.
+It requires **no AgentOW, provider, DevBox or execution workflow**.
+
+See the [project knowledge entrypoint](integrations/agentow/knowledge/README.md),
+[complete source map](integrations/agentow/knowledge/complete-source-guide.md)
+and [per-file coverage/exclusions](integrations/agentow/knowledge/source-inventory.json).
+This is a pinned full-source snapshot, not just the earlier six selected documents.
+Operational instructions and source code in the archive are inert references;
+the knowledge skill does not execute them. No original AgentOW files were removed,
+no live consumer was switched, and external product documentation is not mirrored.
 
 ## Use capabilities inside your own workflow
 
@@ -73,6 +94,7 @@ the full workflow, an AgentOW session or unrelated earlier stages.
 | Plugin | Use it for | Prerequisites |
 |---|---|---|
 | `a11y-knowledge` | Code-generation guidance, static review and accessibility questions | Usable without providers |
+| `a11y-knowledge-odsp` | SPDS, Fluent V8/V9 and SharePoint-specific static guidance with complete source references | Read-only; no AgentOW, providers or workflow |
 | `a11y-intake` | Work-item intake, acceptance criteria and scenarios | An authorized work-item tool connection |
 | `a11y-resources` | Inspect resource ownership/readiness or release one completed evaluator assignment | Explicit owner-bound connection; not general acquisition or full cleanup |
 | `a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Authorized Windows capture connection and owned evaluator |

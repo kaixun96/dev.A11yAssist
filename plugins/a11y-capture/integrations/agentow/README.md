@@ -3,12 +3,14 @@
 This directory preserves the existing AgentOW-specific documentation separately
 from the generic static-accessibility knowledge.
 
-- [Operational and project references](knowledge/README.md)
+- [SPDS, Fluent V8/V9, SharePoint and complete original references](knowledge/README.md)
+- [Whole-tree migration inventory and exclusions](knowledge/source-inventory.json)
 - [Import provenance and execution-topic routing](knowledge/index.json)
 
-It is not another plugin or an automatic integration. Execution packages include
-these references to retain their existing instructions. The independently
-installable `a11y-knowledge` package excludes this entire directory.
+This directory is not an automatic execution integration. Execution packages and
+the read-only `a11y-knowledge-odsp` package bundle the same references. Static
+project knowledge requires no AgentOW workflow. The independently installable
+generic `a11y-knowledge` package still excludes this entire directory.
 
 AgentOW's orchestration and original document bodies are retained. The shared
 validator has the explicit runtime-consumer path below; remaining dependency

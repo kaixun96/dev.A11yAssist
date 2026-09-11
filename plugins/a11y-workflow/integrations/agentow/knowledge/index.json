@@ -2,6 +2,11 @@
   "schemaVersion": 1,
   "migrationStage": "copy-first-original-agentow-files-retained",
   "scope": "agentow-execution-integration",
+  "snapshotInventory": "source-inventory.json",
+  "knowledgePlugin": {
+    "name": "a11y-knowledge-odsp",
+    "description": "Read-only SPDS, Fluent V8/V9 and SharePoint accessibility knowledge with a complete traceable AgentOW source snapshot; no execution or AgentOW dependency."
+  },
   "origin": {
     "repository": "kaixun96/dev.AgentOW",
     "commit": "aedfe50402acf7d314cab285b786a7a4d64cdeb5"
@@ -20,6 +25,21 @@
     }
   },
   "topics": [
+    {
+      "file": "complete-source-guide.md",
+      "trigger": "Looking for any original AgentOW accessibility knowledge, source provenance, coverage or an omitted reference.",
+      "scope": "Current complete snapshot routing and explicit exclusions; the six v0.2 bodies below are legacy compatibility references."
+    },
+    {
+      "file": "fluent-spds.md",
+      "trigger": "Implementing or reviewing SPDS or Fluent V8/V9 component semantics, composition, announcements, focus, theme or component selection.",
+      "scope": "Complete component and design-system source references, applied only to the actual library/version/project."
+    },
+    {
+      "file": "sharepoint.md",
+      "trigger": "SharePoint/ODSP announcements, page/canvas focus, component import paths, theme, drag/drop, content checks or review rules.",
+      "scope": "Project-specific static knowledge; no resource, workflow or execution prerequisite."
+    },
     {
       "file": "foundations.md",
       "trigger": "Classifying user impact, selecting criteria or distinguishing real AT from supporting diagnostics.",
@@ -64,6 +84,7 @@
     "a11y-validate": ["foundations.md", "evidence-contract.md", "pr-evidence-capture-guide.md"],
     "a11y-publish": ["pr-evidence-capture-guide.md"],
     "agent-operations": ["windows-host-testing.md"],
-    "a11y-workflow": ["foundations.md", "component-accessibility.md", "evidence-contract.md", "windows-host-testing.md", "pr-evidence-capture-guide.md", "personal-evaluator-browser.md"]
+    "a11y-workflow": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md", "foundations.md", "component-accessibility.md", "evidence-contract.md", "windows-host-testing.md", "pr-evidence-capture-guide.md", "personal-evaluator-browser.md"],
+    "a11y-knowledge-odsp": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md"]
   }
 }

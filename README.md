@@ -78,12 +78,17 @@ the full workflow, an AgentOW session or unrelated earlier stages.
 | `a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Authorized Windows capture connection and owned evaluator |
 | `a11y-validate` | Check existing evidence; optionally obtain independent behavior evaluation | Evidence-v1 structural checks work directly; behavior evaluation needs an evaluation connection |
 | `a11y-publish` | Reviewer-safe Draft PR and evidence publication | Authorized PR/media publication connection |
-| `agent-operations` | Explicitly scoped cleanup, tracked-media recovery and reconciliation | Connection authorized for the specified owned resources |
+| `agent-operations` | Explicitly scoped cleanup, tracked-media/NVDA-instance recovery and reconciliation | Connection authorized for the specified owned resources |
 | `a11y-workflow` | Optional complete evidence-first composition | Relevant execution connections plus a chosen source/review implementation |
 
 For example, call `a11y_validate_evidence` to check existing request/result files
 without creating a Bug run or configuring an external service. It validates the
 artifact contract, not the media's actual behavior.
+
+**v0.10 scoped NVDA connection:** `recover-nvda` reuses the original controller
+for one recorded main process, or reads its prior stop result without stopping
+again. No new startup engine or full-cleanup claim; unsupported interrupted or
+unrecorded runs fail explicitly. See [the exact boundary](docs/CAPABILITIES.md#scoped-nvda-recovery-v010).
 
 **v0.7 local artifact checking:** explicitly supply `artifactRoot` (and
 `baselineArtifactRoot` for verify) to hash every root-relative evidence file.

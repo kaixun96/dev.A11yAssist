@@ -2,6 +2,16 @@
 
 ## Current delivery
 
+v0.10 connects scoped `recover-nvda` through the shared independent operation
+implementation and small/full packages. It reuses the original owned-instance
+controller and completed-assignment authorization, without redesigning startup
+or broadening cleanup. Its main-process-only receipt distinguishes a new stop
+from reading the original stop result. Busy/incomplete workers, missing original
+identity, legacy runs and unknown effects are unsupported rather than additional
+recovery prerequisites to build around. Existing capture defaults, native/evidence
+exports and AgentOW pins remain unchanged. This source connection does not deploy
+anything, qualify real AT or complete general cleanup.
+
 v0.9 adds explicitly scoped `recover-media` to the shared independent operation
 implementation and both small/full packages. Its exact assignment and limited
 recorder/default-endpoint contract cannot satisfy general or workflow cleanup.

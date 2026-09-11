@@ -21,6 +21,7 @@ use. Its stricter phase ordering is local to that workflow.
 | a11y-publish | `a11y_publish_invoke`, action `publish` | Exact `head` and caller-authorized publication input |
 | agent-operations | `agent_operations_invoke`, action `cleanup` | `subject` and explicitly owned cleanup scope |
 | agent-operations | `agent_operations_invoke`, action `recover-media` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original media recovery connection |
+| agent-operations | `agent_operations_invoke`, action `recover-nvda` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original NVDA instance connection |
 | a11y-resources | `a11y_resources_resources` | Authorized resource connection; read-only status |
 | a11y-resources | `a11y_resources_invoke`, action `release-evaluator` | `subject`, `evaluator`, exact `input.nativeRunId`; explicitly authorized completed assignment |
 
@@ -77,6 +78,38 @@ and original response. Timeout or a missing response permits read-only
 reconciliation only, not another execution. Existing run outcome is unchanged.
 Deployment-specific connections and real audio/AT qualification are separate from
 the generic package's contract tests.
+
+## Scoped NVDA recovery (v0.10)
+
+Use `agent_operations_invoke` with action `recover-nvda`, an original
+`context.subject` and `context.evaluator`, and only `input.nativeRunId`.
+Configure the authorized `operations` connection for this scope. Do not supply
+a PID, process creation time, private journal path or credential in tool inputs.
+The small plugin and optional full package use the same operation implementation;
+neither requires a full workflow run or unrelated prior capability calls.
+
+This connects an existing controller, not a replacement NVDA startup/cleanup
+engine. The connection must derive the instance from its original protected
+worker record and serialize against assignment changes. The supported original
+worker connection requires an authoritatively completed, still-owned assignment.
+It does not take over a busy or interrupted worker lacking completion, adopt
+unrecorded processes, recover legacy captures without an instance record, or
+create missing authorization. Those cases remain explicit failures.
+
+A successful receipt has `recoveryScope: "started-main-process"`,
+`gates.startedProcessExitVerified: true`, `processResult` of `terminated` or
+`observed-exited`, and `fullCleanupVerified: false`. Its `recoveryBasis` is
+`stopped-now` for this stop, or `original-stop-result` when the connection only
+reads the original persisted stop result. A preexisting stop intent is never
+executed again. Missing identity or an intent without a valid result remains
+unknown, not evidence that the process exited.
+
+Transport loss permits only reconciliation of the same operation ID and original
+persisted response, not another execution or a fresh operation ID. No helper,
+descendant, respawn, audio, browser, artifact preservation or resource-release
+gate is established. This receipt cannot replace `cleanup` or make a capture
+pass. Installation and real AT qualification remain deployment responsibilities;
+existing capture defaults do not change.
 
 ## Read-only evidence checking
 

@@ -17,6 +17,13 @@ It needs its own authorized media connection; missing/historical state is not
 successful recovery. Its limited receipt never establishes full cleanup,
 artifact preservation, AT shutdown or permission to release resources.
 
+For only the originally recorded NVDA main process, use `recover-nvda` with the
+same subject/evaluator/nativeRunId input shape and its explicitly authorized
+connection. Never supply a PID or journal path. The result distinguishes a new
+stop from reading original stop proof; neither proves full cleanup. Missing
+binding, busy/incomplete workers and unknown stop results are unsupported, not
+permission to adopt a process, take over the worker or retry an effect.
+
 Clean only the resources explicitly included and authorized for this operation.
 Preserve evidence and restore owned temporary settings where applicable.
 Do not infer permission to release all resources associated with a person or

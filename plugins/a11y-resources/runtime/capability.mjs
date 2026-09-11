@@ -31,7 +31,7 @@ export function providerFor(config, action) {
 }
 export function validateCapabilityInput(action, input) {
   requireValue(input && typeof input === 'object' && !Array.isArray(input), 'Capability input must be an object');
-  if (['release-evaluator', 'recover-media'].includes(action)) {
+  if (['release-evaluator', 'recover-media', 'recover-nvda'].includes(action)) {
     requireValue(Object.keys(input).join(',') === 'nativeRunId' && typeof input.nativeRunId === 'string' &&
       /^[a-f0-9]{32}$/.test(input.nativeRunId),
       `${action} requires only input.nativeRunId (32 lowercase hex characters)`);
@@ -50,6 +50,13 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
       receipt.evaluator === context.evaluator,
     'Media recovery receipt must match the exact original assignment and limited scope');
   }
+  if (action === 'recover-nvda') {
+    validateCapabilityInput(action, input);
+    requireValue(receipt.nativeRunId === input.nativeRunId &&
+      receipt.recoveryScope === 'started-main-process' && receipt.fullCleanupVerified === false &&
+      receipt.subject === context.subject && receipt.evaluator === context.evaluator,
+    'NVDA recovery receipt must match the exact original assignment and limited scope');
+  }
   if (receipt.outcome !== 'pass') {
     requireValue(typeof receipt.reason === 'string' && receipt.reason.trim(), 'Non-pass capability requires a reason');
     requireValue(receipt.outcome !== 'changes-requested' || ['validate', 'review'].includes(action),
@@ -60,6 +67,11 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
   if (action === 'recover-media') {
     requireValue(['terminated', 'observed-exited'].includes(receipt.recorderResult),
       'Media recovery requires an observed tracked-recorder exit, not missing or historical state');
+  }
+  if (action === 'recover-nvda') {
+    requireValue(['terminated', 'observed-exited'].includes(receipt.processResult) &&
+      ['stopped-now', 'original-stop-result'].includes(receipt.recoveryBasis),
+    'NVDA recovery requires an original started-process exit and explicit result provenance');
   }
   if (action === 'release-evaluator') {
     validateCapabilityInput(action, input);
@@ -79,7 +91,7 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
   }
 }
 export async function invokeCapability(config, action, request, transport) {
-  if (['release-evaluator', 'recover-media'].includes(action)) validateCapabilityInput(action, request.input);
+  if (['release-evaluator', 'recover-media', 'recover-nvda'].includes(action)) validateCapabilityInput(action, request.input);
   const provider = providerFor(config, action);
   validateRequestWaiting(config, provider, request);
   const response = await transport(config, provider, request);

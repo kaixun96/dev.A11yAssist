@@ -12,6 +12,12 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 |---|---|---|
 | [a11y-bug-bash](plugins/a11y-bug-bash/README.md) | Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks | Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks |
 
+### Environment preparation
+
+| Plugin and instructions | What it does | What you need |
+|---|---|---|
+| [a11y-setup](plugins/a11y-setup/README.md) | Check and prepare a Windows A11y environment: selected browser, NVDA, audio and Voice Access dependencies | Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization |
+
 ### Knowledge and static review
 
 | Plugin and instructions | What it does | What you need |

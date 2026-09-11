@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "scope": "windows-host-preparation-not-evidence",
+  "defaultMode": "check",
+  "installer": "native/windows-host.ps1",
+  "profiles": [
+    { "id": "source-only", "dependencies": [], "next": "No host probe or installation; use bundled knowledge in the caller." },
+    { "id": "browser", "dependencies": ["Python", "Playwright", "Chromium"], "next": "Use an existing approved browser connection or separately install/bootstrap the bundled personal evaluator helper." },
+    { "id": "nvda", "dependencies": ["NVDA"], "next": "Enables Speech Viewer configuration; qualify real NVDA output on an owned desktop. Combine with browser only if needed." },
+    { "id": "audio", "dependencies": ["Python", "FFmpeg", "AudioDeviceCmdlets", "MSS", "PyAudioWPatch"], "next": "VB-CABLE, Console and audio/desktop checks require separately authorized setup. Not required for browser screenshots." },
+    { "id": "voice-access", "dependencies": ["Python", "FFmpeg", "AudioDeviceCmdlets", "MSS", "PyAudioWPatch"], "next": "Windows Voice Access availability, first-run consent/model, VB-CABLE and actual recognition must be qualified separately." }
+  ],
+  "optionalManual": [
+    { "id": "scanner", "instruction": "Use an existing approved scanner/axe integration; not bundled or auto-installed. Confirm license/source and authenticated-page policy before any separate installation." },
+    { "id": "narrator-etw", "instruction": "Inspect built-in Narrator and Windows Performance Recorder/Analyzer. Missing ADK/WPA requires the organization's approved Microsoft installation path; not installed by this script." },
+    { "id": "capture-validate", "instruction": "Install a11y-capture/a11y-validate only for an explicitly selected evidence-v1 workflow; configure their actual authorized providers and qualify them independently." }
+  ],
+  "statuses": ["ready", "missing-installation", "missing-configuration", "needs-authorization", "restart-required", "runtime-unverified", "unsupported-host", "blocked"]
+}

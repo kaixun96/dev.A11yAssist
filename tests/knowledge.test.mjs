@@ -97,7 +97,7 @@ test('every independently copied plugin retains a complete offline knowledge sna
 
 test('marketplace exposes knowledge separately without making it an execution capability', async () => {
   const marketplace = await load(join(root, '.github/plugin/marketplace.json'));
-  assert.equal(marketplace.plugins.length, 10);
+  assert.equal(marketplace.plugins.length, 11);
   assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge').length, 1);
   assert.equal(plugins['a11y-knowledge'], undefined);
   assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge-odsp').length, 1);

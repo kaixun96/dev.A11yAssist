@@ -1,0 +1,9 @@
+{
+  "name": "a11y-setup",
+  "description": "Check and prepare selected Windows accessibility dependencies using the shared host installer; keep consent, restart and live readiness explicit.",
+  "version": "0.15.0",
+  "author": {
+    "name": "kaixun96"
+  },
+  "license": "Microsoft Internal"
+}

@@ -29,13 +29,14 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Initial discovery framework, not a bundled browser/scanner/recorder. Includes the same a11y-knowledge skills and full ODSP references internally; no extra plugin or duplicate public knowledge commands. Missing tools or source produce explicit partial coverage, not PASS. No automatic source edits, builds, bug filing or PRs.
+Includes the same a11y-knowledge and a11y-setup modules internally; no extra install. Setup defaults to check/planning; installing selected dependencies needs separate host-change authorization. No browser/AT binaries, scanner or live connection supplied. Missing tools or source produce partial coverage, not PASS. No automatic fixes, builds, filing or PRs.
 
 ## Reference
 
 - [Bug Bash workflow and boundaries](docs/BUG-BASH.md)
 - [Feature context template](bug-bash/context.template.md)
 - [Findings and coverage report template](bug-bash/report.template.md)
+- [Built-in environment preparation](modules/a11y-setup/docs/SETUP.md)
 - [Reused internal knowledge review](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
 - [Included project knowledge](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)
 

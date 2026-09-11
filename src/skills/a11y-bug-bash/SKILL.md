@@ -32,6 +32,18 @@ exclusive desktop ownership. Missing tools are gaps, not a reason to invent tool
 names or receipts. Follow deployment ownership gates before interactive control.
 Do not acquire resources with a dummy Bug or fake capture request.
 
+For requested live page/AT checks, read the bundled
+`modules/a11y-setup/skills/a11y-setup/SKILL.md` for environment check/planning.
+Its root is `modules/a11y-setup`; it reuses the same standalone setup skill,
+profiles and shared installer without another installation or public command.
+Select only the capabilities this feature needs. Check-only never installs or
+opens browser/AT; `source-only` and `plan-only` do not run setup scripts at all.
+If prerequisites are missing, return the specific preparation plan. Run its
+prepare steps only with separate explicit host-change authorization and real
+ownership; discovery alone does not authorize installation. Recheck actual
+capabilities afterward, continue supported rows and retain the others as gaps.
+Do not substitute installed packages or legacy probe flags for a callable tool.
+
 ## 2. Build a feature-specific coverage matrix
 
 Turn each supplied verification step into a stable scenario ID with preconditions,

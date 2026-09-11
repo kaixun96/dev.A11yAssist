@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.14.0",
+  "version": "0.15.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -12,17 +12,18 @@
     "a11y-workflow",
     "a11y-knowledge",
     "a11y-knowledge-odsp",
+    "a11y-setup",
     "a11y-bug-bash"
   ],
   "knowledge": {
     "manifest": "src/knowledge/manifest.json",
-    "sha256": "3804bc365b8b0a6ef53f8405de496e0a26fa882b9468ad3bfef54d40eec17a2d"
+    "sha256": "8c0a55c5ba48e3218ebde5b7defc144694c8c37cbce5dbce8feff16c098abb01"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "a2c53ab63320eea02673ec1036896296f1d4ecdb19376f5e18161e4b4df101ac",
+      "sha256": "958a5990c14150041ab5a9ce655a6f189a8810fd5a9af5c9b06832f8c5eb2129",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -69,6 +70,6 @@
     "src/native/ado-intake.mjs": "b2646283bd1e20af8dc96bb3ca92b4513a4705d9b83b85559449225d7e6b53af",
     "src/native/pr-description.mjs": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf",
     "src/native/provenance.json": "eb9bfb249f1620d36ca1ea401e51ce312b1e5555bfb8953695f85ded4816dd2d",
-    "src/native/windows-host.ps1": "e08192a06f1d1d8db60bfb852c728749d3ecbce213116670d42776cca1c9a739"
+    "src/native/windows-host.ps1": "f12b5ae77fd1b3c3d17efd34943cd0692684da5e535ee12189fdeac56e8cabab"
   }
 }

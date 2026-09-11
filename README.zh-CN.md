@@ -12,6 +12,12 @@
 |---|---|---|
 | [a11y-bug-bash](plugins/a11y-bug-bash/README.zh-CN.md) | 面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险 | Feature context 和验证步骤；代码审查需要只读源码；实际页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属 |
 
+### 环境准备
+
+| 插件与使用说明 | 解决什么问题 | 使用前提 |
+|---|---|---|
+| [a11y-setup](plugins/a11y-setup/README.zh-CN.md) | 检查和准备 Windows 无障碍环境：按需安装浏览器、NVDA、音频和 Voice Access 所需依赖 | Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权 |
+
 ### 知识与静态审查
 
 | 插件与使用说明 | 解决什么问题 | 使用前提 |

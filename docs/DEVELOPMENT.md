@@ -12,6 +12,7 @@ Keep migration history and implementation details off the main selection path.
 | `src/catalog.json` | Single catalog for both homepages and all plugin READMEs |
 | `src/skills/`, `src/knowledge/` | Authored instructions and generic reference topics |
 | `src/bug-bash/` | Feature discovery context/coverage/report templates, not another rule engine |
+| `src/setup/` | Scenario-scoped dependency profiles and readiness report |
 | `src/runtime/`, `src/contracts/`, `src/adapters/`, `src/native/` | Shared implementation |
 | `src/integrations/` | Integration-specific executable source |
 | `plugins/` | Generated, self-contained installation packages; do not edit |
@@ -57,7 +58,7 @@ The optional helper requires an explicit selection and prints commands by defaul
 .\tools\install.ps1 -Plugin a11y-knowledge
 ```
 
-`-Execute` runs the commands; `-Plugin all` selects the nine non-compatibility
+`-Execute` runs the commands; `-Plugin all` selects the ten non-compatibility
 packages. Knowledge includes its ODSP subskill and full references by default.
 The old standalone ODSP install name remains supported for existing users only.
 Add `-WithAgentOW` only when intentionally installing that separate integration.
@@ -68,8 +69,15 @@ the same two read-only skills and all references used by `a11y-knowledge` under
 `modules/a11y-knowledge/`, preserving their relative paths without registering
 duplicate public commands or requiring another installation. Its context,
 coverage and report resources are generated from `src/bug-bash/`.
-It has no MCP/configuration/runtime; live checks use the caller's already
+It has no MCP/configuration server; live checks use the caller's already
 authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it.
+
+`bundleSetup` packages the same setup skill, profiles, shared native host script
+and compatibility browser helper in standalone `a11y-setup` and Bug Bash's
+`modules/a11y-setup/`. No second installer implementation or duplicate public
+command is registered. `InstallSafeDependencies -Dependency` selects a subset;
+omission preserves the legacy full set. Existing AgentOW consumers remain
+commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
 
 ## Further contracts
 

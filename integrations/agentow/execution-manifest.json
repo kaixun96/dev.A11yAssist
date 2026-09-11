@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "repository": "kaixun96/dev.A11yAssist",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "files": [
     {
       "source": "native/windows-host.ps1",
       "targets": [
         "copilot/skills/ow-a11y-host-setup/scripts/setup-windows-a11y.ps1"
       ],
-      "sha256": "e08192a06f1d1d8db60bfb852c728749d3ecbce213116670d42776cca1c9a739"
+      "sha256": "f12b5ae77fd1b3c3d17efd34943cd0692684da5e535ee12189fdeac56e8cabab"
     },
     {
       "source": "integrations/agentow/runtime/personal-evaluator-browser.py",

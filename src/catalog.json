@@ -2,18 +2,35 @@
   {
     "name": "a11y-bug-bash",
     "group": "discovery",
-    "docs": ["docs/BUG-BASH.md", "bug-bash/context.template.md", "bug-bash/report.template.md", "modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md", "modules/a11y-knowledge/integrations/agentow/knowledge/README.md"],
+    "docs": ["docs/BUG-BASH.md", "bug-bash/context.template.md", "bug-bash/report.template.md", "modules/a11y-setup/docs/SETUP.md", "modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md", "modules/a11y-knowledge/integrations/agentow/knowledge/README.md"],
     "en": {
       "purpose": "Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks",
       "requires": "Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks",
       "example": "/a11y-bug-bash Review <feature>: <context and expected behavior>. Verify using <steps> on <authorized test URL and safe fixture>; source <paths/revision>. Use my existing browser connection, budget 30 minutes, save to <private output directory>. Report page bugs and code risks separately; do not fix or file.",
-      "limits": "Initial discovery framework, not a bundled browser/scanner/recorder. Includes the same a11y-knowledge skills and full ODSP references internally; no extra plugin or duplicate public knowledge commands. Missing tools or source produce explicit partial coverage, not PASS. No automatic source edits, builds, bug filing or PRs."
+      "limits": "Includes the same a11y-knowledge and a11y-setup modules internally; no extra install. Setup defaults to check/planning; installing selected dependencies needs separate host-change authorization. No browser/AT binaries, scanner or live connection supplied. Missing tools or source produce partial coverage, not PASS. No automatic fixes, builds, filing or PRs."
     },
     "zh": {
       "purpose": "面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险",
       "requires": "Feature context 和验证步骤；代码审查需要只读源码；实际页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属",
       "example": "/a11y-bug-bash 检查 <feature>：<context 和预期行为>。按 <验证步骤> 操作 <获授权测试 URL 和安全数据>，源码在 <路径/版本>。使用已有浏览器连接，预算 30 分钟，报告保存到 <私有输出目录>。分开报告页面 bug 和代码风险，不修改代码或提单。",
-      "limits": "首版检查框架，不自带浏览器、扫描器或录制器。内部原样复用 a11y-knowledge skills 和完整 ODSP 参考资料，无需另装插件，也不重复注册知识命令。缺少工具或源码时明确报告部分覆盖，不宣称 PASS。不自动改代码、构建、提 bug 或建 PR。"
+      "limits": "内置复用 a11y-knowledge 和 a11y-setup，无需另装。环境准备默认检查和规划；按需安装依赖需要单独的主机变更授权。不自带浏览器或 AT 二进制、扫描器和实时连接。缺少工具或源码时报告部分覆盖，不宣称 PASS。不自动修复、构建、提 bug 或建 PR。"
+    }
+  },
+  {
+    "name": "a11y-setup",
+    "group": "setup",
+    "docs": ["docs/SETUP.md", "setup/report.template.md"],
+    "en": {
+      "purpose": "Check and prepare a Windows A11y environment: selected browser, NVDA, audio and Voice Access dependencies",
+      "requires": "Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization",
+      "example": "/a11y-setup check browser and NVDA on <Windows evaluator>; save installed versions, missing dependencies and exact preparation steps to <private output directory>. Do not install or open apps yet.",
+      "limits": "Reuses AgentOW's shared host installer; no AgentOW or MCP dependency. Plugin installation does not install third-party tools. Prepare only an approved subset; driver, consent, elevation and restart are separate gates. No automatic scanner/ADK installation or live provider setup. Installed does not mean runtime-ready."
+    },
+    "zh": {
+      "purpose": "检查和准备 Windows 无障碍环境：按需安装浏览器、NVDA、音频和 Voice Access 所需依赖",
+      "requires": "Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权",
+      "example": "/a11y-setup check <Windows 评估机> 的浏览器和 NVDA 环境，将已安装版本、缺少依赖和具体准备步骤保存到 <私有输出目录>。暂不安装或打开应用。",
+      "limits": "复用 AgentOW 使用的共享安装脚本，无需 AgentOW 或 MCP。装插件不等于安装第三方工具；仅准备获授权的依赖子集。驱动、同意提示、提权和重启单独处理，不自动安装扫描器、ADK 或配置实时 provider。安装成功不代表运行就绪。"
     }
   },
   {

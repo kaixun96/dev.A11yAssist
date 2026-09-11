@@ -4,7 +4,7 @@ description: Optionally compose the shared capabilities into a complete evidence
 ---
 
 Read `${CLAUDE_PLUGIN_ROOT}/docs/CAPABILITIES.md`. The caller owns composition; a small capability does not require the full workflow.
-For static guidance use `knowledge/README.md` and applicable topics: `knowledge/foundations.md`, `knowledge/component-accessibility.md`, `knowledge/keyboard-focus.md`, `knowledge/forms-and-content.md`, `knowledge/dynamic-content.md`, `knowledge/visual-accessibility.md`.
+For static guidance use `knowledge/README.md` and applicable topics: `knowledge/foundations.md`, `knowledge/component-accessibility.md`, `knowledge/keyboard-focus.md`, `knowledge/forms-and-content.md`, `knowledge/dynamic-content.md`, `knowledge/visual-accessibility.md`, `knowledge/widget-patterns.md`.
 Only when the caller selects the applicable execution integration, consult `integrations/agentow/knowledge/README.md` and its topic routing. Do not load that profile as a generic prerequisite.
 
 This is the complete entrypoint. It includes the shared runtime; sibling small

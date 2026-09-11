@@ -78,3 +78,8 @@ made inert; final accessibility-tree behavior is not proven by static inspection
 
 When a component's implementation or documented contract is unavailable, report
 context needed. No repository-specific library is a prerequisite for this topic.
+
+For a tablist, dialog, combobox, menu, tree or grid, consult the corresponding
+section of [Common widget patterns](widget-patterns.md) before proposing a fix.
+Its counterexamples distinguish missing behavior from valid native/library
+behavior that the caller does not need to implement again.

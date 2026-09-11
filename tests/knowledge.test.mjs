@@ -33,7 +33,7 @@ test('knowledge is indexed, versioned and bound to the release', async () => {
   assert.equal(manifest.origin, undefined);
   assert.equal(manifest.version, release.version);
   assert.equal(release.knowledge.sha256, digest(await text(join(root, release.knowledge.manifest))));
-  assert.equal(index.topics.length, 6);
+  assert.equal(index.topics.length, 7);
   const files = new Set(index.topics.map(topic => topic.file));
   assert.equal(files.size, index.topics.length);
   for (const topic of index.topics) {
@@ -100,6 +100,58 @@ test('marketplace exposes knowledge separately without making it an execution ca
   assert.match(skill, /Do not\s+edit files, run shell commands, tests or scanners/);
   assert.match(skill, /source-supported issues, context needed and runtime not verified/);
   assert.match(skill, /Missing context\s+is not a defect/);
+});
+
+test('static review format keeps evidence, confidence and uncertainty separate', async () => {
+  const foundation = await text(join(root, 'knowledge/foundations.md'));
+  const skill = await text(join(root, 'skills/a11y-knowledge/SKILL.md'));
+  for (const heading of [
+    '### 1. Reviewed scope',
+    '### 2. Source-supported issues',
+    '### 3. Context needed',
+    '### 4. Runtime not verified'
+  ]) assert(foundation.includes(heading), `Missing output section: ${heading}`);
+  for (const field of [
+    'ID and title', 'Location', 'Severity', 'Confidence',
+    'Affected users and impact', 'Source evidence', 'Rule/reference', 'Minimal correction'
+  ]) assert(foundation.includes(`| ${field} |`), `Missing finding field: ${field}`);
+  assert.match(foundation, /Severity is priority, not the WCAG conformance level/);
+  assert.match(foundation, /Confidence is independent of severity/);
+  assert.match(foundation, /not in a speculative low-confidence finding/);
+  assert.match(skill, /foundations\.md#output-contract/);
+  assert.match(skill, /Unknown context is not a low-confidence defect/);
+  assert.match(foundation, /No source-supported accessibility issues\s+found in the reviewed scope/);
+});
+
+test('widget guidance provides role-specific exceptions and counterexamples without a runtime gate', async () => {
+  const guide = await text(join(root, 'knowledge/widget-patterns.md'));
+  const readme = await text(join(root, 'knowledge/README.md'));
+  const skill = await text(join(root, 'skills/a11y-knowledge/SKILL.md'));
+  const index = await load(join(root, 'knowledge/index.json'));
+  const topics = index.topics.filter(topic => topic.file === 'widget-patterns.md');
+  assert.equal(topics.length, 1);
+  assert.match(readme, /\(widget-patterns\.md\)/);
+  assert.match(skill, /knowledge\/widget-patterns\.md/);
+  const sections = guide.split(/^## /m).slice(1);
+  assert.deepEqual(sections.map(section => section.split('\n')[0]), [
+    'Tabs', 'Dialogs and non-modal popovers', 'Comboboxes and selection fields',
+    'Menus and menu buttons', 'Trees', 'Grids and data tables'
+  ]);
+  for (const section of sections) {
+    for (const label of ['**Trigger and context:**', '**Inspect:**', '**Defect example:**',
+      '**Valid counterexample:**', '**Minimal correction:**']) {
+      assert(section.includes(label), `Missing ${label} in ${section.split('\n')[0]}`);
+    }
+  }
+  assert.match(guide, /manual activation/);
+  assert.match(guide, /showModal\(\)/);
+  assert.match(guide, /dialog popup moves focus/);
+  assert.match(guide, /ordinary table with a link does not need a grid role/);
+  assert.match(guide, /supporting design guidance, not independent WCAG requirements/);
+  assert.match(guide, /report unknown\s+component behavior as context needed/);
+  for (const consumer of ['a11y-knowledge', 'a11y-validate', 'a11y-workflow']) {
+    assert(index.consumers[consumer].includes('widget-patterns.md'));
+  }
 });
 
 test('original execution references survive unchanged outside the generic package', async () => {

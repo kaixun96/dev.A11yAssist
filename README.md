@@ -53,11 +53,18 @@ source remains unverified.
 | Forms and content | Labels, validation, groups, image alternatives, tables and media semantics |
 | Dynamic content | Loading/results/errors, status messages, announcement ownership and stable focus |
 | Visual accessibility | Source-visible contrast, focus styling, reflow, text, targets and motion risks |
+| Common widget patterns | Tabs, dialogs/popovers, comboboxes, menus, trees and grids: contracts, defects, valid counterexamples and minimal fixes |
 
 Topics are loaded by relevance, not all at once. No framework, operating system,
 repository or coding-workflow dependency is assumed. Examples use standard web
 markup; apply platform equivalents only when their actual contracts are known.
 See the [knowledge index](knowledge/README.md).
+
+Static reviews use a [consistent report format](knowledge/foundations.md#output-contract):
+reviewed scope, source-supported issues, context needed, and runtime not verified.
+Findings include a location, severity, confidence with its basis, user impact,
+causal source evidence, rule reference and minimal correction. Unavailable
+component context is not counted as a defect; severity is not a WCAG level.
 
 The knowledge-only package does not include AgentOW protocols, host setup or
 PR-publication instructions. Those retained execution references live separately

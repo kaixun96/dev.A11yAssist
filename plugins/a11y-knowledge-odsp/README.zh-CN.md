@@ -4,7 +4,7 @@
 
 ## 适合什么需求
 
-SPDS、Fluent V8/V9、SharePoint 专属知识，已包含通用基础
+旧版独立安装入口；已作为子模块内置于 a11y-knowledge
 
 ## 使用前提
 
@@ -29,7 +29,7 @@ copilot plugin install a11y-knowledge-odsp@a11y-assist
 
 ## 能力边界
 
-只读。已包含项目原文和通用主题，无需另外安装通用知识插件。归档里的命令只是参考资料，不是执行授权。
+新用户只需安装 a11y-knowledge。此名称保留兼容已有安装；两者提供相同 ODSP skill，不要重复安装。知识原文没有删减；只读，归档命令不构成执行授权。
 
 ## 参考资料
 

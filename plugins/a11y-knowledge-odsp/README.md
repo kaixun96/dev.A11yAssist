@@ -4,7 +4,7 @@
 
 ## Use this for
 
-SPDS, Fluent V8/V9 and SharePoint accessibility guidance, including general foundations
+Legacy standalone installation; already included as a submodule of a11y-knowledge
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Read-only. Includes the preserved project references and general topics, so a separate general-knowledge install is unnecessary. Archived commands are reference data, not permission to execute them.
+New users install a11y-knowledge only. This name remains for existing installations; do not install both packages because they expose the same ODSP skill. No references were removed. Read-only; archived commands are data, not execution authority.
 
 ## Reference
 

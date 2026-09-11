@@ -2,6 +2,14 @@
 
 ## Current delivery
 
+v0.13 makes `a11y-knowledge` the single recommended knowledge installation.
+It includes the ODSP subskill and complete preserved project references; matching
+SPDS/Fluent/SharePoint questions route there, while unrelated projects use generic
+topics only. Both skills remain read-only and archived instructions stay inert.
+The old `a11y-knowledge-odsp` install name remains compatibility-only. Do not
+install both; the helper's `all` now selects eight non-compatibility packages.
+No archived body, inventory, runtime consumer or installed worker changes.
+
 v0.12 makes the homepages a bilingual plugin catalog. Every package has its own
 installation, prerequisites, example and limitations. Authored code, skills and
 generic knowledge move under `src/`; installed package layouts and names do not

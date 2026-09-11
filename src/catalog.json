@@ -2,35 +2,35 @@
   {
     "name": "a11y-knowledge",
     "group": "knowledge",
-    "docs": ["knowledge/README.md"],
+    "docs": ["knowledge/README.md", "skills/a11y-knowledge-odsp/SKILL.md", "integrations/agentow/knowledge/README.md", "integrations/agentow/knowledge/fluent-spds.md", "integrations/agentow/knowledge/sharepoint.md", "integrations/agentow/knowledge/complete-source-guide.md"],
     "en": {
-      "purpose": "General accessibility guidance for code generation and static review",
+      "purpose": "Accessibility guidance and static review, with general foundations and a built-in ODSP submodule (SPDS, Fluent V8/V9, SharePoint)",
       "requires": "Copilot CLI and the code or question to review; no execution configuration",
-      "example": "/a11y-knowledge Review this component for keyboard, focus and accessible-name issues.",
-      "limits": "Read-only source analysis. Does not edit code, run scanners or test assistive technology. Guidance is not a conformance verdict."
+      "example": "/a11y-knowledge Review this Fluent V9 dialog for keyboard, focus restoration and announcements using the built-in component knowledge.",
+      "limits": "One installation includes general topics and the complete ODSP references; no extra plugin is needed. Select project guidance only for the matching stack/version; unrelated projects use general topics only. Read-only, no scanners or real AT. Archived commands are inert reference data, not execution authority."
     },
     "zh": {
-      "purpose": "通用无障碍知识，用于代码生成指导和静态审查",
+      "purpose": "无障碍知识与静态审查，内置通用基础及 ODSP 子模块（SPDS、Fluent V8/V9、SharePoint）",
       "requires": "Copilot CLI，以及待审代码或问题；不需要执行环境配置",
-      "example": "/a11y-knowledge 审查这个组件的键盘、焦点和可访问名称问题。",
-      "limits": "只读分析源码，不修改代码、不运行扫描器或辅助技术。建议不等于合规结论。"
+      "example": "/a11y-knowledge 使用内置组件知识，审查这个 Fluent V9 对话框的键盘、焦点恢复和播报。",
+      "limits": "一次安装包含通用主题和完整 ODSP 参考资料，无需另装插件。按实际技术栈和版本读取；其他项目只使用通用知识，不套用 ODSP 约定。只读，不运行扫描器或真实辅助技术；归档命令只是参考资料，不是执行授权。"
     }
   },
   {
     "name": "a11y-knowledge-odsp",
-    "group": "knowledge",
+    "group": "compatibility",
     "docs": ["integrations/agentow/knowledge/README.md", "integrations/agentow/knowledge/fluent-spds.md", "integrations/agentow/knowledge/sharepoint.md", "integrations/agentow/knowledge/complete-source-guide.md"],
     "en": {
-      "purpose": "SPDS, Fluent V8/V9 and SharePoint accessibility guidance, including general foundations",
+      "purpose": "Legacy standalone installation; already included as a submodule of a11y-knowledge",
       "requires": "Copilot CLI and relevant project code; no AgentOW, DevBox or provider required",
       "example": "/a11y-knowledge-odsp Review this Fluent V9 dialog's focus restoration and announcements.",
-      "limits": "Read-only. Includes the preserved project references and general topics, so a separate general-knowledge install is unnecessary. Archived commands are reference data, not permission to execute them."
+      "limits": "New users install a11y-knowledge only. This name remains for existing installations; do not install both packages because they expose the same ODSP skill. No references were removed. Read-only; archived commands are data, not execution authority."
     },
     "zh": {
-      "purpose": "SPDS、Fluent V8/V9、SharePoint 专属知识，已包含通用基础",
+      "purpose": "旧版独立安装入口；已作为子模块内置于 a11y-knowledge",
       "requires": "Copilot CLI 和相关项目代码；无需 AgentOW、DevBox 或执行连接",
       "example": "/a11y-knowledge-odsp 审查这个 Fluent V9 对话框的焦点恢复和播报。",
-      "limits": "只读。已包含项目原文和通用主题，无需另外安装通用知识插件。归档里的命令只是参考资料，不是执行授权。"
+      "limits": "新用户只需安装 a11y-knowledge。此名称保留兼容已有安装；两者提供相同 ODSP skill，不要重复安装。知识原文没有删减；只读，归档命令不构成执行授权。"
     }
   },
   {

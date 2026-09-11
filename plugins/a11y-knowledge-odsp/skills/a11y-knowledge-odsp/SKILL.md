@@ -5,6 +5,8 @@ description: Read-only accessibility guidance for SPDS, Fluent V8/V9 and SharePo
 
 Resolve bundled paths from the plugin root, two directories above this SKILL.md,
 not the user's working directory.
+This scoped submodule ships inside `a11y-knowledge`; no additional plugin is
+needed. The old standalone package remains a compatibility installation only.
 Read `integrations/agentow/knowledge/README.md`, then the
 matching complete source documents routed by `fluent-spds.md`, `sharepoint.md`
 or `complete-source-guide.md`. Use `knowledge/README.md` for generic principles.

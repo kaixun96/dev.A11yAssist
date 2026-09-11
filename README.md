@@ -10,8 +10,7 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
-| [a11y-knowledge](plugins/a11y-knowledge/README.md) | General accessibility guidance for code generation and static review | Copilot CLI and the code or question to review; no execution configuration |
-| [a11y-knowledge-odsp](plugins/a11y-knowledge-odsp/README.md) | SPDS, Fluent V8/V9 and SharePoint accessibility guidance, including general foundations | Copilot CLI and relevant project code; no AgentOW, DevBox or provider required |
+| [a11y-knowledge](plugins/a11y-knowledge/README.md) | Accessibility guidance and static review, with general foundations and a built-in ODSP submodule (SPDS, Fluent V8/V9, SharePoint) | Copilot CLI and the code or question to review; no execution configuration |
 
 ### Individual capabilities
 
@@ -30,9 +29,15 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 |---|---|---|
 | [a11y-workflow](plugins/a11y-workflow/README.md) | Optional end-to-end evidence-first remediation workflow | Qualified work-item, resource, Windows capture, source, validation, review, publication and cleanup connections |
 
+### Existing installations only
+
+| Plugin and instructions | What it does | What you need |
+|---|---|---|
+| [a11y-knowledge-odsp](plugins/a11y-knowledge-odsp/README.md) | Legacy standalone installation; already included as a submodule of a11y-knowledge | Copilot CLI and relevant project code; no AgentOW, DevBox or provider required |
+
 Open a plugin above for its installation command, prerequisites, example, limitations and bundled reference links.
 
-For SPDS, Fluent or SharePoint, choose **a11y-knowledge-odsp**; it already includes general knowledge. Choose **a11y-workflow** only if you want the complete workflow; it does not require installing the individual plugins.
+For knowledge, install **a11y-knowledge** once: general topics and the SPDS/Fluent/SharePoint submodule are included, with project guidance read only when relevant. The old **a11y-knowledge-odsp** package is compatibility-only; do not install both. Choose **a11y-workflow** only if you want the complete workflow.
 
 ## Install your selection
 

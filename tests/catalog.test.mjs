@@ -83,7 +83,7 @@ test('published compatibility exports retain consumer paths and exactly match au
   }
 });
 
-test('installer requires selection, covers nine packages and keeps knowledge setup independent', {
+test('installer requires selection, avoids duplicate ODSP installation and keeps knowledge setup independent', {
   skip: process.platform !== 'win32'
 }, () => {
   const run = (...args) => spawnSync('pwsh', [
@@ -94,13 +94,27 @@ test('installer requires selection, covers nine packages and keeps knowledge set
   assert(!missing.stdout.includes('copilot plugin install'));
   const all = run('-Plugin', 'all');
   assert.equal(all.status, 0, all.stderr);
-  assert.equal((all.stdout.match(/copilot plugin install /g) ?? []).length, 9);
-  for (const entry of catalog) assert(all.stdout.includes(`${entry.name}@a11y-assist`));
+  assert.equal((all.stdout.match(/copilot plugin install /g) ?? []).length, 8);
+  assert(!all.stdout.includes('a11y-knowledge-odsp@a11y-assist'));
+  for (const entry of catalog.filter(entry => entry.group !== 'compatibility')) {
+    assert(all.stdout.includes(`${entry.name}@a11y-assist`));
+  }
   for (const name of ['a11y-knowledge', 'a11y-knowledge-odsp']) {
     const result = run('-Plugin', name);
     assert.equal(result.status, 0, result.stderr);
     assert(result.stdout.includes(`/${name}`));
     assert(!result.stdout.includes('A11Y_ASSIST_CONFIG'));
     assert(!result.stdout.includes('agentow-copilot@agentOW'));
+  }
+});
+
+test('knowledge selection includes ODSP by default and labels the old package as compatibility-only', async () => {
+  assert.deepEqual(catalog.filter(entry => entry.group === 'knowledge').map(entry => entry.name), ['a11y-knowledge']);
+  assert.equal(catalog.find(entry => entry.name === 'a11y-knowledge-odsp').group, 'compatibility');
+  const knowledge = catalog.find(entry => entry.name === 'a11y-knowledge');
+  assert(knowledge.docs.includes('skills/a11y-knowledge-odsp/SKILL.md'));
+  for (const [lang, filename] of [['en', 'README.md'], ['zh', 'README.zh-CN.md']]) {
+    assert(knowledge[lang].purpose.includes('ODSP'));
+    assert((await text(`plugins/a11y-knowledge/${filename}`)).includes('skills/a11y-knowledge-odsp/SKILL.md'));
   }
 });

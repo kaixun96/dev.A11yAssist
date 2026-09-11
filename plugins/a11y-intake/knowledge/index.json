@@ -3,7 +3,7 @@
   "scope": "generic-static-accessibility",
   "plugin": {
     "name": "a11y-knowledge",
-    "description": "Framework-independent accessibility guidance for code generation and read-only static review of semantics, keyboard/focus, forms, dynamic content and visual styles."
+    "description": "Read-only accessibility knowledge for any project, including built-in SPDS, Fluent V8/V9 and SharePoint/ODSP guidance selected only when relevant. One installation; no execution setup."
   },
   "topics": [
     {"file": "foundations.md", "trigger": "Starting a review, selecting standards or reporting uncertainty.", "scope": "Source-only reasoning and honest findings; no runtime verification."},

@@ -2,6 +2,16 @@
 
 ## Current delivery
 
+v0.15 extracts the AgentOW host-setup tutorial into independent `a11y-setup`
+and bundles that same module into Bug Bash's preparation step. It reuses the
+shared Windows host installer and retained browser helper, not a second
+implementation. The installer now supports explicit dependency subsets while
+retaining the legacy full-set default. Check-only is the new skill default;
+package/host changes, driver/elevation/restart and live readiness remain separate.
+Eleven package names are installable; `all` selects ten non-compatibility names.
+No scanner/ADK/provider is newly implemented and no installed worker or AgentOW
+pin is updated. See [setup and its inherited browser limits](SETUP.md).
+
 v0.14 adds the independently installable `a11y-bug-bash` discovery framework.
 It plans from feature context and verification steps, coordinates available
 authorized page tools and reuses the exact knowledge skills internally for

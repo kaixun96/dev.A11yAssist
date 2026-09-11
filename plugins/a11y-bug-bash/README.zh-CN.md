@@ -29,13 +29,14 @@ copilot plugin install a11y-bug-bash@a11y-assist
 
 ## 能力边界
 
-首版检查框架，不自带浏览器、扫描器或录制器。内部原样复用 a11y-knowledge skills 和完整 ODSP 参考资料，无需另装插件，也不重复注册知识命令。缺少工具或源码时明确报告部分覆盖，不宣称 PASS。不自动改代码、构建、提 bug 或建 PR。
+内置复用 a11y-knowledge 和 a11y-setup，无需另装。环境准备默认检查和规划；按需安装依赖需要单独的主机变更授权。不自带浏览器或 AT 二进制、扫描器和实时连接。缺少工具或源码时报告部分覆盖，不宣称 PASS。不自动修复、构建、提 bug 或建 PR。
 
 ## 参考资料
 
 - [Bug Bash 流程与边界](docs/BUG-BASH.md)
 - [Feature context 模板](bug-bash/context.template.md)
 - [问题与覆盖率报告模板](bug-bash/report.template.md)
+- [内置环境准备模块](modules/a11y-setup/docs/SETUP.md)
 - [内部复用的知识审查](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
 - [随包项目知识](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)
 

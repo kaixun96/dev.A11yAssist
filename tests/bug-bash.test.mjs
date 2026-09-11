@@ -57,7 +57,10 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
       'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md',
       ...resources.map(path => `bug-bash/${path}`),
-      ...expectedModule.map(path => `modules/a11y-knowledge/${path}`)
+      ...expectedModule.map(path => `modules/a11y-knowledge/${path}`),
+      ...(await filesUnder(join(root, 'plugins/a11y-setup')))
+        .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
+        .map(path => `modules/a11y-setup/${path}`)
     ];
     assert.deepEqual(await filesUnder(directory), expected.sort());
     for (const path of resources) {

@@ -13,6 +13,8 @@ certification service. No sibling plugin is required.
 - The exact two knowledge skills and complete references from `a11y-knowledge`,
   bundled privately within the package at `modules/a11y-knowledge/`.
 - A staged skill that coordinates page inspection and read-only source review.
+- The same setup skill, profiles and shared host installer as `a11y-setup`,
+  privately bundled under `modules/a11y-setup/` for environment preparation.
 
 The internal module has no plugin manifest and is not a nested installed plugin.
 Its skills are read as instructions for the source-review substep, not registered
@@ -49,6 +51,15 @@ authorized page without reading product source. Default `both` attempts both;
 an unavailable track is an explicit gap and makes the overall result partial.
 
 ## Execution boundaries
+
+Before page execution, the skill reads the internal
+[setup contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/SETUP.md) for check/planning. Its actual bundled
+path is `modules/a11y-setup/docs/SETUP.md` relative to the plugin root.
+It can prepare selected browser/NVDA/audio dependencies only with separate
+explicit host-change authorization and ownership. Discovery alone does not
+authorize installation. Source-only and plan-only never run host setup scripts.
+No extra setup plugin installation is required, and missing optional audio/AT
+must not block unrelated browser checks.
 
 The framework itself has no MCP server and needs no `A11Y_ASSIST_CONFIG`.
 It uses tools already available to the calling Copilot session. Static review

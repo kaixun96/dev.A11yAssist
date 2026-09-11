@@ -75,6 +75,16 @@ async function bundleKnowledgeReview(base) {
   await bundleKnowledge(base, genericSet);
   await bundleKnowledge(base, integrationSet);
 }
+async function bundleSetup(base) {
+  for (const path of ['skills/a11y-setup/SKILL.md', 'native/windows-host.ps1',
+    'integrations/agentow/runtime/personal-evaluator-browser.py']) {
+    await emit(`${base}/${path}`, await text(join(source, path)));
+  }
+  for (const file of await readdir(join(source, 'setup'))) {
+    await emit(`${base}/setup/${file}`, await text(join(source, 'setup', file)));
+  }
+  await emit(`${base}/docs/SETUP.md`, await text(join(root, 'docs/SETUP.md')));
+}
 const entries = [];
 for (const [name, definition] of Object.entries(plugins)) {
   const base = `plugins/${name}`;
@@ -138,6 +148,18 @@ await emit(`${projectBase}/AGENTS.md`, '# Project accessibility knowledge\n\nRea
 await bundleKnowledge(projectBase, genericSet);
 await bundleKnowledge(projectBase, integrationSet);
 entries.push({ ...projectKnowledge, source: `./${projectBase}`, version: pkg.version, author: { name: 'kaixun96' } });
+const setup = {
+  name: 'a11y-setup',
+  description: 'Check and prepare selected Windows accessibility dependencies using the shared host installer; keep consent, restart and live readiness explicit.'
+};
+const setupBase = `plugins/${setup.name}`;
+await emit(`${setupBase}/plugin.json`, json({
+  ...setup, version: pkg.version, author: { name: 'kaixun96' }, license: 'Microsoft Internal'
+}));
+await emit(`${setupBase}/LICENSE`, await text(join(root, 'LICENSE')));
+await emit(`${setupBase}/AGENTS.md`, '# Accessibility environment setup\n\nRead skills/a11y-setup/SKILL.md and docs/SETUP.md. Default check-only; preparation needs explicit host-change authorization and actual ownership. Use the same shared native installer, selecting only required dependencies. Installation is not live readiness, evidence or permission to change a worker. No MCP or AgentOW dependency.\n');
+await bundleSetup(setupBase);
+entries.push({ ...setup, source: `./${setupBase}`, version: pkg.version, author: { name: 'kaixun96' } });
 const bugBashName = 'a11y-bug-bash';
 const bugBashBase = `plugins/${bugBashName}`;
 const bugBash = {
@@ -148,7 +170,7 @@ await emit(`${bugBashBase}/plugin.json`, json({
   ...bugBash, version: pkg.version, author: { name: 'kaixun96' }, license: 'Microsoft Internal'
 }));
 await emit(`${bugBashBase}/LICENSE`, await text(join(root, 'LICENSE')));
-await emit(`${bugBashBase}/AGENTS.md`, '# Feature accessibility bug bash\n\nRead skills/a11y-bug-bash/SKILL.md and docs/BUG-BASH.md. This is discovery, not remediation. Reuse the internal modules/a11y-knowledge skill for read-only source review. Page checks require actual authorized host tools and owned resources; no browser, scanner, AT or MCP server is supplied. Separate reproduced findings, code risks and gaps; do not edit product source, file bugs or publish automatically.\n');
+await emit(`${bugBashBase}/AGENTS.md`, '# Feature accessibility bug bash\n\nRead skills/a11y-bug-bash/SKILL.md and docs/BUG-BASH.md. This is discovery, not remediation. Reuse internal modules/a11y-knowledge for read-only source review and modules/a11y-setup for environment check/planning; preparation needs separate authorization. Page checks require actual authorized host tools and owned resources; dependency installers are bundled, not third-party browser/AT binaries or an MCP server. Separate reproduced findings, code risks and gaps; do not edit product source, file bugs or publish automatically.\n');
 await emit(`${bugBashBase}/skills/${bugBashName}/SKILL.md`, await text(join(source, 'skills', bugBashName, 'SKILL.md')));
 for (const file of await readdir(join(source, 'bug-bash'))) {
   await emit(`${bugBashBase}/bug-bash/${file}`, await text(join(source, 'bug-bash', file)));
@@ -156,6 +178,7 @@ for (const file of await readdir(join(source, 'bug-bash'))) {
 await emit(`${bugBashBase}/docs/BUG-BASH.md`, await text(join(root, 'docs/BUG-BASH.md')));
 // Internal instructions retain their own root without registering duplicate public skills.
 await bundleKnowledgeReview(`${bugBashBase}/modules/a11y-knowledge`);
+await bundleSetup(`${bugBashBase}/modules/a11y-setup`);
 entries.push({ ...bugBash, source: `./${bugBashBase}`, version: pkg.version, author: { name: 'kaixun96' } });
 validateCatalog(catalog, entries.map(entry => entry.name));
 for (const [language, filename] of [['en', 'README.md'], ['zh', 'README.zh-CN.md']]) {

@@ -7,7 +7,10 @@ param(
     [string]$OutputPath,
     [string]$SetupRoot,
     [string]$ConsoleTaskName = 'AgentOW-A11Y-TransferToConsole',
-    [string]$PersonalEvaluatorSource
+    [string]$PersonalEvaluatorSource,
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')]
+    [string[]]$Dependency = @('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -654,29 +657,36 @@ function Invoke-WingetInstall {
 }
 
 function Install-SafeDependencies {
-    if (-not (Get-ExistingPath @(
+    param([string[]]$Dependencies)
+
+    if ('NVDA' -in $Dependencies -and -not (Get-ExistingPath @(
         (Join-Path $env:ProgramFiles 'NVDA\nvda.exe'),
         (Join-Path ${env:ProgramFiles(x86)} 'NVDA\nvda.exe')
     ))) {
         Invoke-WingetInstall 'NVAccess.NVDA'
     }
-    if (-not (Get-CommandInfo 'ffmpeg.exe').available) {
+    if ('FFmpeg' -in $Dependencies -and -not (Get-CommandInfo 'ffmpeg.exe').available) {
         Invoke-WingetInstall 'Gyan.FFmpeg'
     }
-    $audioModule = Get-Module -ListAvailable AudioDeviceCmdlets
-    if (-not $audioModule) {
-        $audioModule = Get-ChildItem `
-            (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\AudioDeviceCmdlets') `
-            -Filter 'AudioDeviceCmdlets.psd1' `
-            -File `
-            -Recurse `
-            -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-    }
-    if (-not $audioModule) {
-        Install-Module AudioDeviceCmdlets -Scope CurrentUser -Force -Confirm:$false
+    if ('AudioDeviceCmdlets' -in $Dependencies) {
+        $audioModule = Get-Module -ListAvailable AudioDeviceCmdlets
+        if (-not $audioModule) {
+            $audioModule = Get-ChildItem `
+                (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\AudioDeviceCmdlets') `
+                -Filter 'AudioDeviceCmdlets.psd1' `
+                -File `
+                -Recurse `
+                -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+        }
+        if (-not $audioModule) {
+            Install-Module AudioDeviceCmdlets -Scope CurrentUser -Force -Confirm:$false
+        }
     }
 
+    if ('NVDA' -in $Dependencies) { Set-NvdaSpeechViewer }
+    $pythonDependencies = @($Dependencies | Where-Object { $_ -in @('Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch') })
+    if ($pythonDependencies.Count -eq 0) { return }
     $python = Get-PythonPath
     if (-not $python) {
         Invoke-WingetInstall 'Python.Python.3.12' -UserScope
@@ -686,14 +696,28 @@ function Install-SafeDependencies {
         throw 'Python installation completed but python.exe was not found'
     }
 
-    Set-NvdaSpeechViewer
-    & $python -m pip install --disable-pip-version-check playwright mss PyAudioWPatch
-    if ($LASTEXITCODE -ne 0) {
-        throw "Python dependency installation failed with exit code $LASTEXITCODE"
+    $modules = [ordered]@{}
+    if ('Playwright' -in $Dependencies -or 'Chromium' -in $Dependencies) { $modules.playwright = 'playwright' }
+    if ('MSS' -in $Dependencies) { $modules.mss = 'mss' }
+    if ('PyAudioWPatch' -in $Dependencies) { $modules.pyaudiowpatch = 'PyAudioWPatch' }
+    $missing = @($modules.Keys | Where-Object { -not (Test-PythonModule $python $_) } | ForEach-Object { $modules[$_] })
+    if ($missing.Count -gt 0) {
+        & $python -m pip install --disable-pip-version-check @missing
+        if ($LASTEXITCODE -ne 0) {
+            throw "Python dependency installation failed with exit code $LASTEXITCODE"
+        }
     }
-    & $python -m playwright install chromium
-    if ($LASTEXITCODE -ne 0) {
-        throw "Playwright browser installation failed with exit code $LASTEXITCODE"
+    if ('Chromium' -in $Dependencies) {
+        & $python -c "from pathlib import Path; from playwright.sync_api import sync_playwright; p = sync_playwright().start(); found = Path(p.chromium.executable_path).is_file(); p.stop(); raise SystemExit(0 if found else 10)"
+        $browserCheck = $LASTEXITCODE
+        if ($browserCheck -eq 10) {
+            & $python -m playwright install chromium
+            if ($LASTEXITCODE -ne 0) {
+                throw "Playwright browser installation failed with exit code $LASTEXITCODE"
+            }
+        } elseif ($browserCheck -ne 0) {
+            throw "Playwright browser detection failed with exit code $browserCheck"
+        }
     }
 }
 
@@ -893,7 +917,7 @@ switch ($Action) {
         Write-Capabilities
     }
     'InstallSafeDependencies' {
-        Install-SafeDependencies
+        Install-SafeDependencies -Dependencies $Dependency
         Write-Capabilities
     }
     'InstallPersonalEvaluatorBrowser' {

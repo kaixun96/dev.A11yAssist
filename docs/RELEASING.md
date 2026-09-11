@@ -32,6 +32,13 @@ module, not new top-level knowledge commands. Validate isolated module contents,
 relative routing, coverage/template references and explicit missing-capability
 boundaries. Framework/package validation is not a live feature or AT qualification.
 
+Setup similarly has one authored skill/profile/installer and exact standalone
+and internal Bug Bash copies. Validate selective dependency closure, skipping
+installed dependencies, error propagation, host rejection and legacy defaults
+without actually installing packages or changing the CI desktop. This is not
+live Windows driver, authentication, audio or AT qualification. The retained
+SharePoint browser helper is not a generic product browser connector.
+
 `a11y-knowledge` includes the ODSP subskill and complete inert reference profile
 by default; this does not add executable tools, MCP, configuration or workflow
 authority. The old ODSP package is compatibility-only and must not be installed

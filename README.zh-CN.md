@@ -13,6 +13,10 @@ AgentOW 的专用浏览器场景保留在独立集成目录。
 面向 Copilot CLI 的无障碍知识与模块化工作流插件。可以在代码生成和审查时使用
 无障碍指导，也可以配置单项能力，搭建以证据为依据的 Bug 修复流程。
 
+当前插件配置使用 `.github/plugin/marketplace.json`、插件根目录的 `plugin.json`
+和 MCP 启动路径变量 `${PLUGIN_ROOT}`。保留的 AgentOW 原始参考资料中仍可能出现
+Claude 名称；这些是历史资料，不是当前插件配置，也不代表依赖 Claude Code。
+
 **只想规避生成代码中的常见无障碍问题？从 `a11y-knowledge` 开始。**
 不需要 AgentOW、DevBox 或工作流配置。
 

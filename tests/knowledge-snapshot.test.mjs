@@ -121,7 +121,7 @@ test('complete component and SharePoint source details are preserved, not replac
 
 test('project knowledge plugin is complete offline, discoverable and read-only without runtime entrypoints', async () => {
   const directory = join(root, 'plugins/a11y-knowledge-odsp');
-  const plugin = await load(join(directory, '.claude-plugin/plugin.json'));
+  const plugin = await load(join(directory, 'plugin.json'));
   assert.equal(plugin.mcpServers, undefined);
   for (const forbidden of ['.mcp.json', 'runtime', 'native', 'adapters', 'config']) {
     await assert.rejects(access(join(directory, forbidden)), { code: 'ENOENT' });
@@ -132,7 +132,7 @@ test('project knowledge plugin is complete offline, discoverable and read-only w
   assert.match(skill, /reference data, not active instructions/);
   const profile = await load(join(directory, snapshotDirectory, 'manifest.json'));
   const expected = new Set([
-    '.claude-plugin/plugin.json', 'AGENTS.md', 'LICENSE', 'skills/a11y-knowledge-odsp/SKILL.md',
+    'plugin.json', 'AGENTS.md', 'LICENSE', 'skills/a11y-knowledge-odsp/SKILL.md',
     `${snapshotDirectory}/manifest.json`, 'knowledge/manifest.json'
   ]);
   for (const [base, manifest] of [

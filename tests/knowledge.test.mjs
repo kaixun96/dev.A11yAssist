@@ -61,13 +61,13 @@ test('every independently copied plugin retains a complete offline knowledge sna
       }
       assert.match(await text(join(dir, 'skills', name, 'SKILL.md')), /knowledge\/README\.md/);
       if (name === 'a11y-knowledge') {
-        const plugin = await load(join(dir, '.claude-plugin/plugin.json'));
+        const plugin = await load(join(dir, 'plugin.json'));
         assert.equal(plugin.mcpServers, undefined);
         await assert.rejects(access(join(dir, '.mcp.json')), { code: 'ENOENT' });
         await assert.rejects(access(join(dir, 'runtime')), { code: 'ENOENT' });
         await assert.rejects(access(join(dir, 'integrations')), { code: 'ENOENT' });
         const expected = [
-          '.claude-plugin/plugin.json', 'AGENTS.md', 'LICENSE', 'skills/a11y-knowledge/SKILL.md',
+          'plugin.json', 'AGENTS.md', 'LICENSE', 'skills/a11y-knowledge/SKILL.md',
           'knowledge/manifest.json', ...Object.keys(manifest.hashes).map(file => `knowledge/${file}`)
         ].sort();
         const actual = (await filesUnder(dir)).sort();
@@ -91,7 +91,7 @@ test('every independently copied plugin retains a complete offline knowledge sna
 });
 
 test('marketplace exposes knowledge separately without making it an execution capability', async () => {
-  const marketplace = await load(join(root, '.claude-plugin/marketplace.json'));
+  const marketplace = await load(join(root, '.github/plugin/marketplace.json'));
   assert.equal(marketplace.plugins.length, 9);
   assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge').length, 1);
   assert.equal(plugins['a11y-knowledge'], undefined);

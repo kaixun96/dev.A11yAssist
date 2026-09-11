@@ -6,6 +6,11 @@ Accessibility knowledge and modular workflow plugins for Copilot CLI.
 Use accessibility guidance while generating or reviewing code, or configure
 individual capabilities for an evidence-first bug-fixing workflow.
 
+Active packaging uses `.github/plugin/marketplace.json`, root-level
+`plugin.json` manifests and `${PLUGIN_ROOT}` for MCP launch paths.
+Claude-named material in the preserved AgentOW references is historical data,
+not an active plugin configuration or a Claude Code dependency.
+
 **Just want to avoid common accessibility mistakes in generated code? Start with
 `a11y-knowledge`.** You do not need AgentOW, a DevBox or workflow configuration.
 

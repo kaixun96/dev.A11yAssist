@@ -3,7 +3,7 @@
     "a11y_resources": {
       "command": "node",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "${PLUGIN_ROOT}/runtime/mcp.mjs",
         "a11y-resources"
       ]
     }

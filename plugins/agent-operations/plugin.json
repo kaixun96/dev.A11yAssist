@@ -1,6 +1,6 @@
 {
   "name": "agent-operations",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Durable task continuation, cleanup, progress assessment and Run Insights.",
   "author": {
     "name": "kaixun96"
@@ -10,7 +10,7 @@
     "agent_operations": {
       "command": "node",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/runtime/mcp.mjs",
+        "${PLUGIN_ROOT}/runtime/mcp.mjs",
         "agent-operations"
       ]
     }

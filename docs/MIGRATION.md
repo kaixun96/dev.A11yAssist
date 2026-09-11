@@ -2,6 +2,19 @@
 
 ## Current delivery
 
+v0.11.1 moves active marketplace metadata to `.github/plugin/marketplace.json`
+and all nine plugin manifests to each plugin's root `plugin.json`.
+MCP launch paths use `${PLUGIN_ROOT}`; skill references resolve from their own
+plugin root rather than an assistant-specific variable or the caller's directory.
+This retains the existing Copilot manifest format and `.mcp.json` configuration;
+it does not opt into a different plugin schema or change runtime behavior.
+Marketplace/plugin names and installation commands remain unchanged.
+The pinned AgentOW source archive, inventory and six original compatibility
+bodies retain their original text, including historical Claude names.
+Publication does not update installed plugins or restart active workers.
+See the [Copilot plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference)
+for supported manifest locations.
+
 v0.11 completes the source knowledge inventory beyond the earlier six-document
 selection. Every tracked file at the pinned AgentOW commit has an explicit
 disposition; whole first-party documents and related source references are

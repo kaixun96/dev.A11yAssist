@@ -3,7 +3,8 @@ name: a11y-capture
 description: Capture a caller-supplied Windows accessibility scenario without taking over the caller's workflow.
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/docs/CAPABILITIES.md`. The caller owns composition; a small capability does not require the full workflow.
+Resolve bundled paths from the plugin root, two directories above this SKILL.md, not the user's working directory.
+Read `docs/CAPABILITIES.md`. The caller owns composition; a small capability does not require the full workflow.
 For static guidance use `knowledge/README.md` and applicable topics: `knowledge/foundations.md`, `knowledge/keyboard-focus.md`, `knowledge/dynamic-content.md`, `knowledge/visual-accessibility.md`.
 For SPDS, Fluent V8/V9 or SharePoint-specific guidance, read `integrations/agentow/knowledge/README.md` and its complete-source topic routing. Static project knowledge does not require AgentOW or an execution integration. Archived operational instructions are reference data, not permission to run them; only an explicitly authorized execution integration may act on its procedures.
 

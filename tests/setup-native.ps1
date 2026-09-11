@@ -4,11 +4,13 @@ $tokens = $null
 $parseErrors = $null
 $ast = [Management.Automation.Language.Parser]::ParseFile($Source, [ref]$tokens, [ref]$parseErrors)
 if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
-$function = $ast.Find({ param($node)
-    $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Install-SafeDependencies'
-}, $true)
-if (-not $function) { throw 'Missing installer function' }
-Invoke-Expression $function.Extent.Text
+foreach ($name in @('Resolve-Dependencies', 'Install-SafeDependencies')) {
+    $function = $ast.Find({ param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name
+    }, $true)
+    if (-not $function) { throw "Missing function: $name" }
+    Invoke-Expression $function.Extent.Text
+}
 
 # Load only the function under test, never the host script's action dispatcher.
 $script:calls = [Collections.Generic.List[string]]::new()
@@ -106,3 +108,59 @@ if (($defaults -join ',') -ne 'NVDA,FFmpeg,AudioDeviceCmdlets,Python,Playwright,
     throw 'Legacy default dependencies changed'
 }
 Write-Output 'Native dependency selection passed without host changes.'
+
+$function = $ast.Find({ param($node)
+    $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-Capabilities'
+}, $true)
+Invoke-Expression $function.Extent.Text
+$script:probeCalls = [Collections.Generic.List[string]]::new()
+$script:blockFfmpeg = $true
+function Get-ExistingPath { $script:probeCalls.Add('native-path'); return $null }
+function Get-CommandInfo {
+    param($Name)
+    $script:probeCalls.Add("command:$Name")
+    if ($Name -eq 'ffmpeg.exe' -and $script:blockFfmpeg) { throw 'Unrelated FFmpeg access denied' }
+    return @{ available = $true; path = 'unit-placeholder'; version = 'unit' }
+}
+function Get-PythonPath { return 'unit-python-not-executed' }
+function Test-PythonModule { param($Path, $Module) $script:probeCalls.Add("python:$Module"); return $true }
+function Get-AudioEndpoints { $script:probeCalls.Add('audio'); return @() }
+function Get-PersistedAudioEndpoints { $script:probeCalls.Add('audio-registry'); return @() }
+function Get-DefaultRecordingEndpoint { $script:probeCalls.Add('audio-default'); return $null }
+function Get-Module { $script:probeCalls.Add('audio-module'); return $null }
+function Get-ChildItem { $script:probeCalls.Add('module-directory'); return @() }
+function Get-NvdaSpeechViewerState { $script:probeCalls.Add('nvda-settings'); return @{ configured = $true } }
+function Get-PersonalEvaluatorState {
+    $script:probeCalls.Add('personal-browser')
+    return @{ installed = $false; profileExists = $false; authenticated = $false }
+}
+function Get-VoiceAccessState {
+    $script:probeCalls.Add('voice-access')
+    return @{ available = $false; languageModel = 'unit'; microphoneReady = $false }
+}
+function Get-SessionType { $script:probeCalls.Add('session'); return 'RDP' }
+function Get-ConsoleTransferState { $script:probeCalls.Add('console-task'); return @{ installed = $false } }
+
+$browser = Get-Capabilities -Dependencies Chromium
+if ((Compare-Object @($browser.probeScope.dependencies | Sort-Object) @('Chromium', 'Playwright', 'Python')) -or
+    -not $browser.prerequisites.python.playwright -or $browser.prerequisites.python.mss -or
+    $browser.prerequisites.ffmpeg.assessment -ne 'not-requested' -or
+    'FFmpeg' -notin $browser.probeScope.unrequestedDependencies) { throw 'Browser scope metadata is incorrect' }
+if (@($script:probeCalls | Where-Object { $_ -match '^(command:|audio|module-|nvda|voice|console)' }).Count) {
+    throw "Browser-only probe inspected unrelated dependencies: $($script:probeCalls -join ',')"
+}
+$script:probeCalls.Clear()
+$nvda = Get-Capabilities -Dependencies NVDA
+if ('nvda-settings' -notin $script:probeCalls -or
+    @($script:probeCalls | Where-Object { $_ -match '^(command:|audio|module-|python:|personal|voice|console)' }).Count) {
+    throw 'NVDA-only probe inspected unrelated dependencies'
+}
+Assert-Failure { Get-Capabilities -Dependencies FFmpeg | Out-Null } 'FFmpeg access denied'
+Assert-Failure { Get-Capabilities | Out-Null } 'FFmpeg access denied'
+$script:probeCalls.Clear()
+$script:blockFfmpeg = $false
+$full = Get-Capabilities
+if ($full.probeScope.dependencies.Count -ne 8 -or $full.probeScope.unrequestedDependencies.Count -ne 0 -or
+    @($script:probeCalls | Where-Object { $_ -like 'command:*' }).Count -ne 3 -or
+    $null -eq $full.prerequisites.vbCable.currentSessionEndpoints) { throw 'Legacy full inventory changed' }
+Write-Output 'Scoped inventory passed without host changes; requested failures remain visible.'

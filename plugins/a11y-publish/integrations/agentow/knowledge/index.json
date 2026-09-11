@@ -78,6 +78,7 @@
     }
   ],
   "consumers": {
+    "a11y-bug-bash": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md"],
     "a11y-knowledge": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md"],
     "a11y-intake": ["foundations.md", "pr-evidence-capture-guide.md"],
     "a11y-resources": ["windows-host-testing.md", "personal-evaluator-browser.md"],

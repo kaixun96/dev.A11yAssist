@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "scope": "feature-discovery-planning-not-conformance",
+  "knowledgeRoot": "modules/a11y-knowledge/knowledge",
+  "rowStatuses": ["planned", "observed-no-issue", "finding", "blocked", "not-run", "not-applicable", "inconclusive"],
+  "findingClasses": ["page-reproduced", "source-supported-risk"],
+  "dimensions": [
+    {
+      "id": "semantics",
+      "topic": "component-accessibility.md",
+      "checks": ["Names, roles, states and relationships", "Headings, landmarks and reading order", "Native/library behavior and custom control composition"]
+    },
+    {
+      "id": "keyboard",
+      "topic": "keyboard-focus.md",
+      "checks": ["Reach and operate every applicable action without a pointer", "Logical order and no keyboard trap", "Documented arrows, Enter, Space and Escape for the actual widget"]
+    },
+    {
+      "id": "focus",
+      "topic": "keyboard-focus.md",
+      "checks": ["Visible and unobscured focus", "Dialog/menu entry, dismissal and focus restoration", "Focus after navigation, deletion, errors, async updates and repeated use"]
+    },
+    {
+      "id": "screen-reader",
+      "topic": "dynamic-content.md",
+      "checks": ["Actual named AT output for labels, values and state changes", "Loading, errors, results and status announcements", "Browse/form modes and virtualized content where applicable"]
+    },
+    {
+      "id": "forms",
+      "topic": "forms-and-content.md",
+      "checks": ["Labels, instructions, required and invalid states", "Error identification, association and recovery", "Input formats, autocomplete and accessible authentication where applicable"]
+    },
+    {
+      "id": "visual",
+      "topic": "visual-accessibility.md",
+      "checks": ["Measured rendered text/UI/focus contrast using the applicable criterion", "Information not conveyed by color alone", "Relevant themes, forced colors and selected/disabled/error states"]
+    },
+    {
+      "id": "reflow",
+      "topic": "visual-accessibility.md",
+      "checks": ["Text resizing and 200% zoom", "400% zoom or equivalent narrow CSS viewport with recorded dimensions", "Text spacing, clipping, obscured actions and justified two-dimensional-layout exceptions"]
+    },
+    {
+      "id": "dynamic",
+      "topic": "dynamic-content.md",
+      "checks": ["Loading, empty, populated, error and permission states", "Updates, insertion/removal, virtualization and repeated actions", "Status feedback without redundant announcements or lost focus"]
+    },
+    {
+      "id": "pointer-alternatives",
+      "topic": "component-accessibility.md",
+      "checks": ["Keyboard and single-pointer alternatives to drag/complex gestures", "Target sizing and pointer cancellation against applicable criteria", "Voice-control label matching; real Voice Access only when available and relevant"]
+    },
+    {
+      "id": "content-motion",
+      "topic": "forms-and-content.md",
+      "checks": ["Image alternatives, link purpose, tables and document language", "Captions/transcripts/audio description when media exists", "Reduced motion, pause/stop, time limits and flashing where applicable"]
+    }
+  ]
+}

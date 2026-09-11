@@ -27,6 +27,11 @@ invented in plugin manifests. The current AgentOW freshness rule is still
 applied on its actual leased execution host before invocation.
 
 Keep generic topic bodies and scoped project references separately indexed.
+The Bug Bash framework bundles their unchanged skill sources in an internal
+module, not new top-level knowledge commands. Validate isolated module contents,
+relative routing, coverage/template references and explicit missing-capability
+boundaries. Framework/package validation is not a live feature or AT qualification.
+
 `a11y-knowledge` includes the ODSP subskill and complete inert reference profile
 by default; this does not add executable tools, MCP, configuration or workflow
 authority. The old ODSP package is compatibility-only and must not be installed

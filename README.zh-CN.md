@@ -6,6 +6,12 @@
 
 ## 挑选插件
 
+### Feature Bug Bash
+
+| 插件与使用说明 | 解决什么问题 | 使用前提 |
+|---|---|---|
+| [a11y-bug-bash](plugins/a11y-bug-bash/README.zh-CN.md) | 面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险 | Feature context 和验证步骤；代码审查需要只读源码；实际页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属 |
+
 ### 知识与静态审查
 
 | 插件与使用说明 | 解决什么问题 | 使用前提 |

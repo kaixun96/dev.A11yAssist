@@ -14,6 +14,7 @@
     {"file": "visual-accessibility.md", "trigger": "Styles, themes, contrast, focus indicators, layout, zoom or motion change.", "scope": "Source-visible risks with explicit rendering uncertainty."}
   ],
   "consumers": {
+    "a11y-bug-bash": ["foundations.md", "component-accessibility.md", "keyboard-focus.md", "forms-and-content.md", "dynamic-content.md", "visual-accessibility.md"],
     "a11y-intake": ["foundations.md", "component-accessibility.md"],
     "a11y-resources": ["foundations.md"],
     "a11y-capture": ["foundations.md", "keyboard-focus.md", "dynamic-content.md", "visual-accessibility.md"],

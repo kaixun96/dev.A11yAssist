@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "kaixun96/dev.A11yAssist",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "scope": "agentow-execution-integration",
   "origin": {
     "repository": "kaixun96/dev.AgentOW",
@@ -14,7 +14,7 @@
   },
   "hashes": {
     "README.md": "f4bc37495eedb3f3bbdaba28e0defb3ec3838d1f58dc1a40ce04ac09d02fe61c",
-    "index.json": "cc2cb967893479a17c6bb0c9337838dec1ca912f430b60210ca217161afbb38e",
+    "index.json": "d7f3f419c2bb5aefb8708e06f1629f91d04c045e8b6cb7b002f6ae01f95255f0",
     "complete-source-guide.md": "3b4a3a4ae03d53d2c0e6d40255390fe5c320be26ad5ede75baa4793f22022d8a",
     "fluent-spds.md": "931be6702df83331f7467c4c6b48f5ea6086f77307816b7c6c5479d8da1b3508",
     "sharepoint.md": "6202c86621129d5d52d5615a72eb59516087705f57b90a29c81229647410ecfb",

@@ -4,15 +4,24 @@
     "name": "kaixun96"
   },
   "metadata": {
-    "version": "0.13.0",
+    "version": "0.14.0",
     "description": "Choose independent accessibility knowledge, evidence and workflow plugins for Copilot CLI"
   },
   "plugins": [
     {
+      "name": "a11y-bug-bash",
+      "description": "Feature-scoped accessibility bug bash: context-driven page checks, reused read-only knowledge review, and evidence-separated findings. Uses existing authorized host tools.",
+      "source": "./plugins/a11y-bug-bash",
+      "version": "0.14.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
       "name": "a11y-knowledge",
       "description": "Read-only accessibility knowledge for any project, including built-in SPDS, Fluent V8/V9 and SharePoint/ODSP guidance selected only when relevant. One installation; no execution setup.",
       "source": "./plugins/a11y-knowledge",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }
@@ -21,7 +30,7 @@
       "name": "a11y-knowledge-odsp",
       "description": "Compatibility installation for existing ODSP knowledge users. New users install a11y-knowledge, which includes this read-only submodule and all references.",
       "source": "./plugins/a11y-knowledge-odsp",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }
@@ -30,7 +39,7 @@
       "name": "a11y-intake",
       "source": "./plugins/a11y-intake",
       "description": "Claim-aware work-item intake, acceptance and canonical scenario preparation.",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }
@@ -39,7 +48,7 @@
       "name": "a11y-resources",
       "source": "./plugins/a11y-resources",
       "description": "Shared DevBox/Codespace ownership, health and scoped resource operations.",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }
@@ -48,7 +57,7 @@
       "name": "a11y-capture",
       "source": "./plugins/a11y-capture",
       "description": "Real Windows assistive-technology BEFORE/AFTER evidence under exclusive ownership.",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }
@@ -57,7 +66,7 @@
       "name": "a11y-validate",
       "source": "./plugins/a11y-validate",
       "description": "Deterministic integrity gates plus independent accessibility evaluation.",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }
@@ -66,7 +75,7 @@
       "name": "a11y-publish",
       "source": "./plugins/a11y-publish",
       "description": "Reviewer-safe Draft PR evidence and live publication validation.",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }
@@ -75,7 +84,7 @@
       "name": "agent-operations",
       "source": "./plugins/agent-operations",
       "description": "Durable task continuation, cleanup, progress assessment and Run Insights.",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }
@@ -84,7 +93,7 @@
       "name": "a11y-workflow",
       "source": "./plugins/a11y-workflow",
       "description": "Optional complete evidence-first composition of shared capabilities with caller-selected source and review tools.",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "author": {
         "name": "kaixun96"
       }

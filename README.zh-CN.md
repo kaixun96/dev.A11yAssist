@@ -60,8 +60,26 @@ copilot plugin install a11y-knowledge@a11y-assist
 示例使用标准 Web 标记；只有明确实际平台契约时，才建议相应的平台实现。
 详见[知识索引](knowledge/README.md)。
 
-独立知识包不包含 AgentOW 协议、主机配置或 PR 发布指令。
-保留的执行参考文档单独放在 [integrations/agentow/](integrations/agentow/README.md)。
+通用知识包不包含项目专属规则或操作流程。
+
+### SPDS、Fluent V8/V9 和 SharePoint 专属知识
+
+独立安装只读项目知识包：
+
+```powershell
+copilot plugin install a11y-knowledge-odsp@a11y-assist
+```
+
+重启 Copilot 后使用 `/a11y-knowledge-odsp`。它包含通用基础和完整项目参考：
+SPDS/Fluent 组件与 MessageBar 契约、V8/V9 焦点及播报、组件选型与组合、
+SharePoint 工具和页面/canvas 焦点、主题、导入路径、review 规则及原始 A11y 上下文。
+**不需要 AgentOW、provider、DevBox 或执行工作流。**
+
+查看[专属知识入口](integrations/agentow/knowledge/README.md)、
+[完整来源导航](integrations/agentow/knowledge/complete-source-guide.md)和
+[逐文件覆盖与排除清单](integrations/agentow/knowledge/source-inventory.json)。
+这次保留固定源版本的完整文档正文，不再只选六份。归档中的操作指令和源码仅供阅读，
+知识 skill 不会执行它们。没有删除 AgentOW 原文、切换运行中的消费者或镜像外部产品文档。
 
 ## 在自己的工作流中按需调用
 
@@ -72,6 +90,7 @@ copilot plugin install a11y-knowledge@a11y-assist
 | 插件 | 用途 | 使用前提 |
 |---|---|---|
 | `a11y-knowledge` | 代码生成指导、静态审查和无障碍问题咨询 | 无需 provider 即可使用 |
+| `a11y-knowledge-odsp` | SPDS、Fluent V8/V9、SharePoint 专属静态指导及完整来源参考 | 只读，无需 AgentOW、provider 或工作流 |
 | `a11y-intake` | 工作项读取、验收条件和复现场景 | 接通有权限的工作项读取工具 |
 | `a11y-resources` | 查看共享资源的归属和就绪状态 | 状态接口，不是通用资源申请工具 |
 | `a11y-capture` | 真实 Windows AT 的 BEFORE/AFTER 取证 | 接通获授权的 Windows 采集工具，并持有评估机使用权 |

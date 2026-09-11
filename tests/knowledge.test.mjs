@@ -47,7 +47,7 @@ test('knowledge is indexed, versioned and bound to the release', async () => {
 });
 
 test('every independently copied plugin retains a complete offline knowledge snapshot', async () => {
-  for (const name of [...Object.keys(plugins), 'a11y-knowledge']) {
+  for (const name of [...Object.keys(plugins), 'a11y-knowledge', 'a11y-knowledge-odsp']) {
     const dir = await mkdtemp(join(tmpdir(), 'knowledge-plugin-'));
     try {
       await cp(join(root, 'plugins', name), dir, { recursive: true });
@@ -92,9 +92,11 @@ test('every independently copied plugin retains a complete offline knowledge sna
 
 test('marketplace exposes knowledge separately without making it an execution capability', async () => {
   const marketplace = await load(join(root, '.claude-plugin/marketplace.json'));
-  assert.equal(marketplace.plugins.length, 8);
+  assert.equal(marketplace.plugins.length, 9);
   assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge').length, 1);
   assert.equal(plugins['a11y-knowledge'], undefined);
+  assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge-odsp').length, 1);
+  assert.equal(plugins['a11y-knowledge-odsp'], undefined);
   const skill = await text(join(root, 'skills/a11y-knowledge/SKILL.md'));
   assert.match(skill, /Default to read-only source inspection/);
   assert.match(skill, /Do not\s+edit files, run shell commands, tests or scanners/);
@@ -109,9 +111,11 @@ test('original execution references survive unchanged outside the generic packag
   assert.equal(profile.migrationStage, 'copy-first-original-agentow-files-retained');
   assert.equal(profile.consumers['a11y-knowledge'], undefined);
   assert.equal(release.integrations[0].sha256, digest(await text(join(root, release.integrations[0].manifest))));
-  assert.deepEqual(release.integrations[0].plugins, Object.keys(plugins));
-  assert.equal(profile.topics.length, 6);
-  for (const topic of profile.topics) {
+  assert.deepEqual(release.integrations[0].plugins, [...Object.keys(plugins), 'a11y-knowledge-odsp']);
+  const legacyTopics = profile.topics.filter(topic => profile.preservedSnapshot.hashes[topic.file]);
+  assert.equal(legacyTopics.length, 6);
+  assert.equal(profile.topics.length, 9);
+  for (const topic of legacyTopics) {
     const originalHash = profile.preservedSnapshot.hashes[topic.file];
     assert.match(originalHash, /^[a-f0-9]{64}$/);
     assert.equal(digest(await text(join(root, profileDirectory, topic.file))), originalHash);

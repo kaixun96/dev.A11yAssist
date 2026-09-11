@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scope": "generic-static-accessibility",
+  "plugin": {
+    "name": "a11y-knowledge",
+    "description": "Framework-independent accessibility guidance for code generation and read-only static review of semantics, keyboard/focus, forms, dynamic content and visual styles."
+  },
+  "topics": [
+    {"file": "foundations.md", "trigger": "Starting a review, selecting standards or reporting uncertainty.", "scope": "Source-only reasoning and honest findings; no runtime verification."},
+    {"file": "component-accessibility.md", "trigger": "Elements, names, roles, states, structure or component relationships change.", "scope": "Native semantics and the actual project's component contract."},
+    {"file": "keyboard-focus.md", "trigger": "Keyboard interaction, dialogs, navigation or focus can change.", "scope": "Keyboard paths and focus lifecycle inferred from available source."},
+    {"file": "forms-and-content.md", "trigger": "Inputs, validation, images, icons, tables or media change.", "scope": "Labels, errors, alternatives and meaningful structure."},
+    {"file": "dynamic-content.md", "trigger": "Loading, results, errors, notifications or asynchronous state changes.", "scope": "Status exposure, feedback ownership and stable focus."},
+    {"file": "visual-accessibility.md", "trigger": "Styles, themes, contrast, focus indicators, layout, zoom or motion change.", "scope": "Source-visible risks with explicit rendering uncertainty."}
+  ],
+  "consumers": {
+    "a11y-intake": ["foundations.md", "component-accessibility.md"],
+    "a11y-resources": ["foundations.md"],
+    "a11y-capture": ["foundations.md", "keyboard-focus.md", "dynamic-content.md", "visual-accessibility.md"],
+    "a11y-validate": ["foundations.md", "component-accessibility.md", "keyboard-focus.md", "forms-and-content.md", "dynamic-content.md", "visual-accessibility.md"],
+    "a11y-publish": ["foundations.md"],
+    "agent-operations": ["foundations.md"],
+    "a11y-workflow": ["foundations.md", "component-accessibility.md", "keyboard-focus.md", "forms-and-content.md", "dynamic-content.md", "visual-accessibility.md"],
+    "a11y-knowledge": ["foundations.md", "component-accessibility.md", "keyboard-focus.md", "forms-and-content.md", "dynamic-content.md", "visual-accessibility.md"]
+  }
+}

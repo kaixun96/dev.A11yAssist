@@ -2,6 +2,17 @@
 
 ## Current delivery
 
+v0.11 completes the source knowledge inventory beyond the earlier six-document
+selection. Every tracked file at the pinned AgentOW commit has an explicit
+disposition; whole first-party documents and related source references are
+preserved without summarizing away framework/project details. SPDS/Fluent V8/V9
+and SharePoint have direct topic navigation and an independent read-only
+`a11y-knowledge-odsp` package, while the generic package remains framework-free.
+The original six bodies are retained for compatibility. See `KNOWLEDGE.md` and
+the profile's `source-inventory.json` for exact scope, third-party references and
+non-knowledge exclusions. This does not migrate executable source, replace
+AgentOW documents, update installed plugins or perform a runtime cutover.
+
 v0.10 connects scoped `recover-nvda` through the shared independent operation
 implementation and small/full packages. It reuses the original owned-instance
 controller and completed-assignment authorization, without redesigning startup

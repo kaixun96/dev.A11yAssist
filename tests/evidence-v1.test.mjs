@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import {
   computeScenarioHash,
   validateA11yEvidence,
-} from "../runtime/evidence-v1.mjs";
+} from "../src/runtime/evidence-v1.mjs";
 
 const digest = "a".repeat(64);
 

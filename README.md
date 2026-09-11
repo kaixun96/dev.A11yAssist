@@ -1,260 +1,56 @@
-# A11y Assist
+# A11y Assist - Plugin catalog
 
-[![English](docs/assets/language-en.svg)](README.md) [![简体中文](docs/assets/language-zh-cn.svg)](README.zh-CN.md)
+[简体中文](README.zh-CN.md)
 
-Accessibility knowledge and modular workflow plugins for Copilot CLI.
-Use accessibility guidance while generating or reviewing code, or configure
-individual capabilities for an evidence-first bug-fixing workflow.
+Pick the accessibility plugin you need, install it in Copilot CLI, and use it in your own workflow. You do not need the whole suite.
 
-Active packaging uses `.github/plugin/marketplace.json`, root-level
-`plugin.json` manifests and `${PLUGIN_ROOT}` for MCP launch paths.
-Claude-named material in the preserved AgentOW references is historical data,
-not an active plugin configuration or a Claude Code dependency.
+## Choose a plugin
 
-**Just want to avoid common accessibility mistakes in generated code? Start with
-`a11y-knowledge`.** You do not need AgentOW, a DevBox or workflow configuration.
+### Knowledge and static review
 
-## Quick start: accessibility guidance and static code review
-
-In Copilot CLI:
-
-```powershell
-copilot plugin marketplace add kaixun96/dev.A11yAssist
-copilot plugin install a11y-knowledge@a11y-assist
-```
-
-Restart Copilot to load the plugin, then ask:
-
-```text
-/a11y-knowledge Review this component for potential accessibility issues.
-```
-
-Or ask your coding assistant:
-
-```text
-Use /a11y-knowledge to guide this component's implementation and statically
-review the generated code for accessibility issues.
-```
-
-The plugin supplies rules and read-only review guidance; your coding assistant
-remains responsible for generating or changing code. It helps identify issues
-with native semantics, accessible names, ARIA, keyboard handling, focus and
-announcements. Apply framework-specific guidance only where it fits your project.
-
-**Read-only is the default.** You do not need to repeat "do not run a browser or
-assistive technology" in every prompt. The knowledge plugin does not start a
-remediation workflow, launch browsers, operate AT or run detection tools.
-Its review is model-based source reasoning, not an automated scanner or a
-guarantee of accessibility conformance. Behavior that cannot be established from
-source remains unverified.
-
-### What knowledge is included?
-
-| Topic | Covers |
-|---|---|
-| Foundations | Source-based reasoning, applicable standards, concrete findings and uncertainty |
-| Component semantics | Native elements, names/roles/states, structure, relationships and component contracts |
-| Keyboard and focus | Keyboard operation, dialogs, navigation, focus retention and restoration |
-| Forms and content | Labels, validation, groups, image alternatives, tables and media semantics |
-| Dynamic content | Loading/results/errors, status messages, announcement ownership and stable focus |
-| Visual accessibility | Source-visible contrast, focus styling, reflow, text, targets and motion risks |
-
-Topics are loaded by relevance, not all at once. No framework, operating system,
-repository or coding-workflow dependency is assumed. Examples use standard web
-markup; apply platform equivalents only when their actual contracts are known.
-See the [knowledge index](knowledge/README.md).
-
-The generic knowledge-only package does not include project or operational rules.
-
-### SPDS, Fluent V8/V9 and SharePoint knowledge
-
-Use the independent read-only project knowledge package:
-
-```powershell
-copilot plugin install a11y-knowledge-odsp@a11y-assist
-```
-
-After restarting Copilot, use `/a11y-knowledge-odsp` for the actual component stack.
-It includes generic foundations plus the complete original project references:
-SPDS/Fluent component and MessageBar contracts, V8/V9 focus/announcements,
-component selection and composition, SharePoint utilities and page/canvas focus,
-themes, import routes, review rules and the original A11y reference context.
-It requires **no AgentOW, provider, DevBox or execution workflow**.
-
-See the [project knowledge entrypoint](integrations/agentow/knowledge/README.md),
-[complete source map](integrations/agentow/knowledge/complete-source-guide.md)
-and [per-file coverage/exclusions](integrations/agentow/knowledge/source-inventory.json).
-This is a pinned full-source snapshot, not just the earlier six selected documents.
-Operational instructions and source code in the archive are inert references;
-the knowledge skill does not execute them. No original AgentOW files were removed,
-no live consumer was switched, and external product documentation is not mirrored.
-
-## Use capabilities inside your own workflow
-
-Invoke a plugin with `/<plugin-name>` after installation.
-
-Small plugins accept their own inputs and return results. They do not require
-the full workflow, an AgentOW session or unrelated earlier stages.
-
-| Plugin | Use it for | Prerequisites |
+| Plugin and instructions | What it does | What you need |
 |---|---|---|
-| `a11y-knowledge` | Code-generation guidance, static review and accessibility questions | Usable without providers |
-| `a11y-knowledge-odsp` | SPDS, Fluent V8/V9 and SharePoint-specific static guidance with complete source references | Read-only; no AgentOW, providers or workflow |
-| `a11y-intake` | Work-item intake, acceptance criteria and scenarios | An authorized work-item tool connection |
-| `a11y-resources` | Inspect resource ownership/readiness or release one completed evaluator assignment | Explicit owner-bound connection; not general acquisition or full cleanup |
-| `a11y-capture` | Real Windows AT BEFORE/AFTER evidence | Authorized Windows capture connection and owned evaluator |
-| `a11y-validate` | Check existing evidence; optionally obtain independent behavior evaluation | Evidence-v1 structural checks work directly; behavior evaluation needs an evaluation connection |
-| `a11y-publish` | Reviewer-safe Draft PR and evidence publication | Authorized PR/media publication connection |
-| `agent-operations` | Explicitly scoped cleanup, tracked-media/NVDA-instance recovery and reconciliation | Connection authorized for the specified owned resources |
-| `a11y-workflow` | Optional complete evidence-first composition | Relevant execution connections plus a chosen source/review implementation |
+| [a11y-knowledge](plugins/a11y-knowledge/README.md) | General accessibility guidance for code generation and static review | Copilot CLI and the code or question to review; no execution configuration |
+| [a11y-knowledge-odsp](plugins/a11y-knowledge-odsp/README.md) | SPDS, Fluent V8/V9 and SharePoint accessibility guidance, including general foundations | Copilot CLI and relevant project code; no AgentOW, DevBox or provider required |
 
-For example, call `a11y_validate_evidence` to check existing request/result files
-without creating a Bug run or configuring an external service. It validates the
-artifact contract, not the media's actual behavior.
+### Individual capabilities
 
-**v0.10 scoped NVDA connection:** `recover-nvda` reuses the original controller
-for one recorded main process, or reads its prior stop result without stopping
-again. No new startup engine or full-cleanup claim; unsupported interrupted or
-unrecorded runs fail explicitly. See [the exact boundary](docs/CAPABILITIES.md#scoped-nvda-recovery-v010).
+| Plugin and instructions | What it does | What you need |
+|---|---|---|
+| [a11y-intake](plugins/a11y-intake/README.md) | Read an authorized work item and prepare acceptance criteria and a reproduction scenario | Configured work-item access; built-in ADO read-item uses host-managed authentication |
+| [a11y-resources](plugins/a11y-resources/README.md) | Inspect resource status; release an explicitly authorized completed evaluator assignment | Authorized resource connection; release additionally needs the original completed, owned assignment |
+| [a11y-capture](plugins/a11y-capture/README.md) | Capture BEFORE/AFTER evidence with real Windows assistive technology | Qualified Windows capture connection, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD |
+| [a11y-validate](plugins/a11y-validate/README.md) | Check existing evidence files; optionally request independent behavior evaluation | Node.js 22+ and evidence-v1 files for structural checks; behavior evaluation requires a qualified connection |
+| [a11y-publish](plugins/a11y-publish/README.md) | Attach evidence to an existing Draft PR; integrate broader publication when configured | Authorized PR connection, exact HEAD and hash-bound files; built-in attachment action uses ADO authentication |
+| [agent-operations](plugins/agent-operations/README.md) | Clean up explicitly owned resources and reconcile scoped media or NVDA recovery | Authorized operations connection and original ownership records for the requested scope |
 
-**v0.7 local artifact checking:** explicitly supply `artifactRoot` (and
-`baselineArtifactRoot` for verify) to hash every root-relative evidence file.
-Missing, changed or escaping files reject; no remote URI is fetched and
-independent behavior remains unverified. Both small and full packages reuse the
-[same checker](docs/CAPABILITIES.md#optional-local-artifact-bytes-v07).
+### Optional complete workflow
 
-External operations use `<prefix>_invoke` with an `operationId`, action, context
-and input. Their operation journal prevents duplicate effects; it does not impose
-a global workflow. The caller decides what follows, including after a nonpass
-result. See [capability inputs and examples](docs/CAPABILITIES.md).
+| Plugin and instructions | What it does | What you need |
+|---|---|---|
+| [a11y-workflow](plugins/a11y-workflow/README.md) | Optional end-to-end evidence-first remediation workflow | Qualified work-item, resource, Windows capture, source, validation, review, publication and cleanup connections |
 
-**v0.6 caller-owned waiting:** a CLI or independent caller can explicitly
-configure bounded polling instead of a completion callback. The caller schedules
-reconciliation of the original operation; no Twin connection is required.
-Callbacks remain the default, and timeout never authorizes duplicate execution.
-See [provider waiting](docs/PROVIDERS.md#explicit-caller-owned-polling-v06).
+Open a plugin above for its installation command, prerequisites, example, limitations and bundled reference links.
 
-Each execution plugin bundles the same generic knowledge snapshot and a separate
-profile for its existing execution integration. It reads
-those files directly; it does not need to call or separately install
-`a11y-knowledge`. The full workflow also bundles its stage tools, so installing
-all the smaller plugins is unnecessary.
+For SPDS, Fluent or SharePoint, choose **a11y-knowledge-odsp**; it already includes general knowledge. Choose **a11y-workflow** only if you want the complete workflow; it does not require installing the individual plugins.
 
-**Native execution in v0.5:** `read-item` retrieves a real ADO work item and all
-discussion pages; `attach-evidence` uploads hash-bound files to an existing Draft
-PR, verifies downloaded bytes, and updates/readbacks its description and HEAD.
-These operations use the built-in ADO connection, not a custom provider program.
-They do not interpret discussion, review attachment content, create a PR or
-verify media playback. See [native capabilities](docs/NATIVE-CAPABILITIES.md).
+## Install your selection
 
-## Optional complete workflow
-
-**Use `a11y-workflow` only when you want our complete orchestration.** It calls
-the same capability implementation and adds phase ordering, BEFORE/AFTER,
-review, failure and cleanup policy. AgentOW and other callers may retain their
-own workflows and call small plugins directly.
-
-Connections to external tools still need configuration; installing a plugin
-does not grant work-item, machine or PR access. The current connection mechanism
-wraps trusted executables; tools in another MCP server are not automatically
-connected. Missing connections stop the requested operation;
-`doctor` reports configuration, not proof of a working evaluator.
-
-Supported execution setups are **Twinbot + multiple Windows DevBoxes** or
-**Copilot CLI + one/multiple Windows DevBoxes**. These host requirements do not
-apply to knowledge, structural evidence checking or independent non-capture
-operations. Execution plugins require Node.js 22+.
-
-For the full entrypoint:
+Register this marketplace once, then install only your chosen plugin:
 
 ```powershell
 copilot plugin marketplace add kaixun96/dev.A11yAssist
-copilot plugin install a11y-workflow@a11y-assist
+copilot plugin install <plugin-name>@a11y-assist
 ```
 
-Choose `source` and `review` connections for your coding environment. AgentOW is
-optional, not installed by default. To use the existing AgentOW/odsp-web profile,
-install `agentow-copilot@agentOW` separately and explicitly select
-`workflowProfile: "agentow-odsp"` with its `agentow` connection.
+Restart Copilot after installation to load the plugin, then follow its usage example. Installation does not update or restart an existing worker.
 
-Use a template from [config/](config/) to create your private tool-connection
-configuration, then set its absolute path before restarting Copilot:
+Knowledge plugins need no execution configuration. Execution plugins need Node.js 22+; evidence-file structural checking needs no provider. Live operations require your authorized, configured connections. Installing a plugin does not provision a Windows evaluator or grant service access.
 
-```powershell
-$env:A11Y_ASSIST_CONFIG = 'C:\YourPrivateDirectory\a11y-config.json'
-```
+## For maintainers
 
-Read the [workflow contract](docs/WORKFLOW.md) and
-[provider setup](docs/PROVIDERS.md) before execution. Real BEFORE/AFTER evidence
-and applicable gates are mandatory; static code review is not a substitute.
-
-To install one execution capability instead, use
-`copilot plugin install <plugin-name>@a11y-assist`.
-[tools/install.ps1](tools/install.ps1) can print the install commands;
-`-Execute` runs them and `-Plugin all` installs all eight packages.
-Add `-WithAgentOW` only when you explicitly want that separate plugin too.
-
-## Relationship with AgentOW
-
-AgentOW is a separate caller, not the required parent of these plugins.
-It can call loaded capability MCP tools while retaining its own workflow.
-Its existing `/agentow-a11y` orchestration is not silently replaced.
-
-The evidence-v1 validator is maintained here in `runtime/evidence-v1.mjs`.
-AgentOW can consume a commit-pinned generated copy at its existing tool path,
-preserving offline operation without maintaining another implementation.
-See [the consumer integration](integrations/agentow/README.md).
-
-Additional canonical execution sources live in `native/`: Windows host setup,
-ADO evidence attachments and PR-description budgeting. The retained personal
-browser/campaign implementation is explicitly an AgentOW integration under
-`integrations/agentow/runtime/`. Reviewed AgentOW consumers use pinned generated
-copies; installed workers are not switched by a source release.
-
-Knowledge migration is currently **copy first**: the shared topics are available
-here; other original AgentOW references and the live runtime are retained.
-Generic static-review knowledge is separate from the preserved operational and
-project-specific material under `integrations/agentow/`. Only execution packages
-include that profile; `a11y-knowledge` neither packages nor reads it.
-Remaining cross-repository migration and redundant-authoring cleanup are deferred
-until their compatibility gates pass. Installing this repository does not update
-existing workers.
-
-The intended full-workflow integration keeps source work with AgentOW and real
-AT control with the Windows evidence provider. It must not recursively call
-`a11y-workflow` from an AgentOW source step or use AgentOW's unverified Draft
-fallback to bypass A11y Assist's stricter gates.
-
-See [knowledge migration](docs/KNOWLEDGE.md) and
-[execution rollout](docs/MIGRATION.md).
-
-## Updates and development
-
-Update plugins through your host's supported plugin manager and restart when
-required, at a safe point. A repository push does not hot-update active sessions.
-Keep the installed versions used by an active workflow pinned.
-
-Source lives in `skills/`, `knowledge/`, `integrations/`, `runtime/`, `contracts/`
-and `adapters/`.
-`plugins/`, the marketplace and release manifests are generated; do not hand-edit
-them. Self-contained package copies are distribution artifacts, not separate
-implementations.
-Build removes retired files from generated packages so obsolete operational
-instructions cannot remain inside a knowledge-only package after an update.
-
-With Node.js 22+:
-
-```powershell
-npm run build
-npm test
-npm run check
-```
-
-See the [release process](docs/RELEASING.md).
+Users can stay in the catalog and plugin pages. [Development](docs/DEVELOPMENT.md) explains source, packaging and compatibility exports. [Migration status](docs/MIGRATION.md) and [release guidance](docs/RELEASING.md) are separate from the installation path.
 
 ## Access and license
 
-The repository is public, but public visibility does not grant an open-source
-license; see [LICENSE](LICENSE). Access to operational services is separate.
-Do not contribute credentials, browser profiles, private environment
-configuration or production evidence.
+Public visibility is not an open-source license grant. See [LICENSE](LICENSE). Service permissions are separate; never commit credentials, personal profiles or production evidence.

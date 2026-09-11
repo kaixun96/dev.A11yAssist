@@ -1,8 +1,12 @@
 # Knowledge ownership and consumption
 
-`knowledge/` contains generic rules for code generation and read-only static
+`src/knowledge/` contains authored generic rules for code generation and read-only static
 review. It must not require a particular framework, repository, operating system,
 orchestration tool or runtime evidence workflow.
+
+Installed packages retain `knowledge/` at their own root. Users should start
+with the homepage's knowledge plugins and their individual READMEs, not the
+source or historical integration directories.
 
 `integrations/agentow/knowledge/` provides complete original source references
 and explicit SPDS/Fluent V8/V9 and SharePoint topic maps. `source-inventory.json`
@@ -46,7 +50,7 @@ deleting other original documents or switching installed workers.
   integration profile separately. Their skill preambles route project-specific
   static questions to the same complete source maps without requiring an execution
   integration. Static guidance does not replace authorized runtime evidence.
-- `knowledge/manifest.json` records LF-normalized SHA-256 hashes and the release
+- `src/knowledge/manifest.json` records LF-normalized SHA-256 hashes and the release
   version. A separate integration manifest hashes the retained profile.
   `release.json` binds both manifests and names the execution consumers.
 - Build prunes retired files only from the generated `plugins/` tree; check mode

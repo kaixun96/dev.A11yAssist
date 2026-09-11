@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "mode": "twin",
+  "owner": "replace-with-your-session-owner",
+  "stateRoot": "C:\\REPLACE_WITH_SHARED_PRIVATE_STORAGE\\a11y-assist",
+  "devboxes": ["replace-with-devbox-one", "replace-with-devbox-two"],
+  "twin": {
+    "conversationId": "replace-with-exact-original-conversation",
+    "runtimePath": "C:\\REPLACE_WITH_PRIVATE_BOT_DATA\\runtime.json"
+  },
+  "providers": {}
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "owner": "your-caller-namespace",
+  "stateRoot": "C:\\YourPrivateDirectory\\a11y-operations",
+  "providers": {
+    "intake": {
+      "kind": "ado",
+      "organization": "https://dev.azure.com/YOUR-ORGANIZATION",
+      "project": "YOUR-PROJECT",
+      "authorizationEnvironmentVariable": "A11Y_ADO_AUTHORIZATION"
+    },
+    "publish": {
+      "kind": "ado",
+      "organization": "https://dev.azure.com/YOUR-ORGANIZATION",
+      "project": "YOUR-PROJECT",
+      "repositoryId": "YOUR-REPOSITORY-ID",
+      "authorizationEnvironmentVariable": "A11Y_ADO_AUTHORIZATION"
+    }
+  }
+}

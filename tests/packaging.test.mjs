@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { plugins } from '../runtime/core.mjs';
+import { plugins } from '../src/runtime/core.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 test('seven standalone plugin copies can initialize/list tools without repo siblings', async () => {

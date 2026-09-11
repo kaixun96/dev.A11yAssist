@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWaiting, validateWaitingConfig, validateRequestWaiting, pendingDetails } from '../runtime/waiting.mjs';
-import { invokeCapability } from '../runtime/capability.mjs';
-import { detachedRequirements } from '../adapters/cli.mjs';
+import { createWaiting, validateWaitingConfig, validateRequestWaiting, pendingDetails } from '../src/runtime/waiting.mjs';
+import { invokeCapability } from '../src/runtime/capability.mjs';
+import { detachedRequirements } from '../src/adapters/cli.mjs';
 
 const now = Date.parse('2026-01-01T00:00:00.000Z');
 const policy = { mode: 'caller-poll', pollIntervalSeconds: 10, timeoutSeconds: 60 };

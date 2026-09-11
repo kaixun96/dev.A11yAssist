@@ -3,8 +3,11 @@
 Use a single repository and compatible release set first; do not split into
 separate repositories before independent release requirements exist.
 
-1. Change shared source and skills; do not hand-edit generated packages.
-2. Bump package.json and contracts/workflow.json together.
+1. Change shared source and skills under `src/`, and catalog text in
+   `src/catalog.json`; do not hand-edit generated homepages or packages.
+2. Bump package.json for a release. Change `src/contracts/workflow.json`'s
+   protocol version only for a workflow protocol change; a catalog/layout release
+   must not unnecessarily invalidate existing run/provider contracts.
 3. Run build, tests and generated-package check.
 4. Review for embedded credentials, personal identifiers, machine roster,
    evidence and absolute private paths. Test fixtures must be synthetic.
@@ -17,8 +20,9 @@ separate repositories before independent release requirements exist.
    Retain active run versions; incompatible upgrades fail closed rather than
    rewriting evidence or migrating ownership.
 
-The installer adds AgentOW only with explicit `-WithAgentOW`; the default full
-workflow does not require it. No unsupported dependency fields are
+The installer requires an explicit `-Plugin` selection and adds AgentOW only
+with explicit `-WithAgentOW`; the optional full workflow does not require it.
+No unsupported dependency fields are
 invented in plugin manifests. The current AgentOW freshness rule is still
 applied on its actual leased execution host before invocation.
 

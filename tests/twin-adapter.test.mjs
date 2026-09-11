@@ -5,7 +5,7 @@ import { once } from 'node:events';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { checkTwinDestination, notifyTwin } from '../adapters/twin.mjs';
+import { checkTwinDestination, notifyTwin } from '../src/adapters/twin.mjs';
 
 test('destination preflight is read-only and delivery rechecks the exact enabled scope', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'a11y-notifier-'));

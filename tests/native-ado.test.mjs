@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readAdoWorkItem } from '../native/ado-intake.mjs';
-import { attachPrEvidence } from '../native/ado-attachments.mjs';
-import { readConfig, hash } from '../runtime/core.mjs';
-import { executeOperation, reconcileOperation, operationStatus } from '../runtime/operations.mjs';
+import { readAdoWorkItem } from '../src/native/ado-intake.mjs';
+import { attachPrEvidence } from '../src/native/ado-attachments.mjs';
+import { readConfig, hash } from '../src/runtime/core.mjs';
+import { executeOperation, reconcileOperation, operationStatus } from '../src/runtime/operations.mjs';
 
 const configuration = {
   organization: 'https://example.invalid/organization', project: 'project', repositoryId: 'repository',

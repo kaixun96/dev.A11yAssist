@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Disposable Bug Bash qualification fixture</title>
+<style>
+  body { font: 18px system-ui; max-width: 48rem; margin: 2rem auto; padding: 1rem; }
+  button, input { font: inherit; padding: .5rem; margin: .5rem; }
+  :focus-visible { outline: 3px solid #0047ab; outline-offset: 3px; }
+  [hidden] { display: none !important; }
+  dialog, [role="dialog"] { background: white; border: 2px solid; padding: 2rem; }
+  [role="dialog"] { position: fixed; inset: 20% 25%; }
+  .invalid { border: 3px solid #a80000; }
+</style>
+<h1>Disposable contact editor</h1>
+<p>This fixture deliberately includes a broken variant. It is not a product finding.</p>
+<button id="open" type="button">Edit contact</button>
+<dialog id="native-dialog" aria-labelledby="dialog-title">
+  <h2 id="dialog-title">Edit contact</h2>
+  <label for="name">Name</label><input id="name" autofocus>
+  <button id="close" type="button">Cancel</button>
+</dialog>
+<form id="form" novalidate>
+  <label id="email-label" for="email">Email</label><input id="email" type="email">
+  <p id="error"></p>
+  <button id="submit" type="submit">Save email</button>
+</form>
+<script>
+  const broken = new URLSearchParams(location.search).get('variant') === 'broken';
+  const trigger = document.querySelector('#open');
+  let dialog = document.querySelector('#native-dialog');
+  if (broken) {
+    const replacement = document.createElement('div');
+    replacement.id = 'custom-dialog';
+    replacement.setAttribute('role', 'dialog');
+    replacement.setAttribute('aria-modal', 'true');
+    replacement.setAttribute('aria-labelledby', 'dialog-title');
+    replacement.hidden = true;
+    replacement.innerHTML = dialog.innerHTML;
+    dialog.replaceWith(replacement);
+    dialog = replacement;
+    document.querySelector('#email-label').removeAttribute('for');
+  }
+  trigger.addEventListener('click', () => {
+    if (broken) dialog.hidden = false;
+    else dialog.showModal();
+  });
+  document.querySelector('#close').addEventListener('click', () => {
+    if (broken) dialog.hidden = true;
+    else dialog.close();
+  });
+  document.querySelector('#form').addEventListener('submit', event => {
+    event.preventDefault();
+    const email = document.querySelector('#email');
+    if (!email.value.trim()) {
+      email.classList.add('invalid');
+      if (!broken) {
+        email.setAttribute('aria-invalid', 'true');
+        email.setAttribute('aria-describedby', 'error');
+        document.querySelector('#error').textContent = 'Enter an email address.';
+        email.focus();
+      }
+    }
+  });
+</script>
+</html>

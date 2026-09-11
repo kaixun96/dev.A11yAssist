@@ -32,6 +32,13 @@ exclusive desktop ownership. Missing tools are gaps, not a reason to invent tool
 names or receipts. Follow deployment ownership gates before interactive control.
 Do not acquire resources with a dummy Bug or fake capture request.
 
+If the user explicitly requests tooling qualification rather than a product
+round, `docs/BUG-BASH.md` describes the optional bounded
+`bug-bash/fixture_runner.py` and its disposable healthy/broken controls.
+Use actual owned Windows execution and the browser setup profile. Its seeded
+findings and qualification result never replace product coverage or real AT.
+Normal feature requests must not silently switch to this fixture.
+
 For requested live page/AT checks, read the bundled
 `modules/a11y-setup/skills/a11y-setup/SKILL.md` for environment check/planning.
 Its root is `modules/a11y-setup`; it reuses the same standalone setup skill,

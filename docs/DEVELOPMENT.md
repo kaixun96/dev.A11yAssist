@@ -53,10 +53,12 @@ Normal users can copy the install command from their selected plugin page.
 The optional helper requires an explicit selection and prints commands by default:
 
 ```powershell
-.\tools\install.ps1 -Plugin a11y-knowledge-odsp
+.\tools\install.ps1 -Plugin a11y-knowledge
 ```
 
-`-Execute` runs the commands; `-Plugin all` explicitly selects all nine packages.
+`-Execute` runs the commands; `-Plugin all` selects the eight non-compatibility
+packages. Knowledge includes its ODSP subskill and full references by default.
+The old standalone ODSP install name remains supported for existing users only.
 Add `-WithAgentOW` only when intentionally installing that separate integration.
 The helper never defaults to the full workflow.
 

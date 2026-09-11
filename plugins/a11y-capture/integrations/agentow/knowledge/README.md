@@ -1,8 +1,10 @@
 # SPDS, Fluent, SharePoint and AgentOW knowledge
 
-Start here for the project-specific knowledge that is intentionally absent from
-the generic `a11y-knowledge` plugin. The independent **`a11y-knowledge-odsp`**
-read-only plugin bundles this entire directory and the generic foundations.
+Start here for the project-specific knowledge built into **`a11y-knowledge`**.
+One installation includes generic foundations and this entire directory, routed
+through its read-only ODSP subskill only for matching questions. The old
+`a11y-knowledge-odsp` package remains for installation compatibility, not as an
+additional requirement. Unrelated projects use the generic topics only.
 No AgentOW, provider, DevBox or workflow is required for static source review.
 The seven execution plugins bundle the same files, not separate authoring copies.
 

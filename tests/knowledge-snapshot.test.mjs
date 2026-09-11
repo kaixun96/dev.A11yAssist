@@ -119,8 +119,9 @@ test('complete component and SharePoint source details are preserved, not replac
   }
 });
 
-test('project knowledge plugin is complete offline, discoverable and read-only without runtime entrypoints', async () => {
-  const directory = join(root, 'plugins/a11y-knowledge-odsp');
+for (const name of ['a11y-knowledge', 'a11y-knowledge-odsp']) {
+test(`${name} is complete offline, discoverable and read-only without runtime entrypoints`, async () => {
+  const directory = join(root, 'plugins', name);
   const plugin = await load(join(directory, 'plugin.json'));
   assert.equal(plugin.mcpServers, undefined);
   for (const forbidden of ['.mcp.json', 'runtime', 'native', 'adapters', 'config']) {
@@ -133,6 +134,7 @@ test('project knowledge plugin is complete offline, discoverable and read-only w
   const profile = await load(join(directory, snapshotDirectory, 'manifest.json'));
   const expected = new Set([
     'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md', 'skills/a11y-knowledge-odsp/SKILL.md',
+    ...(name === 'a11y-knowledge' ? ['skills/a11y-knowledge/SKILL.md'] : []),
     `${snapshotDirectory}/manifest.json`, 'knowledge/manifest.json'
   ]);
   for (const [base, manifest] of [
@@ -165,3 +167,4 @@ test('project knowledge plugin is complete offline, discoverable and read-only w
     assert(!entry.endsWith('/SKILL.md') && !entry.endsWith('/AGENTS.md'));
   }
 });
+}

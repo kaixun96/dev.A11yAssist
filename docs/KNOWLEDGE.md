@@ -38,12 +38,16 @@ deleting other original documents or switching installed workers.
 
 - `a11y-knowledge` is an independently installable read-only skill, without MCP,
   providers or automatic commands.
-- The knowledge-only package bundles only generic topics. It contains no
-  integration directory, operational contract, provider configuration, MCP
-  server or executable tool.
-- `a11y-knowledge-odsp` is a second independently installable read-only skill,
-  bundling generic topics plus the complete project/source profile. It has no
-  MCP, providers or executable tools and does not require AgentOW or a workflow.
+- The knowledge-only package bundles generic topics and the complete project
+  profile. Its entry skill selects the built-in `a11y-knowledge-odsp` subskill
+  for SPDS, Fluent V8/V9, SharePoint or ODSP questions; unrelated projects read
+  only generic topics. Identify unknown stacks instead of imposing ODSP rules.
+  Submodules are bundled skills, not nested plugin dependencies or extra installs.
+- `a11y-knowledge-odsp` remains an independently installable compatibility package
+  for existing users, generated from the same skill and references. New users
+  install only `a11y-knowledge`; installing both duplicates the ODSP skill.
+  Both knowledge packages have no MCP, providers or executable tools and do not
+  require AgentOW or a workflow.
   Archived `SKILL.md`/`AGENTS.md`/code receive inert suffixes and are explicitly
   data, never instructions that authorize commands or change the active skill.
 - The seven execution plugins bundle generic knowledge and the retained
@@ -55,7 +59,9 @@ deleting other original documents or switching installed workers.
   `release.json` binds both manifests and names the execution consumers.
 - Build prunes retired files only from the generated `plugins/` tree; check mode
   rejects unexpected files. Package isolation tests scan the entire knowledge
-  package, not only its index, to prevent stale instructions leaking back in.
+  package against its exact declared file set to prevent stale entrypoints.
+  Generic topic bodies stay project-independent; project references stay in their
+  separately indexed, hashed profile. Both read-only packages enforce the same boundary.
 - `tools/agentow-knowledge-snapshot.mjs <repository> <commit> --check` compares
   the copied bodies and inventory against the complete pinned Git tree, not just
   the inventory's own declarations. Ordinary build also rejects snapshot drift

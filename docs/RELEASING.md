@@ -26,9 +26,12 @@ No unsupported dependency fields are
 invented in plugin manifests. The current AgentOW freshness rule is still
 applied on its actual leased execution host before invocation.
 
-Keep generic knowledge and execution integration profiles in separate packages:
-`a11y-knowledge` must not include the `integrations/` tree or stale operational
-files. Build prunes retired generated files; check mode rejects unexpected files.
+Keep generic topic bodies and scoped project references separately indexed.
+`a11y-knowledge` includes the ODSP subskill and complete inert reference profile
+by default; this does not add executable tools, MCP, configuration or workflow
+authority. The old ODSP package is compatibility-only and must not be installed
+alongside it by the `all` helper. Build prunes retired generated files; check mode
+rejects unexpected files. Preserve full snapshot hashes and inert source suffixes.
 
 Integration migration is currently copy-first. Publish the indexed snapshots and
 their hashes, but leave AgentOW's original files and references intact. Do not remove

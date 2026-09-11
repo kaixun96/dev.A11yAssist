@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.12.0",
+  "version": "0.13.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -15,13 +15,13 @@
   ],
   "knowledge": {
     "manifest": "src/knowledge/manifest.json",
-    "sha256": "5099e6e80c788609e5e99d8c98258ac66bebe2d7c53355fbb7fb2dc5b7a64970"
+    "sha256": "76b4b86bdf263c4b3a9278679fb523932e2902957fe55d85ba4fe6cea7143b53"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "6adb3d6805864a8d4bfea0c7b5cb2dc50a75589e74be2dbf6d544a69b9976f5a",
+      "sha256": "f9405380ddd5066b82ca8029cee0d5622640457061ed16f6bd5d43143323b508",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -30,6 +30,7 @@
         "a11y-publish",
         "agent-operations",
         "a11y-workflow",
+        "a11y-knowledge",
         "a11y-knowledge-odsp"
       ]
     }

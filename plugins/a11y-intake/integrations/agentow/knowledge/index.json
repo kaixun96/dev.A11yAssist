@@ -5,7 +5,7 @@
   "snapshotInventory": "source-inventory.json",
   "knowledgePlugin": {
     "name": "a11y-knowledge-odsp",
-    "description": "Read-only SPDS, Fluent V8/V9 and SharePoint accessibility knowledge with a complete traceable AgentOW source snapshot; no execution or AgentOW dependency."
+    "description": "Compatibility installation for existing ODSP knowledge users. New users install a11y-knowledge, which includes this read-only submodule and all references."
   },
   "origin": {
     "repository": "kaixun96/dev.AgentOW",
@@ -78,6 +78,7 @@
     }
   ],
   "consumers": {
+    "a11y-knowledge": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md"],
     "a11y-intake": ["foundations.md", "pr-evidence-capture-guide.md"],
     "a11y-resources": ["windows-host-testing.md", "personal-evaluator-browser.md"],
     "a11y-capture": ["foundations.md", "windows-host-testing.md", "personal-evaluator-browser.md", "pr-evidence-capture-guide.md"],

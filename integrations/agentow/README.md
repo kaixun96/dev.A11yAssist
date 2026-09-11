@@ -8,9 +8,11 @@ from the generic static-accessibility knowledge.
 - [Import provenance and execution-topic routing](knowledge/index.json)
 
 This directory is not an automatic execution integration. Execution packages and
-the read-only `a11y-knowledge-odsp` package bundle the same references. Static
+the read-only `a11y-knowledge` package (and its legacy `a11y-knowledge-odsp`
+compatibility package) bundle the same references. Static
 project knowledge requires no AgentOW workflow. The independently installable
-generic `a11y-knowledge` package still excludes this entire directory.
+`a11y-knowledge` package includes the ODSP subskill and reads project guidance
+only when relevant; no second installation is needed.
 
 AgentOW's orchestration and original document bodies are retained. The shared
 validator has the explicit runtime-consumer path below; remaining dependency

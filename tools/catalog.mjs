@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 const repository = 'https://github.com/kaixun96/dev.A11yAssist';
 const referenceTitles = {
+  'skills/a11y-knowledge-odsp/SKILL.md': { en: 'Built-in ODSP submodule', zh: '内置 ODSP 子模块' },
   'knowledge/README.md': { en: 'General accessibility topics', zh: '通用无障碍知识' },
   'integrations/agentow/knowledge/README.md': { en: 'Project knowledge index', zh: '项目知识索引' },
   'integrations/agentow/knowledge/fluent-spds.md': { en: 'SPDS and Fluent V8/V9', zh: 'SPDS 和 Fluent V8/V9' },
@@ -18,13 +19,13 @@ const labels = {
     language: '[简体中文](README.zh-CN.md)',
     intro: 'Pick the accessibility plugin you need, install it in Copilot CLI, and use it in your own workflow. You do not need the whole suite.',
     choose: 'Choose a plugin',
-    groups: { knowledge: 'Knowledge and static review', capability: 'Individual capabilities', workflow: 'Optional complete workflow' },
+    groups: { knowledge: 'Knowledge and static review', capability: 'Individual capabilities', workflow: 'Optional complete workflow', compatibility: 'Existing installations only' },
     columns: '| Plugin and instructions | What it does | What you need |',
     install: 'Install your selection',
     installation: 'Register this marketplace once, then install only your chosen plugin:',
     placeholder: '<plugin-name>',
     restart: 'Restart Copilot after installation to load the plugin, then follow its usage example. Installation does not update or restart an existing worker.',
-    advice: 'For SPDS, Fluent or SharePoint, choose **a11y-knowledge-odsp**; it already includes general knowledge. Choose **a11y-workflow** only if you want the complete workflow; it does not require installing the individual plugins.',
+    advice: 'For knowledge, install **a11y-knowledge** once: general topics and the SPDS/Fluent/SharePoint submodule are included, with project guidance read only when relevant. The old **a11y-knowledge-odsp** package is compatibility-only; do not install both. Choose **a11y-workflow** only if you want the complete workflow.',
     readiness: 'Knowledge plugins need no execution configuration. Execution plugins need Node.js 22+; evidence-file structural checking needs no provider. Live operations require your authorized, configured connections. Installing a plugin does not provision a Windows evaluator or grant service access.',
     details: 'Open a plugin above for its installation command, prerequisites, example, limitations and bundled reference links.',
     development: 'For maintainers',
@@ -45,13 +46,13 @@ const labels = {
     language: '[English](README.md)',
     intro: '挑选需要的无障碍插件，安装到 Copilot CLI，在你自己的工作流里使用。无需安装整套插件。',
     choose: '挑选插件',
-    groups: { knowledge: '知识与静态审查', capability: '单项能力', workflow: '可选的完整工作流' },
+    groups: { knowledge: '知识与静态审查', capability: '单项能力', workflow: '可选的完整工作流', compatibility: '仅兼容已有安装' },
     columns: '| 插件与使用说明 | 解决什么问题 | 使用前提 |',
     install: '安装你选中的插件',
     installation: '先注册一次插件市场，再安装你选中的插件：',
     placeholder: '<插件名>',
     restart: '安装后重启 Copilot 加载插件，再按该插件页面的示例使用。安装不会更新或重启已有 worker。',
-    advice: '使用 SPDS、Fluent 或 SharePoint 时，选 **a11y-knowledge-odsp**，它已包含通用知识。只有需要整套流程时才选 **a11y-workflow**，无需同时安装各个小插件。',
+    advice: '知识只需安装 **a11y-knowledge**：通用主题和 SPDS／Fluent／SharePoint 子模块一并提供，按场景读取。旧 **a11y-knowledge-odsp** 仅兼容已有安装，不要重复安装。只有需要整套流程时才选 **a11y-workflow**。',
     readiness: '知识插件无需执行环境配置。执行插件需要 Node.js 22+；证据文件结构检查无需 provider。实际操作需要你配置获授权的连接。安装插件不会自动准备 Windows 评估机，也不会授予服务访问权限。',
     details: '点击上面的插件，查看各自的安装命令、使用前提、示例、能力限制和随包参考资料。',
     development: '维护者入口',
@@ -74,7 +75,7 @@ export function validateCatalog(catalog, names) {
   assert(Array.isArray(catalog) && catalog.length === names.length, 'Catalog must cover every plugin');
   assert.deepEqual(catalog.map(entry => entry.name).sort(), [...names].sort(), 'Catalog names must match installable plugins');
   for (const entry of catalog) {
-    assert(['knowledge', 'capability', 'workflow'].includes(entry.group), `Invalid catalog group: ${entry.name}`);
+    assert(['knowledge', 'capability', 'workflow', 'compatibility'].includes(entry.group), `Invalid catalog group: ${entry.name}`);
     assert(Array.isArray(entry.docs) && entry.docs.length, `Missing reference links: ${entry.name}`);
     for (const path of entry.docs) {
       assert(/^[a-zA-Z0-9._/-]+\.md$/.test(path) && !path.startsWith('/') && !path.split('/').includes('..'),

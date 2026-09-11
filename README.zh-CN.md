@@ -10,8 +10,7 @@
 
 | 插件与使用说明 | 解决什么问题 | 使用前提 |
 |---|---|---|
-| [a11y-knowledge](plugins/a11y-knowledge/README.zh-CN.md) | 通用无障碍知识，用于代码生成指导和静态审查 | Copilot CLI，以及待审代码或问题；不需要执行环境配置 |
-| [a11y-knowledge-odsp](plugins/a11y-knowledge-odsp/README.zh-CN.md) | SPDS、Fluent V8/V9、SharePoint 专属知识，已包含通用基础 | Copilot CLI 和相关项目代码；无需 AgentOW、DevBox 或执行连接 |
+| [a11y-knowledge](plugins/a11y-knowledge/README.zh-CN.md) | 无障碍知识与静态审查，内置通用基础及 ODSP 子模块（SPDS、Fluent V8/V9、SharePoint） | Copilot CLI，以及待审代码或问题；不需要执行环境配置 |
 
 ### 单项能力
 
@@ -30,9 +29,15 @@
 |---|---|---|
 | [a11y-workflow](plugins/a11y-workflow/README.zh-CN.md) | 可选的、以证据为依据的端到端修复工作流 | 已验收的工作项、资源、Windows 采集、源码、验证、review、发布和清理连接 |
 
+### 仅兼容已有安装
+
+| 插件与使用说明 | 解决什么问题 | 使用前提 |
+|---|---|---|
+| [a11y-knowledge-odsp](plugins/a11y-knowledge-odsp/README.zh-CN.md) | 旧版独立安装入口；已作为子模块内置于 a11y-knowledge | Copilot CLI 和相关项目代码；无需 AgentOW、DevBox 或执行连接 |
+
 点击上面的插件，查看各自的安装命令、使用前提、示例、能力限制和随包参考资料。
 
-使用 SPDS、Fluent 或 SharePoint 时，选 **a11y-knowledge-odsp**，它已包含通用知识。只有需要整套流程时才选 **a11y-workflow**，无需同时安装各个小插件。
+知识只需安装 **a11y-knowledge**：通用主题和 SPDS／Fluent／SharePoint 子模块一并提供，按场景读取。旧 **a11y-knowledge-odsp** 仅兼容已有安装，不要重复安装。只有需要整套流程时才选 **a11y-workflow**。
 
 ## 安装你选中的插件
 

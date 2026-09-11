@@ -18,9 +18,12 @@ switching and redundant-authoring cleanup wait for their compatibility gates.
 
 ## Shared runtime consumer
 
-`runtime/evidence-v1.mjs` in the repository root is the single authoring source
-for the existing version-1 deterministic evidence validator. Build publishes its
-path/hash in `exports.json`. This is distinct from the retained document snapshot.
+`src/runtime/evidence-v1.mjs` is the single authoring source for the existing
+version-1 deterministic evidence validator. Build retains the public
+`runtime/evidence-v1.mjs` path as a byte-equivalent generated export and publishes
+that path/hash in `exports.json`. Native exports follow the same rule. Installed
+plugins use their bundled `runtime/` and do not depend on repository source paths.
+This is distinct from the retained document snapshot.
 
 AgentOW's consumer update command is:
 

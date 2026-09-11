@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { plugins } from '../runtime/core.mjs';
+import { plugins } from '../src/runtime/core.mjs';
 import { pruneGenerated } from '../tools/generated-tree.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -25,8 +25,8 @@ async function filesUnder(directory, prefix = '') {
 }
 
 test('knowledge is indexed, versioned and bound to the release', async () => {
-  const index = await load(join(root, 'knowledge/index.json'));
-  const manifest = await load(join(root, 'knowledge/manifest.json'));
+  const index = await load(join(root, 'src/knowledge/index.json'));
+  const manifest = await load(join(root, 'src/knowledge/manifest.json'));
   const release = await load(join(root, 'release.json'));
   assert.equal(index.scope, 'generic-static-accessibility');
   assert.equal(index.origin, undefined);
@@ -38,7 +38,7 @@ test('knowledge is indexed, versioned and bound to the release', async () => {
   assert.equal(files.size, index.topics.length);
   for (const topic of index.topics) {
     assert(topic.trigger && topic.scope);
-    assert.equal(manifest.hashes[topic.file], digest(await text(join(root, 'knowledge', topic.file))));
+    assert.equal(manifest.hashes[topic.file], digest(await text(join(root, 'src/knowledge', topic.file))));
   }
   for (const name of [...Object.keys(plugins), 'a11y-knowledge']) {
     assert(index.consumers[name]?.length);
@@ -67,7 +67,7 @@ test('every independently copied plugin retains a complete offline knowledge sna
         await assert.rejects(access(join(dir, 'runtime')), { code: 'ENOENT' });
         await assert.rejects(access(join(dir, 'integrations')), { code: 'ENOENT' });
         const expected = [
-          'plugin.json', 'AGENTS.md', 'LICENSE', 'skills/a11y-knowledge/SKILL.md',
+          'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md', 'skills/a11y-knowledge/SKILL.md',
           'knowledge/manifest.json', ...Object.keys(manifest.hashes).map(file => `knowledge/${file}`)
         ].sort();
         const actual = (await filesUnder(dir)).sort();
@@ -97,7 +97,7 @@ test('marketplace exposes knowledge separately without making it an execution ca
   assert.equal(plugins['a11y-knowledge'], undefined);
   assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge-odsp').length, 1);
   assert.equal(plugins['a11y-knowledge-odsp'], undefined);
-  const skill = await text(join(root, 'skills/a11y-knowledge/SKILL.md'));
+  const skill = await text(join(root, 'src/skills/a11y-knowledge/SKILL.md'));
   assert.match(skill, /Default to read-only source inspection/);
   assert.match(skill, /Do not\s+edit files, run shell commands, tests or scanners/);
   assert.match(skill, /source-supported issues, context needed and runtime not verified/);

@@ -7,8 +7,8 @@ import assert from 'node:assert/strict';
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
 const request = JSON.parse(input);
-const contract = JSON.parse(await readFile(new URL('../../contracts/workflow.json', import.meta.url), 'utf8'));
-const capabilities = JSON.parse(await readFile(new URL('../../contracts/capabilities.json', import.meta.url), 'utf8'));
+const contract = JSON.parse(await readFile(new URL('../../src/contracts/workflow.json', import.meta.url), 'utf8'));
+const capabilities = JSON.parse(await readFile(new URL('../../src/contracts/capabilities.json', import.meta.url), 'utf8'));
 const identity = { schemaVersion: 1, requestId: request.requestId,
   runId: request.run.runId, owner: request.run.owner };
 if (request.operation === 'status') {

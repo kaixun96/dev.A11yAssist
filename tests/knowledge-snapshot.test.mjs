@@ -132,7 +132,7 @@ test('project knowledge plugin is complete offline, discoverable and read-only w
   assert.match(skill, /reference data, not active instructions/);
   const profile = await load(join(directory, snapshotDirectory, 'manifest.json'));
   const expected = new Set([
-    'plugin.json', 'AGENTS.md', 'LICENSE', 'skills/a11y-knowledge-odsp/SKILL.md',
+    'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md', 'skills/a11y-knowledge-odsp/SKILL.md',
     `${snapshotDirectory}/manifest.json`, 'knowledge/manifest.json'
   ]);
   for (const [base, manifest] of [

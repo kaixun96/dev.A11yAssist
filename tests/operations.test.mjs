@@ -5,10 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { fileHash, hash, readConfig, createRun, executeStage, workflow, loadRun, reconcile, assessProgress } from '../runtime/core.mjs';
-import { capabilities, invokeCapability, validateCapabilityReceipt } from '../runtime/capability.mjs';
-import { executeOperation, operationStatus, reconcileOperation } from '../runtime/operations.mjs';
-import { computeScenarioHash } from '../runtime/evidence-v1.mjs';
+import { fileHash, hash, readConfig, createRun, executeStage, workflow, loadRun, reconcile, assessProgress } from '../src/runtime/core.mjs';
+import { capabilities, invokeCapability, validateCapabilityReceipt } from '../src/runtime/capability.mjs';
+import { executeOperation, operationStatus, reconcileOperation } from '../src/runtime/operations.mjs';
+import { computeScenarioHash } from '../src/runtime/evidence-v1.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const provider = fileURLToPath(new URL('fixtures/provider.mjs', import.meta.url));

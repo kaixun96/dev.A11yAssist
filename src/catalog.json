@@ -1,0 +1,155 @@
+[
+  {
+    "name": "a11y-knowledge",
+    "group": "knowledge",
+    "docs": ["knowledge/README.md"],
+    "en": {
+      "purpose": "General accessibility guidance for code generation and static review",
+      "requires": "Copilot CLI and the code or question to review; no execution configuration",
+      "example": "/a11y-knowledge Review this component for keyboard, focus and accessible-name issues.",
+      "limits": "Read-only source analysis. Does not edit code, run scanners or test assistive technology. Guidance is not a conformance verdict."
+    },
+    "zh": {
+      "purpose": "通用无障碍知识，用于代码生成指导和静态审查",
+      "requires": "Copilot CLI，以及待审代码或问题；不需要执行环境配置",
+      "example": "/a11y-knowledge 审查这个组件的键盘、焦点和可访问名称问题。",
+      "limits": "只读分析源码，不修改代码、不运行扫描器或辅助技术。建议不等于合规结论。"
+    }
+  },
+  {
+    "name": "a11y-knowledge-odsp",
+    "group": "knowledge",
+    "docs": ["integrations/agentow/knowledge/README.md", "integrations/agentow/knowledge/fluent-spds.md", "integrations/agentow/knowledge/sharepoint.md", "integrations/agentow/knowledge/complete-source-guide.md"],
+    "en": {
+      "purpose": "SPDS, Fluent V8/V9 and SharePoint accessibility guidance, including general foundations",
+      "requires": "Copilot CLI and relevant project code; no AgentOW, DevBox or provider required",
+      "example": "/a11y-knowledge-odsp Review this Fluent V9 dialog's focus restoration and announcements.",
+      "limits": "Read-only. Includes the preserved project references and general topics, so a separate general-knowledge install is unnecessary. Archived commands are reference data, not permission to execute them."
+    },
+    "zh": {
+      "purpose": "SPDS、Fluent V8/V9、SharePoint 专属知识，已包含通用基础",
+      "requires": "Copilot CLI 和相关项目代码；无需 AgentOW、DevBox 或执行连接",
+      "example": "/a11y-knowledge-odsp 审查这个 Fluent V9 对话框的焦点恢复和播报。",
+      "limits": "只读。已包含项目原文和通用主题，无需另外安装通用知识插件。归档里的命令只是参考资料，不是执行授权。"
+    }
+  },
+  {
+    "name": "a11y-intake",
+    "group": "capability",
+    "docs": ["docs/NATIVE-CAPABILITIES.md", "docs/CAPABILITIES.md"],
+    "en": {
+      "purpose": "Read an authorized work item and prepare acceptance criteria and a reproduction scenario",
+      "requires": "Configured work-item access; built-in ADO read-item uses host-managed authentication",
+      "example": "/a11y-intake Read the authorized work item <item URL> and identify expected behavior and missing reproduction details.",
+      "limits": "ADO read-item fetches fields, discussion and attachment metadata; it does not review attachment bytes or claim that acceptance is complete. No evaluator, source branch or PR is acquired. Apply your deployment's ownership gate first."
+    },
+    "zh": {
+      "purpose": "读取获授权的工作项，整理验收条件和复现场景",
+      "requires": "配置工作项访问连接；内置 ADO read-item 使用主机管理的认证",
+      "example": "/a11y-intake 读取获授权的工作项 <工作项链接>，整理预期行为和缺少的复现信息。",
+      "limits": "ADO read-item 读取字段、讨论和附件元数据，不代表附件内容已审阅或验收条件已完成。不会申请评估机、创建分支或 PR；先遵守部署环境的归属门禁。"
+    }
+  },
+  {
+    "name": "a11y-resources",
+    "group": "capability",
+    "docs": ["docs/CAPABILITIES.md"],
+    "en": {
+      "purpose": "Inspect resource status; release an explicitly authorized completed evaluator assignment",
+      "requires": "Authorized resource connection; release additionally needs the original completed, owned assignment",
+      "example": "/a11y-resources Show resource ownership and readiness through my configured connection; do not acquire or release anything.",
+      "limits": "Not a generic allocator or recovery driver. Stale status does not release ownership. release-evaluator is a separate explicit action, not part of a status query."
+    },
+    "zh": {
+      "purpose": "查看资源状态；按明确授权释放已完成的评估机任务",
+      "requires": "获授权的资源连接；释放还需要原始、已完成且仍归本任务所有的记录",
+      "example": "/a11y-resources 通过已配置的连接查看资源归属和就绪状态，不申请或释放任何资源。",
+      "limits": "不是通用资源分配器或恢复驱动。状态过期不代表归属失效；release-evaluator 是另行明确授权的操作，不会随状态查询执行。"
+    }
+  },
+  {
+    "name": "a11y-capture",
+    "group": "capability",
+    "docs": ["docs/CAPABILITIES.md", "docs/PROVIDERS.md"],
+    "en": {
+      "purpose": "Capture BEFORE/AFTER evidence with real Windows assistive technology",
+      "requires": "Qualified Windows capture connection, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD",
+      "example": "/a11y-capture Capture BEFORE for <sealed scenario> on <owned evaluator> using the authorized capture connection.",
+      "limits": "Installation does not provision a DevBox or recorder. No synthetic AT results. Preserve scenario/evaluator identity for AFTER; missing capabilities are explicit blockers."
+    },
+    "zh": {
+      "purpose": "使用真实 Windows 辅助技术采集 BEFORE／AFTER 证据",
+      "requires": "已完成部署验收的 Windows 采集连接、自有评估机和固定场景；AFTER 还需实际源码 HEAD",
+      "example": "/a11y-capture 通过获授权的采集连接，在 <自有评估机> 为 <已固定场景> 采集 BEFORE。",
+      "limits": "安装插件不会自动创建 DevBox 或录制器，也不生成模拟 AT 结果。AFTER 保持相同场景和评估机；缺少能力会明确阻断。"
+    }
+  },
+  {
+    "name": "a11y-validate",
+    "group": "capability",
+    "docs": ["docs/CAPABILITIES.md", "integrations/agentow/knowledge/evidence-contract.md"],
+    "en": {
+      "purpose": "Check existing evidence files; optionally request independent behavior evaluation",
+      "requires": "Node.js 22+ and evidence-v1 files for structural checks; behavior evaluation requires a qualified connection",
+      "example": "/a11y-validate Check the structure of these evidence-v1 request/result files without starting a workflow or controlling a browser.",
+      "limits": "The a11y_validate_evidence tool needs no provider or run journal. Structure and hash checks are not real AT or behavior PASS. Verify mode also needs baseline files and the repository root."
+    },
+    "zh": {
+      "purpose": "检查已有证据文件；按需请求独立行为评估",
+      "requires": "结构检查只需 Node.js 22+ 和 evidence-v1 文件；行为评估需要已验收的连接",
+      "example": "/a11y-validate 检查这些 evidence-v1 request/result 文件的结构，不启动工作流或控制浏览器。",
+      "limits": "a11y_validate_evidence 工具无需 provider 或流程日志。结构与哈希通过不等于真实 AT 或行为通过；verify 模式还需要基线文件和仓库根路径。"
+    }
+  },
+  {
+    "name": "a11y-publish",
+    "group": "capability",
+    "docs": ["docs/NATIVE-CAPABILITIES.md", "docs/CAPABILITIES.md"],
+    "en": {
+      "purpose": "Attach evidence to an existing Draft PR; integrate broader publication when configured",
+      "requires": "Authorized PR connection, exact HEAD and hash-bound files; built-in attachment action uses ADO authentication",
+      "example": "/a11y-publish Attach the approved hash-bound evidence files to <existing Draft PR> at <exact HEAD>, updating its description only.",
+      "limits": "Built-in attach-evidence does not create a PR, approve review or verify media behavior. Broader publish needs a qualified connection. No PR comments, merge or replay of an ambiguous upload."
+    },
+    "zh": {
+      "purpose": "向已有 Draft PR 附加证据；配置后接入更完整的发布流程",
+      "requires": "获授权的 PR 连接、精确 HEAD 和哈希绑定文件；内置附件操作使用 ADO 认证",
+      "example": "/a11y-publish 将已批准且哈希绑定的证据附加到 <已有 Draft PR> 的 <精确 HEAD>，只更新描述。",
+      "limits": "内置 attach-evidence 不创建 PR、不批准 review，也不验证媒体行为。完整 publish 需要另行验收的连接；不发 PR 评论、不合并，也不重放结果不明的上传。"
+    }
+  },
+  {
+    "name": "agent-operations",
+    "group": "capability",
+    "docs": ["docs/CAPABILITIES.md", "docs/PROVIDERS.md"],
+    "en": {
+      "purpose": "Clean up explicitly owned resources and reconcile scoped media or NVDA recovery",
+      "requires": "Authorized operations connection and original ownership records for the requested scope",
+      "example": "/agent-operations Read the status of <existing operation ID>; do not retry execution or stop any process.",
+      "limits": "Not a general process-killing tool. recover-media and recover-nvda use original recorded identities and prove only their narrow scope, not full cleanup. Busy, unowned or incompletely recorded tasks cannot be taken over."
+    },
+    "zh": {
+      "purpose": "清理明确归本任务所有的资源，处理限定范围的录制或 NVDA 恢复",
+      "requires": "获授权的 operations 连接，以及对应范围的原始归属记录",
+      "example": "/agent-operations 读取 <已有 operation ID> 的状态，不重试执行、不停止任何进程。",
+      "limits": "不是通用进程终止工具。recover-media 和 recover-nvda 使用原始身份记录，只证明限定范围，不代表全部清理完成；不接管忙碌、非自有或记录不完整的任务。"
+    }
+  },
+  {
+    "name": "a11y-workflow",
+    "group": "workflow",
+    "docs": ["docs/WORKFLOW.md", "docs/PROVIDERS.md", "docs/CAPABILITIES.md"],
+    "en": {
+      "purpose": "Optional end-to-end evidence-first remediation workflow",
+      "requires": "Qualified work-item, resource, Windows capture, source, validation, review, publication and cleanup connections",
+      "example": "/a11y-workflow Check my configuration for <exact Bug>; report missing connections before starting any execution.",
+      "limits": "Includes the shared capabilities; sibling plugins are not prerequisites. AgentOW is optional. Installation is not a ready-to-run environment. No reproduced BEFORE means no source change or PR; no unverified publication fallback."
+    },
+    "zh": {
+      "purpose": "可选的、以证据为依据的端到端修复工作流",
+      "requires": "已验收的工作项、资源、Windows 采集、源码、验证、review、发布和清理连接",
+      "example": "/a11y-workflow 检查 <指定 Bug> 所需的配置，在开始执行前报告缺少的连接。",
+      "limits": "已包含共用能力，不要求安装其他小插件；AgentOW 可选。安装不等于环境已就绪。没有已复现的 BEFORE 就不改源码或建 PR，也不允许未验证发布。"
+    }
+  }
+]

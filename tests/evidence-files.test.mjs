@@ -7,8 +7,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { computeScenarioHash, validateA11yEvidenceFiles } from '../runtime/evidence-v1.mjs';
-import { validateEvidenceFiles } from '../runtime/evidence-files.mjs';
+import { computeScenarioHash, validateA11yEvidenceFiles } from '../src/runtime/evidence-v1.mjs';
+import { validateEvidenceFiles } from '../src/runtime/evidence-files.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');

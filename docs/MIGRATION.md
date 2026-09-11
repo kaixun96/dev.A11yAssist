@@ -2,6 +2,15 @@
 
 ## Current delivery
 
+v0.12 makes the homepages a bilingual plugin catalog. Every package has its own
+installation, prerequisites, example and limitations. Authored code, skills and
+generic knowledge move under `src/`; installed package layouts and names do not
+change. Stable AgentOW runtime/native export paths remain generated compatibility
+copies. The original archive and inventory are unchanged. The installer now
+requires an explicit plugin selection and supports all nine packages, including
+project knowledge. No worker, installed plugin, provider or protocol is migrated.
+See [development](DEVELOPMENT.md) for source and generation boundaries.
+
 v0.11.1 moves active marketplace metadata to `.github/plugin/marketplace.json`
 and all nine plugin manifests to each plugin's root `plugin.json`.
 MCP launch paths use `${PLUGIN_ROOT}`; skill references resolve from their own

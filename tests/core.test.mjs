@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { workflow, createRun, readConfig, doctor, executeStage, reconcile, loadRun,
-  fileHash, resourceStatus, abandonRun, assessProgress } from '../runtime/core.mjs';
+  fileHash, resourceStatus, abandonRun, assessProgress } from '../src/runtime/core.mjs';
 
 const provider = fileURLToPath(new URL('fixtures/provider.mjs', import.meta.url));
 async function fixture(run) {

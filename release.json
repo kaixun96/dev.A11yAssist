@@ -14,7 +14,7 @@
   ],
   "knowledge": {
     "manifest": "knowledge/manifest.json",
-    "sha256": "946e030638415f860803c214267dff6bacc3e276cac7f21909f618039117106f"
+    "sha256": "0b7d2b2ba8069b95f939fa6d7c327157273249ef99e46a0845c658de41ed4f9b"
   },
   "integrations": [
     {

@@ -4,14 +4,13 @@
   "version": "0.10.0",
   "scope": "generic-static-accessibility",
   "hashes": {
-    "README.md": "c25112b4876ed103ffb75bf27d71f6debb440adf79012ac5ccf6943c4a73ce6b",
-    "index.json": "7e2a6a8b0496b07c36057f1443e6d4152a85a1158df11c14c0f68fefe4e15718",
-    "foundations.md": "d295546a7439c4653e77d400db469b25739ed79bd7b2f249748c07b27c119be9",
-    "component-accessibility.md": "e6730dbb8a8201efa94af7a7c20f0ebb0268f54c0e16aa3441801ebae6156227",
-    "keyboard-focus.md": "76c30d3b530133478c4a9f257c470e7853468d496b07bfc026b042252793c6ed",
+    "README.md": "87b9cca220b5c9e5a3bd3af14eb880386b569e66876e203a9cccc4b95ba7c67b",
+    "index.json": "6d80f92a67805e80a93ee10fe8043cdc12718e70dfa69f5e6062964afab1e945",
+    "foundations.md": "aea7983cc9be2fe56ea37ee00794eea7a5b4c4aed6c86d60ac5ba5d46dcfd6dd",
+    "component-accessibility.md": "7fbda938b01dc9a7fd5a5a6b5362c581738a3114889f62333348703e75bede71",
+    "keyboard-focus.md": "8ddf86b2eb66e1e0a2ae95641b2c95bb0d1b662c46bd123543bfd8c3eb33df89",
     "forms-and-content.md": "324cb7870fd4a337009b4581a8f926472101b9ad0602bfd00ab73348e7b4a935",
     "dynamic-content.md": "681635a3d6b32dd4fcd133aa727db5c43ceb233fd32a5dae0eb8a2e95e9ef52d",
-    "visual-accessibility.md": "4b856e583e0e29b27f02857df67499869de1a6d789200775d5c0e963bbf967a9",
-    "widget-patterns.md": "b03b088667caec8205de8a86829a521988f9b8706a30fb5acac3b88ea02a3799"
+    "visual-accessibility.md": "4b856e583e0e29b27f02857df67499869de1a6d789200775d5c0e963bbf967a9"
   }
 }

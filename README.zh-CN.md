@@ -55,16 +55,10 @@ copilot plugin install a11y-knowledge@a11y-assist
 | 表单与内容 | 标签、校验、分组、图片替代文本、表格和媒体语义 |
 | 动态内容 | 加载/结果/错误、状态消息、播报归属和焦点稳定性 |
 | 视觉无障碍 | 源码中可识别的对比度、焦点样式、重排、文本、目标大小和动效风险 |
-| 常见复杂控件 | Tabs、Dialog/Popover、Combobox、Menu、Tree、Grid 的具体契约、缺陷示例、正确反例和最小修复方向 |
 
 按相关场景读取主题，不必每次全部加载。不预设框架、操作系统、代码仓库或编码工作流。
 示例使用标准 Web 标记；只有明确实际平台契约时，才建议相应的平台实现。
 详见[知识索引](knowledge/README.md)。
-
-静态审查使用[统一报告格式](knowledge/foundations.md#output-contract)：已审阅范围、
-源码支持的问题、缺少的上下文、运行时未验证内容。每条问题包含位置、严重性、
-确定程度及依据、用户影响、源码因果链、规则引用和最小修复建议。缺少组件上下文不算
-已确认缺陷；严重性也不等于 WCAG 的一致性级别。
 
 独立知识包不包含 AgentOW 协议、主机配置或 PR 发布指令。
 保留的执行参考文档单独放在 [integrations/agentow/](integrations/agentow/README.md)。

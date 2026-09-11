@@ -20,7 +20,6 @@ apply recommendations as part of its separately requested code-generation work.
 | Inputs, validation, images, icons, tables or media change | [Forms and content](forms-and-content.md) |
 | Loading, results, errors, notifications or asynchronous updates change | [Dynamic content](dynamic-content.md) |
 | CSS, themes, focus styling, contrast, layout, zoom or motion change | [Visual accessibility](visual-accessibility.md) |
-| Tabs, dialogs/popovers, comboboxes, menus, trees or grids change | [Common widget patterns](widget-patterns.md) |
 
 Read foundations and only the complete topics relevant to the request. Styles
 and dynamic updates need review even when no accessibility attribute appears in
@@ -47,12 +46,6 @@ is justified. Missing context is not proof of a defect.
 If no definite issue is found, say so for the reviewed scope. Do not say that
 accessibility passed, that assistive technology was tested, or that the UI
 conforms to a standard. Do not initiate runtime verification to fill a gap.
-
-Use the [standard report format](foundations.md#output-contract): reviewed scope,
-source-supported issues, context needed, then runtime not verified. Each finding
-includes location, severity, confidence, affected users, causal source evidence,
-the topic/section reference and a minimal correction. Unknowns are not counted
-as confirmed issues.
 
 `index.json` selects topics; `manifest.json` records this snapshot's version and
 content hashes. Neither is a runtime test result.

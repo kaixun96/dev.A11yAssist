@@ -52,8 +52,3 @@ that contract or report context needed instead.
 A suggested correction should name the intended destination and fallback, not
 just say "restore focus". Actual focus movement, visibility and reading order
 remain runtime not verified; do not run an interaction test from this skill.
-
-Use [Common widget patterns](widget-patterns.md) for role-specific keyboard and
-focus contracts. Establish the widget's activation/selection model before
-applying a key checklist; manual tabs, text editors and non-modal popovers are
-not exceptions to be "fixed" into a different interaction model.

@@ -155,6 +155,12 @@ requires a feature-specific reason and never inflates executed coverage.
 For interruption, preserve scope, row statuses, original resource/operation IDs,
 artifact locations and the exact next safe action. Reconcile unknown effects
 before resuming; never replay them under new IDs or steal a lease.
-Close only owned browser/AT sessions, restore changed test settings and release
-resources through their original authority. Do not force-release or broadly kill
+Ask each capability or caller tool to clean up the temporary resources/settings
+it created or changed, and collect its actual proof and unresolved items.
+Capture owns per-attempt environment preflight, postcheck and recording/AT/audio
+cleanup; browser tools own created browser resources, never borrowed persistent
+contexts or foreign tabs. Use only the connection's supported cleanup/recovery
+scope. Bug Bash coordinates and reports these results; it needs no separate
+cleanup plugin or full workflow. Release resources through their original
+authority with original ownership proof. Do not force-release or broadly kill
 processes. If cleanup is uncertain, report it and keep ownership explicit.

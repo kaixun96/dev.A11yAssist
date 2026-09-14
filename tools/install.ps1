@@ -1,14 +1,14 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','agent-operations','a11y-workflow','a11y-knowledge','a11y-knowledge-odsp','a11y-bug-bash','a11y-test-categories','a11y-setup','all')]
+    [ValidateSet('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','a11y-workflow','a11y-knowledge','a11y-knowledge-odsp','a11y-bug-bash','a11y-test-categories','a11y-setup','all')]
     [string]$Plugin,
     [switch]$Execute,
     [switch]$WithAgentOW
 )
 $ErrorActionPreference = 'Stop'
 $names = if ($Plugin -eq 'all') {
-    @('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','agent-operations','a11y-workflow','a11y-knowledge','a11y-bug-bash','a11y-test-categories','a11y-setup')
+    @('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','a11y-workflow','a11y-knowledge','a11y-bug-bash','a11y-test-categories','a11y-setup')
 } else { @($Plugin) }
 $commands = ,@('plugin','marketplace','add','kaixun96/dev.A11yAssist')
 if ($Plugin -eq 'a11y-knowledge-odsp') {

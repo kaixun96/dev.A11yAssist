@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { plugins } from '../src/runtime/core.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-test('seven standalone plugin copies can initialize/list tools without repo siblings', async () => {
+test('standalone execution plugin copies can initialize/list tools without repo siblings', async () => {
   for (const name of Object.keys(plugins)) {
     const dir = await mkdtemp(join(tmpdir(), 'standalone-plugin-'));
     try {
@@ -46,7 +46,11 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
   const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
   assert.equal(marketplace.name, 'a11y-assist');
   assert.equal(marketplace.metadata.version, pkg.version);
-  assert.equal(marketplace.plugins.length, 12);
+  assert.equal(marketplace.plugins.length, 11);
+  assert(!marketplace.plugins.some(entry => entry.name === 'agent-operations'));
+  assert.equal(plugins['agent-operations'], undefined);
+  await assert.rejects(access(join(root, 'plugins/agent-operations')), { code: 'ENOENT' });
+  await assert.rejects(access(join(root, 'src/skills/agent-operations/SKILL.md')), { code: 'ENOENT' });
   await assert.rejects(access(join(root, '.claude-plugin/marketplace.json')), { code: 'ENOENT' });
   for (const entry of marketplace.plugins) {
     const dir = join(root, entry.source);

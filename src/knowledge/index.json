@@ -20,7 +20,6 @@
     "a11y-capture": ["foundations.md", "keyboard-focus.md", "dynamic-content.md", "visual-accessibility.md"],
     "a11y-validate": ["foundations.md", "component-accessibility.md", "keyboard-focus.md", "forms-and-content.md", "dynamic-content.md", "visual-accessibility.md"],
     "a11y-publish": ["foundations.md"],
-    "agent-operations": ["foundations.md"],
     "a11y-workflow": ["foundations.md", "component-accessibility.md", "keyboard-focus.md", "forms-and-content.md", "dynamic-content.md", "visual-accessibility.md"],
     "a11y-knowledge": ["foundations.md", "component-accessibility.md", "keyboard-focus.md", "forms-and-content.md", "dynamic-content.md", "visual-accessibility.md"]
   }

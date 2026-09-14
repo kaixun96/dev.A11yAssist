@@ -152,6 +152,15 @@ approved sharing, and deliver the result to the requester. Restore only settings
 changed by this run and clean up only its owned sessions through their original
 authority. An unresolved cleanup/unknown effect is reported, not hidden.
 
+Cleanup belongs to the module/tool that created or changed each resource.
+Capture performs fresh per-attempt environment checks, postchecks and its own
+recording/AT/audio cleanup; browser tools restore their temporary state without
+closing borrowed authenticated contexts or foreign tabs. Bug Bash collects
+actual proof and unresolved items, then coordinates any release through the
+original authority. No separate cleanup plugin or full workflow is required.
+Supported capture connections must implement the lifecycle; these instructions
+do not add a generic browser/AT backend or automatically replay failed captures.
+
 This request does not authorize product source edits, builds, dependency
 installation, automatic bug filing, PR creation, uploads or remediation. To
 fix an accepted finding, start a separately authorized remediation task with

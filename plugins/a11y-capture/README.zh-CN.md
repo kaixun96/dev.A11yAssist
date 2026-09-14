@@ -4,11 +4,11 @@
 
 ## 适合什么需求
 
-使用真实 Windows 辅助技术采集 BEFORE／AFTER 证据
+采集真实 Windows AT 证据，恢复自有录制、音频或 NVDA 资源
 
 ## 使用前提
 
-已完成部署验收的 Windows 采集连接、自有评估机和固定场景；AFTER 还需实际源码 HEAD。
+已验收且支持每次采集前环境检查和采集后异常检查的 Windows 连接、自有评估机和固定场景；AFTER 还需实际源码 HEAD。
 
 Node.js 22+.
 
@@ -33,7 +33,7 @@ copilot plugin install a11y-capture@a11y-assist
 
 ## 能力边界
 
-安装插件不会自动创建 DevBox 或录制器，也不生成模拟 AT 结果。AFTER 保持相同场景和评估机；缺少能力会明确阻断。
+安装插件不会自动创建 DevBox 或录制器，也不生成模拟 AT 结果。AFTER 保持相同场景和评估机。明确调用 recover-media/recover-nvda 需要原任务记录和获授权的 operations 连接；窄范围恢复不代表完整清理或资源释放。
 
 ## 参考资料
 

@@ -94,7 +94,8 @@ test('installer requires selection, avoids duplicate ODSP installation and keeps
   assert(!missing.stdout.includes('copilot plugin install'));
   const all = run('-Plugin', 'all');
   assert.equal(all.status, 0, all.stderr);
-  assert.equal((all.stdout.match(/copilot plugin install /g) ?? []).length, 11);
+  assert.equal((all.stdout.match(/copilot plugin install /g) ?? []).length, 10);
+  assert.doesNotMatch(all.stdout, /agent-operations/);
   assert(!all.stdout.includes('a11y-knowledge-odsp@a11y-assist'));
   for (const entry of catalog.filter(entry => entry.group !== 'compatibility')) {
     assert(all.stdout.includes(`${entry.name}@a11y-assist`));

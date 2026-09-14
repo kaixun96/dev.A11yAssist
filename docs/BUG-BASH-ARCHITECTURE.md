@@ -5,7 +5,7 @@
 Maintain both language versions together. This document describes what the plugin
 does, its child capabilities, how they work together, and the user-facing input
 and output. Current behavior and proposed extensions are marked separately.
-Baseline: version 0.15.0, 2026-09-14; installation is not live qualification.
+Baseline: version 0.16.0, 2026-09-14; installation is not live qualification.
 
 ## 1. What is Bug Bash?
 
@@ -44,7 +44,6 @@ instructions/templates.** Other integrations below are conditional or proposed.
 | `a11y-resources` | Integrate with actual evaluator ownership | Host requirements + task identity -> ownership/status information | Optional connected capability under its real contract; status is not acquisition. General feature-task acquisition needs an explicit adapter |
 | `a11y-capture` | Collect real named-AT/media evidence when required | Owned evaluator + supported sealed scenario -> actual observations/artifacts | Optional only for inputs its existing contract supports; generic Bug Bash discovery adapters are proposed |
 | `a11y-validate` | Validate compatible evidence integrity | Supported evidence manifest -> validation result | Current validator is for evidence-v1, not an arbitrary Bug Bash report. Discovery validation is proposed; behavior assessment is separate |
-| `agent-operations` | Reconcile pending operations, recover, clean up and deliver | Original operation/ownership + progress -> scoped status and receipts | Reuse supported connected operations; feature-level journal, supervision and cancellation integration are proposed |
 | Report module | Separate findings, risks and gaps | Coverage rows + observations + evidence -> private report | Current report template; no separate report plugin or publication dependency |
 
 Planning and reporting stay internal because they belong to the feature workflow.
@@ -93,7 +92,7 @@ flowchart TD
     V["6. Evidence checks<br/>a11y-validate: evidence-v1 only<br/>Caller checks actual evidence in other formats"]
     G["7. a11y-test-categories (bundled)<br/>matrix check: reject missing steps, retain unfinished coverage"]
     A["8. a11y-bug-bash<br/>Assess expectations, deduplicate; separate source risks from page findings"]
-    O["9. Caller cleans up owned resources<br/>agent-operations: supported operations only, conditional"]
+    O["9. Each module cleans its owned resources<br/>Capture: AT / recording / audio; browser tools: created sessions<br/>a11y-bug-bash: aggregate proof and unresolved items"]
     F["10. a11y-bug-bash<br/>Deliver: issue count, categories, list + evidence / coverage gaps"]
     U --> P
     P --> S --> C --> R --> E --> V --> G --> A --> O --> F
@@ -122,7 +121,9 @@ flowchart TD
     B["Available browser tools<br/>Perform preconditions and enter the target scenario<br/>Proposed owner: a11y-browser"]
     D{"Which observation does this step require?"}
     W["Available browser tools<br/>Actual keyboard, focus, DOM, rendered observations"]
+    PRE["a11y-capture / qualified AT tools<br/>Fresh scenario-scoped environment preflight"]
     AT["Real AT / media tools<br/>a11y-capture: supported sealed scenarios only<br/>Dynamic announcements: start capture before triggering change"]
+    POST["a11y-capture / qualified AT tools<br/>Postcheck after every attempt + owned cleanup<br/>Preserve anomalies and unresolved effects"]
     F["a11y-bug-bash<br/>Assess against expectations, record actual evidence / uncertainty"]
     L["a11y-bug-bash<br/>Reset safely and advance; retain unrun steps at budget expiry"]
     C --> Q
@@ -131,7 +132,9 @@ flowchart TD
     T -- "No" --> X --> L
     T -- "Yes" --> B --> D
     D -- "Browser observation" --> W --> F
-    D -- "Real AT / media; retain browser evidence as needed" --> AT --> F
+    D -- "Real AT / media; retain browser evidence as needed" --> PRE
+    PRE -- "Ready" --> AT --> POST --> F
+    PRE -- "Not ready: do not capture" --> X
     F --> L
     L -. "Pending steps and remaining budget" .-> C
 ```
@@ -157,8 +160,22 @@ original matrix row:
 | Bug Bash -> browser tools (proposed `a11y-browser`) | Preconditions, action sequence, target state and reset | Target scenario and actual browser observations |
 | Bug Bash -> AT/media tools (conditional `a11y-capture`) | Owned evaluator, real tools, supported scenario and evidence requirements | Actual output/artifacts, or why execution was unavailable |
 | Bug Bash -> `a11y-validate` (conditional) | Evidence and files actually using evidence-v1 | Structural/byte integrity results, not an A11y verdict |
-| Bug Bash -> original resource authority (conditional `agent-operations`) | Original operation/ownership identity and state changed by this run | Supported reconciliation/cleanup receipts, or unresolved effects |
+| Bug Bash -> each module/tool, then original resource authority | Original operation/ownership identity and state changed by this run | Module-owned cleanup proof, unresolved effects and separately authorized release results |
 | Bug Bash -> user | All results, evidence, gaps and actual cleanup state | Concise issue-count/category summary and private report location |
+
+**Cleanup belongs to the capability that created or changed the resource.**
+Capture owns recording/AT/audio lifecycle, including fresh preflight and
+postchecks after every attempt, not just the first setup or successful captures.
+Browser tools own created sessions and temporary state, not borrowed authenticated
+contexts or foreign tabs. Bug Bash aggregates actual proof and unresolved items.
+The original resource authority still owns token-bound release.
+
+There is no standalone operations plugin. Narrow media/NVDA exception recovery
+belongs to `a11y-capture`; full-workflow progress and cleanup coordination belong
+to optional `a11y-workflow`, which is not a Bug Bash prerequisite. Pending-effect
+reconciliation remains shared internal code. These boundaries do not add a
+generic live provider: only qualified connections can execute the capture
+lifecycle, and an unknown outcome never authorizes re-triggering capture.
 
 The diagrams show `both`, not mandatory execution in every mode: `page-only`
 omits the source track; `source-only` reads source without browser, AT or host

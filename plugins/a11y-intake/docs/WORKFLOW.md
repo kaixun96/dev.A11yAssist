@@ -22,9 +22,9 @@ The executable gate list is `contracts/workflow.json`.
 | Stage | Required behavior |
 |---|---|
 | intake (0-1) | Atomically claim the exact Bug; inspect complete comments then attachments; define acceptance and seal scenario. No branch, evaluator or Codespace acquired early. |
-| before (2) | Validated request, healthy exclusive evaluator, real required AT, stable canonical fixture and preserved evidence. Deterministic validation plus independent evaluator must establish reproduced+PASS. |
+| before (2) | Validated request, fresh scenario-scoped capture preflight, healthy exclusive evaluator, real required AT, stable canonical fixture and preserved evidence. Postcheck and owned cleanup must be confirmed; deterministic validation plus independent evaluator must establish reproduced+PASS. |
 | source (3-5) | Caller-selected source connection, owned worktree and verified executor. Minimal implementation, targeted validation, exact HEAD and loaded affected resource. No PR yet. The explicit `agentow-odsp` profile additionally enforces its Codespace, AgentOW entrypoint, model and freshness contract. |
-| after (6) | Same evaluator/scenario/viewport/fixture/AT; fresh real evidence bound to actual HEAD and accepted BEFORE receipt hash. |
+| after (6) | Same evaluator/scenario/viewport/fixture/AT; fresh capture preflight and postcheck for this attempt; real evidence bound to actual HEAD and accepted BEFORE receipt hash. |
 | validate (7) | Independent deterministic integrity and accessibility behavior decisions. Neither substitutes for the other. |
 | review (8) | Actual-HEAD adversarial review; important findings reopen source, invalidate old AFTER and force full AFTER/validate/review again. |
 | publish (9) | Push only reviewed HEAD, actual Draft PR, self-contained reviewer-safe description, live media playback/hash verification. No PR comments. |
@@ -36,6 +36,15 @@ There is no unverified-PR fallback even if a downstream AgentOW version supports
 one. The workflow APIs enforce this order against the shared run. Independent
 capability APIs enforce their own local contracts without this phase ordering;
 callers using the full workflow must not bypass its policy with an unrelated operation.
+
+`a11y-workflow` owns cleanup coordination, progress and abandonment. Each module
+cleans the resources it created/changed and returns proof; the workflow's trusted
+cleanup connection aggregates that proof and the original authority's releases
+under all phase-10 gates. A capture postcheck does not release a long-lived lease
+or replace full cleanup. There is no separate operations plugin dependency.
+The per-attempt [capture lifecycle](CAPABILITIES.md) runs inside the qualified
+capture connection, including postchecks on failure; a missing/unknown check
+cannot advance a pass.
 
 ## Ownership and recovery
 

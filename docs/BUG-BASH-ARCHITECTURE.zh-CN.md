@@ -16,13 +16,14 @@ Bug Bash 自己负责 feature 范围、计划、协调和最终报告；可复�
 
 ## 2. 包含和使用哪些子插件？
 
-这里的“子插件”指组合中的可复用能力，不一定是另一个安装包，也不一定是另一个 Agent。**目前真正内置的是 knowledge 和 setup；规划、协调、报告由 Bug Bash 自身的说明和模板承担。** 其他集成在下表中标明适用条件或规划状态。
+这里的“子插件”指组合中的可复用能力，不一定是另一个安装包，也不一定是另一个 Agent。**目前真正内置的是 knowledge、setup 和 test-categories；规划、协调、报告由 Bug Bash 自身的说明和模板承担。** 其他集成在下表中标明适用条件或规划状态。
 
 | 组成部分 | 负责什么 | 输入 -> 输出 | 组合方式与状态 |
 |---|---|---|---|
 | Bug Bash 协调器 | 理解范围、规划覆盖、分配检查、汇总结果 | Feature context + 验证步骤 -> 覆盖计划 + 报告 | 已有入口 skill 和模板；可执行的持久编排仍在规划中 |
 | `a11y-knowledge` | 提供适用 A11y 知识及只读源码审查 | 技术栈/版本、限定源码和问题 -> 有依据的指导或源码风险 | 已内置于 `modules/a11y-knowledge/`，无需另装或另开 Agent |
 | `a11y-setup` | 只检查本轮页面/AT 检查需要的前提 | 所需能力 + 宿主 -> 清单、缺口和准备计划 | 已内置于 `modules/a11y-setup/`；修改宿主需要单独授权 |
+| `a11y-test-categories` | 对每个对象/状态执行十类中的每个编号步骤 | 完整对象/状态清单 -> 逐步骤矩阵、证据及明确缺口 | 可独立安装；同一份 skill、规程及本地核对工具内置于 `modules/a11y-test-categories/`；不提供现场执行后端 |
 | 浏览器检查 / 拟议 `a11y-browser` | 操作页面，检查导航、焦点、语义和适用的渲染效果 | 获授权连接 + 场景 -> 页面观测与产物 | 当前使用调用方已有工具；可复用、类型明确的浏览器模块尚未交付 |
 | `a11y-resources` | 对接实际 evaluator 归属机制 | 宿主要求 + 任务身份 -> 归属/状态信息 | 仅在实际契约允许时使用已连接能力；status 不等于 acquire。通用 feature 任务获取资源还需明确适配器 |
 | `a11y-capture` | 按需采集真实具名 AT/媒体证据 | 自有 evaluator + 受支持的封存场景 -> 真实观测/产物 | 仅适用于当前契约支持的输入；通用 Bug Bash discovery 适配器仍在规划中 |
@@ -40,11 +41,16 @@ Bug Bash 不要求安装全部兄弟插件。如果已授权工作项提供 cont
 
 安装 Bug Bash 后，加载它的公开 skill 和内置模块。调用方 Copilot 按 skill 执行：读取内置 setup/knowledge 说明，使用当前会话中真实可用的工具。插件自身没有 MCP server，也不会按名称自动调用其他兄弟插件。
 
+页面工作开始前，内置 test-categories 将范围内每个对象/状态展开为全部十类的每个编号步骤。适用步骤必须执行，不适用必须说明针对该对象的理由，不能用代表性抽查代替完整清单。本地矩阵门禁拒绝漏行并指出未完成覆盖；真实证据判断仍单独进行。清单完整性未知、缺少 AT 或预算用尽只能报告部分覆盖，不能缩小分母。
+
 ```text
 用户：feature + 验证步骤 + 获授权输入
                     |
                     v
-          Bug Bash：范围与覆盖计划
+          Bug Bash：范围与对象/状态清单
+                    |
+          内置 a11y-test-categories
+          全部十类 / 每个步骤
                     |
           +---------+----------+
           |                    |
@@ -73,7 +79,7 @@ Bug Bash 不要求安装全部兄弟插件。如果已授权工作项提供 cont
 
 | 步骤 | Bug Bash 传入什么 | 得到什么、下一步做什么 |
 |---|---|---|
-| 规划 | 用户路径、预期行为、预算、适用知识 | 包含前提、动作、预期结果、所需能力和复位方式的覆盖行 |
+| 规划 | 每个对象/状态、用户路径、预期行为、预算和知识 | test-categories 展开十类的每个步骤；场景补齐前提、动作、预期结果、所需能力和复位方式 |
 | 准备 | 这些行真正需要的能力 | 可用工具与缺口；页面交互前确认归属；准备操作另行授权 |
 | 源码审查 | 相关组件/样式路径、版本、技术栈 | 源码支持的风险和运行时触发方式；增加范围内的确认行 |
 | 页面/AT 检查 | 一条覆盖行、安全数据、获授权连接、预期证据 | 实际行为与产物，或该行不能执行的明确原因 |
@@ -99,7 +105,7 @@ copilot plugin marketplace add kaixun96/dev.A11yAssist
 copilot plugin install a11y-bug-bash@a11y-assist
 ```
 
-安装后重启 Copilot 加载插件，无需另装 knowledge/setup。实际页面检查需要已有、获授权的 Windows DevBox 浏览器连接；真实 AT 还需要可用连接与桌面独占归属。安装插件不提供浏览器/AT 程序或实时连接。仅计划/仅源码工作不需要 Windows setup。
+安装后重启 Copilot 加载插件，无需另装 knowledge/setup/test-categories。实际页面检查需要已有、获授权的 Windows DevBox 浏览器连接；真实 AT 还需要可用连接与桌面独占归属。安装插件不提供浏览器/AT 程序或实时连接。仅计划/仅源码工作不需要 Windows setup。
 
 ### 提供 feature 信息，不必先填完整问卷
 
@@ -151,7 +157,7 @@ copilot plugin install a11y-bug-bash@a11y-assist
 | 报告部分 | 内容 |
 |---|---|
 | 范围与结果 | Feature、模式、环境/构建、预算、已检查/排除范围、结果状态 |
-| 覆盖矩阵 | 每行的场景、预期行为、实际工具、状态和证据/缺口 |
+| 覆盖矩阵 | 原始清单；每个对象/状态/类别/步骤的场景、预期、工具、状态及证据/缺口；本地覆盖核对摘要 |
 | 页面已复现问题 | 影响、精确步骤、预期/实际行为、可重复性、证据 |
 | 源码支持的风险 | 源码位置/版本、依据、不确定性、还需哪些运行时确认 |
 | 问题与缺口 | 缺失 context/工具、阻塞/未执行/无结论检查、下一项安全操作 |
@@ -163,8 +169,8 @@ copilot plugin install a11y-bug-bash@a11y-assist
 ```text
 Feature：Item picker
 结果：partial
-覆盖：4 条适用行；已尝试 3 条（2 条未观察到问题，1 条发现问题）；
-      1 条阻塞
+覆盖：<全部对象/状态 x 所有分类步骤>；
+      <已执行 / 适用行>，<阻塞 / 未执行 / 无结论>
 F01 [page-reproduced]：Cancel 后焦点没有回到预期打开按钮。
     包含实际复现步骤、预期/实际焦点和证据。
 R01 [source-supported-risk]：搜索状态更新可能缺少播报。
@@ -195,6 +201,7 @@ R01 [source-supported-risk]：搜索状态更新可能缺少播报。
 ## 7. 配套文档与参考资料
 
 - [当前 Bug Bash 契约](BUG-BASH.md)：已交付行为与边界的权威说明。
+- [独立 test-categories 插件](TEST-CATEGORIES.zh-CN.md)：全部对象的测试规程及本地矩阵门禁。
 - [Context 模板](../src/bug-bash/context.template.md)、[覆盖维度](../src/bug-bash/coverage.json)和[报告模板](../src/bug-bash/report.template.md)。
 - [执行契约与验收设计](BUG-BASH-EXECUTION-DESIGN.zh-CN.md)：详细拟议 schema、归属、恢复和验收门禁。
 - [可复用的大型插件设计方法](COMPOSABLE-PLUGIN-DESIGN.zh-CN.md)。

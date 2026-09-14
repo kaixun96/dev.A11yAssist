@@ -7,26 +7,28 @@ that Voice Access recognized speech or completed the task.
 
 ## Prerequisites and scope
 
-1. Select representative in-scope journeys and safe fixtures. Record route,
+- Select in-scope journeys and safe fixtures. Account for every target/state in
+   the caller's inventory; do not infer untested coverage from a representative
+   control. Record route,
    flags, build identity, viewport, browser version, Windows build, Voice Access
    version when exposed, language, microphone/input device and recording route.
    Source-only and plan-only never launch Voice Access or execute these steps.
-2. Require an authorized interactive Windows desktop with exclusive ownership.
+- Require an authorized interactive Windows desktop with exclusive ownership.
    Run serially with no competing browser/OS input or AT session. Do not start
    NVDA or Narrator for these checks. Never disconnect or stop another user's AT.
-3. Confirm Voice Access is installed, the selected language is available, and
+- Confirm Voice Access is installed, the selected language is available, and
    the correct input is listening. A first-run agreement, microphone permission,
    language download or host change requires the appropriate explicit consent;
    this procedure does not authorize installation or accepting prompts.
-4. In a safe target, speak a supported harmless command and observe recognition
+- In a safe target, speak a supported harmless command and observe recognition
    and its effect. Confirm the recording captures non-silent input audio and
    the same command's visible recognition feedback. Installed binaries, a
    microphone icon or a running process alone do not establish readiness.
-5. If the desktop, speech input, language or evidence capture is unavailable,
+- If the desktop, speech input, language or evidence capture is unavailable,
    mark the affected rows `blocked` or `inconclusive` with the exact reason.
    Continue independent browser checks, without representing them as Voice Access.
 
-## Execute representative journeys
+## Execute in-scope journeys
 
 Use commands supported by the actual Windows build and selected language.
 The examples below are English, not a requirement to change the user's language.
@@ -34,8 +36,9 @@ Confirm unfamiliar commands through Voice Access help or the official command
 list. Record the exact utterance and recognition feedback rather than assuming
 that a command succeeded.
 
-1. **Name-based activation.** Say `Click <visible label>` for representative
-   buttons, links, tabs, checkboxes and menu items. Verify the intended target,
+1. **Name-based activation.** Say `Click <visible label>` for
+   buttons, links, tabs, checkboxes and menu items in each applicable target/state.
+   Verify the intended target,
    resulting state and focus. For repeated labels, follow the offered
    disambiguation and confirm the correct instance. Do not infer success from
    recognition alone or activate destructive controls without authorization.
@@ -60,7 +63,7 @@ that a command succeeded.
    offscreen control. Where needed, speak `Press Tab`, `Press Shift Tab` or
    `Press Enter` and observe focus/activation. These must be spoken commands
    processed by Voice Access, not keys sent directly by the harness.
-6. **Menus, dialogs and dynamic states.** Open a representative menu/dialog by
+6. **Menus, dialogs and dynamic states.** Open each applicable menu/dialog by
    voice, operate an inner control, dismiss with `Press Escape` or a named Cancel
    action where supported, and reopen. Check focus restoration and whether
    labels/numbers target the current UI after loading, validation, insertion or

@@ -62,7 +62,9 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
       'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md',
       ...resources.map(path => `bug-bash/${path}`),
-      ...categoryFiles.map(path => `test-categories/${path}`),
+      ...(await filesUnder(join(root, 'plugins/a11y-test-categories')))
+        .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
+        .map(path => `modules/a11y-test-categories/${path}`),
       ...expectedModule.map(path => `modules/a11y-knowledge/${path}`),
       ...(await filesUnder(join(root, 'plugins/a11y-setup')))
         .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
@@ -74,11 +76,11 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
         await text(join(root, 'src/bug-bash', path)));
     }
     for (const path of categoryFiles) {
-      assert.equal(await text(join(directory, 'test-categories', path)),
-        await text(join(root, 'src/bug-bash/test-categories', path)));
+      assert.equal(await text(join(directory, 'modules/a11y-test-categories/procedures', path)),
+        await text(join(root, 'src/test-categories/procedures', path)));
     }
     for (const path of ['README.md', 'README.zh-CN.md', 'docs/BUG-BASH.md',
-      ...categoryFiles.map(path => `test-categories/${path}`),
+      ...categoryFiles.map(path => `modules/a11y-test-categories/procedures/${path}`),
       'modules/a11y-knowledge/knowledge/README.md',
       ...['README.md', 'fluent-spds.md', 'sharepoint.md', 'complete-source-guide.md']
         .map(file => `modules/a11y-knowledge/integrations/agentow/knowledge/${file}`)]) {
@@ -93,8 +95,8 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
 });
 
 test('category index routes all procedures without adding an execution backend', async () => {
-  const index = await text(join(base, 'test-categories/README.md'));
-  assert.deepEqual((await readdir(join(base, 'test-categories'))).sort(), categoryFiles);
+  const index = await text(join(base, 'modules/a11y-test-categories/procedures/README.md'));
+  assert.deepEqual((await readdir(join(base, 'modules/a11y-test-categories/procedures'))).sort(), categoryFiles);
   for (const file of categoryFiles.filter(file => file !== 'README.md')) {
     assert(index.includes(`](${file})`));
   }
@@ -108,9 +110,9 @@ test('category index routes all procedures without adding an execution backend',
 });
 
 test('Voice Access guidance requires actual speech, scoped actions and separate recovery evidence', async () => {
-  const procedure = await text(join(base, 'test-categories/voice-access.md'));
-  const index = await text(join(base, 'test-categories/README.md'));
-  for (const heading of ['Prerequisites and scope', 'Execute representative journeys',
+  const procedure = await text(join(base, 'modules/a11y-test-categories/procedures/voice-access.md'));
+  const index = await text(join(base, 'modules/a11y-test-categories/procedures/README.md'));
+  for (const heading of ['Prerequisites and scope', 'Execute in-scope journeys',
     'Evidence and outcome', 'Recovery and cleanup']) {
     assert(procedure.includes(`## ${heading}`));
   }
@@ -159,7 +161,7 @@ test('entrypoint and templates retain track isolation, evidence distinctions, sc
   assert.equal(skill, await text(join(root, 'src/skills/a11y-bug-bash/SKILL.md')));
   for (const path of ['docs/BUG-BASH.md', 'bug-bash/context.template.md',
     'bug-bash/coverage.json', 'bug-bash/report.template.md',
-    'test-categories/README.md',
+    'modules/a11y-test-categories/skills/a11y-test-categories/SKILL.md',
     'modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md']) {
     assert(skill.includes(`\`${path}\``));
     await access(join(base, path));

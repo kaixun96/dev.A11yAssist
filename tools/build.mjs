@@ -85,6 +85,19 @@ async function bundleSetup(base) {
   }
   await emit(`${base}/docs/SETUP.md`, await text(join(root, 'docs/SETUP.md')));
 }
+async function bundleTestCategories(base) {
+  await emit(`${base}/skills/a11y-test-categories/SKILL.md`,
+    await text(join(source, 'skills/a11y-test-categories/SKILL.md')));
+  for (const dir of ['procedures', 'tools']) {
+    for (const file of await readdir(join(source, 'test-categories', dir))) {
+      await emit(`${base}/${dir}/${file}`, await text(join(source, 'test-categories', dir, file)));
+    }
+  }
+  for (const file of ['TEST-CATEGORIES.md', 'TEST-CATEGORIES.zh-CN.md']) {
+    await emit(`${base}/docs/${file}`, (await text(join(root, 'docs', file)))
+      .replaceAll('../src/test-categories/procedures/', '../procedures/'));
+  }
+}
 const entries = [];
 for (const [name, definition] of Object.entries(plugins)) {
   const base = `plugins/${name}`;
@@ -160,6 +173,18 @@ await emit(`${setupBase}/LICENSE`, await text(join(root, 'LICENSE')));
 await emit(`${setupBase}/AGENTS.md`, '# Accessibility environment setup\n\nRead skills/a11y-setup/SKILL.md and docs/SETUP.md. Default check-only; preparation needs explicit host-change authorization and actual ownership. Use the same shared native installer, selecting only required dependencies. Installation is not live readiness, evidence or permission to change a worker. No MCP or AgentOW dependency.\n');
 await bundleSetup(setupBase);
 entries.push({ ...setup, source: `./${setupBase}`, version: pkg.version, author: { name: 'kaixun96' } });
+const testCategories = {
+  name: 'a11y-test-categories',
+  description: 'All ten accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.'
+};
+const testCategoriesBase = `plugins/${testCategories.name}`;
+await emit(`${testCategoriesBase}/plugin.json`, json({
+  ...testCategories, version: pkg.version, author: { name: 'kaixun96' }, license: 'Microsoft Internal'
+}));
+await emit(`${testCategoriesBase}/LICENSE`, await text(join(root, 'LICENSE')));
+await emit(`${testCategoriesBase}/AGENTS.md`, '# Accessibility test categories\n\nRead skills/a11y-test-categories/SKILL.md and docs/TEST-CATEGORIES.md. Account for every category and numbered step for every target/state. Local matrix tools do not execute page/AT checks or validate evidence authenticity. Use only caller-authorized tools and owned resources. No host preparation, source changes, filing or publication.\n');
+await bundleTestCategories(testCategoriesBase);
+entries.push({ ...testCategories, source: `./${testCategoriesBase}`, version: pkg.version, author: { name: 'kaixun96' } });
 const bugBashName = 'a11y-bug-bash';
 const bugBashBase = `plugins/${bugBashName}`;
 const bugBash = {
@@ -170,21 +195,16 @@ await emit(`${bugBashBase}/plugin.json`, json({
   ...bugBash, version: pkg.version, author: { name: 'kaixun96' }, license: 'Microsoft Internal'
 }));
 await emit(`${bugBashBase}/LICENSE`, await text(join(root, 'LICENSE')));
-await emit(`${bugBashBase}/AGENTS.md`, '# Feature accessibility bug bash\n\nRead skills/a11y-bug-bash/SKILL.md and docs/BUG-BASH.md. This is discovery, not remediation. Reuse internal modules/a11y-knowledge for read-only source review and modules/a11y-setup for environment check/planning; preparation needs separate authorization. Page checks require actual authorized host tools and owned resources; dependency installers are bundled, not third-party browser/AT binaries or an MCP server. Separate reproduced findings, code risks and gaps; do not edit product source, file bugs or publish automatically.\n');
+await emit(`${bugBashBase}/AGENTS.md`, '# Feature accessibility bug bash\n\nRead skills/a11y-bug-bash/SKILL.md and docs/BUG-BASH.md. This is discovery, not remediation. Reuse internal modules/a11y-knowledge for read-only source review, modules/a11y-setup for environment check/planning and modules/a11y-test-categories for every target/state and every category step; preparation needs separate authorization. Page checks require actual authorized host tools and owned resources; dependency installers are bundled, not third-party browser/AT binaries or an MCP server. Separate reproduced findings, code risks and gaps; do not edit product source, file bugs or publish automatically.\n');
 await emit(`${bugBashBase}/skills/${bugBashName}/SKILL.md`, await text(join(source, 'skills', bugBashName, 'SKILL.md')));
 for (const file of await readdir(join(source, 'bug-bash'))) {
-  if (file === 'test-categories') {
-    for (const category of await readdir(join(source, 'bug-bash', file))) {
-      await emit(`${bugBashBase}/test-categories/${category}`, await text(join(source, 'bug-bash', file, category)));
-    }
-  } else {
-    await emit(`${bugBashBase}/bug-bash/${file}`, await text(join(source, 'bug-bash', file)));
-  }
+  await emit(`${bugBashBase}/bug-bash/${file}`, await text(join(source, 'bug-bash', file)));
 }
 await emit(`${bugBashBase}/docs/BUG-BASH.md`, await text(join(root, 'docs/BUG-BASH.md')));
 // Internal instructions retain their own root without registering duplicate public skills.
 await bundleKnowledgeReview(`${bugBashBase}/modules/a11y-knowledge`);
 await bundleSetup(`${bugBashBase}/modules/a11y-setup`);
+await bundleTestCategories(`${bugBashBase}/modules/a11y-test-categories`);
 entries.push({ ...bugBash, source: `./${bugBashBase}`, version: pkg.version, author: { name: 'kaixun96' } });
 validateCatalog(catalog, entries.map(entry => entry.name));
 for (const [language, filename] of [['en', 'README.md'], ['zh', 'README.zh-CN.md']]) {

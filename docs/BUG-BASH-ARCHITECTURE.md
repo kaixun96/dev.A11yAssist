@@ -30,7 +30,7 @@ A completed round is not accessibility certification.
 ## 2. Which child plugins and modules does it use?
 
 "Child plugin" here means a reusable capability in the composition, not necessarily
-another installed package or another agent. **Today, knowledge and setup are
+another installed package or another agent. **Today, knowledge, setup and test categories are
 bundled internally; planning, coordination and reporting are Bug Bash's own
 instructions/templates.** Other integrations below are conditional or proposed.
 
@@ -39,6 +39,7 @@ instructions/templates.** Other integrations below are conditional or proposed.
 | Bug Bash coordinator | Understand scope, plan coverage, route checks, aggregate results | Feature context + verification steps -> coverage plan + report | Current entry skill and templates; executable durable orchestration is proposed |
 | `a11y-knowledge` | Supply applicable A11y guidance and read-only source review | Stack/version, scoped source and question -> cited guidance or source-supported risks | Already bundled under `modules/a11y-knowledge/`; no extra install or separate agent |
 | `a11y-setup` | Check only the prerequisites needed by selected page/AT checks | Required capabilities + host -> inventory, gaps and preparation plan | Already bundled under `modules/a11y-setup/`; host changes need separate authorization |
+| `a11y-test-categories` | Apply all ten categories and every numbered step to each target/state | Complete target/state inventory -> full step matrix, evidence and explicit gaps | Independently installable; identical skill/procedures/local accounting tool bundled under `modules/a11y-test-categories/`; no live execution backend |
 | Browser checks / proposed `a11y-browser` | Exercise navigation, focus, semantics and applicable rendered checks | Authorized connection + scenario -> page observations and artifacts | Today uses available caller tools. A reusable typed browser module is proposed, not shipped |
 | `a11y-resources` | Integrate with actual evaluator ownership | Host requirements + task identity -> ownership/status information | Optional connected capability under its real contract; status is not acquisition. General feature-task acquisition needs an explicit adapter |
 | `a11y-capture` | Collect real named-AT/media evidence when required | Owned evaluator + supported sealed scenario -> actual observations/artifacts | Optional only for inputs its existing contract supports; generic Bug Bash discovery adapters are proposed |
@@ -64,11 +65,22 @@ Copilot follows that skill: it reads the bundled setup/knowledge instructions an
 uses tools actually available in the session. The package has no MCP server of
 its own and does not automatically invoke sibling plugins by name.
 
+Before page work, the bundled test-categories plugin expands every in-scope
+target/state into all ten categories and their numbered steps. Every applicable
+step must run; not-applicable steps need target-specific reasons. No representative
+sampling substitutes for this inventory. Its local matrix gate rejects missing
+steps and identifies unfinished coverage; actual evidence assessment remains
+separate. Unknown inventory completeness, unavailable AT or budget exhaustion
+means partial, not a smaller denominator.
+
 ```text
 User: feature + verification steps + authorized inputs
                          |
                          v
-             Bug Bash: scope and coverage plan
+             Bug Bash: scope and target/state inventory
+                        |
+             Bundled a11y-test-categories
+             all ten categories / every step
                          |
              +-----------+------------+
              |                        |
@@ -98,7 +110,7 @@ to each substep. It brings observations back to the same coverage row:
 
 | Step | What Bug Bash passes | What it receives and does next |
 |---|---|---|
-| Plan | User journeys, expected behavior, budget and applicable knowledge | Rows with preconditions, actions, expected result, capability and reset |
+| Plan | Every target/state, user journeys, expected behavior, budget and knowledge | Test-categories expands all ten categories/every step; scenarios supply preconditions, actions, expectation, capability and reset |
 | Prepare | Only capabilities required by those rows | Available tools and gaps; check ownership before page interaction; authorize preparation separately |
 | Source review | Relevant component/style paths, revision and stack | Source-supported risks and runtime triggers; add in-scope confirmation rows |
 | Page/AT check | One row, safe data, authorized connection and expected evidence | Actual behavior and artifacts, or a precise reason the row could not run |
@@ -138,7 +150,7 @@ copilot plugin marketplace add kaixun96/dev.A11yAssist
 copilot plugin install a11y-bug-bash@a11y-assist
 ```
 
-Restart Copilot to load the plugin. No separate knowledge/setup install is needed.
+Restart Copilot to load the plugin. No separate knowledge/setup/test-categories install is needed.
 Live page checks need an existing authorized Windows DevBox browser connection;
 real AT needs its own usable connection and exclusive desktop ownership.
 The installation supplies neither browser/AT binaries nor a live connection.
@@ -200,7 +212,7 @@ created Bugs or PRs.
 | Report section | Content |
 |---|---|
 | Scope and outcome | Feature, mode, environment/build, budget, tested/excluded scope and outcome |
-| Coverage matrix | Each row's scenario, expected behavior, actual tool, status and evidence/gap |
+| Coverage matrix | Original inventory; each target/state/category/step, scenario, expectation, tool, status and evidence/gap; local accounting summary |
 | Page-reproduced findings | Impact, exact steps, expected/observed behavior, repeatability and evidence |
 | Source-supported risks | Source location/revision, reasoning, uncertainty and runtime confirmation needed |
 | Questions and gaps | Missing context/tools, blocked/unrun/inconclusive checks and next safe action |
@@ -212,8 +224,8 @@ Illustrative output shape only, **not a real execution result**:
 ```text
 Feature: Item picker
 Outcome: partial
-Coverage: 4 applicable rows; 3 attempted (2 no issue observed, 1 finding);
-          1 blocked
+Coverage: <all inventoried target/states x all category steps>;
+          <executed / applicable>, <blocked / not-run / inconclusive>
 F01 [page-reproduced]: Cancel leaves focus outside the expected opener.
     Includes actual reproduction steps, expected/observed focus and evidence.
 R01 [source-supported-risk]: Search status update may lack an announcement.
@@ -251,6 +263,7 @@ The detailed acceptance design is supporting material, not a claim of completion
 ## 7. Supporting documents and references
 
 - [Current Bug Bash contract](BUG-BASH.md): authoritative shipping behavior and boundaries.
+- [Independent test-categories plugin](TEST-CATEGORIES.md): all-target procedures and local matrix gate.
 - [Context template](../src/bug-bash/context.template.md), [coverage dimensions](../src/bug-bash/coverage.json)
   and [report template](../src/bug-bash/report.template.md).
 - [Execution contracts and qualification](BUG-BASH-EXECUTION-DESIGN.md):

@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 
 const repository = 'https://github.com/kaixun96/dev.A11yAssist';
 const referenceTitles = {
+  'docs/TEST-CATEGORIES.md': { en: 'All-target test procedures and accounting', zh: '全部对象的测试规程与覆盖核对（英文）' },
+  'docs/TEST-CATEGORIES.zh-CN.md': { en: 'Test categories (Chinese)', zh: '测试分类与使用说明' },
+  'procedures/README.md': { en: 'Nine-category procedure index', zh: '九类测试规程索引' },
+  'modules/a11y-test-categories/docs/TEST-CATEGORIES.md': { en: 'Built-in all-target test categories', zh: '内置全对象测试分类（英文）' },
+  'modules/a11y-test-categories/docs/TEST-CATEGORIES.zh-CN.md': { en: 'Built-in test categories (Chinese)', zh: '内置全对象测试分类' },
   'docs/SETUP.md': { en: 'Environment setup and authorization gates', zh: '环境准备与授权门禁' },
   'setup/report.template.md': { en: 'Capability readiness report', zh: '环境能力就绪报告' },
   'modules/a11y-setup/docs/SETUP.md': { en: 'Built-in environment preparation', zh: '内置环境准备模块' },

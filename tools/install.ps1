@@ -1,14 +1,14 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','agent-operations','a11y-workflow','a11y-knowledge','a11y-knowledge-odsp','a11y-bug-bash','a11y-setup','all')]
+    [ValidateSet('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','agent-operations','a11y-workflow','a11y-knowledge','a11y-knowledge-odsp','a11y-bug-bash','a11y-test-categories','a11y-setup','all')]
     [string]$Plugin,
     [switch]$Execute,
     [switch]$WithAgentOW
 )
 $ErrorActionPreference = 'Stop'
 $names = if ($Plugin -eq 'all') {
-    @('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','agent-operations','a11y-workflow','a11y-knowledge','a11y-bug-bash','a11y-setup')
+    @('a11y-intake','a11y-resources','a11y-capture','a11y-validate','a11y-publish','agent-operations','a11y-workflow','a11y-knowledge','a11y-bug-bash','a11y-test-categories','a11y-setup')
 } else { @($Plugin) }
 $commands = ,@('plugin','marketplace','add','kaixun96/dev.A11yAssist')
 if ($Plugin -eq 'a11y-knowledge-odsp') {
@@ -33,7 +33,9 @@ if ($Plugin -in @('a11y-knowledge','a11y-knowledge-odsp')) {
         Write-Output 'The ODSP submodule is included and selected for relevant SPDS, Fluent or SharePoint questions; no second plugin is needed.'
     }
 } elseif ($Plugin -eq 'a11y-bug-bash') {
-    Write-Output 'Restart Copilot before using /a11y-bug-bash with feature context and verification steps. Knowledge review and setup check/planning are included; preparation requires separate authorization. Live checks require actual authorized browser/AT tools and owned resources.'
+    Write-Output 'Restart Copilot before using /a11y-bug-bash with feature context and verification steps. Knowledge review, setup check/planning and all-target test categories are included; preparation requires separate authorization. Live checks require actual authorized browser/AT tools and owned resources.'
+} elseif ($Plugin -eq 'a11y-test-categories') {
+    Write-Output 'Restart Copilot before using /a11y-test-categories. Node.js 22+ supports local all-target step accounting; actual checks require authorized caller browser/AT tools. No provider configuration or AgentOW is required.'
 } elseif ($Plugin -eq 'a11y-setup') {
     Write-Output 'Restart Copilot before using /a11y-setup check on the actual Windows evaluator. This installs the plugin, not third-party dependencies. Prepare selected dependencies only with host-change authorization; no provider configuration or AgentOW is required.'
 } elseif ($Plugin -eq 'a11y-validate') {

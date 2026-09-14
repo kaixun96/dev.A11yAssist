@@ -2,6 +2,78 @@
 
 ## Current delivery
 
+v0.18 / execution envelope v0.9 changes plugin boundaries:
+
+| Previous surface | New owner / action |
+|---|---|
+| Separate `a11y-resources` installation and `a11y_resources_*` tools | `a11y-setup`, `a11y_setup_resources` and `_invoke` release-evaluator; establish DevBox authority before tool preparation |
+| Category files inside Bug Bash/runtime packages | Only `a11y-test-categories`; install separately and configure `pluginRoots.testCategories` |
+| Manual post-validation filing handoff | `a11y-file-bug` draft/submit/skip, native WIT attachments and Bug readback, explicit exact-draft approval |
+| Internal-only final reporting | Independent `a11y-report` generate/deliver plus the same shared coordinator implementation |
+
+There are twelve packages, eleven non-compatibility names. Category consumers
+pin the external plugin version/tool/procedures and never load a bundled fallback.
+For requested filing, `filingRequested:true` yields before reporting until each
+finding has an actual result or explicit skip reason. No automatic Bug creation
+or upload is authorized by discovery. Media bytes and caller playback review
+remain separate; the native simple uploader is bounded to 128 MiB total.
+
+**New operations only:** preserve old resources-plugin operations, category
+copies and provider/runtime pins until their original work is reconciled and
+closed. Do not rewrite old journals or uninstall their sole supervisor. This
+publication does not deploy, run live tests, create actual Bugs or release leases.
+
+v0.17 completes the source discovery chain: accepted plans, per-target category
+expansion, concrete scenario configuration, bounded run/advance, original-effect
+reconciliation, source analysis recording, compatible discovery validation,
+module-owned cleanup and private report delivery. The shared typed browser module
+is bundled, not another mandatory package.
+
+Execution/envelope v0.8 fences these new discovery semantics and lifecycle owners.
+Discovery calls from an older draft must retain their original full runtime and
+provider; never rewrite their journals into this version. BEFORE/AFTER retain the
+v0.7 health requirements below. Discovery adds bound health diagnostic references
+and independent assessment gates. The actual provider/handler must implement and
+qualify those checks before new execution; updating a registry alone is insufficient.
+There is no operations-plugin revival. Unsupported AT/scanner/visual/authenticated
+adapters remain explicit gaps, not implicit browser fallbacks.
+
+This is source publication, not a deployment or live-qualification claim. No
+active evaluator, browser/AT session, lease, original operation or AgentOW pin is
+changed, and no live test is resumed. Plan/source-only local delivery sends no
+Teams message. See [runtime usage](BUG-BASH-RUNTIME.md).
+
+v0.16 removes the independently installable `agent-operations` package, skill,
+MCP server and catalog/installer entry. New calls move as follows:
+
+| Retired entrypoint | New owner |
+|---|---|
+| `agent_operations_invoke` / `recover-media`, `recover-nvda` | `a11y_capture_invoke`; same narrow original-instance recovery contracts |
+| `agent_operations_invoke` / `cleanup` | `a11y_workflow_invoke`; same independently authorized scoped cleanup, not full-workflow completion |
+| Workflow cleanup stage, progress, abandonment and reconciliation | `a11y_workflow_execute`, `_progress`, `_abandon`, `_reconcile` |
+| Independent operation status/reconciliation | New owning plugin's `_operation_status` / `_operation_reconcile`, for new operations only |
+
+Normal cleanup belongs to each module; Bug Bash aggregates actual proof and
+unresolved items without depending on the full workflow. Internal shared
+operations code and the qualified `operations` provider mapping remain; no
+second recovery engine or implicit fallback to the `capture` provider is added.
+Eleven package names remain installable, ten selected by `all`.
+
+Contract/envelope v0.7 adds mandatory `capturePreflightVerified` and
+`capturePostcheckVerified` pass gates to BEFORE/AFTER, including workflow capture.
+Connections must perform current scenario-scoped checks before every capture and
+postcheck/owned cleanup after every attempt, including failure or interruption.
+See [the lifecycle contract](CAPABILITIES.md#capture-lifecycle-package-v016-contract-v07).
+Provider qualification is required; gate checking is not a remote health probe.
+
+**Cutover is for new operations only.** Do not uninstall or replace the only
+runtime supervising unfinished work. Reconcile old operations using their
+original pinned package/provider and IDs, preserve evidence, and close or
+explicitly hand off ownership before an installation upgrade. Old journals fail
+the v0.7 fence; do not edit their plugin/version fields, silently rebind provider
+connections or retry with fresh IDs. This source release neither uninstalls a
+running plugin nor deploys providers, changes existing workers or resumes tests.
+
 v0.15 extracts the AgentOW host-setup tutorial into independent `a11y-setup`
 and bundles that same module into Bug Bash's preparation step. It reuses the
 shared Windows host installer and retained browser helper, not a second

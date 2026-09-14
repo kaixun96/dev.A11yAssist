@@ -40,9 +40,34 @@ if (request.operation === 'status') {
     pr: { url: 'https://example.invalid/pullrequest/123', isDraft: true },
     artifacts: [{ path: artifact, sha256: createHash('sha256').update(data).digest('hex') }]
   };
+  if (request.stage.startsWith('discovery-')) {
+    receipt.taskId = request.input.taskId;
+    receipt.operationIds = request.input.operationIds;
+    if (request.stage === 'discovery-observe') {
+      receipt.capturePreflightArtifacts = [artifact];
+      receipt.capturePostcheckArtifacts = [artifact];
+      receipt.planHash = request.input.planHash;
+      receipt.observations = request.input.rows.map(row => {
+        const status = row.parameters?.status ?? 'observed-no-issue';
+        return { rowId: row.parameters?.wrongRow ? 'wrong-row' : row.id, status,
+          actual: 'UNIT DATA ONLY: no actual page was opened', evidence: [artifact],
+          tool: { name: row.capability, version: 'unit', kind: row.track === 'at' ? 'at' : 'browser' },
+          ...(['blocked', 'not-run', 'inconclusive'].includes(status) ? { reason: 'Unit test gap' } : {}),
+          ...(status === 'finding' ? { issue: { title: 'Unit seeded issue', impact: 'Unit impact', repeatability: 'Unit only' } } : {}) };
+      });
+    }
+    if (request.stage === 'discovery-deliver') {
+      receipt.reportSha256 = request.input.report.sha256;
+      receipt.deliveryReference = 'unit-only-delivery-no-real-message';
+    }
+  }
   if (request.stage === 'release-evaluator') {
     receipt.nativeRunId = request.input.nativeRunId;
     receipt.releaseMode = 'completed-owned-run';
+  }
+  if (request.stage === 'file-bug') {
+    receipt.bug = { id: 42, url: 'https://example.invalid/unit/_workitems/edit/42' };
+    receipt.draftSha256 = request.input.approval.draftSha256;
   }
   if (request.stage === 'recover-media') {
     receipt.nativeRunId = request.input.nativeRunId;
@@ -65,7 +90,8 @@ if (request.operation === 'status') {
   if (request.input.wrongSubject) receipt.subject = 'different-item';
   if (request.input.wrongScenario) receipt.scenarioHash = 'f'.repeat(64);
   await writeFile(join(request.stateDirectory, `provider-${request.requestId}.json`), JSON.stringify(receipt), { flag: 'wx' });
-  if (request.input.pending) {
+  if (request.input.pending || request.input.rows?.some(row => row.parameters?.pending) ||
+    (request.stage === 'file-bug' && process.argv.includes('--pending-filing'))) {
     console.log(JSON.stringify({ ...identity, state: 'pending',
       resumeCondition: 'Test fixture is ready for reconciliation',
       progressPath: artifact, ...(request.waiting ? { waiting: request.waiting } : { completionCallback: 'test-only-callback' }) }));

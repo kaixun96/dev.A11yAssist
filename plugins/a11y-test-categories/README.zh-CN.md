@@ -29,13 +29,13 @@ copilot plugin install a11y-test-categories@a11y-assist
 
 ## 能力边界
 
-可独立安装，也由 Bug Bash 从同一来源内置复用。声明 Liquid HTTP MCP 用于只读标准检索，仍需用户认证；不提供浏览器/AT 后端。本地矩阵核对检测漏行，不证明证据真实或符合 WCAG。不适用需说明原因；缺少工具、时间或证据只能报告部分覆盖。
+测试规程和矩阵工具唯一所属插件。Bug Bash 通过明确配置的已安装路径调用版本化 API，不再内嵌副本。声明 Liquid HTTP MCP 用于只读标准检索，仍需用户认证；不提供浏览器/AT 后端。矩阵核对不证明证据真实或符合 WCAG，无法执行的检查保留缺口。
 
 ## 参考资料
 
 - [全部对象的测试规程与覆盖核对（英文）](docs/TEST-CATEGORIES.md)
 - [测试分类与使用说明](docs/TEST-CATEGORIES.zh-CN.md)
 - [Liquid MCP 连接与 MAS/WCAG 检索](docs/LIQUID-STANDARDS.md)
-- [九类测试规程索引](procedures/README.md)
+- [十类测试规程索引](procedures/README.md)
 
 [返回插件目录](https://github.com/kaixun96/dev.A11yAssist/blob/main/README.zh-CN.md)

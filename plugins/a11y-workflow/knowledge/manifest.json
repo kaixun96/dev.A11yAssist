@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "repository": "kaixun96/dev.A11yAssist",
-  "version": "0.15.0",
+  "version": "0.18.0",
   "scope": "generic-static-accessibility",
   "hashes": {
     "README.md": "87b9cca220b5c9e5a3bd3af14eb880386b569e66876e203a9cccc4b95ba7c67b",
-    "index.json": "716a27f64dcec998a46a0e02c63eaefbd8ff30ba6f72c00d83829b983c11c058",
+    "index.json": "7843d3356725954fdf1413570eb6448361cd4f06502e8fc232c2e37619f0125d",
     "foundations.md": "aea7983cc9be2fe56ea37ee00794eea7a5b4c4aed6c86d60ac5ba5d46dcfd6dd",
     "component-accessibility.md": "7fbda938b01dc9a7fd5a5a6b5362c581738a3114889f62333348703e75bede71",
     "keyboard-focus.md": "8ddf86b2eb66e1e0a2ae95641b2c95bb0d1b662c46bd123543bfd8c3eb33df89",

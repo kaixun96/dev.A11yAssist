@@ -11,8 +11,7 @@ const consumers = [
   ['a11y-knowledge', '', ['a11y-knowledge', 'a11y-knowledge-odsp']],
   ['a11y-knowledge-odsp', '', ['a11y-knowledge-odsp']],
   ['a11y-test-categories', '', ['a11y-test-categories']],
-  ['a11y-bug-bash', 'modules/a11y-knowledge', ['a11y-knowledge', 'a11y-knowledge-odsp']],
-  ['a11y-bug-bash', 'modules/a11y-test-categories', ['a11y-test-categories']]
+  ['a11y-bug-bash', 'modules/a11y-knowledge', ['a11y-knowledge', 'a11y-knowledge-odsp']]
 ];
 
 test('isolated consumers declare Liquid once at the plugin root and share the guide', async () => {

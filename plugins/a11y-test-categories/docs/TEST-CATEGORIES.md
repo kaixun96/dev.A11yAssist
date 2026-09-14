@@ -13,10 +13,13 @@ evidence, and unavailable official sources remain explicit gaps.
 
 ## Composition
 
-Bug Bash bundles the same skill, procedures and local accounting tool under
-`modules/a11y-test-categories/`; no second installation is needed. Standalone
-consumers use `/a11y-test-categories`. Neither path adds a browser, AT backend,
-MCP server or another agent.
+Only this plugin distributes its skill, procedures and accounting tools. Install
+it separately for Bug Bash and configure `pluginRoots.testCategories` to the
+actual absolute installation root. Bug Bash calls its versioned `tools/matrix.mjs`
+API (`apiVersion:1`, loadProcedures/createMatrix/checkMatrix), pins its version,
+tool content and procedures, and fails explicitly if unavailable or changed.
+There are no consumer-side copies or implicit fallback. `/a11y-test-categories`
+remains independently usable. No browser/AT backend, MCP server or agent is added.
 
 The caller inventories targets and states; this plugin expands all ten categories
 and every numbered step for each target/state. Authorized browser tools perform

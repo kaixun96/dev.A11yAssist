@@ -2,6 +2,12 @@
 
 ## What is executable today
 
+v0.18 adds the `bugs` ADO connection for `file-bug`: validated discovery,
+explicit exact-draft/destination approval, WIT binary attachments, Bug creation
+and field/relation/byte readback. It is not a generic workflow PASS. See
+[Bug filing](FILE-BUG.md) for project fields, video review and bounded upload.
+Resource status/release now belong to setup; report delivery belongs to report.
+
 Version 0.5 additionally ships native ADO work-item/discussion retrieval and
 Draft PR evidence upload/description update. These use `kind: "ado"` connections
 instead of external executables. See [native capabilities](NATIVE-CAPABILITIES.md)
@@ -99,6 +105,20 @@ cryptographic proof of product behavior: providers must bind their determination
 to authenticated native results, independent evaluator receipts and artifacts.
 The core checks the shape, provenance identity, hashes and phase consistency;
 provider qualification supplies the underlying behavior correctness.
+
+Contract v0.7 requires BEFORE/AFTER providers to perform fresh scenario-scoped
+preflight before triggering capture and postcheck/owned cleanup after every
+attempt, including failures/interruption. Return `capturePreflightVerified` and
+`capturePostcheckVerified` only when their [lifecycle criteria](CAPABILITIES.md)
+are proven by hash-bound diagnostic artifacts. Preserve the original error and
+partial evidence; no successful receipt when a check or effect is unknown.
+The controller validates the gates, not the live environment. Qualify the actual
+provider before new calls; old active journals/providers remain pinned.
+
+The `operations` provider mapping remains the trusted transport for narrow media/
+NVDA recovery and scoped/full cleanup. It no longer identifies an installable
+plugin. New recovery calls belong to capture and standalone cleanup to workflow;
+neither change authorizes rerouting existing effects to a different executable.
 
 Nonpass receipt outcomes require a reason and artifacts; `not-reproduced`,
 `blocked`, `inconclusive`, `invalid-evidence`, `abandoned` are returned to the

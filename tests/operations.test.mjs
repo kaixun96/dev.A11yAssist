@@ -9,6 +9,7 @@ import { fileHash, hash, readConfig, createRun, executeStage, workflow, loadRun,
 import { capabilities, invokeCapability, validateCapabilityReceipt } from '../src/runtime/capability.mjs';
 import { executeOperation, operationStatus, reconcileOperation } from '../src/runtime/operations.mjs';
 import { computeScenarioHash } from '../src/runtime/evidence-v1.mjs';
+import { capabilityInput } from './fixtures/discovery-plan.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const provider = fileURLToPath(new URL('fixtures/provider.mjs', import.meta.url));
@@ -24,7 +25,7 @@ async function fixture(body) {
   try { await body(config, stateRoot); } finally { await rm(stateRoot, { recursive: true }); }
 }
 
-test('each capability operates without a Bug journal, host roster, previous stages or AgentOW', async () => {
+test('general capabilities need no remediation journal; filing separately requires validated discovery', async () => {
   await fixture(async (config, dir) => {
     delete config.providers.agentow;
     const path = join(dir, 'config.json');
@@ -32,13 +33,15 @@ test('each capability operates without a Bug journal, host roster, previous stag
     const independent = await readConfig(path, { fullWorkflow: false });
     await assert.rejects(readConfig(path), /Unsupported configuration\/mode/);
     for (const [action, definition] of Object.entries(capabilities.operations)) {
-      if (!definition.plugin) continue;
-      const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, context,
-        ['release-evaluator', 'recover-media', 'recover-nvda'].includes(action) ? { nativeRunId: 'd'.repeat(32) } : {});
+      if (!definition.plugin || action === 'file-bug') continue;
+      const binding = action.startsWith('discovery-') ? { ...context, subject: 'task:fixture-test' } : context;
+      const input = action.startsWith('discovery-') ? capabilityInput(action)
+        : ['release-evaluator', 'recover-media', 'recover-nvda'].includes(action) ? { nativeRunId: 'd'.repeat(32) } : {};
+      const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, binding, input);
       assert.equal(result.status, 'finished');
       assert.equal(result.receipt.outcome, 'pass');
       assert.equal(result.receipt.gates.claimOwned, undefined);
-      assert.equal(result.receipt.subject, context.subject);
+      assert.equal(result.receipt.subject, binding.subject);
       assert.equal(result.nextStage, undefined);
     }
     await assert.rejects(access(join(dir, 'runs')), { code: 'ENOENT' });
@@ -51,15 +54,15 @@ test('completed evaluator release binds its native run without declaring full cl
     const binding = { subject: context.subject, evaluator: context.evaluator };
     for (const invalid of [{}, { nativeRunId: '../foreign' }, { nativeRunId: new String(input.nativeRunId) },
       { ...input, token: 'never-transport-tokens' }]) {
-      await assert.rejects(executeOperation(config, 'a11y-resources', 'bad-release', 'release-evaluator',
+      await assert.rejects(executeOperation(config, 'a11y-setup', 'bad-release', 'release-evaluator',
         binding, invalid), /requires only input.nativeRunId/);
     }
     await assert.rejects(access(join(dir, 'operations/bad-release')), { code: 'ENOENT' });
-    const released = await executeOperation(config, 'a11y-resources', 'release', 'release-evaluator', binding, input);
+    const released = await executeOperation(config, 'a11y-setup', 'release', 'release-evaluator', binding, input);
     assert.equal(released.receipt.nativeRunId, input.nativeRunId);
     assert.equal(released.receipt.gates.ownedProcessesStopped, undefined);
     assert.equal(released.receipt.gates.audioRestored, undefined);
-    assert.deepEqual(await executeOperation(config, 'a11y-resources', 'release', 'release-evaluator', binding, input), released);
+    assert.deepEqual(await executeOperation(config, 'a11y-setup', 'release', 'release-evaluator', binding, input), released);
     const request = JSON.parse(await readFile(join(dir, 'operations/release/operation.json'), 'utf8')).request;
     for (const receipt of [
       { ...released.receipt, nativeRunId: 'e'.repeat(32) },
@@ -74,7 +77,7 @@ test('completed evaluator release binds its native run without declaring full cl
     changed.receipt.nativeRunId = 'e'.repeat(32);
     changed.receiptSha256 = hash(JSON.stringify(changed.receipt));
     await writeFile(path, JSON.stringify(changed));
-    await assert.rejects(operationStatus(config, 'a11y-resources', 'release'), /exact requested native run/);
+    await assert.rejects(operationStatus(config, 'a11y-setup', 'release'), /exact requested native run/);
   });
 });
 
@@ -83,11 +86,11 @@ test('narrow media recovery preserves native assignment and cannot stand for who
     const input = { nativeRunId: 'd'.repeat(32) };
     const binding = { subject: context.subject, evaluator: context.evaluator };
     for (const invalid of [{}, { nativeRunId: 'wrong' }, { ...input, token: 'forbidden' }]) {
-      await assert.rejects(executeOperation(config, 'agent-operations', 'invalid-media', 'recover-media',
+      await assert.rejects(executeOperation(config, 'a11y-capture', 'invalid-media', 'recover-media',
         binding, invalid), /requires only input.nativeRunId/);
     }
     await assert.rejects(access(join(dir, 'operations/invalid-media')), { code: 'ENOENT' });
-    const result = await executeOperation(config, 'agent-operations', 'media', 'recover-media', binding, input);
+    const result = await executeOperation(config, 'a11y-capture', 'media', 'recover-media', binding, input);
     assert.equal(result.receipt.fullCleanupVerified, false);
     assert.equal(result.receipt.gates.ownedProcessesStopped, undefined);
     assert.equal(result.receipt.gates.artifactsPreserved, undefined);
@@ -109,7 +112,7 @@ test('narrow media recovery preserves native assignment and cannot stand for who
     changed.receipt.fullCleanupVerified = true;
     changed.receiptSha256 = hash(JSON.stringify(changed.receipt));
     await writeFile(path, JSON.stringify(changed));
-    await assert.rejects(operationStatus(config, 'agent-operations', 'media'), /limited scope/);
+    await assert.rejects(operationStatus(config, 'a11y-capture', 'media'), /limited scope/);
   });
 });
 
@@ -119,11 +122,11 @@ test('NVDA recovery accepts only its original assignment and narrow exit proof',
     const binding = { subject: context.subject, evaluator: context.evaluator };
     for (const invalid of [{}, { nativeRunId: 'wrong' }, { ...input, processId: 42 },
       { ...input, token: 'forbidden' }, { ...input, contextPath: 'caller-selected' }]) {
-      await assert.rejects(executeOperation(config, 'agent-operations', 'invalid-nvda', 'recover-nvda',
+      await assert.rejects(executeOperation(config, 'a11y-capture', 'invalid-nvda', 'recover-nvda',
         binding, invalid), /requires only input.nativeRunId/);
     }
     await assert.rejects(access(join(dir, 'operations/invalid-nvda')), { code: 'ENOENT' });
-    const result = await executeOperation(config, 'agent-operations', 'nvda', 'recover-nvda', binding, input);
+    const result = await executeOperation(config, 'a11y-capture', 'nvda', 'recover-nvda', binding, input);
     assert.equal(result.receipt.fullCleanupVerified, false);
     assert.equal(result.receipt.gates.ownedProcessesStopped, undefined);
     for (const patch of [
@@ -144,7 +147,7 @@ test('NVDA recovery accepts only its original assignment and narrow exit proof',
     changed.receipt.recoveryScope = 'all-processes';
     changed.receiptSha256 = hash(JSON.stringify(changed.receipt));
     await writeFile(path, JSON.stringify(changed));
-    await assert.rejects(operationStatus(config, 'agent-operations', 'nvda'), /limited scope/);
+    await assert.rejects(operationStatus(config, 'a11y-capture', 'nvda'), /limited scope/);
   });
 });
 
@@ -162,6 +165,96 @@ test('caller-selected operation ordering does not become an implicit full workfl
     assert.equal(invalid.status, 'finished');
     assert.equal(invalid.receipt.outcome, 'inconclusive');
     assert.equal(invalid.nextStage, undefined);
+  });
+});
+
+test('capture requires fresh preflight and postcheck gates for every BEFORE/AFTER pass', async () => {
+  await fixture(async config => {
+    for (const action of ['before', 'after']) {
+      const result = await executeOperation(config, 'a11y-capture', `healthy-${action}`, action, context);
+      for (const gate of ['capturePreflightVerified', 'capturePostcheckVerified']) {
+        assert.equal(result.receipt.gates[gate], true);
+        const gates = { ...result.receipt.gates };
+        delete gates[gate];
+        assert.throws(() => validateCapabilityReceipt(action, { ...result.receipt, gates }, context),
+          new RegExp(`Missing capability gate: ${gate}`));
+        const id = `${action}-${gate}`;
+        await assert.rejects(executeOperation(config, 'a11y-capture', id, action, context, { badGate: gate }),
+          new RegExp(`Missing capability gate: ${gate}`));
+        assert.equal((await operationStatus(config, 'a11y-capture', id)).status, 'pending');
+        await assert.rejects(executeOperation(config, 'a11y-capture', id, action, context, { badGate: gate }), /pending/);
+      }
+      const failed = await executeOperation(config, 'a11y-capture', `failed-${action}`, action, context,
+        { outcome: 'inconclusive', badGate: 'capturePostcheckVerified' });
+      assert.equal(failed.receipt.outcome, 'inconclusive');
+      assert.equal(failed.receipt.gates.capturePostcheckVerified, false);
+    }
+  });
+});
+
+test('retired operations entrypoint cannot execute or silently adopt an old recovery journal', async () => {
+  await fixture(async (config, dir) => {
+    const input = { nativeRunId: 'd'.repeat(32) };
+    for (const action of ['recover-media', 'recover-nvda', 'cleanup']) {
+      await assert.rejects(executeOperation(config, 'agent-operations', `retired-${action}`, action, context,
+        action === 'cleanup' ? {} : input), /cannot invoke/);
+      await assert.rejects(access(join(dir, 'operations', `retired-${action}`)), { code: 'ENOENT' });
+    }
+    await executeOperation(config, 'a11y-capture', 'old-media', 'recover-media', context, input);
+    const path = join(dir, 'operations/old-media/operation.json');
+    const state = JSON.parse(await readFile(path, 'utf8'));
+    state.plugin = 'agent-operations';
+    await writeFile(path, JSON.stringify(state));
+    await assert.rejects(operationStatus(config, 'a11y-capture', 'old-media'), /Foreign owner\/plugin/);
+    await assert.rejects(reconcileOperation(config, 'a11y-capture', 'old-media'), /Foreign owner\/plugin/);
+    await assert.rejects(executeOperation(config, 'a11y-capture', 'old-media', 'recover-media', context, input),
+      /Foreign owner\/plugin/);
+    state.version = '0.6.0';
+    await writeFile(path, JSON.stringify(state));
+    await assert.rejects(operationStatus(config, 'agent-operations', 'old-media'), /incompatible operation version/);
+  });
+});
+
+test('copied capture recovery and workflow cleanup expose invoke/status/reconcile without unrelated configuration', async () => {
+  await fixture(async (config, dir) => {
+    const configPath = join(dir, 'config.json');
+    await writeFile(configPath, JSON.stringify({ ...config, providers: { operations: config.providers.operations } }));
+    for (const [plugin, actions] of [
+      ['a11y-capture', ['recover-media', 'recover-nvda']],
+      ['a11y-workflow', ['cleanup']]
+    ]) {
+      const copied = join(dir, plugin);
+      await cp(join(root, 'plugins', plugin), copied, { recursive: true });
+      const prefix = plugin.replaceAll('-', '_');
+      const requests = [{ jsonrpc: '2.0', id: 0, method: 'tools/list' }];
+      for (const action of actions) {
+        const operationId = `mcp-${action}`;
+        const input = action === 'cleanup' ? { pending: true } : { nativeRunId: 'd'.repeat(32) };
+        const calls = [
+          ['invoke', { operationId, action, context: { subject: context.subject, evaluator: context.evaluator }, input }],
+          ['operation_status', { operationId }],
+          ...(action === 'cleanup' ? [['operation_reconcile', { operationId }]] : [])
+        ];
+        for (const [suffix, args] of calls) requests.push({
+          jsonrpc: '2.0', id: requests.length, method: 'tools/call',
+          params: { name: `${prefix}_${suffix}`, arguments: args }
+        });
+      }
+      const child = spawnSync(process.execPath, [join(copied, 'runtime/mcp.mjs'), plugin], {
+        input: requests.map(request => JSON.stringify(request)).join('\n') + '\n',
+        encoding: 'utf8', env: { ...process.env, A11Y_ASSIST_CONFIG: configPath }, timeout: 15000
+      });
+      assert.equal(child.status, 0, child.stderr);
+      const replies = child.stdout.trim().split('\n').map(JSON.parse);
+      const tools = replies.shift().result.tools;
+      assert.deepEqual(tools.find(tool => tool.name === `${prefix}_invoke`).inputSchema.properties.action.enum,
+        plugin === 'a11y-capture' ? ['discovery-observe', 'recover-media', 'recover-nvda', 'before', 'after'] : ['cleanup']);
+      assert.equal(tools.some(tool => tool.name === `${prefix}_progress`), plugin === 'a11y-workflow');
+      assert.equal(tools.some(tool => tool.name === `${prefix}_abandon`), plugin === 'a11y-workflow');
+      for (const reply of replies) assert.equal(reply.result?.isError, undefined, JSON.stringify(reply));
+      assert.equal(JSON.parse(replies.at(-1).result.content[0].text).status, 'finished');
+    }
+    await assert.rejects(access(join(dir, 'runs')), { code: 'ENOENT' });
   });
 });
 

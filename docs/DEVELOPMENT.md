@@ -11,7 +11,7 @@ Keep migration history and implementation details off the main selection path.
 |---|---|
 | `src/catalog.json` | Single catalog for both homepages and all plugin READMEs |
 | `src/skills/`, `src/knowledge/` | Authored instructions and generic reference topics |
-| `src/bug-bash/` | Feature discovery context/coverage/report templates, not another rule engine |
+| `src/bug-bash/` | Feature discovery templates and opt-in disposable fixture qualification, not a rule engine |
 | `src/test-categories/` | Shared procedures and local step-level matrix accounting |
 | `src/setup/` | Scenario-scoped dependency profiles and readiness report |
 | `src/runtime/`, `src/contracts/`, `src/adapters/`, `src/native/` | Shared implementation |
@@ -46,6 +46,9 @@ every installable plugin and that all bundled reference targets exist. Tests
 check standalone packages, navigation, read-only boundaries and compatibility
 exports. `npm run check` rejects generated drift, including homepages and READMEs.
 No dependency installation is needed for the existing built-in Node test runner.
+Fixture request/host-gate tests also use Python 3, but never import Playwright or
+open a browser. Actual fixture qualification is separately authorized Windows
+evaluator work, not a headless CI test or a controller-side shortcut.
 
 Use `npm run doctor` for source-level configuration diagnostics, or the installed
 plugin's own doctor tool. Neither replaces live qualification.
@@ -70,10 +73,12 @@ the same two read-only skills and all references used by `a11y-knowledge` under
 `modules/a11y-knowledge/`, preserving their relative paths without registering
 duplicate public commands or requiring another installation. Its context,
 coverage and report resources are generated from `src/bug-bash/`.
-`bundleTestCategories` packages the same skill, procedures and local matrix tool
-from `src/test-categories/` into standalone `a11y-test-categories` and Bug Bash's
-`modules/a11y-test-categories/`. The standalone package has its own manifest and
-catalog entry; the internal module has no manifest or duplicate public command.
+`bundleTestCategories` packages `src/test-categories/` only into standalone
+`a11y-test-categories`. Bug Bash and all other runtime packages contain no
+category procedures or matrix tools. `runtime/category-plugin.mjs` resolves the
+operator-configured absolute `pluginRoots.testCategories`, checks its manifest
+and versioned API, and binds the actual tool/procedure content into task history.
+Missing or changed dependencies fail closed; no implicit repository/sibling fallback.
 Bug Bash requires every target/state's full ten-category step matrix and checks
 accounting before completion. This does not implement a live browser/AT backend.
 Its root declares the Liquid HTTP MCP for standards lookup; internal modules
@@ -85,7 +90,11 @@ authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it
 `bundleSetup` packages the same setup skill, profiles, shared native host script
 and compatibility browser helper in standalone `a11y-setup` and Bug Bash's
 `modules/a11y-setup/`. No second installer implementation or duplicate public
-command is registered. `InstallSafeDependencies -Dependency` selects a subset;
+command is registered inside Bug Bash. Standalone setup owns the former resource
+MCP tools; original DevBox/setup authority precedes host preparation.
+`a11y-file-bug` owns validated, explicitly approved WIT creation/attachments;
+`a11y-report` exposes the shared final generator and delivery.
+`InstallSafeDependencies -Dependency` selects a subset;
 omission preserves the legacy full set. Existing AgentOW consumers remain
 commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
 

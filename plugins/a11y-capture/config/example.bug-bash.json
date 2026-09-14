@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "mode": "cli",
+  "owner": "your-owner-namespace",
+  "stateRoot": "C:\\private-a11y-state",
+  "providers": {},
+  "pluginRoots": {
+    "testCategories": "C:\\replace-with-installed-plugin-root\\a11y-test-categories"
+  },
+  "discoverySourceRoots": [],
+  "discoveryProfiles": {
+    "public-browser": {
+      "kind": "browser-scenarios",
+      "capabilities": ["browser"],
+      "targets": [],
+      "maxBatchRows": 30
+    },
+    "fixture-browser": {
+      "capabilities": ["browser"],
+      "targets": ["fixture:dialog-form-v1"]
+    }
+  }
+}

@@ -27,10 +27,35 @@ if (['a11y-validate', 'a11y-workflow'].includes(plugin)) tools.push({
     artifactRoot: { type: 'string' }, baselineArtifactRoot: { type: 'string' }
   }, required: ['phase', 'requestPath', 'resultPath'], additionalProperties: false }
 });
-const actions = Object.entries(capabilities.operations).filter(([, value]) => value.plugin === plugin).map(([action]) => action);
+const actions = Object.entries(capabilities.operations).filter(([action, value]) =>
+  value.plugin === plugin && action !== 'file-bug').map(([action]) => action);
+if (plugin === 'a11y-validate') tools.push({
+  name: `${prefix}_discovery`,
+  description: 'Read-only discovery journal, original child receipts, artifact bytes and category accounting. Keeps trusted-provider behavior assessments separate from integrity and source risks; never executes page/AT work.',
+  inputSchema: { type: 'object', properties: { taskId: { type: 'string' } },
+    required: ['taskId'], additionalProperties: false }
+});
+const taskSchema = { type: 'object', properties: { taskId: { type: 'string' } },
+  required: ['taskId'], additionalProperties: false };
+if (plugin === 'a11y-report') {
+  tools.push({ name: `${prefix}_generate`, description: 'Generate the aggregate report from verified original discovery records and Bug-filing receipts. Does not execute checks or file Bugs.', inputSchema: taskSchema });
+  tools.push({ name: `${prefix}_deliver`, description: 'Deliver the existing hash-bound report after owned cleanup; local file delivery never claims a sent message.', inputSchema: taskSchema });
+}
+if (plugin === 'a11y-file-bug') {
+  const properties = { taskId: { type: 'string' }, issueId: { type: 'string' }, details: { type: 'object' } };
+  tools.push({ name: `${prefix}_draft`, description: 'Prepare a detailed Bug draft from a validated production finding and bound evidence. Read-only; returns draft SHA-256 for explicit approval.',
+    inputSchema: { type: 'object', properties, required: Object.keys(properties), additionalProperties: false } });
+  tools.push({ name: `${prefix}_submit`, description: 'File exactly one explicitly approved draft using the configured Bug provider. Retain the deterministic operation ID; unknown effects must be reconciled, never resubmitted.',
+    inputSchema: { type: 'object', properties: { ...properties, approval: { type: 'object' } },
+      required: [...Object.keys(properties), 'approval'], additionalProperties: false } });
+  tools.push({ name: `${prefix}_skip`, description: 'Record why an unfiled finding is intentionally not being filed; cannot hide an existing or pending creation.',
+    inputSchema: { type: 'object', properties: { taskId: { type: 'string' }, issueId: { type: 'string' }, reason: { type: 'string' } },
+      required: ['taskId', 'issueId', 'reason'], additionalProperties: false } });
+}
 const operationSchema = { type: 'object', properties: { operationId: { type: 'string' } },
   required: ['operationId'], additionalProperties: false };
-if (actions.length) {
+if (actions.length || plugin === 'a11y-file-bug') {
+  if (actions.length) {
   tools.push({
     name: `${prefix}_invoke`,
     description: 'Invoke one independent capability inside the caller workflow. No shared workflow run or earlier phases required. Retain operationId to reconcile unknown outcomes.',
@@ -39,6 +64,7 @@ if (actions.length) {
       context: { type: 'object' }, input: { type: 'object' }
     }, required: ['operationId', 'action', 'context'], additionalProperties: false }
   });
+  }
   tools.push({ name: `${prefix}_operation_status`, description: 'Read this capability operation without a workflow journal.', inputSchema: operationSchema });
   tools.push({ name: `${prefix}_operation_reconcile`, description: 'Observe the SAME pending capability operation; never repeat its external effect.', inputSchema: operationSchema });
 }
@@ -52,13 +78,13 @@ if (plugins[plugin].stages.length) tools.push({
     runId: { type: 'string' }, stage: { type: 'string', enum: plugins[plugin].stages }, input: { type: 'object' }
   }, required: ['runId', 'stage'], additionalProperties: false }
 });
-if (['a11y-resources', 'a11y-workflow'].includes(plugin)) tools.push({
+if (['a11y-setup', 'a11y-workflow'].includes(plugin)) tools.push({
   name: `${prefix}_resources`, description: 'Read public resource health/ownership from the configured authoritative pool.', inputSchema: empty
 });
-if (['agent-operations', 'a11y-workflow'].includes(plugin)) tools.push({
+if (plugin === 'a11y-workflow') tools.push({
   name: `${prefix}_progress`, description: 'Identify permitted continuation/reconciliation action; a reply is not execution recovery.', inputSchema: runSchema
 });
-if (['agent-operations', 'a11y-workflow'].includes(plugin)) tools.push({
+if (plugin === 'a11y-workflow') tools.push({
   name: `${prefix}_abandon`, description: 'Record an explicit abandonment reason and require cleanup; never releases resources itself.',
   inputSchema: { type: 'object', properties: { runId: { type: 'string' }, reason: { type: 'string' } },
     required: ['runId', 'reason'], additionalProperties: false }
@@ -91,11 +117,17 @@ async function handle(request) {
   validateArguments(tool, args);
   try {
     const action = tool.name.slice(prefix.length + 1);
-    const fullWorkflow = plugin === 'a11y-workflow' ||
+    const fullWorkflow = (plugin === 'a11y-workflow' && action === 'doctor') ||
       ['create', 'status', 'reconcile', 'execute', 'progress', 'abandon'].includes(action);
     const config = action === 'evidence' ? null : await readConfig(undefined, { fullWorkflow });
     let result;
     if (action === 'evidence') result = await validateEvidenceFiles(args);
+    else if (action === 'discovery') result = await (await import('./bug-bash.mjs')).validateDiscovery(config, args.taskId);
+    else if (action === 'generate') result = await (await import('./bug-bash.mjs')).reportDiscovery(config, args.taskId);
+    else if (action === 'deliver') result = await (await import('./bug-bash.mjs')).deliverDiscovery(config, args.taskId);
+    else if (action === 'draft') result = await (await import('./file-bug.mjs')).prepareDiscoveryBug(config, args.taskId, args.issueId, args.details);
+    else if (action === 'submit') result = await (await import('./file-bug.mjs')).fileDiscoveryBug(config, args);
+    else if (action === 'skip') result = await (await import('./bug-bash.mjs')).skipDiscoveryBug(config, args.taskId, args.issueId, args.reason);
     else if (action === 'invoke') result = await executeOperation(config, plugin, args.operationId, args.action, args.context, args.input ?? {});
     else if (action === 'operation_status') result = await operationStatus(config, plugin, args.operationId);
     else if (action === 'operation_reconcile') result = await reconcileOperation(config, plugin, args.operationId);

@@ -9,6 +9,12 @@ Read `docs/BUG-BASH.md`, `bug-bash/context.template.md`,
 `bug-bash/coverage.json` and `bug-bash/report.template.md` before starting.
 This is a discovery workflow, not the single-Bug remediation workflow.
 
+For explicitly configured executable composition, also read `docs/BUG-BASH-RUNTIME.md`.
+Use the package-local `runtime/bug-bash-cli.mjs`, not the remediation create/run
+commands. The guided plan/source path needs no provider configuration and remains
+valid when the executable path was not requested. Never silently switch a failed
+configured execution into a success-shaped guided result.
+
 ## 1. Establish scope and available capabilities
 
 Extract the feature purpose, user journeys, acceptance/verification steps, URL,
@@ -34,6 +40,13 @@ exclusive desktop ownership. Missing tools are gaps, not a reason to invent tool
 names or receipts. Follow deployment ownership gates before interactive control.
 Do not acquire resources with a dummy Bug or fake capture request.
 
+If the user explicitly requests tooling qualification rather than a product
+round, `docs/BUG-BASH.md` describes the optional bounded
+`bug-bash/fixture_runner.py` and its disposable healthy/broken controls.
+Use actual owned Windows execution and the browser setup profile. Its seeded
+findings and qualification result never replace product coverage or real AT.
+Normal feature requests must not silently switch to this fixture.
+
 For requested live page/AT checks, read the bundled
 `modules/a11y-setup/skills/a11y-setup/SKILL.md` for environment check/planning.
 Its root is `modules/a11y-setup`; it reuses the same standalone setup skill,
@@ -56,14 +69,16 @@ them. Use every dimension in `bug-bash/coverage.json` as a planning prompt,
 not a universal rule or automatic failure. Record why a dimension is not applicable.
 Include entry, exit/cancel, error recovery and repeated use, not just the happy path.
 
-Read `modules/a11y-test-categories/skills/a11y-test-categories/SKILL.md`.
-Its root is `modules/a11y-test-categories`; it is the exact standalone plugin's
-skill, procedures and accounting tool, bundled without a second public command.
-Follow it inline, not a globally installed same-name skill or another agent.
+Use the separately installed `a11y-test-categories` plugin. Configure its actual
+absolute installation root as `pluginRoots.testCategories`; read its own
+`skills/a11y-test-categories/SKILL.md`. The versioned `tools/matrix.mjs` API owns
+procedure loading, expansion and accounting. Bug Bash carries no copy and never
+falls back to archived or guessed procedures. A missing/incompatible dependency
+blocks category expansion before execution; preserve original pins for old tasks.
 Inventory every in-scope region, control and meaningful content element in every
 reachable state, including page-level targets for global checks. For each
-target/state, expand all ten categories and every numbered step with the bundled
-`modules/a11y-test-categories/tools/matrix.mjs` into a private category matrix.
+target/state, call that plugin's matrix API to expand all ten categories and
+every numbered step into a private category matrix.
 Retain the original inventory and its explicit completeness/uncertainty.
 Read all ten procedures; execute all applicable steps in order, not just selected
 categories or representative controls. Every not-applicable step needs a
@@ -77,6 +92,16 @@ dynamic feedback before lower-risk variants. Record each matrix row as
 `not-applicable` or `inconclusive`. Keep page and source rows distinct.
 Show the bounded plan, then proceed without a redundant approval pause when
 scope, authorization and capabilities are already clear.
+
+In executable mode, serialize this plan using the versioned runtime contract,
+including the complete `inventory`, then `create` it once. The runtime expands
+every category step; use `configure` to bind its generated unexecuted rows to
+concrete scenarios without changing category identity. Keep the task ID, fixed budget and original provider/profile
+bindings. Use bounded `run` or `advance`; inspect returned rows and
+continue rather than ending after announcing the next action. Unsupported AT must
+remain a gap without blocking independent browser/source checks. Add discoveries
+through `append` or additive `inventory`; use `exclude` only for justified feature
+non-applicability. Never rewrite an in-flight request or delete required coverage.
 
 ## 3. Exercise the page and preserve observations
 
@@ -130,6 +155,11 @@ matrix. Do not upgrade the source finding until actual evidence supports it.
 Do not assert that source explains the deployed page unless their build binding
 is known. Preserve differing or unknown versions in the report.
 
+After the read-only knowledge substep, executable-mode coordination records its
+source-bound analysis with `source`. This bookkeeping is outside the knowledge
+review itself; it does not turn the review into shell execution or runtime proof.
+When a source input is unavailable, record the affected rows with `gap` and a reason.
+
 ## 5. Reconcile and deliver
 
 Use `bug-bash/report.template.md`. Keep page-reproduced findings, code risks,
@@ -140,7 +170,7 @@ Give severity with user-impact rationale, confidence and justified standard/topi
 references; never invent a WCAG mapping. Suggested fixes are recommendations only.
 
 Every planned row must have an explicit status, evidence or a gap reason.
-For page-track completion, run the bundled category matrix check against the
+For page-track completion, call the category plugin's matrix check against the
 original target inventory. Missing/duplicate steps fail the gate. Valid but
 incomplete accounting (exit 2), unknown inventory completeness or any applicable
 pending/blocked/unrun/inconclusive step forces a partial report. Do not trim the
@@ -157,6 +187,32 @@ requires a feature-specific reason and never inflates executed coverage.
 For interruption, preserve scope, row statuses, original resource/operation IDs,
 artifact locations and the exact next safe action. Reconcile unknown effects
 before resuming; never replay them under new IDs or steal a lease.
-Close only owned browser/AT sessions, restore changed test settings and release
-resources through their original authority. Do not force-release or broadly kill
+Ask each capability or caller tool to clean up the temporary resources/settings
+it created or changed, and collect its actual proof and unresolved items.
+Capture owns per-attempt environment preflight, postcheck and recording/AT/audio
+cleanup; browser tools own created browser resources, never borrowed persistent
+contexts or foreign tabs. Use only the connection's supported cleanup/recovery
+scope. Bug Bash coordinates and reports these results; it needs no separate
+cleanup plugin or full workflow. Release resources through their original
+authority with original ownership proof. Do not force-release or broadly kill
 processes. If cleanup is uncertain, report it and keep ownership explicit.
+
+In executable mode, reconcile the original pending operation before advancement.
+Use `validate` (the same implementation as `a11y_validate_discovery`) before
+reporting: it checks original child receipts/bytes and category accounting, not
+an arbitrary caller-authored report. Real behavior assessments remain separately
+attributed to the pinned trusted provider.
+If filing is explicitly requested, set `filingRequested:true` in the accepted
+plan. After validation and cleanup, `run` yields before reporting until each
+observed finding has a filing result or explicit skip reason. Use
+`a11y-file-bug` to draft detailed reproduction/cause and reviewed attachments,
+approve the exact draft/destination, submit once or record a justified skip.
+Never convert validation into permission to upload or create Bugs. Unknown
+creation requires original-ID reconciliation. The independent `a11y-report`
+plugin owns final generation and delivery; its shared generator backs the CLI.
+Use a real completion callback and independent stall watcher for unattended work;
+neither a CLI reply nor a saved next action installs them. Once rows are accounted
+for, `advance` performs scoped cleanup, report creation and configured private
+delivery. Return the report reference and honest coverage/AT limits to the user.
+For an explicit stop, `cancel` applies only to this task; reconcile its submitted
+bounded work, finish applicable cleanup/delivery and never restart its coverage.

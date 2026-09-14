@@ -29,15 +29,14 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Bundles a11y-knowledge, a11y-setup and a11y-test-categories; no extra install. Every target/state requires all ten categories and every applicable step, not representative sampling. Missing tools, time or evidence remain explicit gaps. Setup preparation needs separate authorization. No browser/AT binaries or live connection supplied; no automatic fixes, builds, filing or PRs.
+Bundles knowledge/setup modules. Install a11y-test-categories separately and set pluginRoots.testCategories; no category procedures or matrix tools are copied into Bug Bash. All ten categories and applicable steps remain required. Node 22+ and authorized providers support execution; a11y-file-bug handles separately approved filing, a11y-report generates the final report. No automatic installation, fixes, builds, filing or PRs.
 
 ## Reference
 
 - [Bug Bash workflow and boundaries](docs/BUG-BASH.md)
+- [Executable composition and durable reports](docs/BUG-BASH-RUNTIME.md)
 - [Feature context template](bug-bash/context.template.md)
 - [Findings and coverage report template](bug-bash/report.template.md)
-- [Built-in all-target test categories](modules/a11y-test-categories/docs/TEST-CATEGORIES.md)
-- [Built-in test categories (Chinese)](modules/a11y-test-categories/docs/TEST-CATEGORIES.zh-CN.md)
 - [Built-in environment preparation](modules/a11y-setup/docs/SETUP.md)
 - [Reused internal knowledge review](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
 - [Included project knowledge](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)

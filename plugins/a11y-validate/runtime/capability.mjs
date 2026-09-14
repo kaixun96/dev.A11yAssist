@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { pendingDetails, validateRequestWaiting } from './waiting.mjs';
+import { validateDiscoveryInput, validateDiscoveryReceipt } from './discovery-contract.mjs';
 
 export const capabilities = JSON.parse(await readFile(new URL('../contracts/capabilities.json', import.meta.url), 'utf8'));
 const outcomes = new Set(['pass', 'changes-requested', 'not-reproduced', 'blocked', 'inconclusive', 'invalid-evidence', 'abandoned']);
@@ -31,6 +32,12 @@ export function providerFor(config, action) {
 }
 export function validateCapabilityInput(action, input) {
   requireValue(input && typeof input === 'object' && !Array.isArray(input), 'Capability input must be an object');
+  if (action.startsWith('discovery-')) validateDiscoveryInput(action, input);
+  if (action === 'file-bug') requireValue(
+    typeof input.taskId === 'string' && typeof input.issueId === 'string' && input.details &&
+    input.approval?.approved === true && sha.test(input.approval.draftSha256 ?? '') &&
+    typeof input.approval.reference === 'string' && input.approval.reference.trim(),
+  'Bug filing requires a validated task/finding and explicit hash-bound draft approval');
   if (['release-evaluator', 'recover-media', 'recover-nvda'].includes(action)) {
     requireValue(Object.keys(input).join(',') === 'nativeRunId' && typeof input.nativeRunId === 'string' &&
       /^[a-f0-9]{32}$/.test(input.nativeRunId),
@@ -42,6 +49,7 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
   requireValue(receipt && receipt.stage === action, 'Capability receipt operation mismatch');
   requireValue(outcomes.has(receipt.outcome), 'Unsupported capability outcome');
   requireValue(Array.isArray(receipt.artifacts) && receipt.artifacts.length > 0, 'Durable capability artifacts required');
+  if (action.startsWith('discovery-')) validateDiscoveryReceipt(action, receipt, input);
   if (action === 'recover-media') {
     validateCapabilityInput(action, input);
     requireValue(receipt.nativeRunId === input.nativeRunId &&
@@ -64,6 +72,10 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
     return;
   }
   for (const gate of definition.gates) requireValue(receipt.gates?.[gate] === true, `Missing capability gate: ${gate}`);
+  if (action === 'file-bug') requireValue(
+    Number.isSafeInteger(receipt.bug?.id) && receipt.bug.id > 0 &&
+    /^https:\/\//.test(receipt.bug?.url ?? '') && receipt.draftSha256 === input.approval.draftSha256,
+  'Filing receipt requires actual Bug identity and the approved draft digest');
   if (action === 'recover-media') {
     requireValue(['terminated', 'observed-exited'].includes(receipt.recorderResult),
       'Media recovery requires an observed tracked-recorder exit, not missing or historical state');

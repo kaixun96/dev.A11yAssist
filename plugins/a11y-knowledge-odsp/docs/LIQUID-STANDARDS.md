@@ -13,8 +13,9 @@ The installable `a11y-knowledge`, compatibility `a11y-knowledge-odsp`,
 their root `plugin.json` and matching `.mcp.json`, following the repository's
 existing packaging convention. Both are generated from
 `src/standards/liquid.mcp.json`; maintain that single source.
-Bug Bash registers Liquid only at its root. Its internal knowledge and category
-modules share that connection and do not contain nested MCP registrations.
+Bug Bash registers Liquid only at its root. Its internal knowledge module
+shares that connection and does not contain a nested MCP registration.
+Test categories is a separate installed plugin, not embedded in Bug Bash.
 
 ```json
 {

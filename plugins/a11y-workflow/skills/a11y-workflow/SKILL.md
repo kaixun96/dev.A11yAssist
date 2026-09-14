@@ -32,8 +32,24 @@ not permission to run a mock or copy someone else's private infrastructure.
    review, and if changes are requested repeat source->AFTER->validate->review.
 5. Publish only actual reviewed HEAD to a verified Draft PR with live media
    evidence. Reject downstream unverified-PR fallback and never post PR comments.
-6. Cleanup all owned resources in canonical order, seal insights and deliver the
-   original owner's final summary. Nonpass/abandoned runs also require cleanup.
+6. Coordinate each module's own cleanup in canonical order, collect actual proof,
+   seal insights and deliver the original owner's final summary. Nonpass/abandoned
+   runs also require cleanup. The `cleanup` stage still requires every workflow
+   gate; partial media/NVDA recovery does not satisfy it.
+
+For caller-owned composition only, `a11y_workflow_invoke` action `cleanup` exposes
+the existing explicitly scoped cleanup connection without creating a workflow
+run. Supply a stable operationId, context.subject and the authorized owned scope.
+Use `a11y_workflow_operation_status` / `_operation_reconcile` for that operation.
+Its narrow receipt does not complete or advance a full workflow. No full workflow
+configuration is required for these independent operation tools.
+
+Normal cleanup belongs to the module that created or changed the resource;
+workflow progress/abandonment and final aggregation belong here. Preserve evidence
+and borrowed sessions; never delete another session's history or restart shared
+workers. Resource release still requires original ownership proof through the
+original authority. Unresolved cleanup must remain explicit, not inferred from
+an accepted trigger or a worker reply.
 
 When a provider is pending or times out, persist the request and call
 `a11y_workflow_reconcile`; never start a second implementation. Long tasks use

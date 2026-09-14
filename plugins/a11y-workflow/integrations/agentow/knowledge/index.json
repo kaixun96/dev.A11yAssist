@@ -81,11 +81,12 @@
     "a11y-bug-bash": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md"],
     "a11y-knowledge": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md"],
     "a11y-intake": ["foundations.md", "pr-evidence-capture-guide.md"],
-    "a11y-resources": ["windows-host-testing.md", "personal-evaluator-browser.md"],
+    "a11y-setup": ["windows-host-testing.md", "personal-evaluator-browser.md"],
+    "a11y-file-bug": ["foundations.md", "evidence-contract.md", "pr-evidence-capture-guide.md"],
+    "a11y-report": ["foundations.md", "evidence-contract.md"],
     "a11y-capture": ["foundations.md", "windows-host-testing.md", "personal-evaluator-browser.md", "pr-evidence-capture-guide.md"],
     "a11y-validate": ["foundations.md", "evidence-contract.md", "pr-evidence-capture-guide.md"],
     "a11y-publish": ["pr-evidence-capture-guide.md"],
-    "agent-operations": ["windows-host-testing.md"],
     "a11y-workflow": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md", "foundations.md", "component-accessibility.md", "evidence-contract.md", "windows-host-testing.md", "pr-evidence-capture-guide.md", "personal-evaluator-browser.md"],
     "a11y-knowledge-odsp": ["complete-source-guide.md", "fluent-spds.md", "sharepoint.md"]
   }

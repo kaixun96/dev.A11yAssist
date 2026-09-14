@@ -4,11 +4,15 @@
 
 Maintain both language versions together when changing this design.
 
-Status: proposed implementation design, 2026-09-14. This is a maintainer design,
-not a claim that these capabilities are installed, qualified or shipping.
-The current [Bug Bash contract](BUG-BASH.md), [provider protocol](PROVIDERS.md)
-and deployment-specific ownership rules remain authoritative until a separately
-qualified implementation changes them. This document does not authorize a cutover.
+Status: maintainer design with an implemented v0.17 source baseline, 2026-09-14.
+The [runtime contract](BUG-BASH-RUNTIME.md) is authoritative for callable fields
+and commands; this broader design also retains future adaptive-service proposals.
+Section 3 records the historical starting point, not current missing features.
+The durable coordinator, full category accounting, typed shared browser module,
+discovery capture/validation and cleanup/report delivery chain now have source
+implementations. Actual host deployment and live qualification remain separate.
+The [provider protocol](PROVIDERS.md) and deployment ownership rules remain binding;
+this document does not authorize a runtime cutover.
 
 This supporting document details execution contracts, reliability and qualification.
 Start with the [plugin design](BUG-BASH-ARCHITECTURE.md) for purpose, child
@@ -100,13 +104,13 @@ installed plugin, separate MCP process or remote sub-agent.
 | Feature planning | Internal Bug Bash skill/module | Context + verification instructions + knowledge -> versioned coverage plan | No external effects; does not silently change feature or requested scope |
 | Knowledge | Reuse `a11y-knowledge` | Stack/version + question or scoped source -> cited guidance/risks | Read-only; generic rules first, project rules only when applicable |
 | Setup | Reuse `a11y-setup` | Required capabilities + actual host -> scoped inventory/preparation plan | Check-only default; preparation separately authorized |
-| Resource connection | Reuse `a11y-resources` and original deployment authority | Host requirements + task identity -> ownership/status evidence | Existing public status is not acquisition; a new typed task-acquisition integration must be implemented before use |
+| Resource connection | Part of `a11y-setup`, using original deployment authority | Host requirements + task identity -> ownership/status evidence before preparation | Status is not acquisition; actual setup ownership precedes host changes |
 | Browser checks | Proposed `a11y-browser` capability, first as a shared internal module | Owned browser + sealed scenario -> observations and artifacts | Keyboard/focus, rendered semantics, approved scanner and visual adapters; no real-AT claims |
 | AT checks | Extend `a11y-capture` with an explicit discovery operation and AT adapters | Owned desktop + sealed scenario + required AT -> observed speech/recognition/media | NVDA/Narrator/Voice Access adapters are logical submodules, not three mandatory installs |
 | Source review | Reuse knowledge's read-only review as a child step | Scoped source/revision + context -> source-supported risks | No separate `a11y-source-review` package initially; no source edits, tests or shell execution within knowledge review |
 | Evidence integrity and behavior | Extend `a11y-validate`; reuse artifact hashing | Discovery evidence manifest -> separate integrity and behavior decisions | New discovery schema required; current evidence-v1 checker cannot accept an arbitrary Bug Bash report |
-| Report | Internal pure Bug Bash module initially | Coverage + accepted observations + source risks + gaps -> private report | No `a11y-publish` dependency; report generation is not ticket/PR publication |
-| Recovery, cleanup, delivery | Reuse `agent-operations` through scoped providers | Original operation/ownership + progress -> reconciliation, cleanup and delivery receipts | Narrow recovery never substitutes for complete cleanup; no broad process termination |
+| Report | Independent `a11y-report`; coordinator reuses the shared implementation | Coverage + accepted observations + filing results + source risks + gaps -> private report | Separately authorized post-validation creation uses `a11y-file-bug`; reporting itself never files tickets/PRs |
+| Recovery, cleanup, delivery | Each module owns its cleanup; Bug Bash aggregates and delivers | Original operation/ownership + module results -> cleanup proof, unresolved items and delivery | Capture owns preflight/postcheck and narrow media/NVDA recovery; original authority owns release; no separate operations plugin or broad process termination |
 
 Thus the first implementation should add at most one new package
 (`a11y-browser`), after its independent contract is useful. It should not create

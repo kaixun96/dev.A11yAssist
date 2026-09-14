@@ -29,15 +29,14 @@ copilot plugin install a11y-bug-bash@a11y-assist
 
 ## 能力边界
 
-内置复用 a11y-knowledge、a11y-setup 和 a11y-test-categories，无需另装。每个对象/状态都展开十类并执行全部适用步骤，不以抽查代替全覆盖；缺少工具、时间或证据必须保留缺口。环境安装准备另需授权。不提供浏览器/AT 程序或实时连接，不自动修复、构建、提 bug 或建 PR。
+内置知识和 setup 模块。a11y-test-categories 单独安装并配置 pluginRoots.testCategories；Bug Bash 不复制测试规程或矩阵工具。每个对象/状态仍需全部十类和适用步骤。执行需要 Node 22+ 和获授权连接；另行授权的提单交给 a11y-file-bug，最终报告由 a11y-report 生成。不自动安装、修复、构建、提单或建 PR。
 
 ## 参考资料
 
 - [Bug Bash 流程与边界](docs/BUG-BASH.md)
+- [可执行组合与持久报告](docs/BUG-BASH-RUNTIME.md)
 - [Feature context 模板](bug-bash/context.template.md)
 - [问题与覆盖率报告模板](bug-bash/report.template.md)
-- [内置全对象测试分类（英文）](modules/a11y-test-categories/docs/TEST-CATEGORIES.md)
-- [内置全对象测试分类](modules/a11y-test-categories/docs/TEST-CATEGORIES.zh-CN.md)
 - [内置环境准备模块](modules/a11y-setup/docs/SETUP.md)
 - [内部复用的知识审查](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
 - [随包项目知识](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)

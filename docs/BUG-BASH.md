@@ -4,20 +4,29 @@
 round. The user supplies context and how to verify the feature; the skill plans
 and carries out available authorized checks and produces an evidence-separated
 report. It is not a new recorder, scanner, automatic remediation engine or
-certification service. No sibling plugin is required.
+certification service. Full category accounting explicitly depends on the
+separately installed `a11y-test-categories` plugin.
 
 ## What ships
 
 - One public entrypoint, `/a11y-bug-bash`.
 - Context, coverage and report templates under `bug-bash/`.
-- The independent `a11y-test-categories` plugin's skill, ten procedures (including
-  dedicated Voice Access steps) and
-  local matrix tool, bundled under `modules/a11y-test-categories/`.
+- An explicit versioned API connection to `a11y-test-categories`, configured by
+  `pluginRoots.testCategories`. That plugin alone ships procedures/matrix tools;
+  neither the root nor internal modules of Bug Bash contain a copy.
 - The exact two knowledge skills and complete references from `a11y-knowledge`,
   bundled privately within the package at `modules/a11y-knowledge/`.
 - A staged skill that coordinates page inspection and read-only source review.
+- Post-validation, explicitly approved filing through `a11y-file-bug`, then
+  aggregate reporting through `a11y-report` (the CLI reuses its shared generator).
 - The same setup skill, profiles and shared host installer as `a11y-setup`,
   privately bundled under `modules/a11y-setup/` for environment preparation.
+- An optional package-local executable coordinator with versioned plans,
+  durable child operations, source-bound risk recording, private reports and
+  separate cleanup/delivery gates. See [executable composition](BUG-BASH-RUNTIME.md).
+- An opt-in disposable browser fixture runner for qualifying the page-observation
+  path, with healthy controls and deliberately broken variants. It is not a
+  generic product scanner, AT recorder or replacement for the supplied feature.
 
 The internal module has no plugin manifest and is not a nested installed plugin.
 Its skills are read as instructions for the source-review substep, not registered
@@ -55,6 +64,13 @@ an unavailable track is an explicit gap and makes the overall result partial.
 
 ## Execution boundaries
 
+For the plugin-by-plugin overall flow and the per-scenario action/check loop, see
+the [composition diagrams](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-ARCHITECTURE.md#3-how-are-they-composed-and-used)
+([简体中文](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-ARCHITECTURE.zh-CN.md#3-这些能力怎么组合怎么调用)).
+They name bundled modules and conditional integrations. The calling agent owns
+reasoning; the durable CLI dispatches accepted scenarios through configured
+connections, not automatic sibling-plugin calls.
+
 Before page execution, the skill reads the internal
 [setup contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/SETUP.md) for check/planning. Its actual bundled
 path is `modules/a11y-setup/docs/SETUP.md` relative to the plugin root.
@@ -90,10 +106,60 @@ automatic MCP-to-MCP calls or prerequisites for source review. In particular:
   Missing AT blocks AT rows, not unrelated browser observations. Mark the
   uncovered scope explicitly rather than assuming success or disabling all work.
 
-No runtime adapters are newly implemented or qualified by this framework.
+No generic product runtime adapter is implemented or qualified by this framework.
+The optional CLI requires Node 22+, private `A11Y_ASSIST_CONFIG` and explicitly
+compatible discovery providers. Its capture contract is separate from BEFORE/AFTER
+and evidence-v1; installation alone does not qualify a deployment adapter.
 Connected execution capabilities retain their existing configuration/protocol
 requirements; see [providers](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/PROVIDERS.md). No live feature has been evaluated
 merely by installing this package.
+
+### Opt-in disposable fixture qualification
+
+Use this only when explicitly asked to qualify the tooling on an owned Windows
+evaluator, not as a substitute for a user's feature. The bundled
+`bug-bash/fixture_runner.py` needs the setup module's browser prerequisites:
+Python, Playwright and its installed Chromium. It opens one **headed**, isolated
+browser, loads only `bug-bash/dialog-form.html` and blocks other page requests.
+It never borrows an authenticated profile, files a Bug, installs dependencies or
+touches product data. The caller must obtain actual exclusive execution authority
+before starting it; setup/recovery ownership is not that authority.
+
+Save this request in a private file:
+
+```json
+{
+  "schemaVersion": 1,
+  "taskId": "my-fixture-qualification",
+  "fixture": "dialog-form-v1",
+  "repetitions": 2
+}
+```
+
+From the installed plugin root, with real paths outside the plugin/repository:
+
+```powershell
+python -B .\bug-bash\fixture_runner.py --request C:\private\request.json --validate-only
+python -B .\bug-bash\fixture_runner.py --request C:\private\request.json --output C:\private\unique-run
+```
+
+Request validation never imports Playwright or opens a browser. Execution accepts
+only this fixed fixture and 1-3 repetitions, refuses Codespaces/non-Windows hosts,
+and refuses an existing `fixture` output directory. An interruption preserves the
+original directory and row states: reconcile the original operation and cleanup
+before authorizing another run; never delete the marker to replay unknown effects.
+
+`fixture/report.json` accounts for every planned row, observed focus/DOM values,
+exact keyboard steps, screenshot/ARIA-snapshot paths and hashes, tool versions
+and source hashes. Partial rows remain explicit on errors. The runner closes only
+its own browser. A fixture qualification **passed** result means the healthy
+controls and deliberately broken variants behaved as expected, not accessibility
+conformance or a completed feature Bug Bash. The seeded defects are not product
+bugs. Source review, real AT, scanner, contrast and zoom/reflow remain separate
+checks/gaps; combine the observations with the normal report template.
+
+This opt-in harness requires a live dedicated-host pilot before claiming runtime
+qualification; its packaging and request tests alone provide no such evidence.
 
 ## Coverage and evidence
 
@@ -104,7 +170,7 @@ rule engine. Derive thresholds and component expectations from the applicable
 knowledge and actual product/library contract; do not label every prompt a defect.
 
 For every in-scope region, control and meaningful content element in every
-reachable state, use the bundled category plugin to expand all ten categories
+reachable state, call the independently installed category plugin to expand all ten categories
 and every numbered step. Include page-level targets for global checks. Execute
 all applicable steps; give a target-specific reason for each not-applicable step.
 Representative sampling cannot establish full target coverage. Reuse evidence
@@ -147,6 +213,15 @@ Save real reports/evidence privately outside the installed plugin, redact before
 approved sharing, and deliver the result to the requester. Restore only settings
 changed by this run and clean up only its owned sessions through their original
 authority. An unresolved cleanup/unknown effect is reported, not hidden.
+
+Cleanup belongs to the module/tool that created or changed each resource.
+Capture performs fresh per-attempt environment checks, postchecks and its own
+recording/AT/audio cleanup; browser tools restore their temporary state without
+closing borrowed authenticated contexts or foreign tabs. Bug Bash collects
+actual proof and unresolved items, then coordinates any release through the
+original authority. No separate cleanup plugin or full workflow is required.
+Supported capture connections must implement the lifecycle; these instructions
+do not add a generic browser/AT backend or automatically replay failed captures.
 
 This request does not authorize product source edits, builds, dependency
 installation, automatic bug filing, PR creation, uploads or remediation. To

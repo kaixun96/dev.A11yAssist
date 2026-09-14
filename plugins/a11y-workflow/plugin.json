@@ -1,7 +1,7 @@
 {
   "name": "a11y-workflow",
-  "version": "0.15.0",
   "description": "Optional complete evidence-first composition of shared capabilities with caller-selected source and review tools.",
+  "version": "0.15.0",
   "author": {
     "name": "kaixun96"
   },
@@ -11,6 +11,13 @@
       "command": "node",
       "args": [
         "${PLUGIN_ROOT}/runtime/mcp.mjs",
+        "a11y-workflow"
+      ]
+    },
+    "a11y_workflow_knowledge": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
         "a11y-workflow"
       ]
     }

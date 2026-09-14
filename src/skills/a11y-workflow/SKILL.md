@@ -5,10 +5,12 @@ description: Optionally compose the shared capabilities into a complete evidence
 
 This is the complete entrypoint. It includes the shared runtime; sibling small
 plugins need not be installed just to run this package. Source and review
-connections are selected by the caller; AgentOW is an optional integration.
+connections are selected and configured by the caller.
 Other callers may compose small plugins in their own workflow instead.
 
-Read packaged `docs/WORKFLOW.md`, `docs/PROVIDERS.md` and `contracts/workflow.json`.
+`${PLUGIN_ROOT}` is the host-supplied top-level installed plugin root, not the
+working directory. Read `${PLUGIN_ROOT}/docs/WORKFLOW.md`,
+`${PLUGIN_ROOT}/docs/PROVIDERS.md` and `${PLUGIN_ROOT}/contracts/workflow.json`.
 Call `a11y_workflow_doctor`. Missing providers mean incomplete environment setup,
 not permission to run a mock or copy someone else's private infrastructure.
 
@@ -20,9 +22,7 @@ not permission to run a mock or copy someone else's private infrastructure.
 3. BEFORE must establish reproduced+PASS using real AT and independent decisions.
    No source branch or PR without that. The source connection must own its
    worktree, verify the executor, and bind changed resources to exact HEAD.
-   When `workflowProfile=agentow-odsp` is selected, retain the existing
-   AgentOW entrypoint, exclusive Codespace, execution-host freshness and
-   effective-model requirements. Never recursively re-enter this workflow.
+   Never recursively re-enter this workflow from a source operation.
 4. AFTER uses the same scenario/evaluator and accepted BEFORE hash. Validate,
    review, and if changes are requested repeat source->AFTER->validate->review.
 5. Publish only actual reviewed HEAD to a verified Draft PR with live media

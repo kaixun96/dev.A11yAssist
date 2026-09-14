@@ -3,7 +3,9 @@ name: a11y-capture
 description: Capture a caller-supplied Windows accessibility scenario without taking over the caller's workflow.
 ---
 
-Read `docs/CAPABILITIES.md`. Use `a11y_capture_invoke` for the requested `before`
+Read `${PLUGIN_ROOT}/docs/CAPABILITIES.md`. `${PLUGIN_ROOT}` is the host-supplied
+top-level installed plugin root, not the working directory.
+Use `a11y_capture_invoke` for the requested `before`
 or `after` operation. Supply a stable operationId, context.scenarioHash and
 context.evaluator; AFTER also requires context.head. Supply
 context.beforeReceiptSha256 when the caller requests a bound comparison.

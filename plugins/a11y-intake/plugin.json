@@ -1,7 +1,7 @@
 {
   "name": "a11y-intake",
-  "version": "0.15.0",
   "description": "Claim-aware work-item intake, acceptance and canonical scenario preparation.",
+  "version": "0.15.0",
   "author": {
     "name": "kaixun96"
   },
@@ -11,6 +11,13 @@
       "command": "node",
       "args": [
         "${PLUGIN_ROOT}/runtime/mcp.mjs",
+        "a11y-intake"
+      ]
+    },
+    "a11y_intake_knowledge": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
         "a11y-intake"
       ]
     }

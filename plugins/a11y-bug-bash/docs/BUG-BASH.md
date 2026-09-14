@@ -10,16 +10,27 @@ certification service. No sibling plugin is required.
 
 - One public entrypoint, `/a11y-bug-bash`.
 - Context, coverage and report templates under `bug-bash/`.
-- The exact two knowledge skills and complete references from `a11y-knowledge`,
-  bundled privately within the package at `modules/a11y-knowledge/`.
+- The SAME single knowledge skill authored at `src/skills/a11y-knowledge/SKILL.md`,
+  generated privately at `modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md`,
+  replacing only `a11y_knowledge_knowledge_` with `a11y_bug_bash_knowledge_`.
+- Top-level `references/knowledge.json` and `references/README.md` selecting the
+  current shared Common, Fluent and SharePoint KB (32 entries), not bundled KB bodies.
+- Its own read-only knowledge stdio MCP and exactly two runtime files,
+  `runtime/knowledge.mjs` and `runtime/knowledge-mcp.mjs`; no operational MCP,
+  provider runtime, browser, scanner or AT implementation.
 - A staged skill that coordinates page inspection and read-only source review.
-- The same setup skill, profiles and shared host installer as `a11y-setup`,
-  privately bundled under `modules/a11y-setup/` for environment preparation.
+- The same setup skill, dependency templates and scoped native host script as `a11y-setup`,
+  with only the skill privately bundled under `modules/a11y-setup/` and its
+  knowledge tool prefix changed to `a11y_bug_bash_knowledge_`. Native script,
+  `setup/` templates and `docs/SETUP.md` remain top-level for environment preparation.
 
-The internal module has no plugin manifest and is not a nested installed plugin.
-Its skills are read as instructions for the source-review substep, not registered
-as additional top-level commands. Their paths resolve relative to the module
-root. Installing standalone knowledge as well does not duplicate Bug Bash's
+The internal knowledge module has no plugin manifest and is not a nested installed plugin.
+Its skill is read as instructions for the source-review substep, not registered
+as an additional top-level command. `${PLUGIN_ROOT}` always resolves to the
+top-level Bug Bash installation, including inside the internal skill. References
+stay top-level; the module has no references, runtime or KB tree. Never derive a
+nested root from the skill's location or the user's working directory.
+Installing standalone knowledge as well does not duplicate Bug Bash's
 public command or require choosing between two top-level knowledge commands.
 Knowledge rules have one authored source; the Bug Bash coverage prompts organize
 scenarios rather than maintaining another component-rule database.
@@ -54,21 +65,45 @@ an unavailable track is an explicit gap and makes the overall result partial.
 
 Before page execution, the skill reads the internal
 [setup contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/SETUP.md) for check/planning. Its actual bundled
-path is `modules/a11y-setup/docs/SETUP.md` relative to the plugin root.
+path is `${PLUGIN_ROOT}/docs/SETUP.md` at the top-level plugin root.
 It can prepare selected browser/NVDA/audio dependencies only with separate
 explicit host-change authorization and ownership. Discovery alone does not
 authorize installation. Source-only and plan-only never run host setup scripts.
 No extra setup plugin installation is required, and missing optional audio/AT
 must not block unrelated browser checks.
 
-The framework itself has no MCP server and needs no `A11Y_ASSIST_CONFIG`.
-It uses tools already available to the calling Copilot session. Static review
-needs only read-only source access. Live page/AT execution supports the repository's
-Windows DevBox deployments and needs actual authorized, qualified connections
-and shared-desktop ownership. Installation does not provide them.
+Only the internal setup skill lives beneath `${PLUGIN_ROOT}/modules/a11y-setup/`;
+its native script, dependency templates and documentation resolve from top-level
+`${PLUGIN_ROOT}`. There is no nested manifest, resource copy, MCP server or browser
+runtime. Knowledge references and tools also belong to the top-level Bug Bash installation.
+
+The framework needs no `A11Y_ASSIST_CONFIG`. Like all ten plugins (seven execution
+plugins, knowledge, Bug Bash and setup), it has its own read-only knowledge MCP server:
+`node ${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs a11y-bug-bash`. Node.js 22+ and
+an MCP-enabled host are required for knowledge access, not a peer knowledge
+plugin, provider or execution configuration. Neutral `plugin.json` discovery,
+skill loading and MCP registration/root resolution are separate host responsibilities.
+
+Its exact tools are `a11y_bug_bash_knowledge_list`,
+`a11y_bug_bash_knowledge_search(query)` and `a11y_bug_bash_knowledge_read(id)`.
+List/select/read actual current entries with citations and source status; snippets
+are not complete rules and pending sources are not authority. Read
+`${PLUGIN_ROOT}/references/README.md` for the selected pins and availability.
+The server resolves an absolute `A11Y_ASSIST_KB_ROOT` if configured, else a
+validated repository KB, else verified shared user cache, else lazy pinned HTTPS
+download. Invalid configured roots and tampered caches fail without fallback or
+repair. Verified cached content works offline; uncached offline use needs a valid
+local KB. Missing knowledge tools/content are explicit gaps; do not run setup
+commands or claim remembered content was read from the pinned KB.
+
+Static review additionally needs read-only source access. Live page/AT execution
+uses tools already authorized in the calling host, supporting Twinbot with multiple
+Windows DevBoxes or Copilot CLI with one/multiple Windows DevBoxes. A single
+DevBox has the same gates. Actual qualified connections and shared-desktop
+ownership are required; installation provides neither them nor operational MCP.
 
 Before any live check, identify actual available tools and their scope. A model
-must not pretend that a tool described in archived documentation is installed.
+must not pretend that a tool mentioned in reference content is installed.
 Existing independent capture/validation/resource capabilities can be used when
 already connected and their real inputs satisfy
 [the capability contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/CAPABILITIES.md). They are optional adapters, not
@@ -95,7 +130,10 @@ merely by installing this package.
 Cross the user's journeys/states with applicable coverage dimensions. Keep row
 IDs stable and include expected behavior, capability, reset and actual outcome.
 The coverage file is a planning checklist, not executable assertions or a WCAG
-rule engine. Derive thresholds and component expectations from the applicable
+rule engine. Its `topic` values are stable current KB IDs such as
+`common.topic.keyboard-focus`, resolved through this plugin's read-only knowledge
+tools, not old knowledge filenames or a module-local content directory.
+Derive thresholds and component expectations from the applicable
 knowledge and actual product/library contract; do not label every prompt a defect.
 
 Exercise happy paths plus relevant entry/exit, cancellation, repeated use,

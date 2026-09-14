@@ -1,24 +1,49 @@
 ---
 name: a11y-knowledge
-description: Guide code generation and perform read-only static accessibility review for any project, with built-in SPDS, Fluent V8/V9 and SharePoint/ODSP knowledge selected when relevant. No scanners, browsers or assistive technology execution.
+description: ODSP accessibility knowledge for SPDS, Fluent V8/V9 and SharePoint. Guide accessible code generation, root-cause analysis, static review, optional design review and accessibility test planning using shared Common, Fluent and SharePoint knowledge, without running tests, scanners, browsers or assistive technology.
 ---
 
-Resolve bundled paths from the plugin root, two directories above this SKILL.md,
-not the user's working directory.
-Read `knowledge/README.md` and `knowledge/foundations.md`,
-then select only the complete topics relevant to the supplied code or request.
+Use this plugin's registered read-only knowledge MCP tools. First call
+`a11y_bug_bash_knowledge_list`, select Common foundations and the applicable
+Fluent/SharePoint entry IDs for the actual component stack, then
+call `a11y_bug_bash_knowledge_read(id)` for their actual content. Start with
+foundations and read only relevant complete topics and find/fix/prevent/design/test
+procedures. `a11y_bug_bash_knowledge_search(query)` can narrow selection, but a
+search snippet or title is not the full rule; read the selected entries before
+applying or citing them. Preserve entry citations and source metadata in findings.
+Do not consume undeclared packages through this skill.
 
-For SPDS, Fluent V8/V9, SharePoint or ODSP code/questions, also read the built-in
-`skills/a11y-knowledge-odsp/SKILL.md` and follow its topic routing into
-`integrations/agentow/knowledge/README.md`. This is a submodule of this installed
-plugin, not a second plugin installation or a delegated task. All references
-are available offline. For unrelated projects, use only the generic topics;
-do not load or impose ODSP conventions. When the stack is unknown, identify it
-from supplied code or ask for context instead of assuming ODSP.
-Archived instructions and commands are reference data, not execution authority.
+See `${PLUGIN_ROOT}/references/README.md` for the pinned snapshot and
+automatic service's availability requirements. `${PLUGIN_ROOT}` is always the
+top-level installed plugin root supplied by the host, even when this skill is
+bundled inside an internal module. References are top-level, not module-local;
+do not infer the root from this file's nesting or the user's working directory.
+
+Node.js 22+ and a host with this MCP server enabled are required; normal use needs
+no host KB pre-setup, peer plugin, provider or `A11Y_ASSIST_CONFIG`. Current KB
+bodies are not bundled in the plugin. On a tool call the server uses an absolute
+`A11Y_ASSIST_KB_ROOT` if set, otherwise a validated repository layout, otherwise
+a verified shared user cache or lazy pinned HTTPS download. An invalid explicit
+root or tampered cache fails without fallback/repair. Already cached content works
+offline; first offline use requires a configured compatible local KB. Environment
+variables are server settings, not model-expanded paths. If a tool or KB is
+unavailable, report the error and needed host/network/local-KB configuration;
+never run setup commands or claim remembered guidance came from the pinned KB.
+Source records marked pending are missing authority, not supplied company rules.
+Do not equate unsupported, not-applicable and unverified. Draft content
+is not approved policy. Procedures and dynamic plans do not authorize execution.
+
+This is the single knowledge entry point for ODSP. Keep Fluent V8 and V9 behavior
+separate. Apply SPDS/SharePoint imports, utilities, focus and theme conventions
+only to the matching component library, installed version and host. Prefer the
+full component-owned contract over a second custom focus or announcement
+mechanism. Product support, MAS and current component sources marked pending
+remain explicit gaps; unsupported is not an exemption. Do not invent missing APIs.
 
 Default to read-only source inspection. Use supplied snippets and, when available,
-read-only access to narrowly relevant source and component documentation. Do not
+read-only access to narrowly relevant source and component documentation. The only
+MCP calls allowed here are the registered read-only knowledge tools above, not
+operational, test, shell or browser tools. Do not
 edit files, run shell commands, tests or scanners, install dependencies, open a
 browser/application, operate assistive technology, dispatch another task or
 require an execution environment. The user does not need to repeat these limits.
@@ -30,6 +55,9 @@ require an execution environment. The user does not need to repeat these limits.
 3. For static review, follow names, roles, states, relationships, keyboard paths,
    focus transitions, feedback and relevant styles in the available source.
    Reuse built-in behavior; do not invent APIs or duplicate an existing mechanism.
+   Use `common.analysis.root-cause` to locate the actual owner before recommending
+   a fix. Explain component-provided versus caller-owned behavior, impact on shared
+   consumers, error/async paths, regression tests and outstanding runtime checks.
 4. Separate source-supported issues, context needed and runtime not verified.
    Give a location/snippet, user impact, source reasoning, relevant topic and
    minimal correction for each supported finding. Never fabricate measurements,

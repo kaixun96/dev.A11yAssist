@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, access } from 'node:fs/promises';
+import { readFile, access, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -16,6 +16,9 @@ const catalog = await json('src/catalog.json');
 test('bilingual catalog covers every installable plugin with working selection and usage links', async () => {
   const marketplace = await json('.github/plugin/marketplace.json');
   const names = marketplace.plugins.map(entry => entry.name);
+  assert.equal(names.length, 10);
+  assert.equal(new Set(names).size, 10);
+  assert(!catalog.some(entry => entry.group === 'compatibility' || entry.name === 'a11y-knowledge-odsp'));
   validateCatalog(catalog, names);
   assert.deepEqual(names, catalog.map(entry => entry.name));
   for (const filename of ['README.md', 'README.zh-CN.md']) {
@@ -57,33 +60,43 @@ test('catalog validation rejects omissions, unknown plugins, unsafe links and wr
   }
 });
 
-test('published compatibility exports retain consumer paths and exactly match authored source', async () => {
-  const expected = [
-    'runtime/evidence-v1.mjs', 'native/windows-host.ps1',
-    'integrations/agentow/runtime/personal-evaluator-browser.py',
-    'native/ado-attachments.mjs', 'native/ado-attachments.d.mts', 'native/pr-description.mjs'
-  ];
-  const manifests = await Promise.all([
-    json('integrations/agentow/exports.json'), json('integrations/agentow/execution-manifest.json')
-  ]);
-  const files = manifests.flatMap(manifest => manifest.files);
-  assert.deepEqual(files.map(file => file.source).sort(), expected.sort());
-  for (const file of files) {
-    const body = await text(file.source);
-    assert.equal(body, await text(`src/${file.source}`), file.source);
-    assert.equal(digest(body), file.sha256, file.source);
-  }
+test('release hashes and standalone execution packages match canonical src without root compatibility exports', async () => {
   const release = await json('release.json');
+  const pkg = await json('package.json');
+  const execution = await json('src/contracts/plugins.json');
+  assert.equal(release.version, pkg.version);
+  assert.equal(Object.keys(execution).length, 7);
+  const expected = [];
+  for (const dir of ['runtime', 'native', 'contracts', 'adapters']) {
+    for (const file of await readdir(join(root, 'src', dir))) expected.push(`src/${dir}/${file}`);
+  }
+  assert.deepEqual(Object.keys(release.hashes).sort(), expected.sort());
   for (const [path, hash] of Object.entries(release.hashes)) {
     assert(path.startsWith('src/'));
-    assert.equal(digest(await text(path)), hash, path);
+    const body = await text(path);
+    assert.equal(digest(body), hash, path);
+    const setupOnly = path === 'src/native/windows-host.ps1';
+    for (const name of setupOnly ? ['a11y-setup', 'a11y-bug-bash'] : Object.keys(execution)) {
+      assert.equal(await text(`plugins/${name}/${path.slice('src/'.length)}`), body, `${name}: ${path}`);
+    }
+    if (setupOnly) {
+      for (const name of Object.keys(execution)) {
+        await assert.rejects(access(join(root, 'plugins', name, 'native/windows-host.ps1')), { code: 'ENOENT' });
+      }
+    }
   }
-  for (const dir of ['skills', 'knowledge', 'adapters', 'contracts']) {
+  for (const entry of catalog) {
+    const manifest = await json(`plugins/${entry.name}/plugin.json`);
+    assert.equal(manifest.version, pkg.version);
+    assert.equal(manifest.name, entry.name);
+  }
+  await access(join(root, 'accessibility-kb/manifest.json'));
+  for (const dir of ['runtime', 'native', 'skills', 'knowledge', 'adapters', 'contracts', 'src/knowledge']) {
     await assert.rejects(access(join(root, dir)), { code: 'ENOENT' });
   }
 });
 
-test('installer requires selection, avoids duplicate ODSP installation and keeps knowledge setup independent', {
+test('installer requires selection, installs exactly ten current plugins and keeps knowledge setup independent', {
   skip: process.platform !== 'win32'
 }, () => {
   const run = (...args) => spawnSync('pwsh', [
@@ -96,25 +109,35 @@ test('installer requires selection, avoids duplicate ODSP installation and keeps
   assert.equal(all.status, 0, all.stderr);
   assert.equal((all.stdout.match(/copilot plugin install /g) ?? []).length, 10);
   assert(!all.stdout.includes('a11y-knowledge-odsp@a11y-assist'));
-  for (const entry of catalog.filter(entry => entry.group !== 'compatibility')) {
+  for (const entry of catalog) {
     assert(all.stdout.includes(`${entry.name}@a11y-assist`));
   }
-  for (const name of ['a11y-knowledge', 'a11y-knowledge-odsp', 'a11y-bug-bash', 'a11y-setup']) {
+  for (const name of ['a11y-knowledge', 'a11y-bug-bash', 'a11y-setup']) {
     const result = run('-Plugin', name);
     assert.equal(result.status, 0, result.stderr);
     assert(result.stdout.includes(`/${name}`));
-    assert(!result.stdout.includes('A11Y_ASSIST_CONFIG'));
+    assert.match(result.stdout, /without a peer knowledge plugin, providers or A11Y_ASSIST_CONFIG/);
+    assert.doesNotMatch(result.stdout, /set A11Y_ASSIST_CONFIG|authorized A11Y_ASSIST_CONFIG connection/);
     assert(!result.stdout.includes('agentow-copilot@agentOW'));
   }
+  const retired = run('-Plugin', 'a11y-knowledge-odsp');
+  assert.notEqual(retired.status, 0);
+  assert(!retired.stdout.includes('copilot plugin install'));
 });
 
-test('knowledge selection includes ODSP by default and labels the old package as compatibility-only', async () => {
+test('knowledge selection routes to shared Common, Fluent and SharePoint without a compatibility entry or peer skill', async () => {
   assert.deepEqual(catalog.filter(entry => entry.group === 'knowledge').map(entry => entry.name), ['a11y-knowledge']);
-  assert.equal(catalog.find(entry => entry.name === 'a11y-knowledge-odsp').group, 'compatibility');
+  assert.equal(catalog.find(entry => entry.name === 'a11y-knowledge-odsp'), undefined);
   const knowledge = catalog.find(entry => entry.name === 'a11y-knowledge');
-  assert(knowledge.docs.includes('skills/a11y-knowledge-odsp/SKILL.md'));
+  assert(knowledge.docs.includes('references/README.md'));
+  assert(knowledge.docs.includes('skills/a11y-knowledge/SKILL.md'));
+  const reference = await json('plugins/a11y-knowledge/references/knowledge.json');
+  assert.deepEqual(Object.keys(reference.packages), ['common', 'fluent', 'sharepoint']);
   for (const [lang, filename] of [['en', 'README.md'], ['zh', 'README.zh-CN.md']]) {
-    assert(knowledge[lang].purpose.includes('ODSP'));
-    assert((await text(`plugins/a11y-knowledge/${filename}`)).includes('skills/a11y-knowledge-odsp/SKILL.md'));
+    for (const layer of ['Common', 'Fluent', 'SharePoint']) assert(knowledge[lang].purpose.includes(layer));
+    const page = await text(`plugins/a11y-knowledge/${filename}`);
+    assert(page.includes('references/README.md'));
+    assert(page.includes('skills/a11y-knowledge/SKILL.md'));
+    assert.doesNotMatch(page, /a11y-knowledge-odsp|integrations\/|snapshot\/|\.claude-plugin/);
   }
 });

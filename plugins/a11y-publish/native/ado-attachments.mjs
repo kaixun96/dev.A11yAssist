@@ -1,3 +1,6 @@
+// Adapted from kaixun96/dev.AgentOW@66eea66533e683492e148f44d361fdd7312c4908,
+// ts/src/ow/tools/prAttach.ts. Microsoft Internal; see LICENSE at the repository or plugin root.
+// Source attribution only; no dependency on the original runtime or API.
 import { readFile, stat } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -17,8 +20,7 @@ function prUrl(configuration, prId) {
 }
 
 function descriptionAppend(input, uploaded) {
-  const sections = [input.appendToDescription, input.commentMarkdown].filter(text => text?.trim()).map(text => text.trim());
-  const template = sections.length ? sections.join('\n\n') :
+  const template = input.descriptionMarkdown?.trim() ||
     (uploaded.length ? '## Visual Validation Attachments\n\n' + uploaded.map(({ name }) => `- [${name}]({{${name}}})`).join('\n') : '');
   return uploaded.reduce((text, { name, url }) => text.split(`{{${name}}}`).join(url), template);
 }
@@ -35,6 +37,10 @@ async function responseJson(response, operation) {
  */
 export async function attachPrEvidence(configuration, input, options = {}) {
   const commentPosted = false;
+  for (const field of Object.keys(input)) {
+    demand(['prId', 'attachments', 'descriptionMarkdown', 'expectedHead'].includes(field), `Unknown attachment input field: ${field}`);
+  }
+  demand(input.descriptionMarkdown === undefined || typeof input.descriptionMarkdown === 'string', 'Invalid descriptionMarkdown');
   const baseUrl = prUrl(configuration, input.prId);
   demand(typeof configuration.authorization === 'string' && configuration.authorization.trim(),
     'An ephemeral ADO authorization header is required');
@@ -48,9 +54,6 @@ export async function attachPrEvidence(configuration, input, options = {}) {
     demand(typeof attachment.localPath === 'string' && isAbsolute(attachment.localPath), 'Attachment path must be absolute');
     demand((await stat(attachment.localPath)).isFile(), 'Attachment must be a file');
     demand(attachment.sha256 === undefined || /^[a-f0-9]{64}$/.test(attachment.sha256), 'Invalid attachment SHA-256');
-  }
-  for (const field of ['commentMarkdown', 'appendToDescription']) {
-    demand(input[field] === undefined || typeof input[field] === 'string', `Invalid ${field}`);
   }
   if (input.expectedHead !== undefined) demand(/^[a-f0-9]{40}$/.test(input.expectedHead), 'Invalid expected HEAD');
   const fetchImpl = options.fetchImpl ?? fetch;

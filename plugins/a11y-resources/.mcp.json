@@ -6,6 +6,13 @@
         "${PLUGIN_ROOT}/runtime/mcp.mjs",
         "a11y-resources"
       ]
+    },
+    "a11y_resources_knowledge": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
+        "a11y-resources"
+      ]
     }
   }
 }

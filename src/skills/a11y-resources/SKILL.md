@@ -3,7 +3,9 @@ name: a11y-resources
 description: Inspect resource health or explicitly release one completed evaluator assignment through its authoritative owner-bound connection.
 ---
 
-Read `docs/CAPABILITIES.md`. Call `a11y_resources_resources` for the configured
+Read `${PLUGIN_ROOT}/docs/CAPABILITIES.md`. `${PLUGIN_ROOT}` is the host-supplied
+top-level installed plugin root, not the working directory.
+Call `a11y_resources_resources` for the configured
 resource connection's public status. No full workflow run or prior stage is
 required. `a11y_resources_doctor` inspects configuration, not live AT readiness.
 

@@ -9,7 +9,6 @@ import { spawnSync } from 'node:child_process';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const text = async path => (await readFile(path, 'utf8')).replaceAll('\r\n', '\n');
 const shared = ['skills/a11y-setup/SKILL.md', 'native/windows-host.ps1',
-  'integrations/agentow/runtime/personal-evaluator-browser.py',
   'setup/profiles.json', 'setup/report.template.md', 'docs/SETUP.md'];
 async function filesUnder(directory, prefix = '') {
   const files = [];
@@ -22,23 +21,44 @@ async function filesUnder(directory, prefix = '') {
   return files.sort();
 }
 
-test('setup is independently packaged and Bug Bash reuses its exact sources without another public command', async () => {
+test('setup is independently packaged and Bug Bash reuses top-root sources with only an internal knowledge-prefix rebind', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'a11y-setup-'));
   try {
     await cp(join(root, 'plugins/a11y-setup'), directory, { recursive: true });
     const manifest = JSON.parse(await text(join(directory, 'plugin.json')));
     assert.equal(manifest.name, 'a11y-setup');
-    assert.equal(manifest.mcpServers, undefined);
+    const mcp = JSON.parse(await text(join(directory, '.mcp.json')));
+    assert.deepEqual(manifest.mcpServers, mcp.mcpServers);
+    assert.deepEqual(mcp.mcpServers, {
+      a11y_setup_knowledge: { command: 'node', args: ['${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs', 'a11y-setup'] }
+    });
     assert.deepEqual(await filesUnder(directory), [
-      ...shared, 'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'
+      ...shared, 'plugin.json', '.mcp.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
+      'runtime/knowledge-mcp.mjs', 'runtime/knowledge.mjs', 'references/knowledge.json', 'references/README.md'
     ].sort());
+    for (const file of ['knowledge-mcp.mjs', 'knowledge.mjs']) {
+      assert.equal(await text(join(directory, 'runtime', file)), await text(join(root, 'src/runtime', file)));
+    }
+    assert.deepEqual(JSON.parse(await text(join(directory, 'references/knowledge.json'))),
+      JSON.parse(await text(join(root, 'plugins/a11y-knowledge/references/knowledge.json'))));
     for (const path of shared) {
       const body = await text(join(directory, path));
       assert.equal(body, await text(join(root, path.startsWith('docs/') ? path : `src/${path}`)));
-      assert.equal(body, await text(join(root, 'plugins/a11y-bug-bash/modules/a11y-setup', path)));
+      const internalSkill = path === 'skills/a11y-setup/SKILL.md';
+      const bashPath = internalSkill ? `modules/a11y-setup/${path}` : path;
+      assert.equal(await text(join(root, 'plugins/a11y-bug-bash', bashPath)),
+        internalSkill ? body.replaceAll('a11y_setup_knowledge_', 'a11y_bug_bash_knowledge_') : body);
     }
     assert.deepEqual(await readdir(join(root, 'plugins/a11y-bug-bash/skills')), ['a11y-bug-bash']);
-    await assert.rejects(access(join(root, 'plugins/a11y-bug-bash/modules/a11y-setup/plugin.json')), { code: 'ENOENT' });
+    // Internal setup is instructions only; resources and the sole knowledge server stay at the top root.
+    assert.deepEqual(await filesUnder(join(root, 'plugins/a11y-bug-bash/modules/a11y-setup')), ['skills/a11y-setup/SKILL.md']);
+    const internal = await text(join(root, 'plugins/a11y-bug-bash/modules/a11y-setup/skills/a11y-setup/SKILL.md'));
+    assert.match(internal, /\$\{PLUGIN_ROOT\}\/references\/README\.md/);
+    assert.doesNotMatch(internal, /a11y_setup_knowledge_|modules\/a11y-setup\/(?:native|setup|docs|references|runtime)\//);
+    for (const action of ['list', 'search', 'read']) assert(internal.includes(`a11y_bug_bash_knowledge_${action}`));
+    for (const path of ['plugin.json', '.mcp.json', 'runtime', 'references', 'integrations', 'native', 'setup', 'docs']) {
+      await assert.rejects(access(join(root, 'plugins/a11y-bug-bash/modules/a11y-setup', path)), { code: 'ENOENT' });
+    }
     for (const path of ['README.md', 'README.zh-CN.md', 'docs/SETUP.md']) {
       for (const match of (await text(join(directory, path))).matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)) {
         if (!/^https:/.test(match[1])) await access(join(directory, dirname(path), match[1]));
@@ -60,7 +80,7 @@ test('setup profiles select minimal dependencies and skill keeps preparation sep
   }
   const skill = await text(join(root, 'src/skills/a11y-setup/SKILL.md'));
   for (const pattern of [/Default to\s+check-only/, /Codespaces|CODESPACES/,
-    /explicit `-Dependency` array/, /never its\s+legacy all-dependencies default/,
+    /explicit `-Dependency` array/, /never an\s+implicit all-dependencies selection/,
     /timeout is unknown execution/, /No unrelated audio/,
     /headless login\s+result alone/, /never copy cookies/i,
     /real exclusive host\/setup/, /separate gated/, /not product evidence/]) {

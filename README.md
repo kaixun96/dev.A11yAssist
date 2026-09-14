@@ -10,19 +10,19 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
-| [a11y-bug-bash](plugins/a11y-bug-bash/README.md) | Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks | Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks |
+| [a11y-bug-bash](plugins/a11y-bug-bash/README.md) | Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks | Feature context and verification steps; Node.js 22+ and enabled host MCP for knowledge; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks |
 
 ### Environment preparation
 
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
-| [a11y-setup](plugins/a11y-setup/README.md) | Check and prepare a Windows A11y environment: selected browser, NVDA, audio and Voice Access dependencies | Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization |
+| [a11y-setup](plugins/a11y-setup/README.md) | Check and prepare a Windows A11y environment: selected browser, NVDA, audio and Voice Access dependencies | Node.js 22+ and enabled host MCP for knowledge; authorized shell access on the actual Windows evaluator for setup checks; preparation needs host ownership and change authorization |
 
 ### Knowledge and static review
 
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
-| [a11y-knowledge](plugins/a11y-knowledge/README.md) | Accessibility guidance and static review, with general foundations and a built-in ODSP submodule (SPDS, Fluent V8/V9, SharePoint) | Copilot CLI and the code or question to review; no execution configuration |
+| [a11y-knowledge](plugins/a11y-knowledge/README.md) | Accessible code guidance, root-cause analysis, static/design review and test planning using shared Common, SPDS, Fluent V8/V9 and SharePoint knowledge | Node.js 22+, enabled host MCP and the code or question to review; automatic KB resolution, no execution configuration or peer plugin |
 
 ### Individual capabilities
 
@@ -41,15 +41,9 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 |---|---|---|
 | [a11y-workflow](plugins/a11y-workflow/README.md) | Optional end-to-end evidence-first remediation workflow | Qualified work-item, resource, Windows capture, source, validation, review, publication and cleanup connections |
 
-### Existing installations only
-
-| Plugin and instructions | What it does | What you need |
-|---|---|---|
-| [a11y-knowledge-odsp](plugins/a11y-knowledge-odsp/README.md) | Legacy standalone installation; already included as a submodule of a11y-knowledge | Copilot CLI and relevant project code; no AgentOW, DevBox or provider required |
-
 Open a plugin above for its installation command, prerequisites, example, limitations and bundled reference links.
 
-For knowledge, install **a11y-knowledge** once: general topics and the SPDS/Fluent/SharePoint submodule are included, with project guidance read only when relevant. The old **a11y-knowledge-odsp** package is compatibility-only; do not install both. Choose **a11y-workflow** only if you want the complete workflow.
+Choose **a11y-knowledge** for accessible code guidance and read-only review, **a11y-setup** for scoped Windows environment checks and authorized preparation, or **a11y-bug-bash** for feature discovery with the same knowledge and setup skills reused internally. All ten plugins reference the current shared Common, Fluent and SharePoint KB through their own read-only knowledge MCP; no peer knowledge plugin is needed. Choose **a11y-workflow** only if you want the complete workflow.
 
 ## Install your selection
 
@@ -62,11 +56,11 @@ copilot plugin install <plugin-name>@a11y-assist
 
 Restart Copilot after installation to load the plugin, then follow its usage example. Installation does not update or restart an existing worker.
 
-Knowledge plugins need no execution configuration. Execution plugins need Node.js 22+; evidence-file structural checking needs no provider. Live operations require your authorized, configured connections. Installing a plugin does not provision a Windows evaluator or grant service access.
+Knowledge use requires Node.js 22+ and enabled host MCP support, but no provider or execution configuration. The KB resolves automatically from an optional configured root, validated development layout, shared user cache, then a pinned HTTPS download. KB bodies are not bundled. First uncached use without a valid local KB requires network access to the published pinned artifact; a local build does not publish it. Evidence-file structural checking needs no provider. Live operations require authorized, configured connections. Installing a plugin does not provision a Windows evaluator or grant service access.
 
 ## For maintainers
 
-Users can stay in the catalog and plugin pages. [Development](docs/DEVELOPMENT.md) explains source, packaging and compatibility exports. [Migration status](docs/MIGRATION.md) and [release guidance](docs/RELEASING.md) are separate from the installation path.
+Users can stay in the catalog and plugin pages. [Development](docs/DEVELOPMENT.md) explains source and packaging; [shared knowledge](docs/KNOWLEDGE.md) and [release guidance](docs/RELEASING.md) cover KB distribution and publishing.
 
 ## Access and license
 

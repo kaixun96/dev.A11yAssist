@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "common",
+  "version": "0.1.0",
+  "dependencies": {},
+  "sources": [
+    {"id": "mas", "authority": "company-requirements", "status": "connection-pending", "locator": null, "revision": null, "note": "Confirm the authorized CLEA MCP interface, source revision, exact rule IDs and caching permission. No MAS text or mapping is supplied."},
+    {"id": "wcag", "authority": "normative-standard", "status": "review-pending", "locator": "https://www.w3.org/TR/WCAG22/", "revision": null, "note": "Public reference; confirm the applicable company baseline and pin the reviewed revision before approving a mapping."},
+    {"id": "aria", "authority": "normative-standard", "status": "review-pending", "locator": "https://www.w3.org/TR/wai-aria-1.2/", "revision": null, "note": "Role, state and property definitions; review exact applicable provisions."},
+    {"id": "html", "authority": "normative-standard", "status": "review-pending", "locator": "https://html.spec.whatwg.org/", "revision": null, "note": "Native semantics; living source must be revision-bound for qualification."},
+    {"id": "apg", "authority": "informative-guidance", "status": "review-pending", "locator": "https://www.w3.org/WAI/ARIA/apg/", "revision": null, "note": "Patterns and examples, not a replacement for normative requirements."},
+    {"id": "wcag-understanding", "authority": "informative-guidance", "status": "review-pending", "locator": "https://www.w3.org/WAI/WCAG22/Understanding/", "revision": null, "note": "Explanation and technique selection, not a mandatory single implementation."}
+  ],
+  "entries": [
+    {"id":"common.overview","path":"README.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":[]},
+    {"id":"common.topic.foundations","path":"topics/foundations.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":["wcag","apg"],"relations":[]},
+    {"id":"common.topic.component-accessibility","path":"topics/component-accessibility.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["html","aria"],"relations":[]},
+    {"id":"common.topic.keyboard-focus","path":"topics/keyboard-focus.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","apg"],"relations":[]},
+    {"id":"common.topic.forms-and-content","path":"topics/forms-and-content.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","html"],"relations":[]},
+    {"id":"common.topic.dynamic-content","path":"topics/dynamic-content.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","aria"],"relations":[]},
+    {"id":"common.topic.visual-accessibility","path":"topics/visual-accessibility.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag"],"relations":[]},
+    {"id":"common.requirements.authority-and-applicability","path":"requirements/authority-and-applicability.md","kind":"requirement-guidance","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":["mas","wcag","aria","html","apg","wcag-understanding"],"relations":[]},
+    {"id":"common.analysis.root-cause","path":"analysis/root-cause.md","kind":"analysis","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.implementation.component-contract"]},
+    {"id":"common.implementation.component-contract","path":"implementation/component-contract.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":["html","aria","apg"],"relations":["common.topic.component-accessibility"]},
+    {"id":"common.verification.static","path":"verification/static.md","kind":"verification","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.analysis.root-cause"]},
+    {"id":"common.verification.dynamic","path":"verification/dynamic.md","kind":"verification","status":"draft","owner":"unassigned","appliesTo":["web","windows-at"],"sourceIds":["wcag","apg"],"relations":["common.verification.static"]},
+    {"id":"common.verification.design","path":"verification/design.md","kind":"verification","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":["wcag"],"relations":["common.verification.dynamic"]},
+    {"id":"common.verification.testing","path":"verification/testing.md","kind":"verification","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":[],"relations":["common.verification.dynamic"]},
+    {"id":"common.case.dialog-focus","path":"cases/dialog-focus.md","kind":"case","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["apg"],"relations":["common.analysis.root-cause","common.topic.keyboard-focus"]},
+    {"id":"common.procedure.find","path":"procedures/find.md","kind":"procedure","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.requirements.authority-and-applicability","common.verification.static","common.verification.dynamic"]},
+    {"id":"common.procedure.fix","path":"procedures/fix.md","kind":"procedure","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.analysis.root-cause","common.verification.testing","common.verification.dynamic"]},
+    {"id":"common.procedure.prevent","path":"procedures/prevent.md","kind":"procedure","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.implementation.component-contract","common.verification.design","common.verification.testing"]},
+    {"id":"common.procedure.review-design","path":"procedures/review-design.md","kind":"procedure","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.verification.design"]},
+    {"id":"common.procedure.add-tests","path":"procedures/add-tests.md","kind":"procedure","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.verification.testing"]}
+  ]
+}

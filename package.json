@@ -11,5 +11,8 @@
     "test": "node --test tests/*.test.mjs",
     "check": "node tools/build.mjs --check",
     "doctor": "node src/runtime/cli.mjs doctor"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0"
   }
 }

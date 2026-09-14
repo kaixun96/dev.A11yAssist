@@ -61,7 +61,7 @@ optional if an authorized work item supplies context. `a11y-publish`,
 ### Current composition
 
 Installing Bug Bash loads its public skill and bundled modules. The calling
-Copilot follows that skill: it reads the bundled setup/knowledge instructions and
+Copilot follows that skill: it reads the bundled setup, knowledge and test-categories instructions and
 uses tools actually available in the session. The package has no MCP server of
 its own and does not automatically invoke sibling plugins by name.
 
@@ -73,55 +73,98 @@ steps and identifies unfinished coverage; actual evidence assessment remains
 separate. Unknown inventory completeness, unavailable AT or budget exhaustion
 means partial, not a smaller denominator.
 
-```text
-User: feature + verification steps + authorized inputs
-                         |
-                         v
-             Bug Bash: scope and target/state inventory
-                        |
-             Bundled a11y-test-categories
-             all nine categories / every step
-                         |
-             +-----------+------------+
-             |                        |
-             v                        v
-     Bundled a11y-setup       Bundled a11y-knowledge
-     scoped readiness        read-only source review
-             |                        |
-     actual ownership                 +--> risks / confirmation scenarios
-             |                        |
-             v                        |
-     available browser tools          |
-             |                        |
-     relevant real-AT checks          |
-             +-----------+------------+
-                         v
-           compare observations with expectations
-                         |
-                         v
-        findings + source risks + coverage gaps
-                         |
-                         v
-           private report + cleanup + delivery
+#### Overall flow: who performs each step?
+
+This diagram shows default `both` mode. **Each node names its executor:
+"bundled" needs no extra installation, "conditional" requires a connected capability
+and supported inputs, and "proposed" is not a callable shipped plugin.** Arrows
+show the calling Copilot passing work and results by following instructions, not
+an already implemented automatic dispatcher.
+
+```mermaid
+flowchart TD
+    U["User input<br/>Feature, URL, verification steps, expectations, source scope"]
+    P["1. a11y-bug-bash<br/>Define scope, scenarios, targets and states"]
+    S["2. a11y-setup (bundled)<br/>Check required page / AT prerequisites"]
+    C["3. a11y-test-categories (bundled)<br/>Expand nine categories, 53 steps per target / state"]
+    R["4. Caller ownership authority<br/>a11y-resources: conditional integration only"]
+    E["5. Execute each scenario (next diagram)<br/>Available browser tools + real AT tools<br/>a11y-browser: proposed; a11y-capture: conditional"]
+    K["a11y-knowledge (bundled, independent source track)<br/>Read-only review → source risks / confirmation scenarios"]
+    V["6. Evidence checks<br/>a11y-validate: evidence-v1 only<br/>Caller checks actual evidence in other formats"]
+    G["7. a11y-test-categories (bundled)<br/>matrix check: reject missing steps, retain unfinished coverage"]
+    A["8. a11y-bug-bash<br/>Assess expectations, deduplicate; separate source risks from page findings"]
+    O["9. Caller cleans up owned resources<br/>agent-operations: supported operations only, conditional"]
+    F["10. a11y-bug-bash<br/>Deliver: issue count, categories, list + evidence / coverage gaps"]
+    U --> P
+    P --> S --> C --> R --> E --> V --> G --> A --> O --> F
+    P --> K
+    K --> A
+    K -. "Add in-scope confirmation scenarios, not reproduced findings" .-> C
 ```
 
-The coordinator passes scenario-specific context, not the entire conversation,
-to each substep. It brings observations back to the same coverage row:
+Missing prerequisites create gaps for affected steps, not deleted steps. Actual
+ownership must precede any live interaction; `a11y-resources` status is not acquire.
+Never fabricate Bugs, leases or capture requests just to route through a named
+plugin. If inventory needs live discovery, first establish readiness and ownership,
+then update the original inventory and regenerate the complete matrix.
 
-| Step | What Bug Bash passes | What it receives and does next |
+#### Within a scenario: how do page actions connect to checks?
+
+Step 5 above is not "open a page and take one screenshot." It iterates the full matrix:
+
+```mermaid
+flowchart TD
+    C["a11y-test-categories → a11y-bug-bash<br/>Next target / state / procedure step and expectation"]
+    Q{"a11y-bug-bash<br/>Does this step apply?"}
+    N["a11y-bug-bash<br/>Record not-applicable + target-specific reason"]
+    T{"Required tools, authorization and safe prerequisites available?"}
+    X["a11y-bug-bash<br/>Record blocked / not-run / inconclusive + reason"]
+    B["Available browser tools<br/>Perform preconditions and enter the target scenario<br/>Proposed owner: a11y-browser"]
+    D{"Which observation does this step require?"}
+    W["Available browser tools<br/>Actual keyboard, focus, DOM, rendered observations"]
+    AT["Real AT / media tools<br/>a11y-capture: supported sealed scenarios only<br/>Dynamic announcements: start capture before triggering change"]
+    F["a11y-bug-bash<br/>Assess against expectations, record actual evidence / uncertainty"]
+    L["a11y-bug-bash<br/>Reset safely and advance; retain unrun steps at budget expiry"]
+    C --> Q
+    Q -- "No" --> N --> L
+    Q -- "Yes" --> T
+    T -- "No" --> X --> L
+    T -- "Yes" --> B --> D
+    D -- "Browser observation" --> W --> F
+    D -- "Real AT / media; retain browser evidence as needed" --> AT --> F
+    F --> L
+    L -. "Pending steps and remaining budget" .-> C
+```
+
+For example, to check picker search-result announcements: browser tools open the
+picker, real Narrator/NVDA tools start capture, then search input triggers the
+result change and the actual announcement is assessed. If a supported sealed
+capture scenario owns both triggering and collection, let it execute them; do not
+trigger again externally. **`a11y-capture` collects evidence rather than deciding
+behavioral correctness; `a11y-validate` checks compatible evidence integrity,
+not feature correctness.** Screenshots or accessibility trees cannot replace
+actual speech.
+
+The coordinator passes only scenario-specific context and returns results to the
+original matrix row:
+
+| Caller -> executor | Input | Output |
 |---|---|---|
-| Plan | Every target/state, user journeys, expected behavior, budget and knowledge | Test-categories expands all nine categories/every step; scenarios supply preconditions, actions, expectation, capability and reset |
-| Prepare | Only capabilities required by those rows | Available tools and gaps; check ownership before page interaction; authorize preparation separately |
-| Source review | Relevant component/style paths, revision and stack | Source-supported risks and runtime triggers; add in-scope confirmation rows |
-| Page/AT check | One row, safe data, authorized connection and expected evidence | Actual behavior and artifacts, or a precise reason the row could not run |
-| Assess | Expected versus observed behavior and supporting evidence | Finding, no issue observed, or uncertainty; repeat candidates safely when useful |
-| Report | Every planned row, evidence and unresolved items | Saved report, restored owned resources and delivery to the requester |
+| Bug Bash -> `a11y-setup` | Required page/AT capabilities and actual host | Available capabilities, gaps and separately authorized preparation plan |
+| Bug Bash -> `a11y-test-categories` | Target/state inventory; original inventory and full result matrix at reconciliation | All nine category procedures; coverage accounting, not behavioral PASS |
+| Bug Bash -> `a11y-knowledge` | Scoped source, revision and stack | Source risks and confirmation scenarios, not reproduced page findings |
+| Bug Bash -> ownership authority (optional `a11y-resources`) | Actual task identity and resource requirements | Supported status/ownership results; status grants no control |
+| Bug Bash -> browser tools (proposed `a11y-browser`) | Preconditions, action sequence, target state and reset | Target scenario and actual browser observations |
+| Bug Bash -> AT/media tools (conditional `a11y-capture`) | Owned evaluator, real tools, supported scenario and evidence requirements | Actual output/artifacts, or why execution was unavailable |
+| Bug Bash -> `a11y-validate` (conditional) | Evidence and files actually using evidence-v1 | Structural/byte integrity results, not an A11y verdict |
+| Bug Bash -> original resource authority (conditional `agent-operations`) | Original operation/ownership identity and state changed by this run | Supported reconciliation/cleanup receipts, or unresolved effects |
+| Bug Bash -> user | All results, evidence, gaps and actual cleanup state | Concise issue-count/category summary and private report location |
 
-For an item-picker Cancel check, the planner expects focus to return to the
-opener. Browser tools open the picker, cancel it and record the actual focus
-target. Source review may inspect the dismissal path independently. A source risk
-does not become a reproduced page bug without runtime observation; connecting it
-to the page's root cause also requires source/build binding.
+The diagrams show `both`, not mandatory execution in every mode: `page-only`
+omits the source track; `source-only` reads source without browser, AT or host
+setup; `plan-only` delivers after planning and matrix generation without executing
+procedures. Source risks need runtime observation to become page findings, and
+source/build binding to establish the page's root cause.
 
 Source analysis may proceed independently of page work. Browser, focus, AT and
 recording operations sharing one desktop are serial. Missing AT blocks its rows,

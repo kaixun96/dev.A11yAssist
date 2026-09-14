@@ -55,6 +55,12 @@ an unavailable track is an explicit gap and makes the overall result partial.
 
 ## Execution boundaries
 
+For the plugin-by-plugin overall flow and the per-scenario action/check loop, see
+the [composition diagrams](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-ARCHITECTURE.md#3-how-are-they-composed-and-used)
+([简体中文](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-ARCHITECTURE.zh-CN.md#3-这些能力怎么组合怎么调用)).
+They name the bundled modules, conditional integrations and proposed browser
+plugin separately; arrows describe caller-directed work, not automatic plugin calls.
+
 Before page execution, the skill reads the internal
 [setup contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/SETUP.md) for check/planning. Its actual bundled
 path is `modules/a11y-setup/docs/SETUP.md` relative to the plugin root.

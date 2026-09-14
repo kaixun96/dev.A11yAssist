@@ -60,7 +60,7 @@ test('setup profiles select minimal dependencies and skill keeps preparation sep
   }
   const skill = await text(join(root, 'src/skills/a11y-setup/SKILL.md'));
   for (const pattern of [/Default to\s+check-only/, /Codespaces|CODESPACES/,
-    /explicit `-Dependency` array/, /never its\s+legacy all-dependencies default/,
+    /explicit `-Dependency` array/, /never an\s+implicit all-dependencies selection/,
     /timeout is unknown execution/, /No unrelated audio/,
     /headless login\s+result alone/, /never copy cookies/i,
     /real exclusive host\/setup/, /separate gated/, /not product evidence/]) {

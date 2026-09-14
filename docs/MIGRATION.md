@@ -2,6 +2,13 @@
 
 ## Current delivery
 
+Current native/setup changes require explicit nonempty installation selections
+and remove the personal-browser setup API. Use an approved browser connection;
+retained compatibility files are not setup instructions. Native attachments now
+accept only `descriptionMarkdown` and own only A11yAssist description markers.
+Generated export paths remain present, but this does not update pinned consumers.
+The delivery notes below describe their original release behavior.
+
 v0.15 extracts the AgentOW host-setup tutorial into independent `a11y-setup`
 and bundles that same module into Bug Bash's preparation step. It reuses the
 shared Windows host installer and retained browser helper, not a second

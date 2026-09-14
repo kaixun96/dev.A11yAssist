@@ -46,16 +46,18 @@ Configure the `publish` connection. Call `a11y_publish_invoke` with action
       "sha256": "<actual 64-character SHA-256>"
     }
   ],
-  "appendToDescription": "## Evidence\n\n![Before]({{before.png}})"
+  "descriptionMarkdown": "## Evidence\n\n![Before]({{before.png}})"
 }
 ```
 
 The implementation reads the live active Draft PR and exact source commit before
 uploading, checks attachment hashes, uploads real bytes and verifies their downloaded
 SHA-256, updates the description
-and reads the PR back to confirm HEAD/description/Draft state. A legacy
-`commentMarkdown` input is folded into the description; no comment endpoint is
-called. Human-authored text is preserved by the shared description budget helper.
+and reads the PR back to confirm HEAD/description/Draft state. Unknown input
+fields, including `commentMarkdown` and `appendToDescription`, are rejected
+before any request; no discussion endpoint is called. The shared description
+budget helper replaces only A11yAssist-owned markers and preserves human-authored
+text, unmarked visual sections and foreign markers.
 
 This operation does not create a PR, approve review, open a browser, play media or
 claim behavior PASS. `liveMediaVerified` and `independentBehaviorVerified` are
@@ -71,9 +73,13 @@ written, inspect the original PR and uploads; do not change IDs to repeat work.
 
 `native/windows-host.ps1` is the maintained Windows host setup implementation
 extracted from AgentOW. AgentOW consumes a pinned generated copy at its existing
-path. Its existing action names and default task/profile identity are retained;
-`SetupRoot`, `ConsoleTaskName` and `PersonalEvaluatorSource` can be configured for a
-different independently owned host. Do not use them to create a competing pool.
+path; this source change does not update that pin. The current helper defaults
+to `Probe`, requires explicit dependency selections for installation, and uses
+an A11yAssist-scoped setup directory and task identity. `SetupRoot` and
+`ConsoleTaskName` select an independently owned deployment, never a competing pool.
+Setup/output paths must be private, outside repositories and installed plugins,
+and must not traverse reparse points. Personal-browser actions and parameters
+are no longer supported; use the caller's approved browser connection.
 
 `Probe` reads prerequisites and writes a capability report; it is not proof of
 live AT behavior. Setup/install/console-transfer actions are explicit administrative
@@ -94,6 +100,7 @@ release, real AT handlers, independent media evaluation and end-to-end cleanup
 remain with the original trusted deployment. No active worker, resource registry,
 browser profile or installed plugin is migrated by this release.
 
-Native ADO tests use synthetic service responses. Windows qualification covers the
-existing read-only Probe and Codespace rejection; it does not establish live
+Native ADO tests use synthetic service responses. Windows regression tests use
+isolated dependency mocks and pre-dispatch rejection checks, not live setup or
+host qualification. They do not establish live
 recording, authentication, actual ADO publication or complete workflow readiness.

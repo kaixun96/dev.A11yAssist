@@ -65,11 +65,11 @@
     "src/contracts/workflow.json": "b955a2dd96718dbaea236888a040124d33daae1d78c2cc420826ba8b23d8aaa3",
     "src/adapters/cli.mjs": "612cb28a5c94f31bf27e6afeb5c4b33d77c6ebcf16272baf567abd0503ea076a",
     "src/adapters/twin.mjs": "9f3288b06c581b280280e4994aa97aaf841da68a3a94174e62d7b066822e2897",
-    "src/native/ado-attachments.d.mts": "0e68234f8714b41a926c53ce8974ae549a0a20ebb788d569076e45c3cbfaf480",
-    "src/native/ado-attachments.mjs": "8be17d46071e10c7c704bec6dbd831b520767b68d086b879d10f2eb0d52ec194",
+    "src/native/ado-attachments.d.mts": "b515637b366353489fbfdbd3d6795d93115bd740ae2969903ac47901f5c88040",
+    "src/native/ado-attachments.mjs": "65a060f02ee4a04f86da338344fa4dad5237350f7e11ac27021e54c850184def",
     "src/native/ado-intake.mjs": "b2646283bd1e20af8dc96bb3ca92b4513a4705d9b83b85559449225d7e6b53af",
-    "src/native/pr-description.mjs": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf",
+    "src/native/pr-description.mjs": "0f115bb004445472642b47e1111cef797c68cbfe14ca6eaaed1aacd2077daad2",
     "src/native/provenance.json": "eb9bfb249f1620d36ca1ea401e51ce312b1e5555bfb8953695f85ded4816dd2d",
-    "src/native/windows-host.ps1": "f12b5ae77fd1b3c3d17efd34943cd0692684da5e535ee12189fdeac56e8cabab"
+    "src/native/windows-host.ps1": "9913718ed1e44535e53a956000db8bdb9faee28b85f826239f1470a3c04414fc"
   }
 }

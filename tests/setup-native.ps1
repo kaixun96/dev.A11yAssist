@@ -101,8 +101,23 @@ Assert-Failure { Install-SafeDependencies -Dependencies Python } 'python.exe was
 Assert-Calls @('Python.Python.3.12')
 
 $parameter = $ast.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'Dependency' }
-$defaults = @($parameter.DefaultValue.SafeGetValue())
-if (($defaults -join ',') -ne 'NVDA,FFmpeg,AudioDeviceCmdlets,Python,Playwright,Chromium,MSS,PyAudioWPatch') {
-    throw 'Legacy default dependencies changed'
+if ($parameter.DefaultValue) {
+    throw 'Dependencies must be explicitly selected, not installed by default'
+}
+$selectionGuard = $ast.Find({ param($node)
+    $node -is [Management.Automation.Language.IfStatementAst] -and
+        $node.Clauses[0].Item1.Extent.Text -eq "$('$Action') -eq 'InstallSafeDependencies' -and -not $('$Dependency')"
+}, $true)
+if (-not $selectionGuard) { throw 'Missing pre-dispatch dependency selection guard' }
+Assert-Failure {
+    $Action = 'InstallSafeDependencies'
+    $Dependency = $null
+    Invoke-Expression $selectionGuard.Extent.Text
+} 'explicit nonempty -Dependency selection'
+$Action = 'InstallSafeDependencies'
+$Dependency = @('NVDA')
+Invoke-Expression $selectionGuard.Extent.Text
+if ($script:calls.Count -ne 1) {
+    throw 'Dependency selection guard caused host changes'
 }
 Write-Output 'Native dependency selection passed without host changes.'

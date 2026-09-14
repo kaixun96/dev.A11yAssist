@@ -1,8 +1,7 @@
 export interface AttachmentInput {
   prId: number;
   attachments: Array<{ name: string; localPath: string; sha256?: string }>;
-  commentMarkdown?: string;
-  appendToDescription?: string;
+  descriptionMarkdown?: string;
   expectedHead?: string;
 }
 export interface AttachmentResult {

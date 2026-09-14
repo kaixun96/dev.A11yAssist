@@ -1,10 +1,13 @@
 # Accessibility environment setup
 
-`a11y-setup` extracts the installation workflow from AgentOW's
+`a11y-setup` maintains the scoped Windows preparation workflow, with factual
+design attribution to AgentOW's
 [`ow-a11y-host-setup` tutorial](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-a11y-host-setup/SKILL.md).
-The tutorial's installer was already generated from this repository. This
-package reuses `src/native/windows-host.ps1` and the retained personal-browser
-helper; it does not fork another installer or require AgentOW.
+The current implementation is `src/native/windows-host.ps1`, with one authored
+setup skill and dependency templates under `src/setup/`. Standalone setup and
+Bug Bash's internal module reuse those sources. Attribution does not establish
+an execution dependency. Setup uses the scoped native script, not historical
+integration procedures or the retained compatibility browser helper.
 
 ## Installation and scope
 
@@ -43,12 +46,13 @@ service connections are inventoried but not automatically installed. Follow
 their official/organization-approved instructions only when explicitly selected.
 This is not an installer for every possible A11y tool.
 
-Resolve `$pluginRoot` from the loaded skill, not the current working directory.
+Resolve `$pluginRoot` from the loaded setup skill, not the current working
+directory. Standalone setup uses its plugin root; Bug Bash uses its internal
+`modules/a11y-setup/` resource root. Both contain this document,
+`setup/profiles.json`, `setup/report.template.md` and `native/windows-host.ps1`.
 Choose one private absolute `$output` and one deployment-approved `$setupRoot`
-for the actual host; reuse these across steps. The compatibility script defaults
-to an older shared setup directory, so always supply the selected setup root.
-The personal profile remains `$HOME\.playwright\personal-evaluator-profile`;
-do not use it concurrently or silently create a different profile.
+for the actual host; reuse these across steps and always pass the selected setup
+root explicitly. Do not create dependency files in product source or plugin caches.
 
 ```powershell
 $setup = Join-Path $pluginRoot 'native\windows-host.ps1'
@@ -65,12 +69,14 @@ through `powershell.exe -File`. Supported dependency names are validated.
 Chromium implies Playwright and Python; other Python modules imply Python.
 The installer checks presence before installation and stops on nonzero exits.
 It does not upgrade installed tools merely to obtain the newest version.
-Omitting `-Dependency` retains the legacy full dependency set for compatibility;
-the new skill always supplies an explicit subset.
+Always supply an explicit `-Dependency` subset for preparation. A dependency
+selection is not a workflow profile and does not enable a provider. The current
+script rejects an omitted/empty installation selection; `-Dependency` is valid
+only with `InstallSafeDependencies`, not with `Probe` or other actions.
 
 Winget uses `NVAccess.NVDA`, `Gyan.FFmpeg` and `Python.Python.3.12`; Python
 modules come from the host's approved pip source and AudioDeviceCmdlets from
-the approved PowerShell repository. The legacy Winget action accepts package
+the approved PowerShell repository. The Winget action accepts package
 and source agreements, so obtain authorization for these before invoking it.
 Do not change enterprise repositories or bypass package rejection. NVDA setup
 also changes Speech Viewer settings: preserve prior configuration and avoid
@@ -78,46 +84,24 @@ another session's NVDA. Do not install into product source or modify a worker.
 
 ## Persistent browser
 
-Prefer an already working authorized connection. For the bundled compatibility
-route, separately authorize helper installation; it copies the packaged helper
-to `$setupRoot` and invalidates that helper's previous authentication receipt.
-Inspect existing ownership/version first; never overwrite another deployment.
+Use an existing approved browser connection and its documented authentication
+procedure. Installing Python/Playwright/Chromium does not create a callable browser
+connection, select a tenant/target, authenticate an account or qualify capture.
+Setup does not install or invoke a product-specific helper, integration runtime
+or default product route. The retained compatibility browser file is not a setup API.
+An unavailable connection is a runtime-unverified or blocked browser capability,
+not a reason to reconstruct an archived installer or invent a provider.
 
-This retained helper is SharePoint-specific: its default bootstrap/check route
-is the SharePoint dogfood campaigns page with historical debug flights. Use it
-only when that route and Microsoft account integration are explicitly in scope.
-It may install the Microsoft Windows Accounts browser extension as part of
-launch; that download also needs authorization. For other products, use their
-existing approved browser connector rather than this helper's default route.
-Its campaign capture command is outside setup scope and must not be run.
-
-```powershell
-& $setup -Action InstallPersonalEvaluatorBrowser -SetupRoot $setupRoot `
-  -OutputPath (Join-Path $output 'browser.json')
-$state = Get-Content (Join-Path $output 'browser.json') -Raw | ConvertFrom-Json
-$python = $state.prerequisites.python.path
-$evaluator = $state.prerequisites.personalEvaluatorBrowser.scriptPath
-$env:PERSONAL_EVALUATOR_OWNER_EMAIL = '<owner-email>'
-try {
-  & $python $evaluator bootstrap --timeout-minutes 30
-  if ($LASTEXITCODE -ne 0) { throw "Browser bootstrap failed: $LASTEXITCODE" }
-} finally {
-  Remove-Item Env:\PERSONAL_EVALUATOR_OWNER_EMAIL
-}
-```
-
-Bootstrap is headed and requires an owned interactive desktop. Let visible
-Windows account renewal run; ask the owner only for an explicit remaining
-password, Windows Hello, MFA, certificate or consent prompt. Never copy cookie
-databases or open system Edge on the Chromium-owned profile.
-
-`CheckPersonalEvaluatorBrowser` runs the legacy helper's headless check and
-stores a short-lived authentication observation. A login/FIDO result is not
-proof that owner intervention is needed. Use visible bootstrap on the same
-profile; do not repeatedly close/reopen headless contexts. This helper does not
-keep a browser connection alive for arbitrary caller operations. The caller
-must use its approved persistent visible browser connection for target access
-through capture; never present bootstrap success as that connection.
+Visible launch/authentication requires separately authorized interactive access
+and an owned desktop/profile. Reuse a compatible owned persistent profile; never
+overwrite another deployment, copy cookie databases or open system Edge against a
+Chromium-owned profile. Keep account identifiers and credentials inside the trusted
+connection. A headless login/FIDO result alone does not establish a manual blocker:
+use approved visible renewal on the same profile when authorized. Password,
+Windows Hello, MFA, certificates and consent must be completed by the owner.
+Do not repeatedly close/reopen contexts or present authentication as proof of a
+persistent connection. Verify actual target access with the caller's authorized
+tools, and retain the owned visible connection through capture when required.
 
 ## Separately gated Windows steps
 
@@ -126,8 +110,9 @@ ownership. They are not implied by `prepare browser` or package installation.
 
 1. **VB-CABLE:** `StageVbCable` downloads the fixed official package and checks
    its pinned SHA-256 and valid `BUREL VINCENT` signature. Never weaken either
-   check. `LaunchVbCableInstaller` stages again and launches the vendor installer
-   with elevation. The owner completes Install Driver. Record restart-required;
+   check. After successful staging, `LaunchVbCableInstaller` revalidates the staged
+   installer and launches it with elevation; it does not download or stage it.
+   The owner completes Install Driver. Record restart-required;
    do not reboot automatically. After an authorized restart, re-probe both
    `CABLE Input` render and `CABLE Output` capture endpoints and current exposure.
 2. **Voice Access:** `OpenVoiceAccess` requires supported Windows and opens
@@ -136,13 +121,16 @@ ownership. They are not implied by `prepare browser` or package installation.
 3. **Console task:** only if unattended audio/desktop work requires it, inspect
    the deployment's existing task first. `InstallConsoleTransferTask` registers
    an elevated InteractiveToken task with fixed embedded logic, not an elevated
-   user-writable script. It can overwrite a same-name task; use the existing
-   protected provisioning process on managed hosts. Never replace a foreign task.
+   user-writable script. It refuses to overwrite an existing task and binds the
+   original caller's interactive session. Use the existing protected provisioning
+   process on managed hosts; never replace a foreign task or broaden its authority.
 4. **Console transfer:** `RunConsoleTransfer` disconnects RDP. Obtain explicit
    authority, persist resume state and ensure no other work owns the desktop.
-   Its compatibility logic selects an Explorer session, so require a single
-   unambiguous owned interactive session first; do not run it on a multi-user
-   host. Do not reconnect after successful transfer. Exit zero alone is not
+   It validates the task's principal, action and session binding before running;
+   the embedded action requires the original caller session and its Explorer
+   process, never selecting another session. Require unambiguous exclusive
+   authority; do not use setup to take over a multi-user host. Do not reconnect
+   after successful transfer. Exit zero alone is not
    Console/audio readiness.
 5. **Diagnostics:** `ValidateHost` requires Console, takes one composed desktop
    frame and plays/records a tone through VB-CABLE. It is opt-in host diagnostics
@@ -158,9 +146,9 @@ No driver binaries or third-party packages are redistributed in this plugin.
 ## Results, restart and composition
 
 Use `setup/report.template.md`. Report installation/configuration/authorization,
-restart and runtime gaps separately. The inherited `scenarios.*` flags include
-legacy Edge assumptions: they are diagnostics, not reliable readiness verdicts
-for a Chromium or different caller route. An actual browser/AT/audio capability
+restart and runtime gaps separately. Inventory and `scenarios.*` flags are
+diagnostics, not reliable readiness verdicts for the caller's actual browser,
+target or connection. An actual browser/AT/audio capability
 check is required before `ready`; unsupported checks remain runtime-unverified.
 This setup does not establish feature coverage, evidence-v1 or conformance.
 

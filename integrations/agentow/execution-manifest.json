@@ -8,7 +8,7 @@
       "targets": [
         "copilot/skills/ow-a11y-host-setup/scripts/setup-windows-a11y.ps1"
       ],
-      "sha256": "f12b5ae77fd1b3c3d17efd34943cd0692684da5e535ee12189fdeac56e8cabab"
+      "sha256": "9913718ed1e44535e53a956000db8bdb9faee28b85f826239f1470a3c04414fc"
     },
     {
       "source": "integrations/agentow/runtime/personal-evaluator-browser.py",
@@ -23,21 +23,21 @@
       "targets": [
         "ts/src/ow/tools/shared-a11y/ado-attachments.mjs"
       ],
-      "sha256": "8be17d46071e10c7c704bec6dbd831b520767b68d086b879d10f2eb0d52ec194"
+      "sha256": "65a060f02ee4a04f86da338344fa4dad5237350f7e11ac27021e54c850184def"
     },
     {
       "source": "native/ado-attachments.d.mts",
       "targets": [
         "ts/src/ow/tools/shared-a11y/ado-attachments.d.mts"
       ],
-      "sha256": "0e68234f8714b41a926c53ce8974ae549a0a20ebb788d569076e45c3cbfaf480"
+      "sha256": "b515637b366353489fbfdbd3d6795d93115bd740ae2969903ac47901f5c88040"
     },
     {
       "source": "native/pr-description.mjs",
       "targets": [
         "ts/src/ow/tools/shared-a11y/pr-description.mjs"
       ],
-      "sha256": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf"
+      "sha256": "0f115bb004445472642b47e1111cef797c68cbfe14ca6eaaed1aacd2077daad2"
     }
   ]
 }

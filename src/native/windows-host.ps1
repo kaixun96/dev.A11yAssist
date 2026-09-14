@@ -1,46 +1,67 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet('Probe', 'InstallSafeDependencies', 'InstallPersonalEvaluatorBrowser', 'CheckPersonalEvaluatorBrowser', 'StageVbCable', 'LaunchVbCableInstaller', 'OpenVoiceAccess', 'InstallConsoleTransferTask', 'RunConsoleTransfer', 'ValidateHost')]
-    [string]$Action,
+    [ValidateSet('Probe', 'InstallSafeDependencies', 'StageVbCable', 'LaunchVbCableInstaller', 'OpenVoiceAccess', 'InstallConsoleTransferTask', 'RunConsoleTransfer', 'ValidateHost')]
+    [string]$Action = 'Probe',
 
     [string]$OutputPath,
     [string]$SetupRoot,
-    [string]$ConsoleTaskName = 'AgentOW-A11Y-TransferToConsole',
-    [string]$PersonalEvaluatorSource,
+    [ValidatePattern('^[A-Za-z0-9_-]+$')]
+    [string]$ConsoleTaskName = 'A11yAssist-TransferToConsole',
     [ValidateNotNullOrEmpty()]
     [ValidateSet('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')]
-    [string[]]$Dependency = @('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')
+    [string[]]$Dependency
 )
 
 $ErrorActionPreference = 'Stop'
 
 if ($env:CODESPACES -eq 'true' -or -not [string]::IsNullOrWhiteSpace($env:CODESPACE_NAME)) {
-    throw '/ow-a11y-host-setup is not supported in a Codespace. Run it on the Windows evaluator host.'
+    throw 'a11y-setup is not supported in a Codespace. Run it on the Windows evaluator host.'
 }
 
 if ($env:OS -ne 'Windows_NT') {
-    throw 'ow-a11y-host-setup must run on the Windows evaluator host'
+    throw 'a11y-setup must run on the Windows evaluator host'
+}
+if ($Action -eq 'InstallSafeDependencies' -and -not $Dependency) {
+    throw 'InstallSafeDependencies requires an explicit nonempty -Dependency selection; no default installation set is authorized.'
+}
+if ($Action -ne 'InstallSafeDependencies' -and $PSBoundParameters.ContainsKey('Dependency')) {
+    throw '-Dependency is valid only with InstallSafeDependencies.'
 }
 
 $vbCableUrl = 'https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip'
 $vbCableSha256 = 'B950E39F01AF1D04EA623C8F6D8EB9B6EA5C477C637295FABF20631C85116BFB'
 if ([string]::IsNullOrWhiteSpace($SetupRoot)) {
-    $SetupRoot = Join-Path $env:LOCALAPPDATA 'agentow\a11y-host'
+    $SetupRoot = Join-Path $env:LOCALAPPDATA 'A11yAssist\setup'
 }
 $setupRoot = $SetupRoot
 $vbCableRoot = Join-Path $setupRoot 'vb-cable-pack45'
 $consoleTaskName = $ConsoleTaskName
-$personalEvaluatorSources = @(
-    $PersonalEvaluatorSource,
-    (Join-Path $PSScriptRoot '..\integrations\agentow\runtime\personal-evaluator-browser.py'),
-    (Join-Path $PSScriptRoot '..\..\..\tools\personal-evaluator-browser.py'),
-    (Join-Path $PSScriptRoot '..\..\..\..\tools\personal-evaluator-browser.py')
-)
-$personalEvaluatorPath = Join-Path $setupRoot 'personal-evaluator-browser.py'
-$personalEvaluatorProfile = Join-Path $HOME '.playwright\personal-evaluator-profile'
-$personalEvaluatorAuthStatePath = Join-Path $setupRoot 'personal-evaluator-auth.json'
-$personalEvaluatorAuthMaxAge = [TimeSpan]::FromMinutes(30)
+
+# These explicit actions still require deployment-owned access/change authority.
+# No probe, installation or diagnostic establishes a resource lease or AT PASS.
+function Assert-PrivatePath {
+    param([string]$Path)
+
+    if ($Path -notmatch '^(?:[A-Za-z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+(?:[\\/]|$))') {
+        throw 'Setup and output paths must be absolute private paths outside repositories and installed plugins.'
+    }
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    $pluginRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+    if ($fullPath -eq $pluginRoot -or $fullPath.StartsWith($pluginRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Setup and output paths must be outside the installed plugin/source tree.'
+    }
+    $candidate = $fullPath
+    while ($candidate) {
+        if ((Test-Path -LiteralPath (Join-Path $candidate '.git')) -or
+            ((Test-Path -LiteralPath $candidate) -and
+             ((Get-Item -LiteralPath $candidate -Force).Attributes -band [IO.FileAttributes]::ReparsePoint))) {
+            throw 'Setup and output paths must be outside Git repositories and must not traverse reparse points.'
+        }
+        $candidate = Split-Path -Parent $candidate
+    }
+}
+Assert-PrivatePath $setupRoot
+if ($OutputPath) { Assert-PrivatePath $OutputPath }
 
 function Get-ExistingPath {
     param([string[]]$Candidates)
@@ -75,6 +96,15 @@ function Test-PythonModule {
         return $false
     }
     & $PythonPath -c "import $Module" 2>$null
+    return $LASTEXITCODE -eq 0
+}
+
+function Test-PlaywrightChromium {
+    param([string]$PythonPath)
+
+    if (-not $PythonPath -or -not (Test-PythonModule $PythonPath 'playwright')) { return $false }
+    # Check the installed executable only; never launch a browser or inspect a profile.
+    & $PythonPath -c "from pathlib import Path; from playwright.sync_api import sync_playwright; p = sync_playwright().start(); found = Path(p.chromium.executable_path).is_file(); p.stop(); raise SystemExit(0 if found else 10)" 2>$null
     return $LASTEXITCODE -eq 0
 }
 
@@ -138,9 +168,9 @@ function Get-CommandInfo {
 }
 
 function Get-SessionType {
-    $userName = [Environment]::UserName
+    $sessionId = (Get-Process -Id $PID).SessionId
     $line = query.exe session 2>$null |
-        Where-Object { $_ -match "\b$([regex]::Escape($userName))\b" } |
+        Where-Object { $_ -match "^\s*>?\s*(console|rdp-\S+)\s+\S+\s+$sessionId\s+" } |
         Select-Object -First 1
     if ($line) {
         $tokens = @((($line -replace '^\s*>', '').Trim() -split '\s+') | Where-Object { $_ })
@@ -155,8 +185,14 @@ function Get-SessionType {
 }
 
 function Get-ConsoleTransferScript {
-    return @'
+    $sessionId = (Get-Process -Id $PID).SessionId
+    if ($sessionId -le 0) { throw 'Console transfer requires the caller''s interactive session.' }
+    return ('$sessionId = ' + $sessionId + "`n") + @'
 $ErrorActionPreference = 'Stop'
+if ((Get-Process -Id $PID).SessionId -ne $sessionId -or
+    -not (Get-Process explorer -ErrorAction SilentlyContinue | Where-Object SessionId -eq $sessionId)) {
+    throw 'The original caller session is no longer available; do not transfer another session.'
+}
 $driver = Get-CimInstance Win32_SystemDriver -Filter "Name='VBAudioVACMME'"
 if (-not $driver) {
     throw 'VBAudioVACMME driver was not found.'
@@ -171,13 +207,6 @@ foreach ($serviceName in 'AudioEndpointBuilder', 'Audiosrv') {
     }
 }
 Start-Sleep -Seconds 5
-$sessionId = Get-Process explorer |
-    Where-Object SessionId -ne 0 |
-    Sort-Object StartTime -Descending |
-    Select-Object -First 1 -ExpandProperty SessionId
-if ($null -eq $sessionId) {
-    throw 'No interactive Explorer session was found.'
-}
 & "$env:WINDIR\System32\tscon.exe" $sessionId /dest:console
 if ($LASTEXITCODE -ne 0) {
     throw "tscon failed with exit code $LASTEXITCODE."
@@ -186,11 +215,14 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 function Install-ConsoleTransferTask {
+    if (Get-ScheduledTask -TaskName $consoleTaskName -TaskPath '\' -ErrorAction SilentlyContinue) {
+        throw 'The Console transfer task already exists; never overwrite an existing task.'
+    }
     $taskScript = Get-ConsoleTransferScript
     $encodedTask = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($taskScript))
     $action = New-ScheduledTaskAction `
-        -Execute 'powershell.exe' `
-        -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -EncodedCommand $encodedTask"
+        -Execute (Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe') `
+        -Argument "-NoProfile -WindowStyle Hidden -EncodedCommand $encodedTask"
     $principal = New-ScheduledTaskPrincipal `
         -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) `
         -LogonType Interactive `
@@ -198,16 +230,16 @@ function Install-ConsoleTransferTask {
     $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew
     Register-ScheduledTask `
         -TaskName $consoleTaskName `
+        -TaskPath '\' `
         -Action $action `
         -Principal $principal `
         -Settings $settings `
-        -Description 'Prepares audio and transfers the interactive A11Y evaluator session to the console.' `
-        -Force |
+        -Description 'A11yAssist scoped setup: transfer only the original caller session.' |
         Out-Null
 }
 
 function Get-ConsoleTransferState {
-    $task = Get-ScheduledTask -TaskName $consoleTaskName -ErrorAction SilentlyContinue
+    $task = Get-ScheduledTask -TaskName $consoleTaskName -TaskPath '\' -ErrorAction SilentlyContinue
     if (-not $task) {
         return [ordered]@{
             installed = $false
@@ -217,7 +249,7 @@ function Get-ConsoleTransferState {
         }
     }
 
-    $info = Get-ScheduledTaskInfo -TaskName $consoleTaskName
+    $info = Get-ScheduledTaskInfo -TaskName $consoleTaskName -TaskPath '\'
     return [ordered]@{
         installed = $true
         state = [string]$task.State
@@ -228,85 +260,6 @@ function Get-ConsoleTransferState {
         }
         lastTaskResult = [int]$info.LastTaskResult
     }
-}
-
-function Get-PersonalEvaluatorState {
-    $installed = Test-Path -LiteralPath $personalEvaluatorPath
-    $profileExists = Test-Path -LiteralPath $personalEvaluatorProfile
-    $scriptHash = if ($installed) {
-        Get-Sha256 $personalEvaluatorPath
-    } else {
-        $null
-    }
-    $authenticated = $false
-    $lastCheckedAt = $null
-    if ($profileExists -and (Test-Path -LiteralPath $personalEvaluatorAuthStatePath)) {
-        try {
-            $authState = Get-Content -LiteralPath $personalEvaluatorAuthStatePath -Raw | ConvertFrom-Json
-            $checkedAt = [DateTimeOffset]::Parse([string]$authState.checkedAt)
-            $fresh = [DateTimeOffset]::UtcNow - $checkedAt.ToUniversalTime() -le $personalEvaluatorAuthMaxAge
-            $authenticated = $authState.state -eq 'authenticated' -and
-                $authState.scriptSha256 -eq $scriptHash -and
-                $fresh
-            $lastCheckedAt = $checkedAt.ToUniversalTime().ToString('o')
-        }
-        catch {
-            $authenticated = $false
-        }
-    }
-
-    return [ordered]@{
-        installed = $installed
-        scriptPath = $personalEvaluatorPath
-        profileExists = $profileExists
-        profilePath = $personalEvaluatorProfile
-        authenticated = [bool]$authenticated
-        lastCheckedAt = $lastCheckedAt
-        authenticationMaxAgeMinutes = [int]$personalEvaluatorAuthMaxAge.TotalMinutes
-    }
-}
-
-function Install-PersonalEvaluatorBrowser {
-    $source = Get-ExistingPath $personalEvaluatorSources
-    if (-not $source) {
-        throw "Personal evaluator source was not found at: $($personalEvaluatorSources -join ', ')"
-    }
-    New-Item -ItemType Directory -Path $setupRoot -Force | Out-Null
-    Copy-Item -LiteralPath $source -Destination $personalEvaluatorPath -Force
-    Remove-Item -LiteralPath $personalEvaluatorAuthStatePath -Force -ErrorAction SilentlyContinue
-    Write-Output $personalEvaluatorPath
-}
-
-function Check-PersonalEvaluatorBrowser {
-    if (-not (Test-Path -LiteralPath $personalEvaluatorPath)) {
-        throw 'InstallPersonalEvaluatorBrowser must run before CheckPersonalEvaluatorBrowser'
-    }
-    $python = Get-PythonPath
-    if (-not $python) {
-        throw 'Python is required for the personal evaluator browser'
-    }
-    Remove-Item -LiteralPath $personalEvaluatorAuthStatePath -Force -ErrorAction SilentlyContinue
-    $output = @(& $python $personalEvaluatorPath check 2>&1)
-    $exitCode = $LASTEXITCODE
-    $jsonLine = $output |
-        ForEach-Object { [string]$_ } |
-        Where-Object { $_.Trim().StartsWith('{') } |
-        Select-Object -Last 1
-    $result = if ($jsonLine) {
-        $jsonLine | ConvertFrom-Json
-    } else {
-        $null
-    }
-    $output | Write-Output
-    if ($exitCode -ne 0 -or -not $result -or $result.state -ne 'authenticated') {
-        throw "Personal evaluator browser authentication check failed with exit code $exitCode"
-    }
-    [ordered]@{
-        state = 'authenticated'
-        checkedAt = [DateTimeOffset]::UtcNow.ToString('o')
-        scriptSha256 = Get-Sha256 $personalEvaluatorPath
-        profilePath = $personalEvaluatorProfile
-    } | ConvertTo-Json | Set-Content -LiteralPath $personalEvaluatorAuthStatePath -Encoding UTF8
 }
 
 function Get-AudioEndpoints {
@@ -388,6 +341,9 @@ function Set-NvdaSpeechViewer {
     if ($state.configured) {
         return
     }
+    if (Get-Process nvda -ErrorAction SilentlyContinue) {
+        throw 'NVDA is running; do not change an active session configuration. Arrange a separately authorized safe point.'
+    }
 
     $iniPath = $state.path
     $parent = Split-Path -Parent $iniPath
@@ -436,6 +392,9 @@ function Set-NvdaSpeechViewer {
             }
             $lines = @($before + 'showSpeechViewerAtStartup = True' + $after)
         }
+    }
+    if (Test-Path -LiteralPath $iniPath) {
+        Copy-Item -LiteralPath $iniPath -Destination ($iniPath + '.a11y-setup-' + [Guid]::NewGuid().ToString('N') + '.bak')
     }
     Set-Content -LiteralPath $iniPath -Value $lines -Encoding UTF8
 }
@@ -564,12 +523,12 @@ function Get-Capabilities {
             available = [bool]$python
             path = $python
             playwright = Test-PythonModule $python 'playwright'
+            chromium = Test-PlaywrightChromium $python
             mss = Test-PythonModule $python 'mss'
             pyAudioWPatch = Test-PythonModule $python 'pyaudiowpatch'
         }
         windowsPerformanceRecorder = $wpr
         windowsPerformanceAnalyzer = $wpa
-        personalEvaluatorBrowser = Get-PersonalEvaluatorState
         voiceAccess = Get-VoiceAccessState $cableOutput $audioEndpoints $defaultRecordingEndpoint
         vbCable = [ordered]@{
             renderEndpointReady = $cableInput.Count -gt 0
@@ -596,14 +555,14 @@ function Get-Capabilities {
         schemaVersion = 1
         generatedAt = (Get-Date).ToUniversalTime().ToString('o')
         host = 'windows'
+        scope = 'dependency-inventory-not-evidence'
+        runtimeReadiness = 'unverified'
         prerequisites = $prerequisites
+        # Installation/configuration hints only, never callable connection or AT readiness.
         scenarios = [ordered]@{
-            browserKeyboard = [bool]($prerequisites.edge.available -and
-                $prerequisites.python.available -and
+            browserKeyboard = [bool]($prerequisites.python.available -and
                 $prerequisites.python.playwright -and
-                $prerequisites.personalEvaluatorBrowser.installed -and
-                $prerequisites.personalEvaluatorBrowser.profileExists -and
-                $prerequisites.personalEvaluatorBrowser.authenticated)
+                $prerequisites.python.chromium)
             nvda = [bool]($prerequisites.edge.available -and $prerequisites.nvda.available -and
                 $prerequisites.nvda.speechViewer.configured)
             narratorEtw = [bool]($prerequisites.edge.available -and
@@ -657,7 +616,12 @@ function Invoke-WingetInstall {
 }
 
 function Install-SafeDependencies {
-    param([string[]]$Dependencies)
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')]
+        [string[]]$Dependencies
+    )
 
     if ('NVDA' -in $Dependencies -and -not (Get-ExistingPath @(
         (Join-Path $env:ProgramFiles 'NVDA\nvda.exe'),
@@ -722,22 +686,29 @@ function Install-SafeDependencies {
 }
 
 function Stage-VbCable {
+    Assert-PrivatePath $vbCableRoot
     New-Item -ItemType Directory -Path $setupRoot -Force | Out-Null
     $zipPath = Join-Path $setupRoot 'VBCABLE_Driver_Pack45.zip'
-    Invoke-WebRequest -Uri $vbCableUrl -OutFile $zipPath
+    Assert-PrivatePath $zipPath
+    if ((Test-Path -LiteralPath $vbCableRoot) -or (Test-Path -LiteralPath $zipPath)) {
+        throw 'VB-CABLE staging already exists. Inspect the original attempt; never overwrite or delete an existing setup attempt.'
+    }
+    Invoke-WebRequest -Uri $vbCableUrl -OutFile $zipPath -TimeoutSec 15 -MaximumRedirection 0
 
     $actualHash = Get-Sha256 $zipPath
     if ($actualHash -ne $vbCableSha256) {
         throw "VB-CABLE package hash mismatch. Expected $vbCableSha256, received $actualHash"
     }
 
-    if (Test-Path -LiteralPath $vbCableRoot) {
-        Remove-Item -LiteralPath $vbCableRoot -Recurse -Force
-    }
     Expand-Archive -LiteralPath $zipPath -DestinationPath $vbCableRoot
+    return Get-VbCableInstaller
+}
+
+function Get-VbCableInstaller {
     $installer = Join-Path $vbCableRoot 'VBCABLE_Setup_x64.exe'
+    Assert-PrivatePath $installer
     if (-not (Test-Path -LiteralPath $installer)) {
-        throw "VB-CABLE installer was not found at $installer"
+        throw 'Run the separately authorized StageVbCable action before launching the driver installer.'
     }
 
     $signature = Get-AuthenticodeSignature -FilePath $installer
@@ -920,21 +891,16 @@ switch ($Action) {
         Install-SafeDependencies -Dependencies $Dependency
         Write-Capabilities
     }
-    'InstallPersonalEvaluatorBrowser' {
-        Install-PersonalEvaluatorBrowser
-        Write-Capabilities
-    }
-    'CheckPersonalEvaluatorBrowser' {
-        Check-PersonalEvaluatorBrowser
-        Write-Capabilities
-    }
     'StageVbCable' {
         Write-Output (Stage-VbCable)
     }
     'LaunchVbCableInstaller' {
-        $installer = Stage-VbCable
+        $installer = Get-VbCableInstaller
         $process = Start-Process -FilePath $installer -Verb RunAs -PassThru
         $process.WaitForExit()
+        if ($process.ExitCode -ne 0) {
+            throw "VB-CABLE installer returned $($process.ExitCode); inspect the original attempt and any restart requirement before continuing."
+        }
         Write-Capabilities
     }
     'OpenVoiceAccess' {
@@ -948,23 +914,33 @@ switch ($Action) {
     }
     'InstallConsoleTransferTask' {
         Install-ConsoleTransferTask
-        Get-ScheduledTask -TaskName $consoleTaskName |
+        Get-ScheduledTask -TaskName $consoleTaskName -TaskPath '\' |
             Select-Object TaskName, State, @{ Name = 'Principal'; Expression = { $_.Principal.UserId } },
                 @{ Name = 'LogonType'; Expression = { $_.Principal.LogonType } },
                 @{ Name = 'RunLevel'; Expression = { $_.Principal.RunLevel } }
     }
     'RunConsoleTransfer' {
-        $task = Get-ScheduledTask -TaskName $consoleTaskName -ErrorAction Stop
-        if ($task.Principal.LogonType -ne 'Interactive') {
-            throw "$consoleTaskName is not configured with InteractiveToken"
+        $task = Get-ScheduledTask -TaskName $consoleTaskName -TaskPath '\' -ErrorAction Stop
+        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $encodedTask = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes((Get-ConsoleTransferScript)))
+        $expectedArguments = "-NoProfile -WindowStyle Hidden -EncodedCommand $encodedTask"
+        $expectedExecutable = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+        if ($task.Principal.LogonType -ne 'Interactive' -or
+            $task.Principal.UserId -notin @($identity.Name, $identity.User.Value) -or
+            $task.Description -ne 'A11yAssist scoped setup: transfer only the original caller session.' -or
+            @($task.Actions).Count -ne 1 -or $task.Actions[0].Execute -ne $expectedExecutable -or
+            $task.Actions[0].Arguments -cne $expectedArguments -or
+            $task.Actions[0].WorkingDirectory -or @($task.Triggers | Where-Object { $null -ne $_ }).Count -ne 0 -or
+            $task.State -eq 'Running') {
+            throw 'Console task identity, original session, definition or state does not match this caller; do not run a foreign or busy task.'
         }
-        $before = Get-ScheduledTaskInfo -TaskName $consoleTaskName
-        Start-ScheduledTask -TaskName $consoleTaskName
+        $before = Get-ScheduledTaskInfo -TaskName $consoleTaskName -TaskPath '\'
+        Start-ScheduledTask -TaskName $consoleTaskName -TaskPath '\'
         $deadline = (Get-Date).AddSeconds(90)
         do {
             Start-Sleep -Seconds 2
-            $currentTask = Get-ScheduledTask -TaskName $consoleTaskName
-            $currentInfo = Get-ScheduledTaskInfo -TaskName $consoleTaskName
+            $currentTask = Get-ScheduledTask -TaskName $consoleTaskName -TaskPath '\'
+            $currentInfo = Get-ScheduledTaskInfo -TaskName $consoleTaskName -TaskPath '\'
             $newRunStarted = $currentInfo.LastRunTime -gt $before.LastRunTime
         } while (
             (Get-Date) -lt $deadline -and

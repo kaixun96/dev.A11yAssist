@@ -3,6 +3,7 @@
 ## Scope and authority
 - Mode, requested profiles and optional capabilities:
 - Actual host/OS, timestamp, plugin/script versions and hashes:
+- Loaded setup resource root (native script, setup templates and docs):
 - Private output directory (no credentials/profile contents):
 - Existing deployment ownership/access proof (reference only, no lease tokens):
 - Authorized package agreements, changes and interactive actions:

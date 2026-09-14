@@ -76,7 +76,8 @@ authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it
 and compatibility browser helper in standalone `a11y-setup` and Bug Bash's
 `modules/a11y-setup/`. No second installer implementation or duplicate public
 command is registered. `InstallSafeDependencies -Dependency` selects a subset;
-omission preserves the legacy full set. Existing AgentOW consumers remain
+an omitted/empty selection now fails, and setup no longer installs or invokes
+the retained compatibility browser helper. Existing AgentOW consumers remain
 commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
 
 ## Further contracts

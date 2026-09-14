@@ -34,7 +34,7 @@ boundaries. Framework/package validation is not a live feature or AT qualificati
 
 Setup similarly has one authored skill/profile/installer and exact standalone
 and internal Bug Bash copies. Validate selective dependency closure, skipping
-installed dependencies, error propagation, host rejection and legacy defaults
+installed dependencies, error propagation, host rejection and explicit-selection guards
 without actually installing packages or changing the CI desktop. This is not
 live Windows driver, authentication, audio or AT qualification. The retained
 SharePoint browser helper is not a generic product browser connector.

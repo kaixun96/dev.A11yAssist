@@ -54,6 +54,11 @@ them. Use every dimension in `bug-bash/coverage.json` as a planning prompt,
 not a universal rule or automatic failure. Record why a dimension is not applicable.
 Include entry, exit/cancel, error recovery and repeated use, not just the happy path.
 
+Read `test-categories/README.md` and the applicable category procedures linked
+there when planning page checks. Use them to supply concrete actions and evidence
+for the matrix, not to replace the coverage dimensions or authorize unavailable
+tools. Source-only stays read-only; plan-only does not execute the procedures.
+
 Prioritize primary journeys, keyboard blockers, inaccessible names/focus and
 dynamic feedback before lower-risk variants. Record each matrix row as
 `planned`, `observed-no-issue`, `finding`, `blocked`, `not-run`,

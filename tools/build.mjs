@@ -173,7 +173,13 @@ await emit(`${bugBashBase}/LICENSE`, await text(join(root, 'LICENSE')));
 await emit(`${bugBashBase}/AGENTS.md`, '# Feature accessibility bug bash\n\nRead skills/a11y-bug-bash/SKILL.md and docs/BUG-BASH.md. This is discovery, not remediation. Reuse internal modules/a11y-knowledge for read-only source review and modules/a11y-setup for environment check/planning; preparation needs separate authorization. Page checks require actual authorized host tools and owned resources; dependency installers are bundled, not third-party browser/AT binaries or an MCP server. Separate reproduced findings, code risks and gaps; do not edit product source, file bugs or publish automatically.\n');
 await emit(`${bugBashBase}/skills/${bugBashName}/SKILL.md`, await text(join(source, 'skills', bugBashName, 'SKILL.md')));
 for (const file of await readdir(join(source, 'bug-bash'))) {
-  await emit(`${bugBashBase}/bug-bash/${file}`, await text(join(source, 'bug-bash', file)));
+  if (file === 'test-categories') {
+    for (const category of await readdir(join(source, 'bug-bash', file))) {
+      await emit(`${bugBashBase}/test-categories/${category}`, await text(join(source, 'bug-bash', file, category)));
+    }
+  } else {
+    await emit(`${bugBashBase}/bug-bash/${file}`, await text(join(source, 'bug-bash', file)));
+  }
 }
 await emit(`${bugBashBase}/docs/BUG-BASH.md`, await text(join(root, 'docs/BUG-BASH.md')));
 // Internal instructions retain their own root without registering duplicate public skills.

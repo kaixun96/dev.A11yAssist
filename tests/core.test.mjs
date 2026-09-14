@@ -65,26 +65,26 @@ test('pending result reconciles same ID and prevents duplicate execute', async (
     assert.equal(next.nextStage, 'before');
     assert.equal(next.receipts[0].requestId, first.pending.requestId);
   });
+});
 
-  test('workflow capture rejects missing lifecycle proof and retains pending identity', async () => {
-    for (const stage of ['before', 'after']) {
-      for (const gate of ['capturePreflightVerified', 'capturePostcheckVerified']) {
-        await fixture(async cfg => {
-          const run = await createRun(cfg, `lifecycle-${stage}-${gate}`);
-          for (const prior of stage === 'before' ? ['intake'] : ['intake', 'before', 'source']) {
-            await executeStage(cfg, 'a11y-workflow', run.runId, prior);
-          }
-          await assert.rejects(executeStage(cfg, 'a11y-workflow', run.runId, stage, { badGate: gate }),
-            new RegExp(`Missing capability gate: ${gate}`));
-          const pending = await loadRun(cfg, run.runId);
-          assert.equal(pending.nextStage, stage);
-          assert(pending.pending);
-          await assert.rejects(reconcile(cfg, 'agent-operations', run.runId), /cannot reconcile/);
-          await assert.rejects(executeStage(cfg, 'a11y-workflow', run.runId, stage), /pending/);
-        });
-      }
+test('workflow capture rejects missing lifecycle proof and retains pending identity', async () => {
+  for (const stage of ['before', 'after']) {
+    for (const gate of ['capturePreflightVerified', 'capturePostcheckVerified']) {
+      await fixture(async cfg => {
+        const run = await createRun(cfg, `lifecycle-${stage}-${gate}`);
+        for (const prior of stage === 'before' ? ['intake'] : ['intake', 'before', 'source']) {
+          await executeStage(cfg, 'a11y-workflow', run.runId, prior);
+        }
+        await assert.rejects(executeStage(cfg, 'a11y-workflow', run.runId, stage, { badGate: gate }),
+          new RegExp(`Missing capability gate: ${gate}`));
+        const pending = await loadRun(cfg, run.runId);
+        assert.equal(pending.nextStage, stage);
+        assert(pending.pending);
+        await assert.rejects(reconcile(cfg, 'agent-operations', run.runId), /cannot reconcile/);
+        await assert.rejects(executeStage(cfg, 'a11y-workflow', run.runId, stage), /pending/);
+      });
     }
-  });
+  }
 });
 
 test('bad gate, artifact or foreign receipt preserves pending state', async () => {

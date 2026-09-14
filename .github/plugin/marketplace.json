@@ -18,6 +18,15 @@
       }
     },
     {
+      "name": "a11y-test-categories",
+      "description": "All nine accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.",
+      "source": "./plugins/a11y-test-categories",
+      "version": "0.15.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
       "name": "a11y-setup",
       "description": "Check and prepare selected Windows accessibility dependencies using the shared host installer; keep consent, restart and live readiness explicit.",
       "source": "./plugins/a11y-setup",

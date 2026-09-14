@@ -10,8 +10,8 @@ certification service. No sibling plugin is required.
 
 - One public entrypoint, `/a11y-bug-bash`.
 - Context, coverage and report templates under `bug-bash/`.
-- Nine category procedures and their index under `test-categories/`, used to
-  turn applicable coverage prompts into page checks, not executable tooling.
+- The independent `a11y-test-categories` plugin's skill, nine procedures and
+  local matrix tool, bundled under `modules/a11y-test-categories/`.
 - The exact two knowledge skills and complete references from `a11y-knowledge`,
   bundled privately within the package at `modules/a11y-knowledge/`.
 - A staged skill that coordinates page inspection and read-only source review.
@@ -100,9 +100,21 @@ The coverage file is a planning checklist, not executable assertions or a WCAG
 rule engine. Derive thresholds and component expectations from the applicable
 knowledge and actual product/library contract; do not label every prompt a defect.
 
+For every in-scope region, control and meaningful content element in every
+reachable state, use the bundled category plugin to expand all nine categories
+and every numbered step. Include page-level targets for global checks. Execute
+all applicable steps; give a target-specific reason for each not-applicable step.
+Representative sampling cannot establish full target coverage. Reuse evidence
+only when it actually covers every linked target/state/step.
+Run the bundled local matrix check against the original inventory before page
+completion; missing steps fail, unfinished rows or unknown inventory mean partial.
+The tool checks accounting, not evidence authenticity or behavior. Keep the
+original inventory, full private matrix, evidence and category counts in delivery.
+See the [category contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/TEST-CATEGORIES.md).
+
 Exercise happy paths plus relevant entry/exit, cancellation, repeated use,
-loading/empty/error/permission and responsive states. Prefer depth on primary
-journeys and high-impact blockers over claiming to have sampled everything.
+loading/empty/error/permission and responsive states. Prioritize primary journeys
+and high-impact blockers first without removing other in-scope targets or steps.
 An expiring time budget yields partial coverage with a prioritized remainder.
 Do not silently drop blocked, not-run or inconclusive rows from the denominator.
 

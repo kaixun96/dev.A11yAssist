@@ -20,11 +20,19 @@ Source-only/page-only results never imply coverage of the omitted track.
 
 ## Coverage matrix
 
+- Original target/state inventory and completeness evidence/uncertainty:
+- Full nine-category step matrix and local accounting check result:
+- Category totals/executed/gaps; unknown inventory or unfinished steps mean partial:
+
 | Row ID | Scenario/state and dimension | Track/tool | Expected check | Status | Evidence or gap reason | Finding IDs |
 |---|---|---|---|---|---|---|
 | <S01-keyboard-page> | <journey/state> | <page/source; actual tool> | <specific expectation> | <coverage.json status> | <evidence ID or reason> | <IDs or none> |
 
 Keep each planned row. Explain every not-applicable decision against the feature.
+Account for every target/state, every category and every numbered procedure step.
+Link each scenario to those rows; do not replace the full matrix with a sample.
+The short summary leads with distinct issue count and issue categories, not row
+counts. A defect affecting several steps is not several distinct defects.
 `observed-no-issue` is limited to that check, not a global accessibility PASS.
 
 ## Page-reproduced findings

@@ -63,7 +63,8 @@ export function validateDiscoveryRows(rows, maximum = 200) {
 }
 export function validateDiscoveryPlan(plan) {
   fields(plan, ['schemaVersion', 'taskId', 'feature', 'mode', 'authorizationReference', 'profile',
-    'target', 'evaluator', 'sourceRoots', 'sourceRevision', 'budgetSeconds', 'maxRows', 'rows'], ['inventory']);
+    'target', 'evaluator', 'sourceRoots', 'sourceRevision', 'budgetSeconds', 'maxRows', 'rows'], ['inventory', 'filingRequested']);
+  requireDiscovery(plan.filingRequested === undefined || typeof plan.filingRequested === 'boolean', 'filingRequested must be boolean');
   requireDiscovery(plan.schemaVersion === 1 && /^[a-z][a-z0-9-]{2,47}$/.test(plan.taskId ?? ''), 'Invalid discovery task identity/schema');
   for (const field of ['feature', 'authorizationReference', 'profile']) text(plan[field], field);
   requireDiscovery(['both', 'page-only', 'source-only', 'plan-only'].includes(plan.mode), 'Invalid discovery mode');

@@ -2,18 +2,18 @@
   {
     "name": "a11y-bug-bash",
     "group": "discovery",
-    "docs": ["docs/BUG-BASH.md", "docs/BUG-BASH-RUNTIME.md", "bug-bash/context.template.md", "bug-bash/report.template.md", "modules/a11y-test-categories/docs/TEST-CATEGORIES.md", "modules/a11y-test-categories/docs/TEST-CATEGORIES.zh-CN.md", "modules/a11y-setup/docs/SETUP.md", "modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md", "modules/a11y-knowledge/integrations/agentow/knowledge/README.md"],
+    "docs": ["docs/BUG-BASH.md", "docs/BUG-BASH-RUNTIME.md", "bug-bash/context.template.md", "bug-bash/report.template.md", "modules/a11y-setup/docs/SETUP.md", "modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md", "modules/a11y-knowledge/integrations/agentow/knowledge/README.md"],
     "en": {
       "purpose": "Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks",
       "requires": "Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks",
       "example": "/a11y-bug-bash Review <feature>: <context and expected behavior>. Verify using <steps> on <authorized test URL and safe fixture>; source <paths/revision>. Use my existing browser connection, budget 30 minutes, save to <private output directory>. Report page bugs and code risks separately; do not fix or file.",
-      "limits": "Bundles a11y-knowledge, a11y-setup and a11y-test-categories; no extra install. Every target/state requires all ten categories and every applicable step, not representative sampling. The durable CLI needs Node 22+ and explicitly configured discovery providers for live effects; plan/source use remains provider-free. Missing tools, time or evidence remain gaps. No automatic installation, fixes, builds, filing or PRs."
+      "limits": "Bundles knowledge/setup modules. Install a11y-test-categories separately and set pluginRoots.testCategories; no category procedures or matrix tools are copied into Bug Bash. All ten categories and applicable steps remain required. Node 22+ and authorized providers support execution; a11y-file-bug handles separately approved filing, a11y-report generates the final report. No automatic installation, fixes, builds, filing or PRs."
     },
     "zh": {
       "purpose": "面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险",
       "requires": "Feature context 和验证步骤；代码审查需要只读源码；实际页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属",
       "example": "/a11y-bug-bash 检查 <feature>：<context 和预期行为>。按 <验证步骤> 操作 <获授权测试 URL 和安全数据>，源码在 <路径/版本>。使用已有浏览器连接，预算 30 分钟，报告保存到 <私有输出目录>。分开报告页面 bug 和代码风险，不修改代码或提单。",
-      "limits": "内置复用 a11y-knowledge、a11y-setup 和 a11y-test-categories，无需另装。每个对象/状态都展开十类并执行全部适用步骤，不以抽查代替全覆盖。持久 CLI 需要 Node 22+，现场操作需要明确配置 discovery provider；计划/源码用法无需 provider。缺少工具、时间或证据必须保留缺口。不自动安装、修复、构建、提 bug 或建 PR。"
+      "limits": "内置知识和 setup 模块。a11y-test-categories 单独安装并配置 pluginRoots.testCategories；Bug Bash 不复制测试规程或矩阵工具。每个对象/状态仍需全部十类和适用步骤。执行需要 Node 22+ 和获授权连接；另行授权的提单交给 a11y-file-bug，最终报告由 a11y-report 生成。不自动安装、修复、构建、提单或建 PR。"
     }
   },
   {
@@ -24,13 +24,13 @@
       "purpose": "Apply all ten accessibility test categories, step by step, to every in-scope target and reachable state",
       "requires": "Feature scope and target/state inventory; Node.js 22+ for local accounting; authorized browser/AT tools and ownership for live checks",
       "example": "/a11y-test-categories Check every element/state of <feature> using all ten categories; save the full step matrix, evidence and gaps to <private directory>. Do not sample, fix or file.",
-      "limits": "Independently installable and bundled in Bug Bash from the same source. No browser/AT backend or MCP server. Local matrix checks detect missing rows, not authentic evidence or WCAG conformance. Not-applicable needs a reason; missing tools/time/evidence remain partial."
+      "limits": "The sole plugin owner of test procedures and matrix tools. Bug Bash calls its versioned API through an explicitly configured installed root; no embedded copies. No browser/AT backend or MCP server. Matrix accounting is not evidence authenticity or WCAG conformance; unavailable checks remain gaps."
     },
     "zh": {
       "purpose": "对范围内每个对象和可达状态，逐项执行全部十类无障碍测试规程",
       "requires": "Feature 范围和对象/状态清单；本地覆盖核对需要 Node.js 22+；现场检查需要获授权的浏览器/AT 工具及资源归属",
       "example": "/a11y-test-categories 按全部十类检查 <feature> 的每个元素/状态，将逐步骤矩阵、证据及缺口保存到 <私有目录>。不抽查、不修复、不提单。",
-      "limits": "可独立安装，也由 Bug Bash 从同一来源内置复用。不提供浏览器/AT 后端或 MCP server。本地矩阵核对检测漏行，不证明证据真实或符合 WCAG。不适用需说明原因；缺少工具、时间或证据只能报告部分覆盖。"
+      "limits": "测试规程和矩阵工具唯一所属插件。Bug Bash 通过明确配置的已安装路径调用版本化 API，不再内嵌副本。不提供浏览器/AT 后端或 MCP server；矩阵核对不证明证据真实或符合 WCAG，无法执行的检查保留缺口。"
     }
   },
   {
@@ -38,16 +38,16 @@
     "group": "setup",
     "docs": ["docs/SETUP.md", "setup/report.template.md"],
     "en": {
-      "purpose": "Check and prepare a Windows A11y environment: selected browser, NVDA, audio and Voice Access dependencies",
+      "purpose": "Resource-first DevBox setup: establish ownership, then check and prepare selected Windows accessibility tools",
       "requires": "Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization",
       "example": "/a11y-setup check browser and NVDA on <Windows evaluator>; save installed versions, missing dependencies and exact preparation steps to <private output directory>. Do not install or open apps yet.",
-      "limits": "Reuses AgentOW's shared host installer; no AgentOW or MCP dependency. Plugin installation does not install third-party tools. Prepare only an approved subset; driver, consent, elevation and restart are separate gates. No automatic scanner/ADK installation or live provider setup. Installed does not mean runtime-ready."
+      "limits": "Includes former resource status and completed-assignment release MCP tools; no separate resources plugin. Establish original DevBox/setup ownership before host changes. Local inventory uses approved host tools; resource MCP calls need a configured connection. No generic allocator, forced release, automatic scanner install or implied readiness."
     },
     "zh": {
-      "purpose": "检查和准备 Windows 无障碍环境：按需安装浏览器、NVDA、音频和 Voice Access 所需依赖",
+      "purpose": "先落实 DevBox 资源与归属，再检查和准备所需 Windows 无障碍工具",
       "requires": "Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权",
       "example": "/a11y-setup check <Windows 评估机> 的浏览器和 NVDA 环境，将已安装版本、缺少依赖和具体准备步骤保存到 <私有输出目录>。暂不安装或打开应用。",
-      "limits": "复用 AgentOW 使用的共享安装脚本，无需 AgentOW 或 MCP。装插件不等于安装第三方工具；仅准备获授权的依赖子集。驱动、同意提示、提权和重启单独处理，不自动安装扫描器、ADK 或配置实时 provider。安装成功不代表运行就绪。"
+      "limits": "合并原资源状态查询和已完成任务释放的 MCP 工具，不再单装 resources。变更前先取得原资源管理器的 DevBox/setup 归属。主机检查使用获授权工具；资源 MCP 需要配置连接。不提供通用分配器、强制释放或自动扫描器安装；安装不代表就绪。"
     }
   },
   {
@@ -102,20 +102,37 @@
     }
   },
   {
-    "name": "a11y-resources",
+    "name": "a11y-file-bug",
     "group": "capability",
-    "docs": ["docs/CAPABILITIES.md"],
+    "docs": ["docs/FILE-BUG.md"],
     "en": {
-      "purpose": "Inspect resource status; release an explicitly authorized completed evaluator assignment",
-      "requires": "Authorized resource connection; release additionally needs the original completed, owned assignment",
-      "example": "/a11y-resources Show resource ownership and readiness through my configured connection; do not acquire or release anything.",
-      "limits": "Not a generic allocator or recovery driver. Stale status does not release ownership. release-evaluator is a separate explicit action, not part of a status query."
+      "purpose": "Create an explicitly approved Bug after validation, with detailed reproduction, cause uncertainty and verified evidence attachments",
+      "requires": "Validated original discovery task/finding, reviewed artifacts, project metadata and an authorized Bug connection",
+      "example": "/a11y-file-bug Draft a Bug for <validated task/finding>; include environment, reproduction, expected/actual behavior, cause and reviewed video timestamps. Do not submit until approved.",
+      "limits": "Native ADO WIT creation and attachment readback; deterministic operation reconciliation, no automatic filing. Only observed-page findings, not seeded defects or source risks. Simple upload is bounded to 128 MiB total; larger evidence needs an approved chunked adapter. No PR operations."
     },
     "zh": {
-      "purpose": "查看资源状态；按明确授权释放已完成的评估机任务",
-      "requires": "获授权的资源连接；释放还需要原始、已完成且仍归本任务所有的记录",
-      "example": "/a11y-resources 通过已配置的连接查看资源归属和就绪状态，不申请或释放任何资源。",
-      "limits": "不是通用资源分配器或恢复驱动。状态过期不代表归属失效；release-evaluator 是另行明确授权的操作，不会随状态查询执行。"
+      "purpose": "验证后按明确授权创建 Bug，包含详细复现、原因及不确定性、校验后的证据附件",
+      "requires": "已验证的原始发现任务/问题、审阅后的附件、项目字段及获授权提单连接",
+      "example": "/a11y-file-bug 为 <已验证任务/问题> 起草 Bug，包含环境、复现、预期/实际、原因及已审阅视频的时间点；批准前不提交。",
+      "limits": "提供 ADO WIT 提单、附件上传与回读，使用固定操作 ID 核对未知结果；不自动提单。仅接受实际页面发现，不接受种子缺陷或代码风险。简单上传总计最多 128 MiB，更大证据需要获授权分块适配器。不操作 PR。"
+    }
+  },
+  {
+    "name": "a11y-report",
+    "group": "discovery",
+    "docs": ["docs/REPORT.md"],
+    "en": {
+      "purpose": "Generate the overall accessibility report after validation and any approved Bug filing",
+      "requires": "Original private discovery journal, artifact bytes and compatible category-plugin version",
+      "example": "/a11y-report Generate the final report for <task>: distinct issue counts/categories, actual Bug links, evidence, all uncovered steps and cleanup.",
+      "limits": "Reuses one shared report generator; no tests, source changes or Bug creation. Pending effects require reconciliation. Local report delivery does not imply a message was sent; gaps and unfiled findings remain visible."
+    },
+    "zh": {
+      "purpose": "在验证及获授权提单之后生成整体无障碍报告",
+      "requires": "原始私有发现日志、证据文件及兼容的测试分类插件版本",
+      "example": "/a11y-report 为 <任务> 生成最终报告：不同问题数量/类别、真实 Bug 链接、证据、全部未覆盖步骤和清理状态。",
+      "limits": "复用唯一报告生成实现，不执行测试、修改源码或创建 Bug。待定操作必须先核对；本地报告交付不等于发送消息，缺口与未提单发现始终保留。"
     }
   },
   {

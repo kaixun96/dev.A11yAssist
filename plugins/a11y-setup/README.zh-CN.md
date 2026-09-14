@@ -4,11 +4,15 @@
 
 ## 适合什么需求
 
-检查和准备 Windows 无障碍环境：按需安装浏览器、NVDA、音频和 Voice Access 所需依赖
+先落实 DevBox 资源与归属，再检查和准备所需 Windows 无障碍工具
 
 ## 使用前提
 
 Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权。
+
+Node.js 22+.
+
+执行实际操作前，只配置需要的连接，把配置放在私有文件中；启动 Copilot 前设置绝对路径 `A11Y_ASSIST_CONFIG`，然后重启。详见 [连接配置](docs/PROVIDERS.md) 和 [配置示例](config/README.md)。默认不启用任何连接。
 
 ## 安装你选中的插件
 
@@ -29,7 +33,7 @@ copilot plugin install a11y-setup@a11y-assist
 
 ## 能力边界
 
-复用 AgentOW 使用的共享安装脚本，无需 AgentOW 或 MCP。装插件不等于安装第三方工具；仅准备获授权的依赖子集。驱动、同意提示、提权和重启单独处理，不自动安装扫描器、ADK 或配置实时 provider。安装成功不代表运行就绪。
+合并原资源状态查询和已完成任务释放的 MCP 工具，不再单装 resources。变更前先取得原资源管理器的 DevBox/setup 归属。主机检查使用获授权工具；资源 MCP 需要配置连接。不提供通用分配器、强制释放或自动扫描器安装；安装不代表就绪。
 
 ## 参考资料
 

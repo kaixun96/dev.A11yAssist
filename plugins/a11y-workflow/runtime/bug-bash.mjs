@@ -5,14 +5,15 @@ import { VERSION, atomicJson, withDirectoryLock, verifyArtifactFiles, hash } fro
 import { executeOperation, reconcileOperation, operationStatus } from './operations.mjs';
 import { validateDiscoveryPlan, discoveryHash, conclusive, requireDiscovery as demand } from './discovery-contract.mjs';
 import { validateBrowserParameters } from './browser-contract.mjs';
-import { expandCoverage, categoryCoverage, issueSummary, procedures,
+import { loadCategoryPlugin } from './category-plugin.mjs';
+import { expandCoverage, categoryCoverage, issueSummary,
   orderedCoverageRows, earlierCategoryRows } from './discovery-coverage.mjs';
 
 const taskPattern = /^[a-z][a-z0-9-]{2,47}$/;
 const implementationHash = discoveryHash(await Promise.all([
   'bug-bash.mjs', 'discovery-contract.mjs', 'discovery-coverage.mjs', 'browser-contract.mjs', 'operations.mjs',
   'capability.mjs', 'canonical.mjs', 'core.mjs', 'waiting.mjs', '../contracts/capabilities.json',
-  '../test-categories/tools/matrix.mjs'
+  'category-plugin.mjs', 'file-bug.mjs'
 ].map(async file => ({ file,
   sha256: hash((await readFile(new URL(file, import.meta.url), 'utf8')).replaceAll('\r\n', '\n'))
 }))));
@@ -58,12 +59,14 @@ async function load(config, taskId) {
       event.stateHash === discoveryHash(event.state), 'Discovery history integrity mismatch');
     demand(event.state.owner === config.owner && event.state.plan.taskId === taskId &&
       event.state.schemaVersion === 1 && event.state.version === VERSION &&
-      event.state.implementationHash === implementationHash &&
-      event.state.procedureHash === discoveryHash(procedures),
+      event.state.implementationHash === implementationHash,
     'Foreign owner or incompatible discovery runtime; retain the original installed version');
     previous = discoveryHash(event); state = event.state;
   }
-  return { dir, state, revision: files.length, previous };
+  const categories = await loadCategoryPlugin(config, Boolean(state.plan.inventory) && state.plan.mode !== 'source-only');
+  demand(state.procedureHash === (categories?.binding ?? null),
+    'Category plugin changed; retain the original installed version for this task');
+  return { dir, state, revision: files.length, previous, categories };
 }
 async function commit(current, state, event) {
   const revision = current.revision + 1;
@@ -88,12 +91,14 @@ function summary(current) {
     row.attempts.some(attempt => attempt.observation.attempted ?? conclusive.has(attempt.observation.status)));
   const applicable = rows.filter(row => row.status !== 'not-applicable');
   const concluded = rows.filter(row => conclusive.has(row.status));
-  const categories = categoryCoverage(state.plan, rows);
+  const categories = categoryCoverage(state.plan, rows, current.categories);
   const scenarioOutcome = concluded.length === applicable.length ? 'complete' : attempted.length ? 'partial' : 'blocked';
   const coverageOutcome = state.plan.mode === 'plan-only' ? 'plan-only'
     : scenarioOutcome === 'complete' && (state.plan.mode === 'source-only' || categories?.accountingComplete)
     ? 'complete' : attempted.length ? 'partial' : 'blocked';
   return { taskId: state.plan.taskId, feature: state.plan.feature, mode: state.plan.mode,
+    target: state.plan.target, filingRequested: state.plan.filingRequested === true,
+    filingDecisions: state.filingDecisions ?? {},
     revision: current.revision, profile: state.plan.profile, planHash: discoveryHash(state.plan), deadlineAt: state.deadlineAt,
     rows, coverage: { total: rows.length, attempted: attempted.length, conclusive: concluded.length },
     categoryCoverage: categories, issues: issueSummary(rows), scenarioOutcome,
@@ -112,7 +117,8 @@ function summary(current) {
       : 'review remaining source rows or execute supported page rows; then clean, report and deliver' };
 }
 export async function createDiscovery(config, plan) {
-  plan = expandCoverage(plan);
+  const categories = await loadCategoryPlugin(config, Boolean(plan.inventory) && plan.mode !== 'source-only');
+  plan = expandCoverage(plan, categories);
   validateDiscoveryPlan(plan);
   const profile = config.discoveryProfiles?.[plan.profile];
   if (profile !== undefined) demand(profile && Array.isArray(profile.capabilities) &&
@@ -140,13 +146,13 @@ export async function createDiscovery(config, plan) {
   await mkdir(dir);
   await mkdir(join(dir, 'events'));
   const state = {
-    schemaVersion: 1, version: VERSION, implementationHash, procedureHash: discoveryHash(procedures),
+    schemaVersion: 1, version: VERSION, implementationHash, procedureHash: categories?.binding ?? null,
     owner: config.owner, plan: structuredClone(plan), binding: binding(config, plan),
     createdAt: new Date().toISOString(), deadlineAt: new Date(Date.now() + plan.budgetSeconds * 1000).toISOString(),
     rows: Object.fromEntries(plan.rows.map(row => [row.id, { status: 'planned', attempts: [] }])),
     operations: [], pending: null, cancelRequested: false, cleaned: true, delivered: false, report: null
   };
-  return summary(await commit({ dir, revision: 0, previous: null }, state, 'plan-accepted'));
+  return summary(await commit({ dir, revision: 0, previous: null, categories }, state, 'plan-accepted'));
 }
 export async function discoveryStatus(config, taskId) {
   const current = await load(config, taskId);
@@ -182,7 +188,7 @@ export async function appendDiscoveryRows(config, taskId, rows, reason) {
   return mutate(config, taskId, async current => {
     const state = current.state;
     demand(!state.cancelRequested && !state.delivered && !state.pending, 'Cannot revise a cancelled, delivered or in-flight plan');
-    const next = expandCoverage({ ...state.plan, rows: [...state.plan.rows, ...rows] });
+    const next = expandCoverage({ ...state.plan, rows: [...state.plan.rows, ...rows] }, current.categories);
     validateDiscoveryPlan(next);
     if (config.discoveryProfiles?.[next.profile]?.kind === 'browser-scenarios') {
       rows.filter(row => row.track === 'page' && row.parameters !== undefined)
@@ -217,7 +223,7 @@ export async function configureDiscoveryRows(config, taskId, updates, reason) {
       if (config.discoveryProfiles?.[state.plan.profile]?.kind === 'browser-scenarios' &&
         row.track === 'page' && row.parameters !== undefined) validateBrowserParameters(row.parameters);
     }
-    const next = expandCoverage({ ...state.plan, rows });
+    const next = expandCoverage({ ...state.plan, rows }, current.categories);
     validateDiscoveryPlan(next);
     state.plan = next; state.report = null;
     return summary(await commit(current, state, `scenarios-configured: ${reason}`));
@@ -234,7 +240,11 @@ export async function appendDiscoveryTargets(config, taskId, inventory, reason) 
       demand(inventory.targets.some(next => discoveryHash(target) === discoveryHash(next)),
         'Inventory revision cannot remove or rewrite an accepted target/state');
     }
-    const next = expandCoverage({ ...state.plan, inventory });
+    const categories = await loadCategoryPlugin(config);
+    demand(!state.procedureHash || state.procedureHash === categories.binding, 'Category plugin changed');
+    current.categories = categories;
+    state.procedureHash = categories.binding;
+    const next = expandCoverage({ ...state.plan, inventory }, categories);
     validateDiscoveryPlan(next);
     next.rows.filter(row => !state.rows[row.id]).forEach(row => {
       state.rows[row.id] = { status: 'planned', attempts: [] };
@@ -315,7 +325,7 @@ async function begin(config, taskId, kind, rowIds = []) {
       input = { taskId, operationIds: state.operations.filter(operation => operation.kind === 'observe').map(operation => operation.id),
         reason: kind === 'cancel' ? state.cancelReason : `Discovery ${kind} for the exact original task` };
       if (kind === 'deliver') input.report = { path: join(current.dir, state.report.relativePath), sha256: state.report.sha256 };
-      plugin = 'a11y-bug-bash'; action = `discovery-${kind}`;
+      plugin = kind === 'deliver' ? 'a11y-report' : 'a11y-bug-bash'; action = `discovery-${kind}`;
     }
     const pending = { id: operationId(taskId, kind, current.revision), kind, plugin, action, context, input, rowIds };
     state.pending = pending;
@@ -446,6 +456,10 @@ export async function reportDiscovery(config, taskId) {
   return mutate(config, taskId, async current => {
     const state = current.state, result = summary(current);
     demand(!state.pending && !state.delivered, 'Reconcile pending effects before generating a final report');
+    const filing = await (await import('./file-bug.mjs')).discoveryBugRecords(config, result);
+    demand(!filing.some(item => item.status === 'pending'), 'Reconcile pending Bug creation before the final report');
+    demand(!result.filingRequested || !filing.some(item => item.status === 'not-requested'),
+      'Requested Bug filing needs a filed result or an explicit skip reason before reporting');
     const lines = ['# Feature accessibility bug bash', '',
       `Distinct page findings: ${result.issues.filter(issue => issue.scope === 'observed-page').length}. Categories: ${md([...new Set(result.issues.filter(issue => issue.scope === 'observed-page').flatMap(issue => issue.categories))].join(', ') || 'none')}.`,
       `Seeded fixture defects (not production findings): ${result.issues.filter(issue => issue.scope === 'synthetic-fixture').length}.`,
@@ -471,7 +485,11 @@ export async function reportDiscovery(config, taskId) {
         `Steps: ${md(row.actions.join('; '))}`, `Expected: ${md(row.expected)}`,
         `Observed: ${md(row.observation.actual)}`, `Repeatability: ${md(row.observation.issue.repeatability)}`, '');
     }
-    lines.push('## Source-supported risks (runtime not verified)', '');
+    lines.push('## Bug filing', '',
+      '| Finding | Filing status | Bug |',
+      '|---|---|---|',
+      ...filing.map(item => `| ${md(item.issueId)} | ${md(item.outcome ?? item.status)} | ${md(item.bug?.url ?? item.reason ?? 'Not filed; no automatic filing authorization')} |`),
+      '', '## Source-supported risks (runtime not verified)', '');
     for (const row of result.rows.filter(row => row.sourceReview)) {
       for (const risk of row.sourceReview.risks) lines.push(`### ${md(row.id)}: ${md(risk.title)}`,
         `Impact: ${md(risk.impact)}`, `Confirmation needed: ${md(risk.confirmation)}`,
@@ -498,12 +516,16 @@ export async function reportDiscovery(config, taskId) {
       if (error.code !== 'EEXIST') throw error;
       demand(hash(await readFile(join(current.dir, relativePath))) === hash(bytes), 'Unreconciled report bytes differ; do not overwrite');
     }
-    state.report = { relativePath, sha256: hash(bytes), planHash: discoveryHash(state.plan) };
+    state.report = { relativePath, sha256: hash(bytes), planHash: discoveryHash(state.plan),
+      filingHash: discoveryHash(filing), generatedBy: 'a11y-report' };
     return summary(await commit(current, state, 'report-saved'));
   });
 }
 export async function deliverDiscovery(config, taskId) {
-  await discoveryStatus(config, taskId);
+  const checked = await discoveryStatus(config, taskId);
+  const filing = await (await import('./file-bug.mjs')).discoveryBugRecords(config, checked);
+  demand(checked.report?.filingHash === discoveryHash(filing) && !filing.some(item => item.status === 'pending'),
+    'Bug-filing state changed; regenerate the final report before delivery');
   if (!config.providers?.operations) {
     return mutate(config, taskId, async current => {
       const state = current.state;
@@ -534,6 +556,21 @@ export async function recordDiscoveryGap(config, taskId, rowIds, reason) {
     return summary(await commit(current, current.state, 'coverage-gap'));
   });
 }
+export async function skipDiscoveryBug(config, taskId, issueId, reason) {
+  demand(typeof reason === 'string' && reason.trim(), 'Skipping Bug filing requires a precise reason');
+  return mutate(config, taskId, async current => {
+    const result = summary(current);
+    demand(!result.delivered && !result.pending && result.issues.some(issue =>
+      issue.id === issueId && issue.scope === 'observed-page'), 'Cannot skip an unknown, in-flight or closed finding');
+    const records = await (await import('./file-bug.mjs')).discoveryBugRecords(config, result);
+    demand(['not-requested', 'skipped'].includes(records.find(item => item.issueId === issueId)?.status),
+      'Existing filing effects must be reconciled, not hidden by a skip');
+    current.state.filingDecisions ??= {};
+    current.state.filingDecisions[issueId] = { status: 'skipped', reason };
+    current.state.report = null;
+    return summary(await commit(current, current.state, 'bug-filing-skipped'));
+  });
+}
 export async function advanceDiscovery(config, taskId) {
   const result = await discoveryStatus(config, taskId);
   if (result.lifecycle === 'closed' || result.lifecycle === 'cancelled') return result;
@@ -549,7 +586,8 @@ export async function advanceDiscovery(config, taskId) {
     const satisfied = row => (row.dependsOn ?? []).every(id =>
       ['finding', 'observed-no-issue', 'not-applicable'].includes(result.rows.find(item => item.id === id).status));
     const ready = [];
-    for (const row of orderedCoverageRows(result.rows)) {
+    const categories = await loadCategoryPlugin(config, Boolean(result.categoryCoverage));
+    for (const row of orderedCoverageRows(result.rows, categories)) {
       if (row.status === 'planned' && row.track !== 'source' && satisfied(row) &&
         earlierCategoryRows({ rows: result.rows }, row).every(previous =>
           previous.status !== 'planned' || ready.some(selected => selected.id === previous.id))) ready.push(row);
@@ -567,6 +605,12 @@ export async function advanceDiscovery(config, taskId) {
     return cancelDiscovery(config, taskId, result.cancelReason);
   }
   if (!result.cleaned) return cleanupDiscovery(config, taskId);
+  const filing = await (await import('./file-bug.mjs')).discoveryBugRecords(config, result);
+  if (filing.some(item => item.status === 'pending' ||
+    (result.filingRequested && item.status === 'not-requested'))) {
+    return { ...result, nextAction: 'Use a11y-file-bug to draft/approve/submit, reconcile original creation, or record an explicit skip reason before a11y-report' };
+  }
+  if (result.report && result.report.filingHash !== discoveryHash(filing)) return reportDiscovery(config, taskId);
   if (!result.report) return reportDiscovery(config, taskId);
   return deliverDiscovery(config, taskId);
 }

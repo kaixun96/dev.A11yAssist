@@ -2,6 +2,12 @@
 
 ## What is executable today
 
+v0.18 adds the `bugs` ADO connection for `file-bug`: validated discovery,
+explicit exact-draft/destination approval, WIT binary attachments, Bug creation
+and field/relation/byte readback. It is not a generic workflow PASS. See
+[Bug filing](FILE-BUG.md) for project fields, video review and bounded upload.
+Resource status/release now belong to setup; report delivery belongs to report.
+
 Version 0.5 additionally ships native ADO work-item/discussion retrieval and
 Draft PR evidence upload/description update. These use `kind: "ado"` connections
 instead of external executables. See [native capabilities](NATIVE-CAPABILITIES.md)

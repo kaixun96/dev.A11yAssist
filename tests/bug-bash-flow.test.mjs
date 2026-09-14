@@ -19,6 +19,7 @@ async function fixture(body) {
   const definition = { executable: process.execPath, executableSha256: await fileHash(process.execPath),
     args: [provider], timeoutSeconds: 10 };
   const config = { schemaVersion: 1, owner: 'unit-owner', stateRoot: root,
+    pluginRoots: { testCategories: fileURLToPath(new URL('../plugins/a11y-test-categories', import.meta.url)) },
     providers: { capture: definition, operations: definition },
     discoverySourceRoots: [root],
     discoveryProfiles: { 'fixture-browser': { capabilities: ['browser'], targets: ['fixture:dialog-form-v1'] } } };

@@ -65,6 +65,10 @@ if (request.operation === 'status') {
     receipt.nativeRunId = request.input.nativeRunId;
     receipt.releaseMode = 'completed-owned-run';
   }
+  if (request.stage === 'file-bug') {
+    receipt.bug = { id: 42, url: 'https://example.invalid/unit/_workitems/edit/42' };
+    receipt.draftSha256 = request.input.approval.draftSha256;
+  }
   if (request.stage === 'recover-media') {
     receipt.nativeRunId = request.input.nativeRunId;
     receipt.recoveryScope = 'tracked-recorder-and-default-audio-endpoints';
@@ -86,7 +90,8 @@ if (request.operation === 'status') {
   if (request.input.wrongSubject) receipt.subject = 'different-item';
   if (request.input.wrongScenario) receipt.scenarioHash = 'f'.repeat(64);
   await writeFile(join(request.stateDirectory, `provider-${request.requestId}.json`), JSON.stringify(receipt), { flag: 'wx' });
-  if (request.input.pending || request.input.rows?.some(row => row.parameters?.pending)) {
+  if (request.input.pending || request.input.rows?.some(row => row.parameters?.pending) ||
+    (request.stage === 'file-bug' && process.argv.includes('--pending-filing'))) {
     console.log(JSON.stringify({ ...identity, state: 'pending',
       resumeCondition: 'Test fixture is ready for reconciliation',
       progressPath: artifact, ...(request.waiting ? { waiting: request.waiting } : { completionCallback: 'test-only-callback' }) }));

@@ -4,18 +4,21 @@
 round. The user supplies context and how to verify the feature; the skill plans
 and carries out available authorized checks and produces an evidence-separated
 report. It is not a new recorder, scanner, automatic remediation engine or
-certification service. No sibling plugin is required.
+certification service. Full category accounting explicitly depends on the
+separately installed `a11y-test-categories` plugin.
 
 ## What ships
 
 - One public entrypoint, `/a11y-bug-bash`.
 - Context, coverage and report templates under `bug-bash/`.
-- The independent `a11y-test-categories` plugin's skill, ten procedures (including
-  dedicated Voice Access steps) and
-  local matrix tool, bundled under `modules/a11y-test-categories/`.
+- An explicit versioned API connection to `a11y-test-categories`, configured by
+  `pluginRoots.testCategories`. That plugin alone ships procedures/matrix tools;
+  neither the root nor internal modules of Bug Bash contain a copy.
 - The exact two knowledge skills and complete references from `a11y-knowledge`,
   bundled privately within the package at `modules/a11y-knowledge/`.
 - A staged skill that coordinates page inspection and read-only source review.
+- Post-validation, explicitly approved filing through `a11y-file-bug`, then
+  aggregate reporting through `a11y-report` (the CLI reuses its shared generator).
 - The same setup skill, profiles and shared host installer as `a11y-setup`,
   privately bundled under `modules/a11y-setup/` for environment preparation.
 - An optional package-local executable coordinator with versioned plans,
@@ -165,7 +168,7 @@ rule engine. Derive thresholds and component expectations from the applicable
 knowledge and actual product/library contract; do not label every prompt a defect.
 
 For every in-scope region, control and meaningful content element in every
-reachable state, use the bundled category plugin to expand all ten categories
+reachable state, call the independently installed category plugin to expand all ten categories
 and every numbered step. Include page-level targets for global checks. Execute
 all applicable steps; give a target-specific reason for each not-applicable step.
 Representative sampling cannot establish full target coverage. Reuse evidence

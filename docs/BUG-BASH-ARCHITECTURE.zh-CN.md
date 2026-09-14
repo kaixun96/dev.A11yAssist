@@ -2,7 +2,7 @@
 
 [English](BUG-BASH-ARCHITECTURE.md) | **简体中文**
 
-修改时同步维护中英文版本。本文说明插件是什么、有哪些子能力、如何组合，以及用户的输入和最终输出。基线：0.17.0 版本，2026-09-14；源码执行链路已实现，部署和现场验收另行进行。实际可执行范围由受支持适配器决定，不承诺任意浏览器/AT 组合都已可用。
+修改时同步维护中英文版本。本文说明插件是什么、有哪些子能力、如何组合，以及用户的输入和最终输出。基线：0.18.0 版本，2026-09-14；源码执行链路已实现，部署和现场验收另行进行。实际可执行范围由受支持适配器决定，不承诺任意浏览器/AT 组合都已可用。
 
 ## 1. Bug Bash 是什么？
 
@@ -10,27 +10,27 @@
 
 例如，item picker 不只是一个等待扫描的对话框。它包含打开、搜索、浏览结果、选择、确认、取消、重新打开等用户路径。插件围绕这些路径检查适用的键盘、焦点、语义、视觉、动态状态，以及真实辅助技术（AT）行为。检查的是可达且相关的组合，不是所有理论组合。
 
-Bug Bash 自己负责 feature 范围、计划、协调和最终报告；可复用能力提供知识、环境检查、页面观测和源码分析。用户只使用一个入口：`/a11y-bug-bash`。
+Bug Bash 负责 feature 范围、计划和协调；`a11y-report` 负责最终整体报告。可复用能力提供知识、资源与环境准备、页面观测和源码分析。用户可通过 `/a11y-bug-bash` 编排这些能力。
 
 它负责发现问题，不自动修改代码、构建产品、创建 Bug、创建 PR 或发布证据。这些属于单独授权的任务。完成一轮也不等于无障碍认证。
 
 ## 2. 包含和使用哪些子插件？
 
-这里的“子插件”指组合中的可复用能力，不一定是另一个安装包，也不一定是另一个 Agent。**knowledge、setup 和 test-categories 已内置；调用方 Copilot 负责规划推理，持久 CLI 负责协调已接受场景、校验结果和生成报告。**
+这里的“子插件”指组合中的可复用能力，不一定是另一个 Agent。**knowledge 和 setup 模块仍内置；test-categories 必须单独安装，Bug Bash 不复制规程和矩阵工具。提单与整体报告分别有专门插件。**
 
 | 组成部分 | 负责什么 | 输入 -> 输出 | 组合方式与状态 |
 |---|---|---|---|
 | Bug Bash 协调器 | 理解范围、规划覆盖、分配检查、汇总结果 | Feature context + 验证步骤 -> 覆盖计划 + 报告 | Skill 加持久 `create/configure/run/advance/reconcile/cancel` CLI；追加式历史、有界执行 |
 | `a11y-knowledge` | 提供适用 A11y 知识及只读源码审查 | 技术栈/版本、限定源码和问题 -> 有依据的指导或源码风险 | 已内置于 `modules/a11y-knowledge/`，无需另装或另开 Agent |
-| `a11y-setup` | 只检查本轮页面/AT 检查需要的前提 | 所需能力 + 宿主 -> 清单、缺口和准备计划 | 已内置于 `modules/a11y-setup/`；修改宿主需要单独授权 |
-| `a11y-test-categories` | 对每个对象/状态执行十类中的每个编号步骤 | 完整对象/状态清单 -> 逐步骤矩阵、证据及明确缺口 | 可独立安装；同一份 skill、规程及本地核对工具内置于 `modules/a11y-test-categories/`；不提供现场执行后端 |
+| `a11y-setup` | 先落实 DevBox 资源归属，再准备所需工具 | 任务与宿主需求 -> 原始归属、按需检查和准备 | 合并原 resources 工具；共享 setup 模块仍内置。取得实际授权归属前不变更宿主 |
+| `a11y-test-categories` | 独占全部十类规程和逐步骤矩阵工具 | 完整对象/状态清单 -> 矩阵和覆盖核对 | 单独安装，明确配置 `pluginRoots.testCategories`，调用版本/哈希绑定 API；无内置副本或现场后端 |
 | 浏览器检查 / 共享 `a11y-browser` 模块 | 键盘、焦点、渲染语义和文本检查 | 获授权连接 + 类型明确的场景 -> 页面观测与产物 | 已实现在 `browser/` 和 `runtime/browser-contract.mjs`，内置于 Bug Bash/capture；不是额外安装包 |
-| `a11y-resources` | 对接实际 evaluator 归属机制 | 完整请求 + 任务身份 -> 原始归属/派发回执 | 可信 discovery 连接通过部署侧原有管理方 acquire/dispatch；status 不代替资源获取 |
 | `a11y-capture` | 采集场景/AT/媒体观测 | 自有 evaluator + 封存 `discovery-observe` 请求 -> 逐行证据 | 类型明确的 discovery 操作已实现；要求新鲜前后检查和独立评估。未支持的具名 AT 适配器保留缺口 |
 | `a11y-validate` | 校验 discovery 历史、回执、字节和类别核对 | 原始任务 ID -> 完整性、已接受行为评估及缺口 | `a11y_validate_discovery`，或同源包内 `validate` CLI；与 evidence-v1 分开 |
-| 报告模块 | 分开汇总问题、风险和缺口 | 覆盖行 + 观测 + 证据 -> 私有报告 | 已实现不可变 Markdown 报告及核实交付；植入缺陷、重复观测不算新的生产问题 |
+| `a11y-file-bug` | 验证后按明确授权提单 | 已验证问题 + 详细草稿 + 已批准证据 -> 真实 Bug ID/URL 和附件 | 提供 ADO WIT 上传、创建与回读；视频要求播放审阅、时间点和文本替代 |
+| `a11y-report` | 生成整体报告 | 覆盖、观测、提单结果、清理 -> 私有报告 | 独立 MCP 插件；与协调器 CLI 复用唯一生成实现 |
 
-规划和报告属于 feature 工作流本身，保留为内部模块。浏览器能力已做共享模块，确实需要独立安装时再拆 `a11y-browser` 包。真实 AT 适配器归入 capture，不为每种 AT 增加一个必装包。
+规划留在协调器；提单与报告有独立入口。浏览器能力保留共享模块，确实需要独立安装时再拆 `a11y-browser` 包。真实 AT 适配器归入 capture，不为每种 AT 增加一个必装包。
 
 Bug Bash 不要求安装全部兄弟插件。如果已授权工作项提供 context，可以选用 `a11y-intake`。`a11y-publish`、`a11y-workflow` 和 AgentOW 都不是问题发现的依赖。
 
@@ -38,11 +38,11 @@ Bug Bash 不要求安装全部兄弟插件。如果已授权工作项提供 cont
 
 ### 当前组合方式
 
-安装 Bug Bash 后，加载它的公开 skill 和内置模块。调用方 Copilot 按 skill 执行：读取内置 setup、knowledge、test-categories 说明，使用当前会话中真实可用的工具。插件自身没有 MCP server，也不会按名称自动调用其他兄弟插件。
+安装 Bug Bash 后，加载它的公开 skill 和内置模块。调用方 Copilot 读取内置 setup/knowledge 及单独安装的 test-categories 说明，使用当前会话中真实可用的工具。插件自身没有 MCP server；分类 API 通过明确配置的插件路径调用，不是隐式 MCP-to-MCP 调用。
 
 调用方使用内置[持久 CLI](BUG-BASH-RUNTIME.zh-CN.md)，通过明确配置的 provider 执行已接受计划。`run` 连续推进安全的确定性步骤；遇到源码分析、待定回调或有界步数上限时交回调用方。
 
-页面工作开始前，内置 test-categories 将范围内每个对象/状态展开为全部十类的每个编号步骤。适用步骤必须执行，不适用必须说明针对该对象的理由，不能用代表性抽查代替完整清单。本地矩阵门禁拒绝漏行并指出未完成覆盖；真实证据判断仍单独进行。清单完整性未知、缺少 AT 或预算用尽只能报告部分覆盖，不能缩小分母。
+页面工作开始前，独立 test-categories 插件将范围内每个对象/状态展开为全部十类的每个编号步骤。适用步骤必须执行，不适用必须说明针对该对象的理由，不能用代表性抽查代替完整清单。矩阵门禁拒绝漏行并指出未完成覆盖；真实证据判断仍单独进行。清单完整性未知、缺少 AT 或预算用尽只能报告部分覆盖，不能缩小分母。
 
 #### 总流程：谁负责哪一步？
 
@@ -52,24 +52,25 @@ Bug Bash 不要求安装全部兄弟插件。如果已授权工作项提供 cont
 flowchart TD
     U["用户输入<br/>Feature、URL、验证步骤、预期、源码范围"]
     P["1. a11y-bug-bash<br/>明确范围、场景、对象及状态"]
-    S["2. a11y-setup（内置）<br/>检查本轮页面 / AT 所需环境"]
-    C["3. a11y-test-categories（内置）<br/>每个对象 / 状态展开十类、61 个步骤<br/>包含 Voice Access"]
-    R["4. 调用方资源归属机制<br/>a11y-resources：仅条件接入"]
+    R["2a. a11y-setup / 原资源管理方<br/>选择 DevBox，落实任务专属 setup 归属"]
+    S["2b. a11y-setup<br/>此后才能检查 / 准备获授权页面及 AT 工具"]
+    C["3. a11y-test-categories（独立插件）<br/>调用版本化矩阵 API<br/>每对象 / 状态十类、61 步"]
     E["5. a11y-bug-bash run / advance<br/>a11y-capture discovery-observe<br/>共享 a11y-browser 模块或已配置具名 AT 适配器"]
     K["a11y-knowledge（内置，独立源码路径）<br/>只读审查 → 源码风险 / 待确认场景"]
     V["6. a11y-validate discovery<br/>原始回执 + 产物哈希 + 完整逐行核对<br/>独立行为评估仍单独标明"]
-    G["7. a11y-test-categories（内置）<br/>matrix check：漏步骤拒绝，未完成保留缺口"]
+    G["7. a11y-test-categories（独立插件）<br/>matrix check：漏步骤拒绝，未完成保留缺口"]
     A["8. a11y-bug-bash<br/>对照预期判断、去重；源码风险与页面问题分开"]
     O["9. 各模块清理自己的资源<br/>Capture：AT / 录制 / 音频；浏览器工具：自建会话<br/>a11y-bug-bash：汇总证明和未解决项"]
-    F["10. a11y-bug-bash<br/>交付：问题总数、类别、清单 + 证据 / 覆盖缺口"]
+    B["10. a11y-file-bug（需明确授权）<br/>详细原因 / 复现草稿，上传并校验证据<br/>创建 Bug，回读真实链接<br/>否则记录未提单原因"]
+    F["11. a11y-report<br/>问题数量 / 类别、真实 Bug 链接<br/>证据、完整覆盖、缺口和清理状态"]
     U --> P
-    P --> S --> C --> R --> E --> V --> G --> A --> O --> F
+    P --> R --> S --> C --> E --> V --> G --> A --> O --> B --> F
     P --> K
     K --> A
     K -. "范围内待确认场景回填矩阵，不直接算页面问题" .-> C
 ```
 
-环境检查发现缺能力，只为相应步骤记缺口，不删除步骤。资源归属必须在任何现场操作前成立；`a11y-resources` 的 status 不能当作 acquire。不支持的输入不能为了连上图中插件而伪造 Bug、租约或 capture 请求。清单需要现场补全时，也必须先具备环境和归属，再更新原始清单并重新展开完整矩阵。
+环境检查发现缺能力，只为相应步骤记缺口，不删除步骤。资源归属必须在任何宿主准备和现场操作前成立；setup 中的资源 status 不能当作 acquire。不支持的输入不能为了连上插件而伪造 Bug、租约或 capture 请求。清单需要现场补全时，也必须先具备环境和归属，再更新原始清单并重新展开完整矩阵。
 
 #### 场景内循环：操作页面与检测怎样衔接？
 
@@ -109,15 +110,15 @@ flowchart TD
 
 | 调用方 → 执行方 | 传入什么 | 返回什么 |
 |---|---|---|
-| Bug Bash → `a11y-setup` | 页面/AT 所需能力和实际宿主 | 可用能力、缺口及另行授权的准备计划 |
+| Bug Bash → `a11y-setup` | 任务、DevBox 和页面/AT 所需能力 | 先落实原始归属，再返回按需准备计划及缺口 |
 | Bug Bash → `a11y-test-categories` | 对象/状态清单；结束时传原清单与完整结果矩阵 | 全十类步骤；覆盖核对结果，不是行为 PASS |
 | Bug Bash → `a11y-knowledge` | 源码范围、版本、技术栈 | 源码风险与待确认场景，不是页面已复现问题 |
-| Bug Bash → 资源归属机制（可选 `a11y-resources`） | 真实任务身份与资源需求 | 实际契约支持的状态/归属结果；status 不授予控制权 |
 | Bug Bash → 共享 `a11y-browser` 模块 | 类型明确的前提、操作序列、目标状态、复位方式 | 场景绑定的浏览器观测及逐次采集健康产物 |
 | Bug Bash → AT/媒体工具（条件 `a11y-capture`） | 自有 evaluator、真实工具、受支持场景和证据需求 | 真实输出与产物，或不能执行的原因 |
 | Bug Bash → `a11y-validate` discovery | 原始任务 ID 及私有操作存储 | 核实回执/字节、类别核对；单独标明可信行为评估 |
 | Bug Bash → 各模块/工具，再到原资源管理方 | 原操作/归属身份与本轮改变的状态 | 模块自有资源清理证明、未核清事项及另行授权的释放结果 |
-| Bug Bash → 用户 | 全部结果、证据、缺口和实际清理状态 | 简洁问题总数/分类摘要及私有报告位置 |
+| Bug Bash → `a11y-file-bug` | 已验证问题、详细环境/原因/复现及哈希绑定授权 | 真实 Bug 和已审阅附件，或明确跳过/失败原因 |
+| Bug Bash → `a11y-report` → 用户 | 全部结果、提单回执、证据、缺口及清理 | 简洁问题数量/类别摘要、真实 Bug 链接及不可变私有报告 |
 
 **谁创建或改变资源，谁负责收尾。** Capture 负责录制、AT、音频的生命周期：每次采集前重新检测环境，每次尝试后检查异常并收尾，包括失败和中断，而不是只在首次 setup 或成功后检查。浏览器工具负责自建会话和临时状态，不关闭借用的已认证上下文或其他任务的标签页。Bug Bash 汇总真实证明和未解决项；租约仍由原资源管理方凭原始归属证明释放。
 
@@ -142,9 +143,12 @@ flowchart TD
 ```powershell
 copilot plugin marketplace add kaixun96/dev.A11yAssist
 copilot plugin install a11y-bug-bash@a11y-assist
+copilot plugin install a11y-test-categories@a11y-assist
+copilot plugin install a11y-file-bug@a11y-assist
+copilot plugin install a11y-report@a11y-assist
 ```
 
-安装后重启 Copilot 加载插件，无需另装 knowledge/setup/test-categories。实际页面检查需要已有、获授权的 Windows DevBox 浏览器连接；真实 AT 还需要可用连接与桌面独占归属。安装插件不提供浏览器/AT 程序或实时连接。仅计划/仅源码工作不需要 Windows setup。
+以上展示完整组合；不提单可省略 file-bug，使用协调器共享报告 CLI 时可省略 report 的独立安装。分类插件必须单装并将真实安装路径写入 `pluginRoots.testCategories`；缺少依赖直接提示，不读取隐藏副本。安装后重启 Copilot，无需另装 knowledge/setup。现场检查仍需要已有、获授权的 Windows 工具与独占归属；安装不提供浏览器/AT 程序或实时连接。仅计划/源码工作不执行 Windows setup。
 
 ### 提供 feature 信息，不必先填完整问卷
 

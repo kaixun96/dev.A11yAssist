@@ -12,12 +12,13 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 |---|---|---|
 | [a11y-bug-bash](plugins/a11y-bug-bash/README.md) | Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks | Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks |
 | [a11y-test-categories](plugins/a11y-test-categories/README.md) | Apply all ten accessibility test categories, step by step, to every in-scope target and reachable state | Feature scope and target/state inventory; Node.js 22+ for local accounting; authorized browser/AT tools and ownership for live checks |
+| [a11y-report](plugins/a11y-report/README.md) | Generate the overall accessibility report after validation and any approved Bug filing | Original private discovery journal, artifact bytes and compatible category-plugin version |
 
 ### Environment preparation
 
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
-| [a11y-setup](plugins/a11y-setup/README.md) | Check and prepare a Windows A11y environment: selected browser, NVDA, audio and Voice Access dependencies | Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization |
+| [a11y-setup](plugins/a11y-setup/README.md) | Resource-first DevBox setup: establish ownership, then check and prepare selected Windows accessibility tools | Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization |
 
 ### Knowledge and static review
 
@@ -30,7 +31,7 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
 | [a11y-intake](plugins/a11y-intake/README.md) | Read an authorized work item and prepare acceptance criteria and a reproduction scenario | Configured work-item access; built-in ADO read-item uses host-managed authentication |
-| [a11y-resources](plugins/a11y-resources/README.md) | Inspect resource status; release an explicitly authorized completed evaluator assignment | Authorized resource connection; release additionally needs the original completed, owned assignment |
+| [a11y-file-bug](plugins/a11y-file-bug/README.md) | Create an explicitly approved Bug after validation, with detailed reproduction, cause uncertainty and verified evidence attachments | Validated original discovery task/finding, reviewed artifacts, project metadata and an authorized Bug connection |
 | [a11y-capture](plugins/a11y-capture/README.md) | Capture real Windows AT evidence and recover owned recording, audio or NVDA resources | Qualified Windows capture connection with per-attempt preflight/postcheck, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD |
 | [a11y-validate](plugins/a11y-validate/README.md) | Check existing evidence files; optionally request independent behavior evaluation | Node.js 22+ and evidence-v1 files for structural checks; behavior evaluation requires a qualified connection |
 | [a11y-publish](plugins/a11y-publish/README.md) | Attach evidence to an existing Draft PR; integrate broader publication when configured | Authorized PR connection, exact HEAD and hash-bound files; built-in attachment action uses ADO authentication |

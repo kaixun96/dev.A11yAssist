@@ -62,7 +62,7 @@ The optional helper requires an explicit selection and prints commands by defaul
 .\tools\install.ps1 -Plugin a11y-knowledge
 ```
 
-`-Execute` runs the commands; `-Plugin all` selects the ten non-compatibility
+`-Execute` runs the commands; `-Plugin all` selects the eleven non-compatibility
 packages. Knowledge includes its ODSP subskill and full references by default.
 The old standalone ODSP install name remains supported for existing users only.
 Add `-WithAgentOW` only when intentionally installing that separate integration.
@@ -73,10 +73,12 @@ the same two read-only skills and all references used by `a11y-knowledge` under
 `modules/a11y-knowledge/`, preserving their relative paths without registering
 duplicate public commands or requiring another installation. Its context,
 coverage and report resources are generated from `src/bug-bash/`.
-`bundleTestCategories` packages the same skill, procedures and local matrix tool
-from `src/test-categories/` into standalone `a11y-test-categories` and Bug Bash's
-`modules/a11y-test-categories/`. The standalone package has its own manifest and
-catalog entry; the internal module has no manifest or duplicate public command.
+`bundleTestCategories` packages `src/test-categories/` only into standalone
+`a11y-test-categories`. Bug Bash and all other runtime packages contain no
+category procedures or matrix tools. `runtime/category-plugin.mjs` resolves the
+operator-configured absolute `pluginRoots.testCategories`, checks its manifest
+and versioned API, and binds the actual tool/procedure content into task history.
+Missing or changed dependencies fail closed; no implicit repository/sibling fallback.
 Bug Bash requires every target/state's full ten-category step matrix and checks
 accounting before completion. This does not implement a live browser/AT backend.
 It has no MCP/configuration server; live checks use the caller's already
@@ -85,7 +87,11 @@ authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it
 `bundleSetup` packages the same setup skill, profiles, shared native host script
 and compatibility browser helper in standalone `a11y-setup` and Bug Bash's
 `modules/a11y-setup/`. No second installer implementation or duplicate public
-command is registered. `InstallSafeDependencies -Dependency` selects a subset;
+command is registered inside Bug Bash. Standalone setup owns the former resource
+MCP tools; original DevBox/setup authority precedes host preparation.
+`a11y-file-bug` owns validated, explicitly approved WIT creation/attachments;
+`a11y-report` exposes the shared final generator and delivery.
+`InstallSafeDependencies -Dependency` selects a subset;
 omission preserves the legacy full set. Existing AgentOW consumers remain
 commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
 

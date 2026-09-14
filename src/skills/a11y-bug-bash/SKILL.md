@@ -67,14 +67,16 @@ them. Use every dimension in `bug-bash/coverage.json` as a planning prompt,
 not a universal rule or automatic failure. Record why a dimension is not applicable.
 Include entry, exit/cancel, error recovery and repeated use, not just the happy path.
 
-Read `modules/a11y-test-categories/skills/a11y-test-categories/SKILL.md`.
-Its root is `modules/a11y-test-categories`; it is the exact standalone plugin's
-skill, procedures and accounting tool, bundled without a second public command.
-Follow it inline, not a globally installed same-name skill or another agent.
+Use the separately installed `a11y-test-categories` plugin. Configure its actual
+absolute installation root as `pluginRoots.testCategories`; read its own
+`skills/a11y-test-categories/SKILL.md`. The versioned `tools/matrix.mjs` API owns
+procedure loading, expansion and accounting. Bug Bash carries no copy and never
+falls back to archived or guessed procedures. A missing/incompatible dependency
+blocks category expansion before execution; preserve original pins for old tasks.
 Inventory every in-scope region, control and meaningful content element in every
 reachable state, including page-level targets for global checks. For each
-target/state, expand all ten categories and every numbered step with the bundled
-`modules/a11y-test-categories/tools/matrix.mjs` into a private category matrix.
+target/state, call that plugin's matrix API to expand all ten categories and
+every numbered step into a private category matrix.
 Retain the original inventory and its explicit completeness/uncertainty.
 Read all ten procedures; execute all applicable steps in order, not just selected
 categories or representative controls. Every not-applicable step needs a
@@ -166,7 +168,7 @@ Give severity with user-impact rationale, confidence and justified standard/topi
 references; never invent a WCAG mapping. Suggested fixes are recommendations only.
 
 Every planned row must have an explicit status, evidence or a gap reason.
-For page-track completion, run the bundled category matrix check against the
+For page-track completion, call the category plugin's matrix check against the
 original target inventory. Missing/duplicate steps fail the gate. Valid but
 incomplete accounting (exit 2), unknown inventory completeness or any applicable
 pending/blocked/unrun/inconclusive step forces a partial report. Do not trim the
@@ -198,6 +200,14 @@ Use `validate` (the same implementation as `a11y_validate_discovery`) before
 reporting: it checks original child receipts/bytes and category accounting, not
 an arbitrary caller-authored report. Real behavior assessments remain separately
 attributed to the pinned trusted provider.
+If filing is explicitly requested, set `filingRequested:true` in the accepted
+plan. After validation and cleanup, `run` yields before reporting until each
+observed finding has a filing result or explicit skip reason. Use
+`a11y-file-bug` to draft detailed reproduction/cause and reviewed attachments,
+approve the exact draft/destination, submit once or record a justified skip.
+Never convert validation into permission to upload or create Bugs. Unknown
+creation requires original-ID reconciliation. The independent `a11y-report`
+plugin owns final generation and delivery; its shared generator backs the CLI.
 Use a real completion callback and independent stall watcher for unattended work;
 neither a CLI reply nor a saved next action installs them. Once rows are accounted
 for, `advance` performs scoped cleanup, report creation and configured private

@@ -28,14 +28,23 @@ test('setup is independently packaged and Bug Bash reuses its exact sources with
     await cp(join(root, 'plugins/a11y-setup'), directory, { recursive: true });
     const manifest = JSON.parse(await text(join(directory, 'plugin.json')));
     assert.equal(manifest.name, 'a11y-setup');
-    assert.equal(manifest.mcpServers, undefined);
-    assert.deepEqual(await filesUnder(directory), [
-      ...shared, 'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'
-    ].sort());
+    assert(manifest.mcpServers.a11y_setup);
+    const packaged = await filesUnder(directory);
+    for (const path of [...shared, 'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md']) {
+      assert(packaged.includes(path), `Missing ${path}`);
+    }
+    assert(!packaged.some(path => path.startsWith('test-categories/')));
     for (const path of shared) {
       const body = await text(join(directory, path));
-      assert.equal(body, await text(join(root, path.startsWith('docs/') ? path : `src/${path}`)));
-      assert.equal(body, await text(join(root, 'plugins/a11y-bug-bash/modules/a11y-setup', path)));
+      const source = await text(join(root, path.startsWith('docs/') ? path : `src/${path}`));
+      const internal = await text(join(root, 'plugins/a11y-bug-bash/modules/a11y-setup', path));
+      if (path === 'skills/a11y-setup/SKILL.md') {
+        assert(body.endsWith(source.slice(source.indexOf('\n---\n\n') + 6)));
+        assert.equal(internal, source);
+      } else {
+        assert.equal(body, source);
+        assert.equal(body, internal);
+      }
     }
     assert.deepEqual(await readdir(join(root, 'plugins/a11y-bug-bash/skills')), ['a11y-bug-bash']);
     await assert.rejects(access(join(root, 'plugins/a11y-bug-bash/modules/a11y-setup/plugin.json')), { code: 'ENOENT' });

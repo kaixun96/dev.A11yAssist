@@ -4,11 +4,15 @@
 
 ## Use this for
 
-Check and prepare a Windows A11y environment: selected browser, NVDA, audio and Voice Access dependencies
+Resource-first DevBox setup: establish ownership, then check and prepare selected Windows accessibility tools
 
 ## Prerequisites
 
 Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization.
+
+Node.js 22+.
+
+For live operations, configure only the required connection in a private file, set the absolute `A11Y_ASSIST_CONFIG` path before starting Copilot, then restart. See [connection setup](docs/PROVIDERS.md) and [configuration examples](config/README.md). No connection is enabled by default.
 
 ## Install your selection
 
@@ -29,7 +33,7 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Reuses AgentOW's shared host installer; no AgentOW or MCP dependency. Plugin installation does not install third-party tools. Prepare only an approved subset; driver, consent, elevation and restart are separate gates. No automatic scanner/ADK installation or live provider setup. Installed does not mean runtime-ready.
+Includes former resource status and completed-assignment release MCP tools; no separate resources plugin. Establish original DevBox/setup ownership before host changes. Local inventory uses approved host tools; resource MCP calls need a configured connection. No generic allocator, forced release, automatic scanner install or implied readiness.
 
 ## Reference
 

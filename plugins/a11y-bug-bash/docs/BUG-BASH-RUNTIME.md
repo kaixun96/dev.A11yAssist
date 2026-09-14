@@ -2,7 +2,7 @@
 
 **English** | [简体中文](BUG-BASH-RUNTIME.zh-CN.md)
 
-Package v0.17 / execution contract v0.8. Source implementation is separate from
+Package v0.18 / execution contract v0.9. Source implementation is separate from
 deployment and live qualification. This release never resumes an old task.
 
 The optional package-local CLI turns an accepted coverage plan into a durable
@@ -16,6 +16,13 @@ Use Node 22+ for this CLI. Copy `config/example.bug-bash.json` to an authorized
 private location, set the actual owner and an existing private `stateRoot` outside
 the repository/plugin, then set `A11Y_ASSIST_CONFIG` to that file.
 
+Install `a11y-test-categories` separately and set `pluginRoots.testCategories` to
+its actual absolute installed root. The coordinator calls that plugin's API;
+no category files are copied into consumers. The accepted task pins version,
+tool hash and procedure content. Missing/changed dependencies fail explicitly.
+Source-only or legacy plans without inventory need no category dependency but
+cannot claim complete page accounting.
+
 The example enables no executable provider. `discoveryProfiles` is an operator
 allow-list of capabilities and exact targets, not live readiness evidence.
 `discoverySourceRoots` is the operator's source-read boundary; a plan can narrow
@@ -28,7 +35,7 @@ executable protocol. The capture connection must explicitly implement
 automatically understand these actions. No dummy Bug, evidence-v1 request or
 unqualified browser/AT fallback is allowed.
 
-Those three lifecycle actions belong to **Bug Bash itself**, not a retired
+Cancellation/cleanup belong to **Bug Bash**; delivery belongs to **a11y-report**, not a retired
 operations plugin or the optional remediation workflow. Each module supplies
 its owned cleanup proof; the original resource authority releases ownership.
 With `providers: {}`, plan/source-only rounds can deliver a hash-verified
@@ -55,12 +62,20 @@ authorized private JSON plan. Required fields:
 | `rows` | Explicit applicable coverage, including required AT checks even if unavailable |
 | `inventory` | Target/state inventory from the category contract; required for complete page coverage |
 
-`create` reuses the bundled category procedures and adds every missing step for
+`create` calls the installed category plugin and adds every missing step for
 every inventory target/state (currently ten categories, 61 steps each).
 For an inventory-first plan, supply `rows: []` and a sufficient explicit
 `maxRows`. Unknown inventory completeness always prevents complete page coverage.
 Without an inventory, legacy bounded scenarios still run but cannot imply full
 feature coverage. Source-only does not expand page procedures.
+
+Set optional `filingRequested:true` when the user requested Bug filing. After
+validation and owned cleanup, bounded execution yields before reporting until
+each observed finding is filed or explicitly skipped with a reason. Use
+`a11y-file-bug` draft/submit/skip tools; exact-draft approval is still required.
+No flag automatically authorizes uploads. `a11y-report` generates the aggregate
+report, including actual Bug links and failed/skipped filing; pending effects
+block final reporting. See [filing](FILE-BUG.md) and [reporting](REPORT.md).
 
 Each row has `id`, `journey`, `state`, `dimension`, `track`, `capability`,
 `preconditions`, `actions`, `expected` and `reset`. Tracks are `page`, `source`

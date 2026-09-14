@@ -2,7 +2,7 @@
 
 [English](BUG-BASH-RUNTIME.md) | **简体中文**
 
-包 v0.17 / 执行契约 v0.8。源码实现、部署和现场验收分别记录；本版本不恢复任何旧任务。
+包 v0.18 / 执行契约 v0.9。源码实现、部署和现场验收分别记录；本版本不恢复任何旧任务。
 
 ## 配置与职责
 
@@ -10,11 +10,15 @@
 配置真实 owner、位于安装目录/仓库外的已有 `stateRoot`，并将
 `A11Y_ASSIST_CONFIG` 指向该文件。
 
+单独安装 `a11y-test-categories`，将真实绝对安装路径写入 `pluginRoots.testCategories`。
+协调器调用该插件 API，不复制类别文件。任务固定插件版本、工具哈希和规程内容；
+缺失或变化明确失败。仅源码或无清单的旧有限场景不要求分类依赖，但不能声称完整页面覆盖。
+
 `discoveryProfiles` 限定能力和精确目标，`discoverySourceRoots` 限定只读源码范围；
 这些是配置边界，不是现场健康证明。`providers.capture` 必须明确实现
 `discovery-observe`；兼容名称 `providers.operations` 实现
 `discovery-cancel`、`discovery-cleanup`、`discovery-deliver`。
-后三项属于 **Bug Bash 自身**，不需要已删除的 operations 插件或完整修复工作流。
+取消/收尾属于 **Bug Bash**，交付属于 **a11y-report**，不需要已删除的 operations 插件或完整修复工作流。
 各模块提供自有资源清理证明，原资源管理方负责释放。
 
 旧 BEFORE/AFTER provider 不会自动支持 discovery。不得伪造 Bug、租约、
@@ -30,10 +34,16 @@ evidence-v1 请求或降级证据。仅计划/源码模式可使用 `providers: 
 模式为 `both`、`page-only`、`source-only` 或 `plan-only`；未知目标/宿主/源码版本用 `null`。
 预算固定为 1-14400 秒；覆盖上限为 1-5000 行。
 
-`create` 复用内置规程，将每个对象/状态补齐全部十类、61 个步骤。
+`create` 调用独立分类插件，将每个对象/状态补齐全部十类、61 个步骤。
 清单优先的计划可传 `rows: []` 和足够的 `maxRows`。
 未知清单完整性不能得到完整页面覆盖结论；没有清单的旧有限场景仍可执行，
 但不能代表整个 feature 已测完。仅源码模式不展开页面步骤。
+
+用户要求提单时，在计划设置 `filingRequested:true`。验证和自有资源清理后，
+执行器会在最终报告前交回调用方，直到每个实际发现都有提单结果或明确跳过理由。
+使用 `a11y-file-bug` 的 draft/submit/skip 工具；仍须批准精确草稿与目的地，
+该标记不自动授权上传。`a11y-report` 生成含真实 Bug 链接、失败/跳过状态的整体报告；
+待定外部操作必须先核对。参见[提单](FILE-BUG.md)和[报告](REPORT.md)。
 
 每行包含 `id`、`journey`、`state`、`dimension`、`track`、`capability`、
 `preconditions`、`actions`、`expected`、`reset`；可增加 `dependsOn` 和有限 `parameters`。

@@ -1,6 +1,6 @@
 {
   "name": "a11y-file-bug",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Create explicitly approved Bugs from validated reproduced findings, with detailed reproduction and verified evidence attachments.",
   "author": {
     "name": "kaixun96"

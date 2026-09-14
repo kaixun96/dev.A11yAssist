@@ -5,15 +5,22 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { fileHash, hash } from '../src/runtime/core.mjs';
+import { fileHash, hash, withDirectoryLock } from '../src/runtime/core.mjs';
 import { createDiscovery, observeDiscovery, runDiscovery, reportDiscovery, deliverDiscovery,
-  skipDiscoveryBug, discoveryStatus } from '../src/runtime/bug-bash.mjs';
+  skipDiscoveryBug, discoveryStatus, appendDiscoveryRows } from '../src/runtime/bug-bash.mjs';
 import { prepareDiscoveryBug, fileDiscoveryBug } from '../src/runtime/file-bug.mjs';
 import { createAdoBug } from '../src/native/ado-bugs.mjs';
 import { loadCategoryPlugin } from '../src/runtime/category-plugin.mjs';
-import { reconcileOperation, operationStatus } from '../src/runtime/operations.mjs';
+import { reconcileOperation, operationStatus, executeOperation, resumeOperation,
+  discardUnstartedOperation } from '../src/runtime/operations.mjs';
 import { plan, row } from './fixtures/discovery-plan.mjs';
 
+function lookupResponse(target) {
+  if (target.includes('/workitemtypes/')) return Response.json({ value:
+    ['System.Title', 'System.Description', 'System.Tags'].map(referenceName => ({ referenceName })) });
+  if (target.includes('/wiql?')) return Response.json({ workItems: [] });
+  return null;
+}
 async function fixture(body) {
   const root = await mkdtemp(join(tmpdir(), 'a11y-filing-'));
   const definition = { executable: process.execPath, executableSha256: await fileHash(process.execPath),
@@ -47,7 +54,7 @@ test('requested filing yields before reporting; approved creation appears in fin
     const prepared = await prepareDiscoveryBug(config, input.taskId, input.issueId, input.details);
     assert.match(prepared.descriptionHtml, /Steps to reproduce/);
     assert.match(prepared.descriptionHtml, /Root cause \(unknown\)/);
-    await assert.rejects(fileDiscoveryBug(config, { ...input, approval: {} }), /Explicit approval/);
+    await assert.rejects(fileDiscoveryBug(config, { ...input, approval: {} }), /explicit.*approval/i);
     const approval = { approved: true, reference: 'Unit-only explicit approval', draftSha256: prepared.sha256,
       organization: 'https://example.invalid', project: 'unit' };
     const filed = await fileDiscoveryBug(config, { ...input, approval });
@@ -102,6 +109,10 @@ test('pending filing blocks reporting and skips until its original operation is 
     await assert.rejects(fileDiscoveryBug(config, { ...input, approval }), /pending; reconcile/);
     await assert.rejects(reportDiscovery(config, input.taskId), /pending Bug creation/);
     await assert.rejects(skipDiscoveryBug(config, input.taskId, input.issueId, 'Skip pending effect'), /must be reconciled/);
+    await withDirectoryLock(join(config.stateRoot, 'bug-bash', input.taskId), async () => {
+      await assert.rejects(reconcileOperation(config, 'a11y-file-bug', submitted.operationId), { code: 'EEXIST' });
+      await assert.rejects(deliverDiscovery(config, input.taskId), { code: 'EEXIST' });
+    });
     const reconciled = await reconcileOperation(config, 'a11y-file-bug', submitted.operationId);
     assert.equal(reconciled.requestId, submitted.requestId);
     assert.equal((await runDiscovery(config, input.taskId)).lifecycle, 'closed');
@@ -139,6 +150,8 @@ test('native WIT filing uploads bytes, attaches video and verifies remote fields
     let fields, relations, progress;
     const url = 'https://example.invalid/unit/_apis/wit/attachments/one';
     const fetchImpl = async (target, init) => {
+      const lookup = lookupResponse(target);
+      if (lookup) return lookup;
       methods.push(init.method ?? 'GET');
       assert.equal(init.redirect, 'error');
       if (target.includes('/attachments?')) {
@@ -174,7 +187,7 @@ test('native WIT filing uploads bytes, attaches video and verifies remote fields
 });
 test('copied filing/report/setup MCP packages expose their own tools without a categories fallback', async () => {
   for (const [plugin, expected] of [
-    ['a11y-file-bug', ['draft', 'submit', 'skip']],
+    ['a11y-file-bug', ['draft', 'submit', 'skip', 'inspect', 'resume', 'discard_unstarted']],
     ['a11y-report', ['generate', 'deliver']],
     ['a11y-setup', ['resources', 'invoke']]
   ]) {
@@ -201,6 +214,8 @@ test('built-in ADO filing recovers failed readback using the same ID and no repe
     const methods = [];
     let fields, relations, failReadback = true;
     t.mock.method(globalThis, 'fetch', async (target, init) => {
+      const lookup = lookupResponse(target);
+      if (lookup) return lookup;
       methods.push(init.method ?? 'GET');
       if (target.includes('/attachments?')) return Response.json({ url });
       if (target === url) return new Response(bytes);
@@ -224,9 +239,13 @@ test('built-in ADO filing recovers failed readback using the same ID and no repe
       assert.equal(pending.status, 'pending');
       const ledger = JSON.parse(await readFile(join(root, 'operations', pending.operationId, 'native-bug-progress.json')));
       assert.equal(ledger.progress.bugId, 71);
+      await assert.rejects(discardUnstartedOperation(config, 'a11y-file-bug', pending.operationId, 'Cannot hide a created Bug'),
+        /Only a proven/);
       assert.equal(methods.filter(method => method === 'POST').length, 2);
       methods.length = 0;
       failReadback = false;
+      await appendDiscoveryRows(config, input.taskId, [row('later-row', 'page')], 'Unit additive follow-up');
+      assert.notEqual((await discoveryStatus(config, input.taskId)).planHash, prepared.draft.planHash);
       const complete = await reconcileOperation(config, 'a11y-file-bug', pending.operationId);
       assert.equal(complete.receipt.bug.id, 71);
       assert.equal(complete.requestId, pending.requestId);
@@ -234,6 +253,104 @@ test('built-in ADO filing recovers failed readback using the same ID and no repe
     } finally {
       if (previous === undefined) delete process.env.A11Y_UNIT_BUG_AUTH;
       else process.env.A11Y_UNIT_BUG_AUTH = previous;
+    }
+  });
+});
+
+test('generic CLI/custom-provider filing cannot bypass exact draft, task identity or closed-task guards', async () => {
+  await fixture(async config => {
+    const input = { taskId: 'filing-round', ...await finding(config) };
+    const prepared = await prepareDiscoveryBug(config, input.taskId, input.issueId, input.details);
+    input.approval = { approved: true, reference: 'Unit approval', draftSha256: prepared.sha256,
+      organization: 'https://example.invalid', project: 'unit' };
+    const context = { subject: input.taskId, scenarioHash: prepared.draft.planHash };
+    await assert.rejects(executeOperation(config, 'a11y-file-bug', 'wrong-operation', 'file-bug', context, input),
+      /deterministic/);
+    await assert.rejects(executeOperation(config, 'a11y-file-bug', prepared.draft.operationId, 'file-bug',
+      context, { ...input, approval: { ...input.approval, draftSha256: '0'.repeat(64) } }), /Explicit approval/);
+    await skipDiscoveryBug(config, input.taskId, input.issueId, 'Unit final deferral');
+    await runDiscovery(config, input.taskId);
+    await assert.rejects(executeOperation(config, 'a11y-file-bug', prepared.draft.operationId, 'file-bug', context, input),
+      /already delivered/);
+  });
+});
+test('approval binds metadata/upload policy and audio cannot bypass playback review', async () => {
+  await fixture(async config => {
+    const input = { taskId: 'filing-round', ...await finding(config) };
+    const prepared = await prepareDiscoveryBug(config, input.taskId, input.issueId, input.details);
+    const approval = { approved: true, reference: 'Unit approval', draftSha256: prepared.sha256,
+      organization: 'https://example.invalid', project: 'unit' };
+    config.providers.bugs.bugFields = { 'System.AreaPath': 'unit\\different' };
+    await assert.rejects(fileDiscoveryBug(config, { ...input, approval }), /Explicit approval/);
+    const audio = structuredClone(input.details);
+    audio.evidence[0].name = 'speech.wav';
+    await assert.rejects(prepareDiscoveryBug(config, input.taskId, input.issueId, audio), /Audio/);
+    audio.evidence[0].kind = 'audio';
+    await assert.rejects(prepareDiscoveryBug(config, input.taskId, input.issueId, audio), /playback review/);
+  });
+});
+test('nonpass provider filing is included even when the optional subject echo is absent', async () => {
+  await fixture(async (config, root) => {
+    const input = { taskId: 'filing-round', ...await finding(config) };
+    config.providers.bugs.args = [...config.providers.bugs.args, '--blocked-filing'];
+    const prepared = await prepareDiscoveryBug(config, input.taskId, input.issueId, input.details);
+    const filed = await fileDiscoveryBug(config, { ...input, approval: { approved: true, reference: 'Unit approval',
+      draftSha256: prepared.sha256, organization: 'https://example.invalid', project: 'unit' } });
+    assert.equal(filed.receipt.outcome, 'blocked');
+    const result = await runDiscovery(config, input.taskId);
+    const report = await readFile(join(root, 'bug-bash', input.taskId, result.report.relativePath), 'utf8');
+    assert.match(report, /Unit filing unavailable/);
+    assert.equal(result.lifecycle, 'closed');
+  });
+});
+
+test('native prepared checkpoints support explicit continuation or honest abandonment through the public operation API', async t => {
+  for (const action of ['resume', 'discard']) await fixture(async (config, root) => {
+    const input = { taskId: 'filing-round', ...await finding(config) };
+    config.providers.bugs = { kind: 'ado', organization: 'https://example.invalid', project: 'unit',
+      authorizationEnvironmentVariable: 'A11Y_UNIT_RECOVERY_AUTH' };
+    const prepared = await prepareDiscoveryBug(config, input.taskId, input.issueId, input.details);
+    const bytes = await readFile(prepared.draft.attachments[0].localPath);
+    let available = false, fields, relations, mutations = 0;
+    const url = 'https://example.invalid/unit/_apis/wit/attachments/original';
+    t.mock.method(globalThis, 'fetch', async (target, init) => {
+      if (!available && target.includes('/workitemtypes/')) return Response.json({ value: [] });
+      const lookup = lookupResponse(target);
+      if (lookup) return lookup;
+      if (init.method === 'POST') mutations++;
+      if (target.includes('/attachments?')) return Response.json({ url });
+      if (target === url) return new Response(bytes);
+      if (target.includes('/workitems/$Bug')) {
+        const patch = JSON.parse(init.body);
+        fields = Object.fromEntries(patch.filter(item => item.path.startsWith('/fields/'))
+          .map(item => [item.path.slice(8), item.value]));
+        relations = patch.filter(item => item.path === '/relations/-').map(item => item.value);
+        return Response.json({ id: 81 });
+      }
+      return Response.json({ id: 81, fields: { ...fields, 'System.WorkItemType': 'Bug' }, relations });
+    });
+    const previous = process.env.A11Y_UNIT_RECOVERY_AUTH;
+    process.env.A11Y_UNIT_RECOVERY_AUTH = ['Bearer', 'offline-only'].join(' ');
+    try {
+      const approval = { approved: true, reference: 'Unit approval', draftSha256: prepared.sha256,
+        organization: 'https://example.invalid', project: 'unit' };
+      await assert.rejects(fileDiscoveryBug(config, { ...input, approval }), /configuration needs correction/);
+      const pending = await operationStatus(config, 'a11y-file-bug', prepared.draft.operationId);
+      assert.equal(mutations, 0);
+      available = true;
+      const result = action === 'resume'
+        ? await resumeOperation(config, 'a11y-file-bug', pending.operationId)
+        : await discardUnstartedOperation(config, 'a11y-file-bug', pending.operationId, 'Unit: stop before external mutations');
+      assert.equal(result.requestId, pending.requestId);
+      assert.equal(result.receipt.outcome, action === 'resume' ? 'pass' : 'abandoned');
+      assert.equal(mutations, action === 'resume' ? 2 : 0);
+      if (action === 'discard') assert.deepEqual(result.receipt.gates, {});
+      assert.equal((await runDiscovery(config, input.taskId)).lifecycle, 'closed');
+      const ledger = JSON.parse(await readFile(join(root, 'operations', pending.operationId, 'native-bug-progress.json')));
+      assert.equal(ledger.progress.phase, action === 'resume' ? 'verified' : 'prepared');
+    } finally {
+      if (previous === undefined) delete process.env.A11Y_UNIT_RECOVERY_AUTH;
+      else process.env.A11Y_UNIT_RECOVERY_AUTH = previous;
     }
   });
 });

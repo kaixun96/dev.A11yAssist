@@ -68,6 +68,12 @@ if (request.operation === 'status') {
   if (request.stage === 'file-bug') {
     receipt.bug = { id: 42, url: 'https://example.invalid/unit/_workitems/edit/42' };
     receipt.draftSha256 = request.input.approval.draftSha256;
+    if (process.argv.includes('--blocked-filing')) {
+      receipt.outcome = 'blocked';
+      receipt.reason = 'Unit filing unavailable';
+      delete receipt.subject;
+      delete receipt.bug;
+    }
   }
   if (request.stage === 'recover-media') {
     receipt.nativeRunId = request.input.nativeRunId;

@@ -35,15 +35,15 @@ async function verifyFinished(dir, state) {
 }
 function publicOperation(state) {
   return {
-    operationId: state.operationId, action: state.action, status: state.status,
+    operationId: state.operationId, action: state.action, status: state.status, subject: state.request.run.subject,
     requestId: state.request.requestId, updatedAt: state.updatedAt,
     receipt: state.receipt, receiptSha256: state.receiptSha256, pending: state.pending,
     waiting: state.status === 'pending' ? state.request.waiting : undefined
   };
 }
-async function consume(config, dir, state, operation) {
+async function consume(config, dir, state, operation, extra = {}) {
   demand(binding(config, state.action) === state.providerBinding, 'Operation provider changed; do not replay with a different executor');
-  const response = await invokeCapability(config, state.action, { ...state.request, operation }, callProvider);
+  const response = await invokeCapability(config, state.action, { ...state.request, ...extra, operation }, callProvider);
   if (response.state === 'pending') {
     state.pending = pendingDetails(state.request, response);
   } else {
@@ -61,6 +61,15 @@ export async function executeOperation(config, plugin, operationId, action, cont
   operationDefinition(action, plugin);
   validateContext(action, context);
   validateCapabilityInput(action, input);
+  if (action === 'file-bug') {
+    const { withValidatedFiling, filingAuthorization } = await import('./file-bug.mjs');
+    if (config.providers?.bugs?.kind === 'ado') filingAuthorization(config.providers.bugs);
+    return withValidatedFiling(config, operationId, context, input,
+      () => executeValidatedOperation(config, plugin, operationId, action, context, input));
+  }
+  return executeValidatedOperation(config, plugin, operationId, action, context, input);
+}
+async function executeValidatedOperation(config, plugin, operationId, action, context, input) {
   const providerBinding = binding(config, action);
   const dir = directory(config, operationId);
   await mkdir(dir, { recursive: true });
@@ -101,10 +110,39 @@ export async function operationStatus(config, plugin, operationId) {
 }
 export async function reconcileOperation(config, plugin, operationId) {
   const dir = directory(config, operationId);
-  return withDirectoryLock(dir, async () => {
+  const current = await readState(dir);
+  owned(current, config, plugin);
+  const reconcile = () => withDirectoryLock(dir, async () => {
     const state = await readState(dir);
     owned(state, config, plugin);
     demand(state.status === 'pending', 'Operation is not pending');
     return consume(config, dir, state, 'reconcile');
+  });
+  if (current.action === 'file-bug') return (await import('./file-bug.mjs'))
+    .withFilingTask(config, current.request.input.taskId, reconcile);
+  return reconcile();
+}
+export async function resumeOperation(config, plugin, operationId) {
+  return continueFilingOperation(config, plugin, operationId, 'resume');
+}
+export async function discardUnstartedOperation(config, plugin, operationId, reason) {
+  demand(typeof reason === 'string' && reason.trim(), 'An explicit abandonment reason is required');
+  return continueFilingOperation(config, plugin, operationId, 'discard-unstarted', { abandonReason: reason });
+}
+async function continueFilingOperation(config, plugin, operationId, operation, extra) {
+  const dir = directory(config, operationId);
+  const current = await readState(dir);
+  owned(current, config, plugin);
+  demand(current.action === 'file-bug' && config.providers?.bugs?.kind === 'ado',
+    'Explicit continuation supports only the original built-in ADO Bug operation');
+  const { withFilingTask, assertFilingContinuation } = await import('./file-bug.mjs');
+  return withFilingTask(config, current.request.input.taskId, async () => {
+    if (operation === 'resume') await assertFilingContinuation(config, current.request.input.taskId);
+    return withDirectoryLock(dir, async () => {
+      const state = await readState(dir);
+      owned(state, config, plugin);
+      demand(state.status === 'pending', 'Operation is not pending');
+      return consume(config, dir, state, operation, extra);
+    });
   });
 }

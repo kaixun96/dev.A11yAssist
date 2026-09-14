@@ -2,7 +2,11 @@
 
 ## What is executable today
 
-v0.18 adds the `bugs` ADO connection for `file-bug`: validated discovery,
+v0.19 / envelope v0.10 completes the built-in `bugs` connection's bounded
+chunked transfer, process-field/duplicate inspection, original-create correlation,
+explicit safe continuation and proven-unstarted abandonment. All filing entrypoints
+share the validated task/draft gate and lock; reports retain nonpass outcomes.
+v0.18 introduced the `bugs` ADO connection for `file-bug`: validated discovery,
 explicit exact-draft/destination approval, WIT binary attachments, Bug creation
 and field/relation/byte readback. It is not a generic workflow PASS. See
 [Bug filing](FILE-BUG.md) for project fields, video review and bounded upload.
@@ -25,6 +29,11 @@ fails explicitly; `doctor` never reports configuration as live readiness.
 
 This boundary is intentional: publishing private scripts wholesale would leak
 personal infrastructure assumptions and could establish a second unsafe pool.
+The bundled browser runner is limited to the anonymous/client-side scenarios in
+[BROWSER.md](BROWSER.md). Authenticated transactions, scanner/visual measurement
+and named real-AT capture drivers are **not implemented as generic built-ins**.
+Existing qualified deployment programs can implement the typed contracts; merely
+setting a profile does not supply those implementations.
 Installing the full workflow is not yet proof that a fresh user's environment
 can autonomously complete a real A11y Bug.
 
@@ -75,6 +84,9 @@ bounded diagnostics; core only reports the byte count, not raw diagnostic data.
 ```
 
 `operation: reconcile` uses the SAME request ID. Do not treat it as execute.
+The built-in ADO filing connection additionally supports explicit `resume` and
+`discard-unstarted` through its specialized tools/CLI. These are not new executable
+provider protocol obligations or general workflow-stage retries. See FILE-BUG.
 Long-lived work must live in a provider-owned detached executor with durable
 progress, not in the short-lived RPC process. A completion callback remains
 required unless the caller explicitly selects the polling contract below.
@@ -225,7 +237,7 @@ public configuration, operation inputs or output.
 
 In the full workflow, resource mutations belong inside the stage provider that owns their timing
 (intake claims, BEFORE evaluator acquisition, source Codespace acquisition,
-cleanup token-bound release). The standalone resources plugin exposes status
+cleanup token-bound release). The setup plugin's resource tools expose status
 and ownership diagnosis plus explicit `release-evaluator` for one exact completed
 native assignment. It does not acquire resources. That release must use the
 original authority's token/lock/completion validation with durable no-replay

@@ -2,13 +2,13 @@
 import { readFile } from 'node:fs/promises';
 import { createRun, doctor, readConfig, loadRun, publicRun, executeStage, reconcile,
   resourceStatus, assessProgress, VERSION } from './core.mjs';
-import { executeOperation, operationStatus, reconcileOperation } from './operations.mjs';
+import { executeOperation, operationStatus, reconcileOperation, resumeOperation, discardUnstartedOperation } from './operations.mjs';
 
 const [command, ...args] = process.argv.slice(2);
 try {
   if (command === 'version') console.log(VERSION);
   else {
-    const independent = ['invoke', 'operation-status', 'operation-reconcile', 'resources'].includes(command);
+    const independent = ['invoke', 'operation-status', 'operation-reconcile', 'operation-resume', 'operation-discard', 'resources'].includes(command);
     const config = await readConfig(undefined, { fullWorkflow: !independent });
     let result;
     if (command === 'invoke') {
@@ -17,6 +17,8 @@ try {
       result = await executeOperation(config, args[0], args[1], args[2], request.context, request.input ?? {});
     } else if (command === 'operation-status') result = await operationStatus(config, args[0], args[1]);
     else if (command === 'operation-reconcile') result = await reconcileOperation(config, args[0], args[1]);
+    else if (command === 'operation-resume') result = await resumeOperation(config, args[0], args[1]);
+    else if (command === 'operation-discard') result = await discardUnstartedOperation(config, args[0], args[1], args[2]);
     else if (command === 'doctor') result = await doctor(config);
     else if (command === 'create') result = await createRun(config, args[0]);
     else if (command === 'status') result = publicRun(await loadRun(config, args[0]));
@@ -26,7 +28,7 @@ try {
     else if (command === 'execute') {
       const input = args[2] ? JSON.parse(await readFile(args[2], 'utf8')) : {};
       result = await executeStage(config, 'a11y-workflow', args[0], args[1], input);
-    } else throw new Error('Usage: cli.mjs invoke <plugin> <operationId> <action> <request.json> | operation-status|operation-reconcile <plugin> <operationId> | version|doctor|create <subject>|status|progress|reconcile <run>|resources|execute <run> <stage> [input.json]');
+    } else throw new Error('Usage: cli.mjs invoke <plugin> <operationId> <action> <request.json> | operation-status|operation-reconcile|operation-resume <plugin> <operationId> | operation-discard <plugin> <operationId> <reason> | version|doctor|create <subject>|status|progress|reconcile <run>|resources|execute <run> <stage> [input.json]');
     console.log(JSON.stringify(result, null, 2));
   }
 } catch (error) {

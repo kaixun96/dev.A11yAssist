@@ -81,6 +81,7 @@ commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
 
 ## Further contracts
 
+- [Reusable large-plugin design and maintenance method](COMPOSABLE-PLUGIN-DESIGN.md) (DeepSeek-inspired service composition, constrained adaptation and evaluated evolution)
 - [Bug Bash plugin architecture and qualification design](BUG-BASH-ARCHITECTURE.md) (proposal; not installed capability)
 - [Independent capabilities](CAPABILITIES.md)
 - [Provider setup and protocol](PROVIDERS.md)

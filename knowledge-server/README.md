@@ -7,6 +7,10 @@ skills, knowledge, operational MCP servers, configuration and workflows remain
 unchanged. A host administrator may register this service alongside them; it is
 not discovered automatically by installing a plugin.
 
+For contributors and maintainers, see the
+[technical design and extension guide (简体中文)](TECH-DESIGN.md): architecture,
+content placement, entry/package examples, source review, schemas, tests and releases.
+
 ## Host registration
 
 Use Node.js 22 or later. Configure a **stdio** MCP server in the host's supported

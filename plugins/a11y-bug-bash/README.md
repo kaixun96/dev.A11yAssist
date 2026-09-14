@@ -38,6 +38,6 @@ Includes the same a11y-knowledge and a11y-setup modules internally; no extra ins
 - [Findings and coverage report template](bug-bash/report.template.md)
 - [Built-in environment preparation](modules/a11y-setup/docs/SETUP.md)
 - [Reused internal knowledge review](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
-- [Included project knowledge](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)
+- [Included portable knowledge](modules/a11y-knowledge/knowledge/README.md)
 
 [Back to the plugin catalog](https://github.com/kaixun96/dev.A11yAssist)

@@ -1,14 +1,13 @@
 ---
 name: a11y-setup
-description: Check and prepare a Windows accessibility evaluator environment. Reuse the shared AgentOW host installer for selected browser, NVDA, audio and Voice Access prerequisites; distinguish installation, configuration, consent and live readiness. Default check-only; prepare requires explicit host-change authorization.
+description: Check and prepare a Windows accessibility evaluator environment. Reuse the shared native host installer for selected browser, NVDA, audio and Voice Access prerequisites; distinguish installation, configuration, consent and live readiness. Default check-only; prepare requires explicit host-change authorization.
 ---
 
 Resolve bundled paths from the plugin root, two directories above this SKILL.md,
 not the user's working directory. Read `docs/SETUP.md`, `setup/profiles.json` and
-`setup/report.template.md`. The executable is `native/windows-host.ps1`; its
-bundled personal-browser helper is `integrations/agentow/runtime/personal-evaluator-browser.py`.
-These are the same authored implementations used by existing AgentOW exports,
-not commands to execute from the historical knowledge archive.
+`setup/report.template.md`. The executable is `native/windows-host.ps1`.
+Setup does not bundle or install a product browser helper; use the caller's
+existing authorized browser connection for target access.
 
 ## 1. Scope and authority
 
@@ -44,8 +43,8 @@ scanner, Narrator/ETW and capture/validate connections separately; the bundled
 installer does not install these automatically. No unrelated audio or Voice
 Access requirement may block browser-only work.
 
-In check mode, stop with the plan/report: do not install packages, copy the
-browser helper, open a browser/AT, change NVDA settings, accept agreements,
+In check mode, stop with the plan/report: do not install packages,
+open a browser/AT, change NVDA settings, accept agreements,
 elevate, transfer the Console session or reboot.
 
 ## 3. Prepare only the approved subset
@@ -54,7 +53,7 @@ In prepare mode, record explicit authorization for the actual host, selected
 packages, downloads/package agreements and configuration changes first. Existing
 authorization need not be requested twice. Use `InstallSafeDependencies` with
 an explicit `-Dependency` array derived from the chosen profiles, never its
-legacy all-dependencies default. The script adds required Python/Playwright
+existing all-dependencies default. The script adds required Python/Playwright
 dependencies, skips installed imports/binaries, and propagates installer errors.
 An NVDA selection also enables Speech Viewer; preserve the prior configuration
 and do not change it while an existing NVDA session owns it.
@@ -65,10 +64,9 @@ authenticated page, install a substitute package after a safety rejection, or
 write dependencies into the product repository. A timeout is unknown execution:
 record command/process identity and inspect that attempt before another install.
 
-For the personal-browser route, follow the dedicated helper installation and
-headed authentication procedure in `docs/SETUP.md`. Reuse a compatible owned
-profile; never copy cookies, start Edge against a Chromium profile or overwrite
-another deployment's helper/profile. Keep owner email process-local. Password,
+For browser access, follow the caller's approved visible connection procedure
+and `docs/SETUP.md`. Reuse a compatible owned profile; never copy cookies, start
+Edge against a Chromium profile or overwrite another deployment's profile. Password,
 Windows Hello, MFA, certificates and consent require the owner. A headless login
 result alone is not that blocker; use approved visible silent renewal first.
 
@@ -81,14 +79,14 @@ deploy a runtime or create/overwrite a protected task without its own authorizat
 If the caller explicitly requests additional marketplace plugins, install only
 the needed named packages following their README, preserve existing private
 configuration, and restart Copilot before checking they are actually loaded.
-No AgentOW prerequisite, global same-name skill invocation, sub-agent dispatch
+No integration prerequisite, global same-name skill invocation, sub-agent dispatch
 or automatic MCP-to-MCP connection is introduced by this plugin.
 
 ## 4. Re-probe, qualify and hand back
 
 Re-run Probe after changes and after each manual step/restart. Preserve separate
 raw reports and actual exit codes. Do not interpret `scenarios.*` booleans as
-live readiness: the inherited probe uses legacy browser assumptions and cannot
+live readiness: the remaining probe flags use Edge assumptions and cannot
 prove Chromium launch, current target authentication, AT output or audio behavior.
 
 With separately authorized owned interactive access, verify only requested

@@ -10,15 +10,15 @@ certification service. No sibling plugin is required.
 
 - One public entrypoint, `/a11y-bug-bash`.
 - Context, coverage and report templates under `bug-bash/`.
-- The exact two knowledge skills and complete references from `a11y-knowledge`,
+- The exact unified knowledge skill and portable topics from `a11y-knowledge`,
   bundled privately within the package at `modules/a11y-knowledge/`.
 - A staged skill that coordinates page inspection and read-only source review.
 - The same setup skill, profiles and shared host installer as `a11y-setup`,
   privately bundled under `modules/a11y-setup/` for environment preparation.
 
 The internal module has no plugin manifest and is not a nested installed plugin.
-Its skills are read as instructions for the source-review substep, not registered
-as additional top-level commands. Their paths resolve relative to the module
+Its skill is read as instructions for the source-review substep, not registered
+as an additional top-level command. Its paths resolve relative to the module
 root. Installing standalone knowledge as well does not duplicate Bug Bash's
 public command or require choosing between two top-level knowledge commands.
 Knowledge rules have one authored source; the Bug Bash coverage prompts organize

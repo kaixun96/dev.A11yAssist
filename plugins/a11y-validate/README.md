@@ -40,6 +40,5 @@ The a11y_validate_evidence tool needs no provider or run journal. Structure and 
 ## Reference
 
 - [Capability interfaces and boundaries](docs/CAPABILITIES.md)
-- [Evidence-v1 file format](integrations/agentow/knowledge/evidence-contract.md)
 
 [Back to the plugin catalog](https://github.com/kaixun96/dev.A11yAssist)

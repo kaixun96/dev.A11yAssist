@@ -3,7 +3,7 @@
 The [homepage](../README.md) is a plugin catalog, not an architecture tour.
 Users choose a plugin by purpose, prerequisites and example. Each generated
 plugin directory has English and Chinese READMEs and can be installed alone.
-Keep migration history and implementation details off the main selection path.
+Keep implementation details off the main selection path.
 
 ## Authoring and distribution
 
@@ -14,21 +14,18 @@ Keep migration history and implementation details off the main selection path.
 | `src/bug-bash/` | Feature discovery context/coverage/report templates, not another rule engine |
 | `src/setup/` | Scenario-scoped dependency profiles and readiness report |
 | `src/runtime/`, `src/contracts/`, `src/adapters/`, `src/native/` | Shared implementation |
-| `src/integrations/` | Integration-specific executable source |
 | `plugins/` | Generated, self-contained installation packages; do not edit |
 | `config/` | Placeholder templates, also bundled by execution packages |
-| `integrations/agentow/knowledge/` | Preserved source inventory, complete project references and immutable archive |
-| `runtime/`, `native/`, `integrations/agentow/runtime/` | Generated compatibility exports for existing AgentOW consumers |
 | `tools/`, `tests/` | Build/install tooling and regression tests |
 
 The source layout is not the installed layout. Installed skills still resolve
 `runtime/`, `knowledge/` and `contracts/` from their own plugin root. No package
 depends on this repository's `src/` or another installed package.
 
-The AgentOW updater validates exact public export paths. Retain those generated
-exports and their hashes rather than breaking the consumer for cosmetic layout
-changes. The archived project knowledge retains its original paths and bodies;
-its plugin page provides direct SPDS/Fluent/SharePoint navigation.
+There are no historical integration archives or root runtime/native exports.
+The canonical evidence-v1 validator, native ADO implementation and scoped setup
+helper remain source; preserve their factual attribution and license notices.
+Source and review providers are configured directly, without workflow profiles.
 
 ## Local development
 
@@ -42,8 +39,8 @@ npm run check
 
 Change authored files, then regenerate. Build checks that the catalog covers
 every installable plugin and that all bundled reference targets exist. Tests
-check standalone packages, navigation, read-only boundaries and compatibility
-exports. `npm run check` rejects generated drift, including homepages and READMEs.
+check standalone packages, navigation, read-only boundaries and the absence of
+retired exports. `npm run check` rejects generated drift, including homepages and READMEs.
 No dependency installation is needed for the existing built-in Node test runner.
 
 Use `npm run doctor` for source-level configuration diagnostics, or the installed
@@ -58,26 +55,27 @@ The optional helper requires an explicit selection and prints commands by defaul
 .\tools\install.ps1 -Plugin a11y-knowledge
 ```
 
-`-Execute` runs the commands; `-Plugin all` selects the ten non-compatibility
-packages. Knowledge includes its ODSP subskill and full references by default.
-The old standalone ODSP install name remains supported for existing users only.
-Add `-WithAgentOW` only when intentionally installing that separate integration.
+`-Execute` runs the commands; `-Plugin all` selects all ten packages. The unified
+knowledge skill supports generic and ODSP source review using offline portable
+topics and supplied current component documentation. No separate ODSP alias or
+integration installation option is supported.
 The helper never defaults to the full workflow.
 
 `a11y-bug-bash` exposes only its own public skill. `bundleKnowledgeReview` copies
-the same two read-only skills and all references used by `a11y-knowledge` under
+the same single read-only skill and portable topics used by `a11y-knowledge` under
 `modules/a11y-knowledge/`, preserving their relative paths without registering
 duplicate public commands or requiring another installation. Its context,
 coverage and report resources are generated from `src/bug-bash/`.
 It has no MCP/configuration server; live checks use the caller's already
 authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it.
 
-`bundleSetup` packages the same setup skill, profiles, shared native host script
-and compatibility browser helper in standalone `a11y-setup` and Bug Bash's
+`bundleSetup` packages the same setup skill, profiles and scoped native host script
+in standalone `a11y-setup` and Bug Bash's
 `modules/a11y-setup/`. No second installer implementation or duplicate public
 command is registered. `InstallSafeDependencies -Dependency` selects a subset;
-omission preserves the legacy full set. Existing AgentOW consumers remain
-commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
+omission preserves the existing full dependency set, while the skill always
+supplies an explicit subset. Setup does not ship or invoke a product browser
+helper. Read [setup boundaries](SETUP.md).
 
 ## Further contracts
 
@@ -87,6 +85,5 @@ commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
 - [Independent capabilities](CAPABILITIES.md)
 - [Provider setup and protocol](PROVIDERS.md)
 - [Optional workflow](WORKFLOW.md)
-- [Knowledge ownership and preservation](KNOWLEDGE.md)
-- [Migration status](MIGRATION.md)
+- [Knowledge ownership and consumption](KNOWLEDGE.md)
 - [Releases and freshness](RELEASING.md)

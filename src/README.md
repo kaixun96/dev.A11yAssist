@@ -13,19 +13,17 @@ You do not need to understand this directory to install or use a plugin.
 | `contracts/` | Capability, plugin and workflow contracts |
 | `adapters/` | Caller adapters |
 | `native/` | Native execution implementations |
-| `integrations/` | Integration-specific executable source |
+| `setup/` | Scoped dependency selections and readiness report |
 
 Run `npm run build` from the repository root to generate the homepages, plugin
 READMEs, installable `plugins/` packages and release metadata. Never hand-edit
 those outputs. Package paths stay independent of this source layout.
 
-The original project knowledge and its immutable inventory remain under
-`integrations/agentow/knowledge/` at the repository root. Users reach them through
-the built-in ODSP submodule in `a11y-knowledge`, not by knowing their historical
-source location or installing a second plugin.
-The root `runtime/` and `native/` files and integration browser export are
-generated compatibility exports at paths consumed by AgentOW. They are not
-additional authoring sources. Do not remove or rename these public exports
-without a coordinated consumer migration.
+The ten plugins contain no historical integration archives, retired ODSP alias
+or root runtime/native exports. The shared evidence-v1 validator and native ADO
+implementations remain canonical source and are bundled in execution plugins.
+The unified knowledge skill reads the existing portable topics offline and uses
+supplied current component documentation for project-specific source review.
+Bug Bash reuses the same knowledge and setup sources under internal modules.
 
 See [development](../docs/DEVELOPMENT.md) and [releases](../docs/RELEASING.md).

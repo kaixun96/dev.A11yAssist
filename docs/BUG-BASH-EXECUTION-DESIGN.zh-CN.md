@@ -83,7 +83,7 @@
 
 ## 5. 打包与实际调用
 
-一次 Bug Bash 安装仍应足以提供说明与共享模块。保留 `bundleKnowledgeReview` 和 `bundleSetup` 作为单一源码组合模式。手写变更归属 `src/`；不得手改生成的 `plugins/` 和保留的兼容导出。
+一次 Bug Bash 安装仍应足以提供说明与共享模块。保留 `bundleKnowledgeReview` 和 `bundleSetup` 作为单一源码组合模式。手写变更归属 `src/`；不得手改生成的 `plugins/`。不再发布根目录兼容导出。
 
 目标可执行包可以内置共享运行时，并提供命名空间明确的 Bug Bash MCP 入口。这是需要显式选择加入的新增能力，不是 0.15 已有能力。保留无需 provider 的计划/源码用法，不将 Windows setup 或执行配置变成其前提。
 

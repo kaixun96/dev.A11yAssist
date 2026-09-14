@@ -38,6 +38,6 @@ copilot plugin install a11y-bug-bash@a11y-assist
 - [问题与覆盖率报告模板](bug-bash/report.template.md)
 - [内置环境准备模块](modules/a11y-setup/docs/SETUP.md)
 - [内部复用的知识审查](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
-- [随包项目知识](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)
+- [随包通用知识](modules/a11y-knowledge/knowledge/README.md)
 
 [返回插件目录](https://github.com/kaixun96/dev.A11yAssist/blob/main/README.zh-CN.md)

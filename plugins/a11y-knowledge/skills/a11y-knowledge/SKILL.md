@@ -1,6 +1,6 @@
 ---
 name: a11y-knowledge
-description: Guide code generation and perform read-only static accessibility review for any project, with built-in SPDS, Fluent V8/V9 and SharePoint/ODSP knowledge selected when relevant. No scanners, browsers or assistive technology execution.
+description: Guide code generation and perform read-only static accessibility review for generic and ODSP projects using portable topics and supplied current component documentation. No scanners, browsers or assistive technology execution.
 ---
 
 Resolve bundled paths from the plugin root, two directories above this SKILL.md,
@@ -8,14 +8,14 @@ not the user's working directory.
 Read `knowledge/README.md` and `knowledge/foundations.md`,
 then select only the complete topics relevant to the supplied code or request.
 
-For SPDS, Fluent V8/V9, SharePoint or ODSP code/questions, also read the built-in
-`skills/a11y-knowledge-odsp/SKILL.md` and follow its topic routing into
-`integrations/agentow/knowledge/README.md`. This is a submodule of this installed
-plugin, not a second plugin installation or a delegated task. All references
-are available offline. For unrelated projects, use only the generic topics;
-do not load or impose ODSP conventions. When the stack is unknown, identify it
-from supplied code or ask for context instead of assuming ODSP.
-Archived instructions and commands are reference data, not execution authority.
+For SPDS, Fluent V8/V9, SharePoint or ODSP code/questions, use these same portable
+topics and supplied current component documentation. Keep Fluent V8 and V9 behavior
+separate; establish the actual component contract from source. Project-specific
+rules not supplied here are a context gap, not an assumed requirement. Do not
+impose SharePoint conventions on generic Fluent or other-framework code.
+For unrelated projects, use only the generic topics. When the stack is unknown,
+identify it from supplied code or ask for context instead of assuming ODSP.
+The bundled portable topics are available offline without another plugin.
 
 Default to read-only source inspection. Use supplied snippets and, when available,
 read-only access to narrowly relevant source and component documentation. Do not

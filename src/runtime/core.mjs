@@ -4,8 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { invokeCapability, providerFor } from './capability.mjs';
-import { validateProfileReceipt } from './profiles.mjs';
+import { invokeCapability, providerFor, rejectRemovedConfiguration } from './capability.mjs';
 import { validateAdoProvider, callAdoProvider } from './builtin-ado.mjs';
 import { createWaiting, pendingDetails, validateWaitingConfig } from './waiting.mjs';
 
@@ -16,6 +15,7 @@ export const VERSION = workflow.version;
 const idPattern = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,100}$/;
 const shaPattern = /^[a-f0-9]{64}$/;
 const commitPattern = /^[a-f0-9]{40}$/;
+const providerNames = ['intake', 'capture', 'source', 'review', 'validate', 'publish', 'operations', 'resources'];
 export const hash = value => createHash('sha256').update(value).digest('hex');
 
 function demand(condition, message) {
@@ -26,8 +26,7 @@ export async function readConfig(path = process.env.A11Y_ASSIST_CONFIG, { fullWo
   demand(path && isAbsolute(path), 'A11Y_ASSIST_CONFIG must name an absolute private configuration file');
   const config = JSON.parse(await readFile(path, 'utf8'));
   demand(config.schemaVersion === 1, 'Unsupported configuration');
-  demand(config.workflowProfile === undefined || ['generic', 'agentow-odsp'].includes(config.workflowProfile),
-    'Unsupported workflow profile');
+  rejectRemovedConfiguration(config);
   if (fullWorkflow) demand(workflow.modes.includes(config.mode), 'Unsupported configuration/mode');
   demand(typeof config.owner === 'string' && idPattern.test(config.owner), 'Configuration requires an auditable owner namespace');
   demand(typeof config.stateRoot === 'string' && isAbsolute(config.stateRoot), 'stateRoot must be absolute shared storage');
@@ -35,14 +34,15 @@ export async function readConfig(path = process.env.A11Y_ASSIST_CONFIG, { fullWo
     config.devboxes.every(id => typeof id === 'string' && idPattern.test(id)) &&
     new Set(config.devboxes).size === config.devboxes.length, 'Provide unique Windows DevBox identifiers');
   if (fullWorkflow) demand(config.mode !== 'twin' || config.devboxes.length >= 2, 'Twin mode requires multiple DevBoxes');
-  demand(config.providers && typeof config.providers === 'object', 'Explicit trusted providers are required');
+  demand(config.providers && typeof config.providers === 'object' && !Array.isArray(config.providers),
+    'Explicit trusted providers are required');
   if (fullWorkflow && config.mode === 'twin') {
     demand(typeof config.twin?.conversationId === 'string' && config.twin.conversationId &&
       typeof config.twin?.runtimePath === 'string' && isAbsolute(config.twin.runtimePath),
     'Twin mode requires an exact conversation binding and local runtime metadata path');
   }
   for (const [name, provider] of Object.entries(config.providers)) {
-    demand(['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources'].includes(name), 'Unknown provider');
+    demand(providerNames.includes(name), `Unknown provider: ${name}`);
     validateWaitingConfig(provider, config.mode);
     if (provider?.kind === 'ado') {
       demand(['intake', 'publish'].includes(name), 'ADO built-in connection supports only intake/publication');
@@ -65,8 +65,9 @@ export async function fileHash(path) {
 }
 
 export async function doctor(config) {
+  rejectRemovedConfiguration(config);
   const capabilities = {};
-  for (const name of ['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources']) {
+  for (const name of providerNames) {
     const provider = config.providers[name];
     if (!provider) { capabilities[name] = 'not-configured'; continue; }
     if (provider.kind === 'ado') {
@@ -115,11 +116,13 @@ export async function withDirectoryLock(dir, operation) {
 }
 
 export async function loadRun(config, runId) {
+  rejectRemovedConfiguration(config);
   const state = JSON.parse(await readFile(join(pathFor(config, runId), 'run.json'), 'utf8'));
   demand(state.owner === config.owner && state.version === VERSION && state.schemaVersion === 1,
     'Foreign owner or incompatible run version; do not mutate it');
-  demand(state.mode === config.mode, 'Run mode changed; explicit migration required');
-  demand(state.workflowProfile === (config.workflowProfile ?? 'generic'), 'Run workflow profile changed');
+  demand(state.mode === config.mode, 'Run mode changed; do not resume or mutate the original run');
+  demand(!('workflowProfile' in state), 'Saved workflowProfile is no longer supported; run cannot be resumed');
+  demand(state.pending?.provider !== 'agentow', 'Saved providers.agentow binding is no longer supported; run cannot be resumed');
   return state;
 }
 
@@ -137,12 +140,13 @@ export function publicRun(state) {
 }
 
 export async function createRun(config, bug) {
+  rejectRemovedConfiguration(config);
   demand(typeof bug === 'string' && bug.trim().length > 0 && bug.length <= 2048, 'A non-empty work item reference is required');
   const runId = `run-${randomUUID()}`;
   const directory = pathFor(config, runId);
   await mkdir(directory, { recursive: true });
   const state = { schemaVersion: 1, version: VERSION, runId, bug, owner: config.owner,
-    mode: config.mode, workflowProfile: config.workflowProfile ?? 'generic', status: 'ready', nextStage: 'intake', revision: 0,
+    mode: config.mode, status: 'ready', nextStage: 'intake', revision: 0,
     scenarioHash: null, evaluator: null, head: null, receipts: [], pending: null,
     outcome: null, updatedAt: new Date().toISOString() };
   await atomicJson(join(directory, 'run.json'), state);
@@ -150,6 +154,8 @@ export async function createRun(config, bug) {
 }
 
 export async function callProvider(config, providerName, request) {
+  rejectRemovedConfiguration(config);
+  demand(providerNames.includes(providerName), `Unknown provider: ${providerName}`);
   const provider = config.providers[providerName];
   demand(provider, `Provider ${providerName} is not configured; no live operation performed`);
   if (provider.kind === 'ado') return callAdoProvider(provider, request);
@@ -217,7 +223,6 @@ export function validateReceipt(state, receipt) {
     return;
   }
   for (const gate of stage.gates) demand(receipt.gates?.[gate] === true, `Missing gate: ${gate}`);
-  validateProfileReceipt(state.workflowProfile, receipt);
   if (stage.id === 'intake') demand(shaPattern.test(receipt.scenarioHash ?? ''), 'Intake must seal canonical scenario');
   if (['before', 'source', 'after', 'validate', 'review', 'publish'].includes(stage.id)) {
     demand(receipt.scenarioHash === state.scenarioHash, 'Canonical scenario changed');

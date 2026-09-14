@@ -1,13 +1,12 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('Probe', 'InstallSafeDependencies', 'InstallPersonalEvaluatorBrowser', 'CheckPersonalEvaluatorBrowser', 'StageVbCable', 'LaunchVbCableInstaller', 'OpenVoiceAccess', 'InstallConsoleTransferTask', 'RunConsoleTransfer', 'ValidateHost')]
+    [ValidateSet('Probe', 'InstallSafeDependencies', 'StageVbCable', 'LaunchVbCableInstaller', 'OpenVoiceAccess', 'InstallConsoleTransferTask', 'RunConsoleTransfer', 'ValidateHost')]
     [string]$Action,
 
     [string]$OutputPath,
     [string]$SetupRoot,
     [string]$ConsoleTaskName = 'AgentOW-A11Y-TransferToConsole',
-    [string]$PersonalEvaluatorSource,
     [ValidateNotNullOrEmpty()]
     [ValidateSet('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')]
     [string[]]$Dependency = @('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')
@@ -31,16 +30,6 @@ if ([string]::IsNullOrWhiteSpace($SetupRoot)) {
 $setupRoot = $SetupRoot
 $vbCableRoot = Join-Path $setupRoot 'vb-cable-pack45'
 $consoleTaskName = $ConsoleTaskName
-$personalEvaluatorSources = @(
-    $PersonalEvaluatorSource,
-    (Join-Path $PSScriptRoot '..\integrations\agentow\runtime\personal-evaluator-browser.py'),
-    (Join-Path $PSScriptRoot '..\..\..\tools\personal-evaluator-browser.py'),
-    (Join-Path $PSScriptRoot '..\..\..\..\tools\personal-evaluator-browser.py')
-)
-$personalEvaluatorPath = Join-Path $setupRoot 'personal-evaluator-browser.py'
-$personalEvaluatorProfile = Join-Path $HOME '.playwright\personal-evaluator-profile'
-$personalEvaluatorAuthStatePath = Join-Path $setupRoot 'personal-evaluator-auth.json'
-$personalEvaluatorAuthMaxAge = [TimeSpan]::FromMinutes(30)
 
 function Get-ExistingPath {
     param([string[]]$Candidates)
@@ -228,85 +217,6 @@ function Get-ConsoleTransferState {
         }
         lastTaskResult = [int]$info.LastTaskResult
     }
-}
-
-function Get-PersonalEvaluatorState {
-    $installed = Test-Path -LiteralPath $personalEvaluatorPath
-    $profileExists = Test-Path -LiteralPath $personalEvaluatorProfile
-    $scriptHash = if ($installed) {
-        Get-Sha256 $personalEvaluatorPath
-    } else {
-        $null
-    }
-    $authenticated = $false
-    $lastCheckedAt = $null
-    if ($profileExists -and (Test-Path -LiteralPath $personalEvaluatorAuthStatePath)) {
-        try {
-            $authState = Get-Content -LiteralPath $personalEvaluatorAuthStatePath -Raw | ConvertFrom-Json
-            $checkedAt = [DateTimeOffset]::Parse([string]$authState.checkedAt)
-            $fresh = [DateTimeOffset]::UtcNow - $checkedAt.ToUniversalTime() -le $personalEvaluatorAuthMaxAge
-            $authenticated = $authState.state -eq 'authenticated' -and
-                $authState.scriptSha256 -eq $scriptHash -and
-                $fresh
-            $lastCheckedAt = $checkedAt.ToUniversalTime().ToString('o')
-        }
-        catch {
-            $authenticated = $false
-        }
-    }
-
-    return [ordered]@{
-        installed = $installed
-        scriptPath = $personalEvaluatorPath
-        profileExists = $profileExists
-        profilePath = $personalEvaluatorProfile
-        authenticated = [bool]$authenticated
-        lastCheckedAt = $lastCheckedAt
-        authenticationMaxAgeMinutes = [int]$personalEvaluatorAuthMaxAge.TotalMinutes
-    }
-}
-
-function Install-PersonalEvaluatorBrowser {
-    $source = Get-ExistingPath $personalEvaluatorSources
-    if (-not $source) {
-        throw "Personal evaluator source was not found at: $($personalEvaluatorSources -join ', ')"
-    }
-    New-Item -ItemType Directory -Path $setupRoot -Force | Out-Null
-    Copy-Item -LiteralPath $source -Destination $personalEvaluatorPath -Force
-    Remove-Item -LiteralPath $personalEvaluatorAuthStatePath -Force -ErrorAction SilentlyContinue
-    Write-Output $personalEvaluatorPath
-}
-
-function Check-PersonalEvaluatorBrowser {
-    if (-not (Test-Path -LiteralPath $personalEvaluatorPath)) {
-        throw 'InstallPersonalEvaluatorBrowser must run before CheckPersonalEvaluatorBrowser'
-    }
-    $python = Get-PythonPath
-    if (-not $python) {
-        throw 'Python is required for the personal evaluator browser'
-    }
-    Remove-Item -LiteralPath $personalEvaluatorAuthStatePath -Force -ErrorAction SilentlyContinue
-    $output = @(& $python $personalEvaluatorPath check 2>&1)
-    $exitCode = $LASTEXITCODE
-    $jsonLine = $output |
-        ForEach-Object { [string]$_ } |
-        Where-Object { $_.Trim().StartsWith('{') } |
-        Select-Object -Last 1
-    $result = if ($jsonLine) {
-        $jsonLine | ConvertFrom-Json
-    } else {
-        $null
-    }
-    $output | Write-Output
-    if ($exitCode -ne 0 -or -not $result -or $result.state -ne 'authenticated') {
-        throw "Personal evaluator browser authentication check failed with exit code $exitCode"
-    }
-    [ordered]@{
-        state = 'authenticated'
-        checkedAt = [DateTimeOffset]::UtcNow.ToString('o')
-        scriptSha256 = Get-Sha256 $personalEvaluatorPath
-        profilePath = $personalEvaluatorProfile
-    } | ConvertTo-Json | Set-Content -LiteralPath $personalEvaluatorAuthStatePath -Encoding UTF8
 }
 
 function Get-AudioEndpoints {
@@ -569,7 +479,6 @@ function Get-Capabilities {
         }
         windowsPerformanceRecorder = $wpr
         windowsPerformanceAnalyzer = $wpa
-        personalEvaluatorBrowser = Get-PersonalEvaluatorState
         voiceAccess = Get-VoiceAccessState $cableOutput $audioEndpoints $defaultRecordingEndpoint
         vbCable = [ordered]@{
             renderEndpointReady = $cableInput.Count -gt 0
@@ -598,12 +507,6 @@ function Get-Capabilities {
         host = 'windows'
         prerequisites = $prerequisites
         scenarios = [ordered]@{
-            browserKeyboard = [bool]($prerequisites.edge.available -and
-                $prerequisites.python.available -and
-                $prerequisites.python.playwright -and
-                $prerequisites.personalEvaluatorBrowser.installed -and
-                $prerequisites.personalEvaluatorBrowser.profileExists -and
-                $prerequisites.personalEvaluatorBrowser.authenticated)
             nvda = [bool]($prerequisites.edge.available -and $prerequisites.nvda.available -and
                 $prerequisites.nvda.speechViewer.configured)
             narratorEtw = [bool]($prerequisites.edge.available -and
@@ -918,14 +821,6 @@ switch ($Action) {
     }
     'InstallSafeDependencies' {
         Install-SafeDependencies -Dependencies $Dependency
-        Write-Capabilities
-    }
-    'InstallPersonalEvaluatorBrowser' {
-        Install-PersonalEvaluatorBrowser
-        Write-Capabilities
-    }
-    'CheckPersonalEvaluatorBrowser' {
-        Check-PersonalEvaluatorBrowser
         Write-Capabilities
     }
     'StageVbCable' {

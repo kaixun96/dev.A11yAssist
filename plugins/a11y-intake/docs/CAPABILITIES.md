@@ -2,7 +2,7 @@
 
 Small plugins do one job inside the caller's workflow. The caller chooses the
 order, interprets the result and decides what happens next. They do not require
-this repository's intake, a global Bug/run journal, AgentOW or unrelated stages.
+this repository's intake, a global Bug/run journal or unrelated stages.
 
 `a11y-workflow` is an optional composition, not the parent that every caller must
 use. Its stricter phase ordering is local to that workflow.
@@ -14,6 +14,8 @@ use. Its stricter phase ordering is local to that workflow.
 | a11y-intake | `a11y_intake_invoke`, action `read-item` | `subject`; built-in ADO connection and input.itemId |
 | a11y-publish | `a11y_publish_invoke`, action `attach-evidence` | Exact `head`; built-in ADO connection, existing Draft PR and hash-bound files |
 | a11y-knowledge | `/a11y-knowledge` | Supplied code/question; source-only guidance |
+| a11y-bug-bash | `/a11y-bug-bash` | Feature context and verification steps; separate authorized page and read-only source tracks, no automatic fixes/filing |
+| a11y-setup | `/a11y-setup` | Actual Windows host and selected dependencies; check-only by default, preparation separately authorized; no operational MCP |
 | a11y-intake | `a11y_intake_invoke`, action `intake` | `subject`: authorized item reference |
 | a11y-capture | `a11y_capture_invoke`, action `before` or `after` | `scenarioHash`, `evaluator`; AFTER also `head` |
 | a11y-validate | `a11y_validate_evidence` | Version-1 request/result files; verify also needs baseline files and repository root |
@@ -24,6 +26,16 @@ use. Its stricter phase ordering is local to that workflow.
 | agent-operations | `agent_operations_invoke`, action `recover-nvda` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original NVDA instance connection |
 | a11y-resources | `a11y_resources_resources` | Authorized resource connection; read-only status |
 | a11y-resources | `a11y_resources_invoke`, action `release-evaluator` | `subject`, `evaluator`, exact `input.nativeRunId`; explicitly authorized completed assignment |
+
+Execution and knowledge plugins bundle the six portable accessibility topics;
+Bug Bash reuses the same topics and unified skill in its internal knowledge module.
+Knowledge needs no runtime, MCP, providers, `A11Y_ASSIST_CONFIG` or a peer plugin.
+Knowledge and Bug Bash ship no executable runtime or MCP server. Bug Bash page/AT
+checks use separately authorized host tools and ownership gates; see the
+[Bug Bash contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH.md).
+Setup retains its scoped native Windows script and dependency templates, not an
+operational MCP server or a browser/provider runtime. Setup preparation is not a
+prerequisite for knowledge and does not establish live capability readiness.
 
 `context` may contain `subject`, `scenarioHash`, `evaluator`, `head` and
 `beforeReceiptSha256`. Supplied bindings must match a successful receipt.
@@ -63,7 +75,7 @@ A successful receipt binds that exact assignment and scope
 `tracked-recorder-and-default-audio-endpoints`, with an observed recorder result
 (`terminated` or `observed-exited`) and verified default endpoints. It always
 sets `fullCleanupVerified: false`. Missing/historical state, an untracked recorder,
-or a legacy restoration acknowledgement cannot establish these two gates.
+or an unverified restoration acknowledgement cannot establish these two gates.
 They remain nonpass with a reason and durable diagnostic artifacts.
 
 This is not general `cleanup`, evidence acceptance, all-process/all-audio-role
@@ -93,7 +105,7 @@ engine. The connection must derive the instance from its original protected
 worker record and serialize against assignment changes. The supported original
 worker connection requires an authoritatively completed, still-owned assignment.
 It does not take over a busy or interrupted worker lacking completion, adopt
-unrecorded processes, recover legacy captures without an instance record, or
+unrecorded processes, recover captures without an instance record, or
 create missing authorization. Those cases remain explicit failures.
 
 A successful receipt has `recoveryScope: "started-main-process"`,
@@ -114,7 +126,8 @@ existing capture defaults do not change.
 ## Read-only evidence checking
 
 `a11y_validate_evidence` needs no provider configuration or operation journal.
-It calls the shared `runtime/evidence-v1.mjs` implementation:
+It calls the shared `src/runtime/evidence-v1.mjs` implementation (generated as
+`runtime/evidence-v1.mjs` inside execution plugins):
 
 ```json
 {
@@ -127,8 +140,8 @@ It calls the shared `runtime/evidence-v1.mjs` implementation:
 For `phase: "verify"`, also provide `baselineRequestPath`,
 `baselineResultPath` and `repoRoot`, all absolute paths. Verification binds the
 actual baseline result bytes and independently resolves repository HEAD.
-The retained [version-1 schema](../integrations/agentow/knowledge/evidence-contract.md)
-describes the artifact shape. Its legacy workflow policy is not a prerequisite
+The current [evidence-v1 validator](https://github.com/kaixun96/dev.A11yAssist/blob/main/src/runtime/evidence-v1.mjs) defines the accepted
+artifact shape and bindings. Full-workflow phase policy is not a prerequisite
 for this read-only operation.
 
 Without artifact roots, the result sets `independentBehaviorVerified: false` and
@@ -240,23 +253,21 @@ small capability at its authorized cleanup step, but must separately establish
 every remaining cleanup gate. No automatic phase transition was added.
 
 Private deployment implementations/configuration remain outside this package.
-The unchanged workflow/envelope version remains 0.6; this additive capability
-does not migrate active journals, replace pinned source or update installed workers.
+This capability does not rewrite active journals, replace pinned source or update
+installed workers.
 
-## Full workflow and compatibility
+## Current full workflow and independent capabilities
 
 The full workflow calls the same `invokeCapability` implementation and then
 applies its own phase, baseline, affinity, review and cleanup gates. It does not
 maintain another implementation of the capability.
 
-The older create/status/execute/reconcile APIs remain for explicit full-workflow
-clients; small-plugin entry skills use independent operations instead. Do not
-use those legacy workflow APIs as prerequisites for a standalone capability.
+The create/status/execute/reconcile/progress/abandon APIs are current full-workflow
+interfaces; small-plugin entry skills use independent operations instead. Neither
+interface is an alias for the other. Full-workflow APIs are not prerequisites for
+a standalone capability.
 
-Generic full workflows configure `source` and `review` connections.
-`workflowProfile: "agentow-odsp"` instead selects the `agentow` connection and
-retains its exclusive Codespace, entrypoint, effective-model and freshness
-requirements. It is explicit, not inferred or installed by default.
-
-Version 0.4 does not migrate active version-0.3 journals or installed workers.
-Keep active tasks pinned until a separately qualified cutover.
+Full workflows configure `source` and `review` connections directly and preserve
+owned worktrees, verified executors, exact-HEAD bindings and all evidence gates.
+Keep active tasks on their pinned package and provider versions; an update must
+not silently rewrite their journals or change resource ownership.

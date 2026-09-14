@@ -32,7 +32,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
     assert.equal(plugin.mcpServers, undefined);
     assert.deepEqual(await readdir(join(directory, 'skills')), ['a11y-bug-bash']);
     const expectedModule = [];
-    for (const subtree of ['skills', 'knowledge', 'integrations']) {
+    for (const subtree of ['skills', 'knowledge']) {
       for (const path of await filesUnder(join(root, 'plugins/a11y-knowledge', subtree))) {
         const relative = `${subtree}/${path}`;
         expectedModule.push(relative);
@@ -41,15 +41,14 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       }
     }
     assert.deepEqual(await filesUnder(moduleRoot), expectedModule.sort());
-    for (const name of ['a11y-knowledge', 'a11y-knowledge-odsp']) {
+    for (const name of ['a11y-knowledge']) {
       assert.equal(await text(join(moduleRoot, 'skills', name, 'SKILL.md')),
         await text(join(root, 'src/skills', name, 'SKILL.md')));
     }
-    for (const prefix of ['knowledge', 'integrations/agentow/knowledge']) {
+    for (const prefix of ['knowledge']) {
       const manifest = await load(join(moduleRoot, prefix, 'manifest.json'));
       for (const [path, hash] of Object.entries(manifest.hashes)) {
         assert.equal(digest(await text(join(moduleRoot, prefix, path))), hash);
-        if (path.startsWith('snapshot/')) assert.match(path, /\.source\.(md|txt)$/);
       }
     }
     const resources = ['context.template.md', 'coverage.json', 'report.template.md'];
@@ -68,9 +67,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
         await text(join(root, 'src/bug-bash', path)));
     }
     for (const path of ['README.md', 'README.zh-CN.md', 'docs/BUG-BASH.md',
-      'modules/a11y-knowledge/knowledge/README.md',
-      ...['README.md', 'fluent-spds.md', 'sharepoint.md', 'complete-source-guide.md']
-        .map(file => `modules/a11y-knowledge/integrations/agentow/knowledge/${file}`)]) {
+      'modules/a11y-knowledge/knowledge/README.md']) {
       for (const match of (await text(join(directory, path))).matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)) {
         if (/^https:/.test(match[1])) continue;
         await access(join(directory, dirname(path), match[1]));
@@ -104,8 +101,7 @@ test('coverage prompts reuse existing topics and preserve explicit nonpass accou
   for (const status of coverage.rowStatuses) assert(skill.includes(`\`${status}\``));
   const generic = await load(join(root, 'src/knowledge/index.json'));
   assert.deepEqual(generic.consumers['a11y-bug-bash'], generic.consumers['a11y-knowledge']);
-  const project = await load(join(root, 'integrations/agentow/knowledge/index.json'));
-  assert.deepEqual(project.consumers['a11y-bug-bash'], project.consumers['a11y-knowledge']);
+  await assert.rejects(access(join(base, 'modules/a11y-knowledge/integrations')), { code: 'ENOENT' });
 });
 
 test('entrypoint and templates retain track isolation, evidence distinctions, scope and cleanup', async () => {

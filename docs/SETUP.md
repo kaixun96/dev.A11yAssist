@@ -2,9 +2,9 @@
 
 `a11y-setup` extracts the installation workflow from AgentOW's
 [`ow-a11y-host-setup` tutorial](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-a11y-host-setup/SKILL.md).
-The tutorial's installer was already generated from this repository. This
-package reuses `src/native/windows-host.ps1` and the retained personal-browser
-helper; it does not fork another installer or require AgentOW.
+This package reuses `src/native/windows-host.ps1`; it does not fork another
+installer or require AgentOW. The source attribution does not introduce an
+integration dependency or a bundled product browser helper.
 
 ## Installation and scope
 
@@ -45,10 +45,8 @@ This is not an installer for every possible A11y tool.
 
 Resolve `$pluginRoot` from the loaded skill, not the current working directory.
 Choose one private absolute `$output` and one deployment-approved `$setupRoot`
-for the actual host; reuse these across steps. The compatibility script defaults
-to an older shared setup directory, so always supply the selected setup root.
-The personal profile remains `$HOME\.playwright\personal-evaluator-profile`;
-do not use it concurrently or silently create a different profile.
+for the actual host; reuse these across steps. The script defaults to a shared
+setup directory, so always supply the selected setup root.
 
 ```powershell
 $setup = Join-Path $pluginRoot 'native\windows-host.ps1'
@@ -65,12 +63,12 @@ through `powershell.exe -File`. Supported dependency names are validated.
 Chromium implies Playwright and Python; other Python modules imply Python.
 The installer checks presence before installation and stops on nonzero exits.
 It does not upgrade installed tools merely to obtain the newest version.
-Omitting `-Dependency` retains the legacy full dependency set for compatibility;
-the new skill always supplies an explicit subset.
+Omitting `-Dependency` retains the existing full dependency set;
+the skill always supplies an explicit subset.
 
 Winget uses `NVAccess.NVDA`, `Gyan.FFmpeg` and `Python.Python.3.12`; Python
 modules come from the host's approved pip source and AudioDeviceCmdlets from
-the approved PowerShell repository. The legacy Winget action accepts package
+the approved PowerShell repository. The Winget action accepts package
 and source agreements, so obtain authorization for these before invoking it.
 Do not change enterprise repositories or bypass package rejection. NVDA setup
 also changes Speech Viewer settings: preserve prior configuration and avoid
@@ -78,46 +76,16 @@ another session's NVDA. Do not install into product source or modify a worker.
 
 ## Persistent browser
 
-Prefer an already working authorized connection. For the bundled compatibility
-route, separately authorize helper installation; it copies the packaged helper
-to `$setupRoot` and invalidates that helper's previous authentication receipt.
-Inspect existing ownership/version first; never overwrite another deployment.
+Use an already working authorized browser connection. Setup does not bundle,
+install or authenticate a product browser helper. Python/Playwright installation
+and inventory do not establish a callable browser connection or target access.
 
-This retained helper is SharePoint-specific: its default bootstrap/check route
-is the SharePoint dogfood campaigns page with historical debug flights. Use it
-only when that route and Microsoft account integration are explicitly in scope.
-It may install the Microsoft Windows Accounts browser extension as part of
-launch; that download also needs authorization. For other products, use their
-existing approved browser connector rather than this helper's default route.
-Its campaign capture command is outside setup scope and must not be run.
-
-```powershell
-& $setup -Action InstallPersonalEvaluatorBrowser -SetupRoot $setupRoot `
-  -OutputPath (Join-Path $output 'browser.json')
-$state = Get-Content (Join-Path $output 'browser.json') -Raw | ConvertFrom-Json
-$python = $state.prerequisites.python.path
-$evaluator = $state.prerequisites.personalEvaluatorBrowser.scriptPath
-$env:PERSONAL_EVALUATOR_OWNER_EMAIL = '<owner-email>'
-try {
-  & $python $evaluator bootstrap --timeout-minutes 30
-  if ($LASTEXITCODE -ne 0) { throw "Browser bootstrap failed: $LASTEXITCODE" }
-} finally {
-  Remove-Item Env:\PERSONAL_EVALUATOR_OWNER_EMAIL
-}
-```
-
-Bootstrap is headed and requires an owned interactive desktop. Let visible
-Windows account renewal run; ask the owner only for an explicit remaining
-password, Windows Hello, MFA, certificate or consent prompt. Never copy cookie
-databases or open system Edge on the Chromium-owned profile.
-
-`CheckPersonalEvaluatorBrowser` runs the legacy helper's headless check and
-stores a short-lived authentication observation. A login/FIDO result is not
-proof that owner intervention is needed. Use visible bootstrap on the same
-profile; do not repeatedly close/reopen headless contexts. This helper does not
-keep a browser connection alive for arbitrary caller operations. The caller
-must use its approved persistent visible browser connection for target access
-through capture; never present bootstrap success as that connection.
+With separately authorized owned interactive access, use the caller's approved
+persistent visible connection for target access through capture. Reuse its owned
+profile; never copy cookie databases or open system Edge on a Chromium-owned
+profile. Let approved visible account renewal run; ask the owner only for an
+explicit remaining password, Windows Hello, MFA, certificate or consent prompt.
+A headless login/FIDO result alone is not proof that owner intervention is needed.
 
 ## Separately gated Windows steps
 
@@ -140,7 +108,7 @@ ownership. They are not implied by `prepare browser` or package installation.
    protected provisioning process on managed hosts. Never replace a foreign task.
 4. **Console transfer:** `RunConsoleTransfer` disconnects RDP. Obtain explicit
    authority, persist resume state and ensure no other work owns the desktop.
-   Its compatibility logic selects an Explorer session, so require a single
+   Its existing logic selects an Explorer session, so require a single
    unambiguous owned interactive session first; do not run it on a multi-user
    host. Do not reconnect after successful transfer. Exit zero alone is not
    Console/audio readiness.
@@ -158,8 +126,8 @@ No driver binaries or third-party packages are redistributed in this plugin.
 ## Results, restart and composition
 
 Use `setup/report.template.md`. Report installation/configuration/authorization,
-restart and runtime gaps separately. The inherited `scenarios.*` flags include
-legacy Edge assumptions: they are diagnostics, not reliable readiness verdicts
+restart and runtime gaps separately. The remaining `scenarios.*` flags include
+Edge assumptions: they are diagnostics, not reliable readiness verdicts
 for a Chromium or different caller route. An actual browser/AT/audio capability
 check is required before `ready`; unsupported checks remain runtime-unverified.
 This setup does not establish feature coverage, evidence-v1 or conformance.

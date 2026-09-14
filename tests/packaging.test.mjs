@@ -46,7 +46,7 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
   const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
   assert.equal(marketplace.name, 'a11y-assist');
   assert.equal(marketplace.metadata.version, pkg.version);
-  assert.equal(marketplace.plugins.length, 11);
+  assert.equal(marketplace.plugins.length, 10);
   await assert.rejects(access(join(root, '.claude-plugin/marketplace.json')), { code: 'ENOENT' });
   for (const entry of marketplace.plugins) {
     const dir = join(root, entry.source);
@@ -55,6 +55,15 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
     assert.equal(manifest.version, pkg.version);
     assert.equal(entry.version, pkg.version);
     await assert.rejects(access(join(dir, '.claude-plugin')), { code: 'ENOENT' });
+    for (const path of ['integrations', 'runtime/profiles.mjs', 'native/provenance.json',
+      'skills/a11y-knowledge-odsp', 'runtime/knowledge.mjs', 'runtime/knowledge-mcp.mjs', 'references']) {
+      await assert.rejects(access(join(dir, path)), { code: 'ENOENT' });
+    }
+    if (!['a11y-knowledge', 'a11y-bug-bash', 'a11y-setup'].includes(entry.name)) {
+      assert.deepEqual(Object.keys(manifest.mcpServers), [entry.name.replaceAll('-', '_')]);
+    } else {
+      assert.equal(manifest.mcpServers, undefined);
+    }
     const skillPath = join(dir, 'skills', entry.name, 'SKILL.md');
     const skill = await readFile(skillPath, 'utf8');
     assert.match(skill, /plugin root, two directories above this SKILL\.md/);
@@ -64,8 +73,7 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
       assert.doesNotMatch(await readFile(join(dir, path), 'utf8'), /claude/i, `${entry.name}: ${path}`);
     }
     for (const path of entry.name === 'a11y-setup' ? ['docs/SETUP.md', 'native/windows-host.ps1'] : ['knowledge/README.md',
-      ...(manifest.mcpServers ? ['docs/CAPABILITIES.md'] : []),
-      ...(entry.name !== 'a11y-knowledge' ? ['integrations/agentow/knowledge/README.md'] : [])]) {
+      ...(manifest.mcpServers ? ['docs/CAPABILITIES.md'] : [])]) {
       const contentRoot = entry.name === 'a11y-bug-bash' ? join(dir, 'modules/a11y-knowledge') : dir;
       await access(join(contentRoot, path));
     }

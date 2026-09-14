@@ -178,7 +178,7 @@ test('CLI and module share the loader and each document is read exactly once', a
       assert.equal(reads.get(path), 1);
     }
     t.mock.restoreAll();
-    const child = spawnSync(process.execPath, [join(root, 'runtime/evidence-v1.mjs'),
+    const child = spawnSync(process.execPath, [join(root, 'src/runtime/evidence-v1.mjs'),
       ...Object.entries(args).flatMap(([name, value]) => [`--${name}`, value])],
     { encoding: 'utf8', timeout: 15000 });
     assert.equal(child.status, 0, child.stderr);

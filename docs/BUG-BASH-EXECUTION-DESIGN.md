@@ -137,8 +137,8 @@ repeating the producer's conclusion is insufficient.
 
 One Bug Bash installation remains sufficient for instructions and shared modules.
 Keep `bundleKnowledgeReview` and `bundleSetup` as the single-source composition
-pattern. Authored changes belong under `src/`; generated `plugins/` and retained
-compatibility exports are never hand-edited.
+pattern. Authored changes belong under `src/`; generated `plugins/` are never
+hand-edited. No root compatibility exports are shipped.
 
 The target executable package may bundle the shared runtime and expose a
 namespaced Bug Bash MCP entrypoint. This would be an explicit opt-in addition,

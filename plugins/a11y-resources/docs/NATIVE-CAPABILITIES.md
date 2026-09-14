@@ -67,13 +67,13 @@ journal prevents another execution with the same ID. Reconcile consumes only the
 same persisted native response. If the process failed before that response was
 written, inspect the original PR and uploads; do not change IDs to repeat work.
 
-## Windows tools and compatibility profile
+## Windows host setup
 
-`native/windows-host.ps1` is the maintained Windows host setup implementation
-extracted from AgentOW. AgentOW consumes a pinned generated copy at its existing
-path. Its existing action names and default task/profile identity are retained;
-`SetupRoot`, `ConsoleTaskName` and `PersonalEvaluatorSource` can be configured for a
-different independently owned host. Do not use them to create a competing pool.
+`src/native/windows-host.ps1` is the maintained Windows host setup implementation
+extracted from AgentOW and packaged as `native/windows-host.ps1` in setup modules.
+`SetupRoot` and `ConsoleTaskName` can be configured for a different independently
+owned host. The existing setup-path and task-name defaults remain unchanged;
+do not use them to create a competing pool.
 
 `Probe` reads prerequisites and writes a capability report; it is not proof of
 live AT behavior. Setup/install/console-transfer actions are explicit administrative
@@ -81,11 +81,10 @@ operations, not automatically invoked by capture or installation of a plugin.
 On Twin-managed machines, use the existing protected deployment/recovery workflow,
 never these standalone administrative actions as an evidence handler.
 
-The retained Python personal evaluator is under
-`integrations/agentow/runtime/`, not generic knowledge. It still contains the
-existing AgentOW campaign scenario and host assumptions. It is a compatibility
-implementation, **not a generic NVDA/Narrator/Voice Access recorder**. Both AgentOW
-copies are generated from this one source.
+Setup does not bundle a product browser helper or an authentication receipt.
+Python and general Playwright inventory remain available, but browser access
+requires the caller's separately authorized connection and actual target checks.
+The host helper is **not a generic NVDA/Narrator/Voice Access recorder**.
 
 ## What has not moved
 

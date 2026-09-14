@@ -4,7 +4,7 @@
 
 ## 适合什么需求
 
-无障碍知识与静态审查，内置通用基础及 ODSP 子模块（SPDS、Fluent V8/V9、SharePoint）
+面向通用和 ODSP 项目的无障碍知识与静态审查，使用可移植的基础主题及提供的当前组件文档
 
 ## 使用前提
 
@@ -29,15 +29,10 @@ copilot plugin install a11y-knowledge@a11y-assist
 
 ## 能力边界
 
-一次安装包含通用主题和完整 ODSP 参考资料，无需另装插件。按实际技术栈和版本读取；其他项目只使用通用知识，不套用 ODSP 约定。只读，不运行扫描器或真实辅助技术；归档命令只是参考资料，不是执行授权。
+一次安装包含可离线使用的通用主题，无需另装插件。项目专属规则需依据提供的当前文档及实际技术栈和版本；缺失规则属于上下文缺口。只读，不运行扫描器或真实辅助技术；静态审查不等于运行验证。
 
 ## 参考资料
 
 - [通用无障碍知识](knowledge/README.md)
-- [内置 ODSP 子模块](skills/a11y-knowledge-odsp/SKILL.md)
-- [项目知识索引](integrations/agentow/knowledge/README.md)
-- [SPDS 和 Fluent V8/V9](integrations/agentow/knowledge/fluent-spds.md)
-- [SharePoint 专属指导](integrations/agentow/knowledge/sharepoint.md)
-- [完整原文导航](integrations/agentow/knowledge/complete-source-guide.md)
 
 [返回插件目录](https://github.com/kaixun96/dev.A11yAssist/blob/main/README.zh-CN.md)

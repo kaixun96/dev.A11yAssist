@@ -40,6 +40,5 @@ a11y_validate_evidence 工具无需 provider 或流程日志。结构与哈希�
 ## 参考资料
 
 - [能力接口与边界](docs/CAPABILITIES.md)
-- [Evidence-v1 文件格式](integrations/agentow/knowledge/evidence-contract.md)
 
 [返回插件目录](https://github.com/kaixun96/dev.A11yAssist/blob/main/README.zh-CN.md)

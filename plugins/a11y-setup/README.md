@@ -29,7 +29,7 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Reuses AgentOW's shared host installer; no AgentOW or MCP dependency. Plugin installation does not install third-party tools. Prepare only an approved subset; driver, consent, elevation and restart are separate gates. No automatic scanner/ADK installation or live provider setup. Installed does not mean runtime-ready.
+Uses the scoped native host installer; no MCP dependency. Plugin installation does not install third-party tools. Prepare only an approved subset; driver, consent, elevation and restart are separate gates. No automatic scanner/ADK installation or live provider setup. Installed does not mean runtime-ready.
 
 ## Reference
 

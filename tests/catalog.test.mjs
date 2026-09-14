@@ -32,11 +32,15 @@ test('bilingual catalog covers every installable plugin with working selection a
   }
   const pages = [
     'README.md', 'README.zh-CN.md', 'src/README.md', 'docs/DEVELOPMENT.md', 'config/README.md',
-    ...catalog.flatMap(entry => [`plugins/${entry.name}/README.md`, `plugins/${entry.name}/README.zh-CN.md`])
+    ...catalog.flatMap(entry => [`plugins/${entry.name}/README.md`, `plugins/${entry.name}/README.zh-CN.md`]),
+    ...catalog.filter(entry => ['capability', 'workflow'].includes(entry.group)).flatMap(entry =>
+      ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md', 'NATIVE-CAPABILITIES.md'].map(file =>
+        `plugins/${entry.name}/docs/${file}`))
   ];
   for (const path of pages) {
     for (const match of (await text(path)).matchAll(/\]\(([^)]+)\)/g)) {
-      if (/^https:/.test(match[1])) continue;
+      // Evidence description examples contain template slots, not local file links.
+      if (/^https:/.test(match[1]) || /^\{\{[\w.-]+\}\}$/.test(match[1])) continue;
       await access(join(root, dirname(path), match[1].split('#')[0]));
     }
   }
@@ -47,6 +51,7 @@ test('catalog validation rejects omissions, unknown plugins, unsafe links and wr
   assert.throws(() => validateCatalog(catalog.slice(1), names), /every plugin/);
   for (const mutate of [
     entries => { entries[0].name = 'not-an-installable-plugin'; },
+    entries => { entries[0].group = 'compatibility'; },
     entries => { entries[0].docs = ['../private.md']; },
     entries => { entries[0].zh.requires = ''; },
     entries => { entries[0].en.example = '/another-plugin do work'; }
@@ -57,33 +62,25 @@ test('catalog validation rejects omissions, unknown plugins, unsafe links and wr
   }
 });
 
-test('published compatibility exports retain consumer paths and exactly match authored source', async () => {
-  const expected = [
-    'runtime/evidence-v1.mjs', 'native/windows-host.ps1',
-    'integrations/agentow/runtime/personal-evaluator-browser.py',
-    'native/ado-attachments.mjs', 'native/ado-attachments.d.mts', 'native/pr-description.mjs'
-  ];
-  const manifests = await Promise.all([
-    json('integrations/agentow/exports.json'), json('integrations/agentow/execution-manifest.json')
-  ]);
-  const files = manifests.flatMap(manifest => manifest.files);
-  assert.deepEqual(files.map(file => file.source).sort(), expected.sort());
-  for (const file of files) {
-    const body = await text(file.source);
-    assert.equal(body, await text(`src/${file.source}`), file.source);
-    assert.equal(digest(body), file.sha256, file.source);
+test('retired exports are absent and canonical execution sources remain hash-bound in packages', async () => {
+  for (const path of ['runtime', 'native', 'integrations', 'src/integrations',
+    'src/runtime/profiles.mjs', 'src/native/provenance.json', 'docs/MIGRATION.md']) {
+    await assert.rejects(access(join(root, path)), { code: 'ENOENT' });
   }
   const release = await json('release.json');
   for (const [path, hash] of Object.entries(release.hashes)) {
     assert(path.startsWith('src/'));
     assert.equal(digest(await text(path)), hash, path);
+    for (const entry of catalog.filter(entry => ['capability', 'workflow'].includes(entry.group))) {
+      assert.equal(digest(await text(`plugins/${entry.name}/${path.slice(4)}`)), hash, `${entry.name}: ${path}`);
+    }
   }
   for (const dir of ['skills', 'knowledge', 'adapters', 'contracts']) {
     await assert.rejects(access(join(root, dir)), { code: 'ENOENT' });
   }
 });
 
-test('installer requires selection, avoids duplicate ODSP installation and keeps knowledge setup independent', {
+test('installer requires selection, rejects retired options and keeps knowledge setup independent', {
   skip: process.platform !== 'win32'
 }, () => {
   const run = (...args) => spawnSync('pwsh', [
@@ -96,10 +93,15 @@ test('installer requires selection, avoids duplicate ODSP installation and keeps
   assert.equal(all.status, 0, all.stderr);
   assert.equal((all.stdout.match(/copilot plugin install /g) ?? []).length, 10);
   assert(!all.stdout.includes('a11y-knowledge-odsp@a11y-assist'));
-  for (const entry of catalog.filter(entry => entry.group !== 'compatibility')) {
+  for (const entry of catalog) {
     assert(all.stdout.includes(`${entry.name}@a11y-assist`));
   }
-  for (const name of ['a11y-knowledge', 'a11y-knowledge-odsp', 'a11y-bug-bash', 'a11y-setup']) {
+  for (const args of [['-Plugin', 'a11y-knowledge-odsp'], ['-Plugin', 'a11y-knowledge', '-WithAgentOW']]) {
+    const result = run(...args);
+    assert.notEqual(result.status, 0);
+    assert(!result.stdout.includes('copilot plugin install'));
+  }
+  for (const name of ['a11y-knowledge', 'a11y-bug-bash', 'a11y-setup']) {
     const result = run('-Plugin', name);
     assert.equal(result.status, 0, result.stderr);
     assert(result.stdout.includes(`/${name}`));
@@ -108,13 +110,16 @@ test('installer requires selection, avoids duplicate ODSP installation and keeps
   }
 });
 
-test('knowledge selection includes ODSP by default and labels the old package as compatibility-only', async () => {
+test('knowledge selection offers one generic and ODSP skill with usable offline topic links', async () => {
   assert.deepEqual(catalog.filter(entry => entry.group === 'knowledge').map(entry => entry.name), ['a11y-knowledge']);
-  assert.equal(catalog.find(entry => entry.name === 'a11y-knowledge-odsp').group, 'compatibility');
+  assert.equal(catalog.find(entry => entry.name === 'a11y-knowledge-odsp'), undefined);
+  assert.equal(catalog.some(entry => entry.group === 'compatibility'), false);
   const knowledge = catalog.find(entry => entry.name === 'a11y-knowledge');
-  assert(knowledge.docs.includes('skills/a11y-knowledge-odsp/SKILL.md'));
+  assert.deepEqual(knowledge.docs, ['knowledge/README.md']);
   for (const [lang, filename] of [['en', 'README.md'], ['zh', 'README.zh-CN.md']]) {
     assert(knowledge[lang].purpose.includes('ODSP'));
-    assert((await text(`plugins/a11y-knowledge/${filename}`)).includes('skills/a11y-knowledge-odsp/SKILL.md'));
+    const page = await text(`plugins/a11y-knowledge/${filename}`);
+    assert(page.includes('knowledge/README.md'));
+    assert.doesNotMatch(page, /integrations\/|a11y-knowledge-odsp/);
   }
 });

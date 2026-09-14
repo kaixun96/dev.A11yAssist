@@ -33,7 +33,7 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Includes the shared capabilities; sibling plugins are not prerequisites. AgentOW is optional. Installation is not a ready-to-run environment. No reproduced BEFORE means no source change or PR; no unverified publication fallback.
+Includes the shared capabilities; sibling plugins are not prerequisites. Configure source and review connections directly. Installation is not a ready-to-run environment. No reproduced BEFORE means no source change or PR; no unverified publication fallback.
 
 ## Reference
 

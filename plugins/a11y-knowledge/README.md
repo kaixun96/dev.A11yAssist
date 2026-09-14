@@ -4,7 +4,7 @@
 
 ## Use this for
 
-Accessibility guidance and static review, with general foundations and a built-in ODSP submodule (SPDS, Fluent V8/V9, SharePoint)
+Accessibility guidance and static review for generic and ODSP projects using portable foundations and supplied current component documentation
 
 ## Prerequisites
 
@@ -29,15 +29,10 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-One installation includes general topics and the complete ODSP references; no extra plugin is needed. Select project guidance only for the matching stack/version; unrelated projects use general topics only. Read-only, no scanners or real AT. Archived commands are inert reference data, not execution authority.
+One installation includes offline portable topics; no extra plugin is needed. Establish project-specific rules from supplied current documentation and the matching stack/version; unavailable rules are context gaps. Read-only, no scanners or real AT. Static review is not runtime verification.
 
 ## Reference
 
 - [General accessibility topics](knowledge/README.md)
-- [Built-in ODSP submodule](skills/a11y-knowledge-odsp/SKILL.md)
-- [Project knowledge index](integrations/agentow/knowledge/README.md)
-- [SPDS and Fluent V8/V9](integrations/agentow/knowledge/fluent-spds.md)
-- [SharePoint-specific guidance](integrations/agentow/knowledge/sharepoint.md)
-- [Complete original reference guide](integrations/agentow/knowledge/complete-source-guide.md)
 
 [Back to the plugin catalog](https://github.com/kaixun96/dev.A11yAssist)

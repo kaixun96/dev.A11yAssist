@@ -92,9 +92,8 @@ artifact or measurement. Redact sensitive content before any approved sharing.
 
 Read `modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md` and follow it for
 the source track. Its plugin root is `modules/a11y-knowledge`, so its
-`knowledge/README.md`, sibling ODSP skill and
-`integrations/agentow/knowledge/README.md` resolve inside that module.
-The two skills and full references are copied from the SAME sources as the
+`knowledge/README.md` and portable topics resolve inside that module.
+The unified skill and portable topics are copied from the SAME sources as the
 standalone knowledge plugin, not a second rule set or an additional installation.
 Do not invoke a globally installed same-name skill or dispatch another agent.
 
@@ -102,7 +101,8 @@ Keep this substep read-only: inspect scoped components, parents, handlers, style
 localization and relevant library contracts. Respect the knowledge skill's ban
 on shell commands, tests, scanners, browsers and AT within the source review.
 Browser actions belong only to the separately authorized page track above.
-Use SPDS/Fluent/SharePoint knowledge only for the matching actual stack/version.
+Use supplied current SPDS/Fluent/SharePoint documentation only for the matching
+actual stack/version; unavailable project rules remain context gaps.
 Review complete affected interaction paths, not only explicit ARIA attributes.
 Missing source or unknown component behavior is a context gap, not a bug.
 

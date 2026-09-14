@@ -1,10 +1,19 @@
 # Private connection setup
 
-Knowledge plugins require none of these files. Neither does the
-`a11y_validate_evidence` file-checking tool.
+Bundled portable knowledge requires none of these files, a provider or an MCP
+server. Knowledge, Bug Bash and setup have no execution configuration requirement.
+Neither does the `a11y_validate_evidence` file-checking tool. Bug Bash live page/AT
+checks use already-authorized host tools and owned resources; installation supplies
+no browser or MCP server. Setup uses its current scoped Windows host script and
+dependency templates only with the applicable host authorization, without an MCP
+server. Knowledge use does not require running setup.
 
 For live operations, copy the appropriate template to a private location and
 configure only the connections you are authorized to use:
+
+For full workflows, configure `source` and `review` directly; no workflow profile
+selector or integration-provider alias is used. A single Windows DevBox is a
+pool of size one with the same ownership and evidence gates.
 
 | Template | Use |
 |---|---|

@@ -9,7 +9,6 @@ import { spawnSync } from 'node:child_process';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const text = async path => (await readFile(path, 'utf8')).replaceAll('\r\n', '\n');
 const shared = ['skills/a11y-setup/SKILL.md', 'native/windows-host.ps1',
-  'integrations/agentow/runtime/personal-evaluator-browser.py',
   'setup/profiles.json', 'setup/report.template.md', 'docs/SETUP.md'];
 async function filesUnder(directory, prefix = '') {
   const files = [];
@@ -60,7 +59,7 @@ test('setup profiles select minimal dependencies and skill keeps preparation sep
   }
   const skill = await text(join(root, 'src/skills/a11y-setup/SKILL.md'));
   for (const pattern of [/Default to\s+check-only/, /Codespaces|CODESPACES/,
-    /explicit `-Dependency` array/, /never its\s+legacy all-dependencies default/,
+    /explicit `-Dependency` array/, /never its\s+existing all-dependencies default/,
     /timeout is unknown execution/, /No unrelated audio/,
     /headless login\s+result alone/, /never copy cookies/i,
     /real exclusive host\/setup/, /separate gated/, /not product evidence/]) {
@@ -80,6 +79,35 @@ test('native dependency selection is side-effect-isolated and propagates failure
   { encoding: 'utf8', timeout: 20000 });
   assert.equal(child.status, 0, child.stdout + child.stderr);
   assert.match(child.stdout, /dependency selection passed/);
+});
+
+test('setup removes only the retired browser helper surface while retaining general host inventory', async () => {
+  const native = await text(join(root, 'src/native/windows-host.ps1'));
+  assert.doesNotMatch(native, /PersonalEvaluator|personal-evaluator|browserKeyboard/i);
+  for (const name of ['Get-PythonPath', 'Test-PythonModule', 'Get-Sha256',
+    'Get-Capabilities', 'Install-SafeDependencies', 'Set-NvdaSpeechViewer',
+    'Stage-VbCable', 'Get-ConsoleTransferScript', 'Install-ConsoleTransferTask',
+    'Get-ConsoleTransferState', 'Get-VoiceAccessState', 'Invoke-HostValidation']) {
+    assert(native.includes(`function ${name} {`), `Missing current helper: ${name}`);
+  }
+  assert.match(native, /playwright = Test-PythonModule/);
+  assert.match(native, /python = \[ordered\]@/);
+  for (const path of ['docs/SETUP.md', 'src/skills/a11y-setup/SKILL.md',
+    'src/setup/profiles.json', 'src/setup/report.template.md']) {
+    assert.doesNotMatch(await text(join(root, path)), /PersonalEvaluator|personal-evaluator|personal evaluator helper/i);
+  }
+});
+
+test('retired browser actions are rejected during parameter validation without host effects', {
+  skip: process.platform !== 'win32'
+}, () => {
+  for (const action of ['InstallPersonalEvaluatorBrowser', 'CheckPersonalEvaluatorBrowser']) {
+    const child = spawnSync('pwsh', ['-NoProfile', '-NonInteractive', '-File',
+      join(root, 'plugins/a11y-setup/native/windows-host.ps1'), '-Action', action],
+    { encoding: 'utf8', timeout: 15000, env: { ...process.env, CODESPACES: 'true' } });
+    assert.notEqual(child.status, 0);
+    assert.match(child.stderr, /ValidateSet|does not belong|not.*set/i);
+  }
 });
 
 test('packaged host script rejects Codespaces and invalid dependency selections before any effects', {

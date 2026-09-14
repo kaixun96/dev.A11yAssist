@@ -20,14 +20,13 @@ separate repositories before independent release requirements exist.
    Retain active run versions; incompatible upgrades fail closed rather than
    rewriting evidence or migrating ownership.
 
-The installer requires an explicit `-Plugin` selection and adds AgentOW only
-with explicit `-WithAgentOW`; the optional full workflow does not require it.
-No unsupported dependency fields are
-invented in plugin manifests. The current AgentOW freshness rule is still
-applied on its actual leased execution host before invocation.
+The installer requires an explicit `-Plugin` selection; `all` selects the ten
+current plugins. No integration option or retired alias is supported. No
+unsupported dependency fields are invented in plugin manifests. Source and
+review connections are configured directly, without a workflow profile selector.
 
-Keep generic topic bodies and scoped project references separately indexed.
-The Bug Bash framework bundles their unchanged skill sources in an internal
+Keep the six portable topic bodies indexed and hash-bound to the release.
+The Bug Bash framework bundles the unified knowledge skill in an internal
 module, not new top-level knowledge commands. Validate isolated module contents,
 relative routing, coverage/template references and explicit missing-capability
 boundaries. Framework/package validation is not a live feature or AT qualification.
@@ -36,31 +35,19 @@ Setup similarly has one authored skill/profile/installer and exact standalone
 and internal Bug Bash copies. Validate selective dependency closure, skipping
 installed dependencies, error propagation, host rejection and legacy defaults
 without actually installing packages or changing the CI desktop. This is not
-live Windows driver, authentication, audio or AT qualification. The retained
-SharePoint browser helper is not a generic product browser connector.
+live Windows driver, authentication, audio or AT qualification. No product
+browser helper is shipped; use an existing authorized connection.
 
-`a11y-knowledge` includes the ODSP subskill and complete inert reference profile
-by default; this does not add executable tools, MCP, configuration or workflow
-authority. The old ODSP package is compatibility-only and must not be installed
-alongside it by the `all` helper. Build prunes retired generated files; check mode
-rejects unexpected files. Preserve full snapshot hashes and inert source suffixes.
+`a11y-knowledge` includes offline portable topics for generic and ODSP source
+review, with project-specific contracts taken from supplied current documentation.
+This adds no executable tools, MCP, configuration or workflow authority. Build
+prunes retired generated files; check mode rejects unexpected files. Verify
+independent offline packages and the absence of historical archives/root exports.
 
-Integration migration is currently copy-first. Publish the indexed snapshots and
-their hashes, but leave AgentOW's original files and references intact. Do not remove
-redundancy until the later coordinated integration and compatibility gates in
-`KNOWLEDGE.md` pass. Updating this repository does not update AgentOW.
-
-The evidence-v1 runtime export has its own pinned consumer path. Release the
-canonical source first, then update AgentOW's generated validator copies and
-source lock through its reviewed updater. Never maintain separate validator
-implementations or silently refresh an active run.
-
-The additional execution export is `integrations/agentow/execution-manifest.json`,
-generated from the explicit allowlist in `execution-exports.json`. Its consumers
-use AgentOW's `--update-execution <exact-commit>` updater and independent
-`a11y-execution.lock.json`. Publish and qualify the source before advancing that
-pin. Retain the original command/API paths through generated copies or thin
-wrappers; never hand-maintain the copied execution bodies.
+The shared evidence-v1 validator and native ADO implementations remain canonical
+source bundled in execution plugins. Never maintain separate implementations or
+silently refresh an active run. Source attribution and license notices remain;
+they do not establish an execution dependency or authorize publication.
 
 Rollback selects a previously qualified plugin/provider release for a compatible
 run. It must not reset session bindings, remove claims, discard new evidence,

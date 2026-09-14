@@ -164,3 +164,19 @@ if ($full.probeScope.dependencies.Count -ne 8 -or $full.probeScope.unrequestedDe
     @($script:probeCalls | Where-Object { $_ -like 'command:*' }).Count -ne 3 -or
     $null -eq $full.prerequisites.vbCable.currentSessionEndpoints) { throw 'Legacy full inventory changed' }
 Write-Output 'Scoped inventory passed without host changes; requested failures remain visible.'
+
+foreach ($name in @('Get-PythonPath', 'Test-PythonModule')) {
+    $function = $ast.Find({ param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name
+    }, $true)
+    Invoke-Expression $function.Extent.Text
+}
+Assert-Failure { Get-PythonPath -RequestedPath 'relative-python.exe' } 'existing absolute executable'
+Assert-Failure { Get-PythonPath -RequestedPath 'C:\missing-bugbash-python\python.exe' } 'existing absolute executable'
+$script:calls.Clear()
+Test-PythonModule 'Invoke-FakePython' 'playwright' -Isolated | Out-Null
+Assert-Calls @('-I -c import playwright')
+$script:calls.Clear()
+Test-PythonModule 'Invoke-FakePython' 'playwright' | Out-Null
+Assert-Calls @('-c import playwright')
+Write-Output 'Explicit Python probes preserve isolated flags and legacy defaults.'

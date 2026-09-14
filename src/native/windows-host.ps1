@@ -8,6 +8,8 @@ param(
     [string]$SetupRoot,
     [string]$ConsoleTaskName = 'AgentOW-A11Y-TransferToConsole',
     [string]$PersonalEvaluatorSource,
+    [string]$ProbePythonPath,
+    [switch]$IsolatedPython,
     [ValidateNotNullOrEmpty()]
     [ValidateSet('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')]
     [string[]]$Dependency = @('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')
@@ -21,6 +23,9 @@ if ($env:CODESPACES -eq 'true' -or -not [string]::IsNullOrWhiteSpace($env:CODESP
 
 if ($env:OS -ne 'Windows_NT') {
     throw 'ow-a11y-host-setup must run on the Windows evaluator host'
+}
+if (($ProbePythonPath -or $IsolatedPython) -and $Action -ne 'Probe') {
+    throw 'ProbePythonPath and IsolatedPython are supported only for Probe.'
 }
 
 $vbCableUrl = 'https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip'
@@ -49,6 +54,14 @@ function Get-ExistingPath {
 }
 
 function Get-PythonPath {
+    param([string]$RequestedPath)
+    if ($RequestedPath) {
+        if ($RequestedPath -notmatch '^[A-Za-z]:\\.+\.exe$' -or
+            -not (Test-Path -LiteralPath $RequestedPath -PathType Leaf)) {
+            throw 'Requested Python must be an existing absolute executable path.'
+        }
+        return [IO.Path]::GetFullPath($RequestedPath)
+    }
     $candidates = @(
         (Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'),
         (Join-Path $env:LOCALAPPDATA 'Programs\Python\Python311\python.exe')
@@ -78,13 +91,17 @@ function Resolve-Dependencies {
 function Test-PythonModule {
     param(
         [string]$PythonPath,
-        [string]$Module
+        [string]$Module,
+        [switch]$Isolated
     )
 
     if (-not $PythonPath) {
         return $false
     }
-    & $PythonPath -c "import $Module" 2>$null
+    $arguments = @()
+    if ($Isolated) { $arguments += '-I' }
+    $arguments += @('-c', "import $Module")
+    & $PythonPath @arguments 2>$null
     return $LASTEXITCODE -eq 0
 }
 
@@ -514,7 +531,7 @@ function Get-VoiceAccessState {
 }
 
 function Get-Capabilities {
-    param([string[]]$Dependencies)
+    param([string[]]$Dependencies, [string]$PythonPath, [switch]$IsolatedPython)
 
     $selected = @(if ($PSBoundParameters.ContainsKey('Dependencies')) {
         Resolve-Dependencies -Dependencies $Dependencies
@@ -525,7 +542,7 @@ function Get-Capabilities {
     $fullInventory = $unrequested.Count -eq 0
     $probeBrowser = 'Playwright' -in $selected
     $probeAudio = 'AudioDeviceCmdlets' -in $selected -or 'PyAudioWPatch' -in $selected
-    $python = if ('Python' -in $selected) { Get-PythonPath } else { $null }
+    $python = if ('Python' -in $selected) { Get-PythonPath -RequestedPath $PythonPath } else { $null }
     $nvda = if ('NVDA' -in $selected) { Get-ExistingPath @(
         (Join-Path $env:ProgramFiles 'NVDA\nvda.exe'),
         (Join-Path ${env:ProgramFiles(x86)} 'NVDA\nvda.exe')
@@ -595,9 +612,10 @@ function Get-Capabilities {
         python = [ordered]@{
             available = [bool]$python
             path = $python
-            playwright = [bool]($probeBrowser -and (Test-PythonModule $python 'playwright'))
-            mss = [bool]('MSS' -in $selected -and (Test-PythonModule $python 'mss'))
-            pyAudioWPatch = [bool]('PyAudioWPatch' -in $selected -and (Test-PythonModule $python 'pyaudiowpatch'))
+            isolatedMode = [bool]$IsolatedPython
+            playwright = [bool]($probeBrowser -and (Test-PythonModule $python 'playwright' -Isolated:$IsolatedPython))
+            mss = [bool]('MSS' -in $selected -and (Test-PythonModule $python 'mss' -Isolated:$IsolatedPython))
+            pyAudioWPatch = [bool]('PyAudioWPatch' -in $selected -and (Test-PythonModule $python 'pyaudiowpatch' -Isolated:$IsolatedPython))
         }
         windowsPerformanceRecorder = $wpr
         windowsPerformanceAnalyzer = $wpa
@@ -664,7 +682,7 @@ function Get-Capabilities {
 
 function Write-Capabilities {
     $capabilities = if ($Action -in @('Probe', 'InstallSafeDependencies')) {
-        Get-Capabilities -Dependencies $Dependency
+        Get-Capabilities -Dependencies $Dependency -PythonPath $ProbePythonPath -IsolatedPython:$IsolatedPython
     } else {
         Get-Capabilities
     }

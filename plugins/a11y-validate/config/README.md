@@ -11,9 +11,9 @@ server. Knowledge use does not require running setup.
 For live operations, copy the appropriate template to a private location and
 configure only the connections you are authorized to use:
 
-For full workflows, configure `source` and `review` directly; no workflow profile
-selector or integration-provider alias is used. A single Windows DevBox is a
-pool of size one with the same ownership and evidence gates.
+For full workflows, configure `source` and `review` as named trusted providers.
+A single Windows DevBox is a pool of size one with the same ownership and
+evidence gates.
 
 | Template | Use |
 |---|---|

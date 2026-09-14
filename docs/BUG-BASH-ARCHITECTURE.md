@@ -53,7 +53,8 @@ within capture, not one mandatory package per AT.
 
 Bug Bash does not require every sibling plugin to be installed. `a11y-intake` is
 optional if an authorized work item supplies context. `a11y-publish`,
-`a11y-workflow` and AgentOW are not discovery dependencies.
+`a11y-workflow` and their remediation/publication gates belong to separately
+authorized work beyond discovery.
 
 ## 3. How are they composed and used?
 

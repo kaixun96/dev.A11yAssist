@@ -32,7 +32,7 @@ Bug Bash 自己负责 feature 范围、计划、协调和最终报告；可复�
 
 规划和报告属于 feature 工作流本身，先保留为内部模块。浏览器能力也先做共享模块，确实有独立复用需要时，最多新增一个 `a11y-browser` 包。真实 AT 适配器归入 capture，不为每种 AT 增加一个必装包。
 
-Bug Bash 不要求安装全部兄弟插件。如果已授权工作项提供 context，可以选用 `a11y-intake`。`a11y-publish`、`a11y-workflow` 和 AgentOW 都不是问题发现的依赖。
+Bug Bash 不要求安装全部兄弟插件。如果已授权工作项提供 context，可以选用 `a11y-intake`。`a11y-publish`、`a11y-workflow` 及其修复/发布门禁属于问题发现之外单独授权的工作。
 
 ## 3. 这些能力怎么组合、怎么调用？
 

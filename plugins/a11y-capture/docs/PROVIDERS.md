@@ -2,7 +2,7 @@
 
 ## What is executable today
 
-Version 0.5 additionally ships native ADO work-item/discussion retrieval and
+The packages provide native ADO work-item/discussion retrieval and
 Draft PR evidence upload/description update. These use `kind: "ado"` connections
 instead of external executables. See [native capabilities](NATIVE-CAPABILITIES.md)
 for the exact narrower actions, authentication and non-verification boundaries.
@@ -243,5 +243,4 @@ identity. Normal responses use the host's own UI; a notification is never proof
 that the worker resumed.
 
 Generated execution packages place these adapters under their own `adapters/`.
-Full workflows configure `source` and `review` connections directly; no workflow
-profile selector or integration-provider alias is used.
+Full workflows configure `source` and `review` as named trusted connections.

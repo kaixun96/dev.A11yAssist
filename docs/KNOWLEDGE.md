@@ -1,9 +1,9 @@
 # Knowledge ownership and consumption
 
-`src/knowledge/` remains the single authored source for six portable accessibility
+`src/knowledge/` is the single authored source for six portable accessibility
 topics. These support code-generation guidance and read-only static review without
 requiring a framework, orchestration tool or runtime evidence workflow. Topic
-bodies cite primary standards and remain unchanged by compatibility cleanup.
+bodies cite primary standards.
 
 ## Distribution
 
@@ -24,14 +24,13 @@ bodies cite primary standards and remain unchanged by compatibility cleanup.
 - `src/knowledge/manifest.json` records LF-normalized SHA-256 hashes and the
   release version. `release.json` binds that manifest. Independently copied
   packages work offline without repository siblings or another plugin.
-- Build prunes retired files from generated packages; check mode rejects
-  unexpected files. Tests verify exact knowledge-only file sets, topic hashes,
-  local navigation and isolation from operational/project-specific rules.
+- Build produces the exact declared package file sets; check mode rejects
+  missing, changed or unexpected files. Tests verify exact knowledge-only file
+  sets, topic hashes, local navigation and isolation from operational/project-specific rules.
 
-Historical integration archives, runtime profiles and the standalone ODSP alias
-are not distributed. There is no new compatibility or cross-repository updater.
-The shared evidence-v1 validator and native ADO code remain execution source,
-not knowledge rules. Preserve their factual attribution and license notices.
+The shared evidence-v1 validator and native ADO code are execution implementations
+under `src/runtime/` and `src/native/`, not knowledge rules. Preserve their factual
+attribution and license notices.
 
 ## Release boundaries
 

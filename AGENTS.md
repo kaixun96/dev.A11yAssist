@@ -13,9 +13,9 @@ Windows DevBoxes. A single DevBox is a pool of size one, not a weaker workflow.
   by `npm run build`. Never edit generated copies. Each installed plugin must
   work without sibling directories or this repository's root.
 - Canonical execution source lives in `src/runtime/`, `src/native/`,
-  `src/contracts/` and `src/adapters/`. No root runtime/native exports, historical
-  integration archives, workflow profile selectors or compatibility plugins.
-  Configure source and review providers directly. Preserve factual source
+  `src/contracts/` and `src/adapters/`. Configure source and review providers
+  directly. Describe current package contents and supported usage in documentation.
+  Preserve factual source
   attribution and license notices; provenance grants no execution authority.
 - Ship ten plugins: seven execution plugins, unified read-only `a11y-knowledge`,
   `a11y-bug-bash` and `a11y-setup`. Homepages and per-plugin READMEs are generated

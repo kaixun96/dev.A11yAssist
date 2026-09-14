@@ -53,7 +53,7 @@ Configure the `publish` connection. Call `a11y_publish_invoke` with action
 The implementation reads the live active Draft PR and exact source commit before
 uploading, checks attachment hashes, uploads real bytes and verifies their downloaded
 SHA-256, updates the description
-and reads the PR back to confirm HEAD/description/Draft state. A legacy
+and reads the PR back to confirm HEAD/description/Draft state. The
 `commentMarkdown` input is folded into the description; no comment endpoint is
 called. Human-authored text is preserved by the shared description budget helper.
 
@@ -69,11 +69,11 @@ written, inspect the original PR and uploads; do not change IDs to repeat work.
 
 ## Windows host setup
 
-`src/native/windows-host.ps1` is the maintained Windows host setup implementation
-extracted from AgentOW and packaged as `native/windows-host.ps1` in setup modules.
+The Windows host setup implementation is authored in `src/native/windows-host.ps1`
+and packaged as `native/windows-host.ps1` in setup modules.
 `SetupRoot` and `ConsoleTaskName` can be configured for a different independently
-owned host. The existing setup-path and task-name defaults remain unchanged;
-do not use them to create a competing pool.
+owned host. Use the setup path and task name assigned to that host;
+do not create a competing pool.
 
 `Probe` reads prerequisites and writes a capability report; it is not proof of
 live AT behavior. Setup/install/console-transfer actions are explicit administrative
@@ -86,13 +86,18 @@ Python and general Playwright inventory remain available, but browser access
 requires the caller's separately authorized connection and actual target checks.
 The host helper is **not a generic NVDA/Narrator/Voice Access recorder**.
 
-## What has not moved
+## Deployment responsibilities
 
 Deployment-specific Dev Center recovery, shared resource ownership and token-bound
 release, real AT handlers, independent media evaluation and end-to-end cleanup
-remain with the original trusted deployment. No active worker, resource registry,
-browser profile or installed plugin is migrated by this release.
+are responsibilities of the trusted deployment. Plugin installation does not
+authorize changes to active workers, resource registries or browser profiles.
 
 Native ADO tests use synthetic service responses. Windows qualification covers the
 existing read-only Probe and Codespace rejection; it does not establish live
 recording, authentication, actual ADO publication or complete workflow readiness.
+
+## Source attribution
+
+The Windows host setup implementation is adapted from AgentOW. Preserve factual
+source attribution and license notices; attribution grants no runtime authority.

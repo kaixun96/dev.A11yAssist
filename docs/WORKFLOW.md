@@ -18,7 +18,7 @@ Installation does not authorize machine access or establish evaluator readiness.
 
 The authored executable gate list is `src/contracts/workflow.json`, generated as
 `contracts/workflow.json` inside execution plugins. Configure source and review
-connections directly; no workflow profile selector is used.
+providers directly through trusted connections.
 
 | Stage | Required behavior |
 |---|---|

@@ -31,5 +31,5 @@ start the next phase. The caller decides what follows.
 
 For an unknown/pending result, use `a11y_intake_operation_reconcile` with the
 same operationId. Never change IDs to repeat an unreconciled external operation.
-The legacy create/status/execute tools are only for callers explicitly using
+The create/status/execute tools are only for callers explicitly using
 the optional full workflow.

@@ -74,7 +74,7 @@ test('every independently copied consumer retains complete offline portable know
           'knowledge/manifest.json', ...Object.keys(manifest.hashes).map(file => `knowledge/${file}`)
         ].sort();
         const actual = (await filesUnder(dir)).sort();
-        assert.deepEqual(actual, expected, 'Knowledge-only package must not retain undeclared legacy files');
+        assert.deepEqual(actual, expected, 'Knowledge-only package must contain exactly its declared files');
         const index = await load(join(dir, 'knowledge/index.json'));
         for (const file of ['README.md', ...index.topics.map(topic => topic.file)]) {
           assert.doesNotMatch(await text(join(dir, 'knowledge', file)),
@@ -102,7 +102,7 @@ test('marketplace exposes knowledge separately without making it an execution ca
   assert.match(skill, /Missing context\s+is not a defect/);
 });
 
-test('historical archives are absent while every portable topic remains bound to its source', async () => {
+test('knowledge distribution stays within package boundaries and binds every topic to its source', async () => {
   const index = await load(join(root, 'src/knowledge/index.json'));
   const manifest = await load(join(root, 'src/knowledge/manifest.json'));
   const release = await load(join(root, 'release.json'));
@@ -120,7 +120,7 @@ test('historical archives are absent while every portable topic remains bound to
   }
 });
 
-test('one unified knowledge skill handles generic and ODSP review without dead archive routing', async () => {
+test('one unified knowledge skill routes generic and ODSP review to applicable current sources', async () => {
   const base = join(root, 'plugins/a11y-knowledge');
   const entry = await text(join(base, 'skills/a11y-knowledge/SKILL.md'));
   assert.match(entry, /For SPDS, Fluent V8\/V9, SharePoint or ODSP/);

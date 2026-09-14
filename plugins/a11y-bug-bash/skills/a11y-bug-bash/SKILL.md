@@ -42,7 +42,7 @@ If prerequisites are missing, return the specific preparation plan. Run its
 prepare steps only with separate explicit host-change authorization and real
 ownership; discovery alone does not authorize installation. Recheck actual
 capabilities afterward, continue supported rows and retain the others as gaps.
-Do not substitute installed packages or legacy probe flags for a callable tool.
+Do not substitute installed packages or probe flags for a callable tool.
 
 ## 2. Build a feature-specific coverage matrix
 

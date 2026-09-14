@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, access } from 'node:fs/promises';
+import { readFile, access, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -46,6 +46,45 @@ test('bilingual catalog covers every installable plugin with working selection a
   }
 });
 
+test('repository guides describe current layout and supported usage', async () => {
+  const docs = (await readdir(join(root, 'docs'))).filter(file => file.endsWith('.md'));
+  const pages = [
+    'AGENTS.md', 'src/README.md', 'config/README.md', 'README.md', 'README.zh-CN.md',
+    ...docs.map(file => `docs/${file}`),
+    ...catalog.flatMap(entry => [`plugins/${entry.name}/README.md`, `plugins/${entry.name}/README.zh-CN.md`]),
+    ...catalog.filter(entry => ['capability', 'workflow'].includes(entry.group)).flatMap(entry =>
+      [`plugins/${entry.name}/config/README.md`, ...['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md', 'NATIVE-CAPABILITIES.md']
+        .map(file => `plugins/${entry.name}/docs/${file}`)]),
+    'plugins/a11y-setup/docs/SETUP.md', 'plugins/a11y-bug-bash/modules/a11y-setup/docs/SETUP.md',
+    ...catalog.flatMap(entry => [`src/skills/${entry.name}/SKILL.md`, `plugins/${entry.name}/skills/${entry.name}/SKILL.md`])
+  ];
+  // Check explanatory prose, not attribution, operational identifiers or safety fixtures.
+  const supersededNarrative = /historical\s+integration\s+archives|root\s+(?:compatibility\s+|runtime\/native\s+)exports|compatibility\s+cleanup|retired\s+(?:ODSP\s+)?alias|不再发布根目录兼容导出|历史集成归档|历史归档.*(?:移除|删除)|AgentOW\s+(?:are not|都不是)/i;
+  for (const path of pages) {
+    assert.doesNotMatch(await text(path), supersededNarrative, path);
+    assert.doesNotMatch(await text(path), /what has not moved|legacy\s+(?:`commentMarkdown`|probe flags)|defaults remain unchanged|migrated by this release|integration-provider alias/i, path);
+  }
+  for (const name of ['a11y-intake', 'agent-operations']) {
+    for (const path of [`src/skills/${name}/SKILL.md`, `plugins/${name}/skills/${name}/SKILL.md`]) {
+      assert.doesNotMatch(await text(path), /legacy\s+(?:create\/status\/execute|progress\/abandon\/reconcile)/i, path);
+    }
+  }
+});
+
+test('setup guides separate current usage from preserved source attribution', async () => {
+  for (const path of ['docs/SETUP.md', 'plugins/a11y-setup/docs/SETUP.md',
+    'plugins/a11y-bug-bash/modules/a11y-setup/docs/SETUP.md']) {
+    const body = await text(path);
+    const heading = '\n## Source attribution\n';
+    const offset = body.indexOf(heading);
+    assert(offset > 0, path);
+    assert.doesNotMatch(body.slice(0, offset), /AgentOW|extracted from|extracts the installation|require AgentOW/i, path);
+    assert.match(body.slice(offset), /AgentOW/, path);
+    assert(body.slice(offset).includes('https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-a11y-host-setup/SKILL.md'), path);
+    assert.match(body.slice(offset), /license notices/, path);
+  }
+});
+
 test('catalog validation rejects omissions, unknown plugins, unsafe links and wrong commands', () => {
   const names = catalog.map(entry => entry.name);
   assert.throws(() => validateCatalog(catalog.slice(1), names), /every plugin/);
@@ -62,7 +101,7 @@ test('catalog validation rejects omissions, unknown plugins, unsafe links and wr
   }
 });
 
-test('retired exports are absent and canonical execution sources remain hash-bound in packages', async () => {
+test('execution package boundaries and canonical source hashes match the release', async () => {
   for (const path of ['runtime', 'native', 'integrations', 'src/integrations',
     'src/runtime/profiles.mjs', 'src/native/provenance.json', 'docs/MIGRATION.md']) {
     await assert.rejects(access(join(root, path)), { code: 'ENOENT' });
@@ -80,7 +119,7 @@ test('retired exports are absent and canonical execution sources remain hash-bou
   }
 });
 
-test('installer requires selection, rejects retired options and keeps knowledge setup independent', {
+test('installer requires selection, rejects unsupported options and keeps knowledge setup independent', {
   skip: process.platform !== 'win32'
 }, () => {
   const run = (...args) => spawnSync('pwsh', [

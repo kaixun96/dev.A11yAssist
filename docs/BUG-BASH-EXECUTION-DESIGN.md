@@ -46,7 +46,7 @@ Isolate substantial reasoning procedures only when their inputs and outputs just
 it. Start with qualified static profiles; evaluate adaptive selection and offline
 changes separately without weakening mandatory coverage or acceptance gates.
 
-Keep the existing package format; this design includes no manifest migration.
+Use the current package format and supported manifest fields.
 Use the actual negotiated SDK/protocol and observed tool support, not an assumed
 new protocol version or optional Tasks extension. Validate schemas and reconcile
 durable state after reconnect; notifications alone are insufficient.
@@ -66,7 +66,7 @@ These are dated snapshots, not live status indicators.
 | Area | Existing implementation | Remaining gap |
 |---|---|---|
 | Feature workflow | `src/skills/a11y-bug-bash/` and `src/bug-bash/` define scope, coverage and report instructions | No executable feature-level dependency graph or reliable continuation supervisor |
-| Knowledge | One authored knowledge source, including scoped project references, bundled into Bug Bash | Preserve reuse; do not create another accessibility rules database |
+| Knowledge | Portable topics authored in `src/knowledge/` and the unified read-only skill are bundled into Bug Bash; project contracts come from supplied current documentation | Preserve reuse; do not create another accessibility rules database |
 | Setup | Independent package and identical bundled module share `src/native/windows-host.ps1` | Installed dependencies do not prove an authenticated connection or real AT |
 | Independent operations | `src/runtime/operations.mjs`, `capability.mjs` and `waiting.mjs` persist sealed calls, validate receipts and reconcile pending effects | Feature discovery actions and parent/child cancellation policy are not registered |
 | Existing execution plugins | Resources, capture, validation and operations have scoped contracts | Generic page exploration and feature-level report acceptance are not supplied by the current capture/evidence-v1 APIs |
@@ -115,7 +115,8 @@ diagram. Reconsider extraction only when another caller needs a stable independe
 interface or the module has a genuinely separate release/permission lifecycle.
 
 `a11y-intake` is optional when an authorized work item supplies context.
-`a11y-publish`, `a11y-workflow` and AgentOW are not Bug Bash dependencies.
+`a11y-publish` and `a11y-workflow` serve separately authorized publication and
+remediation, outside Bug Bash discovery.
 An accepted finding may later enter separately authorized remediation, retaining
 that workflow's actual BEFORE/AFTER, resource, source and publication gates.
 
@@ -138,7 +139,8 @@ repeating the producer's conclusion is insufficient.
 One Bug Bash installation remains sufficient for instructions and shared modules.
 Keep `bundleKnowledgeReview` and `bundleSetup` as the single-source composition
 pattern. Authored changes belong under `src/`; generated `plugins/` are never
-hand-edited. No root compatibility exports are shipped.
+hand-edited. Each package resolves its bundled implementation and references
+from its own installed root.
 
 The target executable package may bundle the shared runtime and expose a
 namespaced Bug Bash MCP entrypoint. This would be an explicit opt-in addition,
@@ -316,7 +318,7 @@ Do not mix three kinds of state:
 A successfully executed check may find a product defect. An adapter error is
 not a product defect. A finished operation is not a finished feature round.
 Translate existing provider `receipt.outcome` through an explicit adapter;
-do not reinterpret legacy `pass` as "feature has no accessibility issues".
+provider `pass` does not mean "feature has no accessibility issues".
 
 ## 8. Evidence and report correctness
 

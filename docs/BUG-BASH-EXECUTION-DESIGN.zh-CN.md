@@ -25,7 +25,7 @@
 
 通过稳定能力契约组合可验证场景。模型提出场景与路由；可信运行时强制执行授权、证据、资源归属和完成条件。路由与跨步骤 A11y 知识留在主上下文，场景细节按需加载，确定性探测使用工具。只有较大推理过程的输入输出确实适合隔离时，才使用独立上下文。先使用已验收静态 profile，再单独评价自适应选择和离线变更；不能削弱必需覆盖或接受门禁。
 
-保留现有打包格式，本设计不包含 manifest 迁移。使用实际协商的 SDK/协议和观测到的工具支持，不假定宿主支持新协议版本或可选 Tasks 扩展。校验 schema，重连后核对持久状态；仅靠通知不够。MCP 任务句柄不证明桌面归属、证据正确、清理完成或交付。权限由宿主/provider 边界强制执行；skill 的 `allowed-tools` 元数据不是安全边界。包必须自包含，但仅完成安装不会调度工作，也不证明实际宿主已就绪。
+使用当前打包格式和受支持的 manifest 字段。使用实际协商的 SDK/协议和观测到的工具支持，不假定宿主支持新协议版本或可选 Tasks 扩展。校验 schema，重连后核对持久状态；仅靠通知不够。MCP 任务句柄不证明桌面归属、证据正确、清理完成或交付。权限由宿主/provider 边界强制执行；skill 的 `allowed-tools` 元数据不是安全边界。包必须自包含，但仅完成安装不会调度工作，也不证明实际宿主已就绪。
 
 ## 3. 基线：先复用，再加模块
 
@@ -34,7 +34,7 @@
 | 领域 | 现有实现 | 剩余缺口 |
 |---|---|---|
 | Feature 工作流 | `src/skills/a11y-bug-bash/` 和 `src/bug-bash/` 定义范围、覆盖与报告说明 | 没有可执行的 feature 级依赖图或可靠续跑监督器 |
-| 知识 | 单一知识源，包括限定范围的项目参考资料，打包进入 Bug Bash | 继续复用，不另建无障碍规则数据库 |
+| 知识 | `src/knowledge/` 中手写的可移植主题和统一只读 skill 打包进入 Bug Bash；项目契约来自当前提供的文档 | 继续复用，不另建无障碍规则数据库 |
 | Setup | 独立包与相同的内置模块共享 `src/native/windows-host.ps1` | 安装依赖不证明连接已认证或真实 AT 可用 |
 | 独立操作 | `src/runtime/operations.mjs`、`capability.mjs`、`waiting.mjs` 持久化封存调用、校验回执并核对待定外部作用 | 尚未注册 feature discovery 操作及父子任务取消策略 |
 | 现有执行插件 | Resources、capture、validation、operations 有限定范围的契约 | 现有 capture/evidence-v1 API 不提供通用页面探索或 feature 级报告接受 |
@@ -73,7 +73,7 @@
 
 因此，首个实现最多新增一个包（`a11y-browser`），且要等其独立契约确实有用。不要仅为匹配架构图就新建 `a11y-at`、`a11y-evidence`、`a11y-report`。只有其他调用方需要稳定独立接口，或模块确有独立发布/权限周期时，才重新考虑抽包。
 
-有已授权工作项提供 context 时，可选用 `a11y-intake`。`a11y-publish`、`a11y-workflow` 和 AgentOW 都不是 Bug Bash 的依赖。已接受的问题之后可以进入单独授权的修复流程，但仍须遵守该流程真实 BEFORE/AFTER、资源、源码和发布门禁。
+有已授权工作项提供 context 时，可选用 `a11y-intake`。`a11y-publish` 和 `a11y-workflow` 服务于单独授权的发布与修复，属于 Bug Bash 问题发现之外的工作。已接受的问题之后可以进入单独授权的修复流程，但仍须遵守该流程真实 BEFORE/AFTER、资源、源码和发布门禁。
 
 ### 推理是另一项独立的组合选择
 
@@ -83,7 +83,7 @@
 
 ## 5. 打包与实际调用
 
-一次 Bug Bash 安装仍应足以提供说明与共享模块。保留 `bundleKnowledgeReview` 和 `bundleSetup` 作为单一源码组合模式。手写变更归属 `src/`；不得手改生成的 `plugins/`。不再发布根目录兼容导出。
+一次 Bug Bash 安装仍应足以提供说明与共享模块。保留 `bundleKnowledgeReview` 和 `bundleSetup` 作为单一源码组合模式。手写变更归属 `src/`；不得手改生成的 `plugins/`。每个包从自身安装根目录解析内置实现和引用。
 
 目标可执行包可以内置共享运行时，并提供命名空间明确的 Bug Bash MCP 入口。这是需要显式选择加入的新增能力，不是 0.15 已有能力。保留无需 provider 的计划/源码用法，不将 Windows setup 或执行配置变成其前提。
 
@@ -186,7 +186,7 @@ Context + 验证步骤
 - 覆盖：现有 `planned`、`observed-no-issue`、`finding`、`blocked`、`not-run`、`not-applicable`、`inconclusive`。
 - 任务交付：pending，或已确认报告交付及适用清理。
 
-成功执行检查可能发现产品缺陷；适配器报错不是产品缺陷；一个操作结束不等于整个 feature 轮次完成。通过显式适配器转换现有 provider 的 `receipt.outcome`，不能把旧 `pass` 重新解释成“feature 没有无障碍问题”。
+成功执行检查可能发现产品缺陷；适配器报错不是产品缺陷；一个操作结束不等于整个 feature 轮次完成。通过显式适配器转换现有 provider 的 `receipt.outcome`；provider 的 `pass` 不等于“feature 没有无障碍问题”。
 
 ## 8. 证据与报告正确性
 

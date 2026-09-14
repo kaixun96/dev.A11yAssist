@@ -1,10 +1,8 @@
 # Accessibility environment setup
 
-`a11y-setup` extracts the installation workflow from AgentOW's
-[`ow-a11y-host-setup` tutorial](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-a11y-host-setup/SKILL.md).
-This package reuses `src/native/windows-host.ps1`; it does not fork another
-installer or require AgentOW. The source attribution does not introduce an
-integration dependency or a bundled product browser helper.
+`a11y-setup` checks and prepares selected Windows accessibility dependencies using
+the shared host helper authored in `src/native/windows-host.ps1`. Its skill,
+dependency profiles and report template separate installation from live readiness.
 
 ## Installation and scope
 
@@ -126,7 +124,7 @@ No driver binaries or third-party packages are redistributed in this plugin.
 ## Results, restart and composition
 
 Use `setup/report.template.md`. Report installation/configuration/authorization,
-restart and runtime gaps separately. The remaining `scenarios.*` flags include
+restart and runtime gaps separately. The `scenarios.*` flags include
 Edge assumptions: they are diagnostics, not reliable readiness verdicts
 for a Chromium or different caller route. An actual browser/AT/audio capability
 check is required before `ready`; unsupported checks remain runtime-unverified.
@@ -141,3 +139,10 @@ Bug Bash bundles this same setup module and uses its check/plan before page
 execution. Preparation remains separately authorized; source-only/plan-only
 never launch setup scripts. No second plugin installation is needed. Other
 callers may install `a11y-setup` alone and consume the capability report.
+
+## Source attribution
+
+The installation workflow is adapted from AgentOW's
+[`ow-a11y-host-setup` tutorial](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-a11y-host-setup/SKILL.md).
+Preserve factual source attribution and license notices; attribution grants no
+runtime authority.

@@ -21,9 +21,8 @@ separate repositories before independent release requirements exist.
    rewriting evidence or migrating ownership.
 
 The installer requires an explicit `-Plugin` selection; `all` selects the ten
-current plugins. No integration option or retired alias is supported. No
-unsupported dependency fields are invented in plugin manifests. Source and
-review connections are configured directly, without a workflow profile selector.
+current plugins. Use only fields supported by the current plugin manifest contract.
+Configure source and review providers directly through trusted connections.
 
 Keep the six portable topic bodies indexed and hash-bound to the release.
 The Bug Bash framework bundles the unified knowledge skill in an internal
@@ -33,21 +32,24 @@ boundaries. Framework/package validation is not a live feature or AT qualificati
 
 Setup similarly has one authored skill/profile/installer and exact standalone
 and internal Bug Bash copies. Validate selective dependency closure, skipping
-installed dependencies, error propagation, host rejection and legacy defaults
-without actually installing packages or changing the CI desktop. This is not
-live Windows driver, authentication, audio or AT qualification. No product
-browser helper is shipped; use an existing authorized connection.
+installed dependencies, error propagation, host rejection and the default
+dependency selection without actually installing packages or changing the CI
+desktop. Omitting `-Dependency` selects NVDA, FFmpeg, AudioDeviceCmdlets, Python,
+Playwright, Chromium, MSS and PyAudioWPatch; the skill supplies an explicit subset.
+This is not live Windows driver, authentication, audio or AT qualification.
+No product browser helper is shipped; use an existing authorized connection.
 
 `a11y-knowledge` includes offline portable topics for generic and ODSP source
 review, with project-specific contracts taken from supplied current documentation.
-This adds no executable tools, MCP, configuration or workflow authority. Build
-prunes retired generated files; check mode rejects unexpected files. Verify
-independent offline packages and the absence of historical archives/root exports.
+Knowledge review requires no executable tools, MCP or configuration and grants no
+workflow authority. Build produces the exact declared package file sets; check
+mode rejects missing, changed or unexpected files. Verify independent offline
+packages, topic hashes and package-local references.
 
-The shared evidence-v1 validator and native ADO implementations remain canonical
+The shared evidence-v1 validator and native ADO implementations are canonical
 source bundled in execution plugins. Never maintain separate implementations or
 silently refresh an active run. Source attribution and license notices remain;
-they do not establish an execution dependency or authorize publication.
+provenance does not grant execution or publication authority.
 
 Rollback selects a previously qualified plugin/provider release for a compatible
 run. It must not reset session bindings, remove claims, discard new evidence,

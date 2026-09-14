@@ -35,6 +35,6 @@ Return the actual cleanup receipt and unresolved items. Do not decide that the
 caller's full task is complete or start another task. Use
 `agent_operations_operation_status` / `_operation_reconcile` for this operation.
 
-The legacy progress/abandon/reconcile tools concern the optional full workflow
+The progress/abandon/reconcile tools concern the optional full workflow
 only. A message, busy process or accepted trigger is not proof of work completed.
 Explicit pauses and safety refusals are not permission for an execution retry.

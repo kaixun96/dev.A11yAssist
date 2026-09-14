@@ -2,7 +2,7 @@ import { readdir, unlink, rmdir } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import assert from 'node:assert/strict';
 
-// Generated packages must not retain retired instructions after a scope change.
+// Generated packages must contain exactly the files declared by the build.
 export async function pruneGenerated(root, expectedFiles, check = false) {
   async function visit(directory) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {

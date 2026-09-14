@@ -22,10 +22,10 @@ The source layout is not the installed layout. Installed skills still resolve
 `runtime/`, `knowledge/` and `contracts/` from their own plugin root. No package
 depends on this repository's `src/` or another installed package.
 
-There are no historical integration archives or root runtime/native exports.
 The canonical evidence-v1 validator, native ADO implementation and scoped setup
-helper remain source; preserve their factual attribution and license notices.
-Source and review providers are configured directly, without workflow profiles.
+helper live under `src/runtime/` and `src/native/` and are bundled in the packages
+that use them. Preserve their factual attribution and license notices.
+Configure source and review providers directly through trusted connections.
 
 ## Local development
 
@@ -39,8 +39,9 @@ npm run check
 
 Change authored files, then regenerate. Build checks that the catalog covers
 every installable plugin and that all bundled reference targets exist. Tests
-check standalone packages, navigation, read-only boundaries and the absence of
-retired exports. `npm run check` rejects generated drift, including homepages and READMEs.
+check standalone packages, navigation, read-only boundaries and exact package
+file sets. `npm run check` rejects missing, changed or unexpected generated files,
+including homepages and READMEs.
 No dependency installation is needed for the existing built-in Node test runner.
 
 Use `npm run doctor` for source-level configuration diagnostics, or the installed
@@ -57,8 +58,7 @@ The optional helper requires an explicit selection and prints commands by defaul
 
 `-Execute` runs the commands; `-Plugin all` selects all ten packages. The unified
 knowledge skill supports generic and ODSP source review using offline portable
-topics and supplied current component documentation. No separate ODSP alias or
-integration installation option is supported.
+topics and supplied current component documentation through `a11y-knowledge`.
 The helper never defaults to the full workflow.
 
 `a11y-bug-bash` exposes only its own public skill. `bundleKnowledgeReview` copies

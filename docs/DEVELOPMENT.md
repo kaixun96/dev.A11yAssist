@@ -69,6 +69,8 @@ the same two read-only skills and all references used by `a11y-knowledge` under
 `modules/a11y-knowledge/`, preserving their relative paths without registering
 duplicate public commands or requiring another installation. Its context,
 coverage and report resources are generated from `src/bug-bash/`.
+Its category procedures are authored in `src/bug-bash/test-categories/` and
+generated only into `plugins/a11y-bug-bash/test-categories/`.
 It has no MCP/configuration server; live checks use the caller's already
 authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it.
 

@@ -10,6 +10,11 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const text = async path => (await readFile(path, 'utf8')).replaceAll('\r\n', '\n');
 const load = async path => JSON.parse(await text(path));
 const base = join(root, 'plugins/a11y-bug-bash');
+const categoryFiles = [
+  'README.md', 'authentication-forms.md', 'dynamic-content.md', 'keyboard-focus.md',
+  'orientation-input-purpose.md', 'screen-reader.md', 'structure-semantics.md',
+  'timing-motion.md', 'touch-pointer.md', 'visual-color.md'
+];
 const digest = body => createHash('sha256').update(body).digest('hex');
 async function filesUnder(directory, prefix = '') {
   const files = [];
@@ -57,6 +62,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
       'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md',
       ...resources.map(path => `bug-bash/${path}`),
+      ...categoryFiles.map(path => `test-categories/${path}`),
       ...expectedModule.map(path => `modules/a11y-knowledge/${path}`),
       ...(await filesUnder(join(root, 'plugins/a11y-setup')))
         .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
@@ -67,7 +73,12 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       assert.equal(await text(join(directory, 'bug-bash', path)),
         await text(join(root, 'src/bug-bash', path)));
     }
+    for (const path of categoryFiles) {
+      assert.equal(await text(join(directory, 'test-categories', path)),
+        await text(join(root, 'src/bug-bash/test-categories', path)));
+    }
     for (const path of ['README.md', 'README.zh-CN.md', 'docs/BUG-BASH.md',
+      ...categoryFiles.map(path => `test-categories/${path}`),
       'modules/a11y-knowledge/knowledge/README.md',
       ...['README.md', 'fluent-spds.md', 'sharepoint.md', 'complete-source-guide.md']
         .map(file => `modules/a11y-knowledge/integrations/agentow/knowledge/${file}`)]) {
@@ -79,6 +90,21 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
   } finally {
     await rm(directory, { recursive: true });
   }
+});
+
+test('category index routes all imported procedures without adding an execution backend', async () => {
+  const index = await text(join(base, 'test-categories/README.md'));
+  assert.deepEqual((await readdir(join(base, 'test-categories'))).sort(), categoryFiles);
+  for (const file of categoryFiles.filter(file => file !== 'README.md')) {
+    assert(index.includes(`](${file})`));
+  }
+  const coverage = await load(join(base, 'bug-bash/coverage.json'));
+  for (const dimension of coverage.dimensions) assert(index.includes(`\`${dimension.id}\``));
+  for (const status of coverage.rowStatuses) assert(index.includes(`\`${status}\``));
+  assert.match(index, /7233b63c416c17c2c362d31aaf6f3c92abd1fb20/);
+  assert.match(index, /Source-only and plan-only never execute/);
+  assert.match(index, /Real AT always runs serially/);
+  assert.match(index, /not new Bug Bash result enums or an installed execution backend/);
 });
 
 test('coverage prompts reuse existing topics and preserve explicit nonpass accounting', async () => {
@@ -113,6 +139,7 @@ test('entrypoint and templates retain track isolation, evidence distinctions, sc
   assert.equal(skill, await text(join(root, 'src/skills/a11y-bug-bash/SKILL.md')));
   for (const path of ['docs/BUG-BASH.md', 'bug-bash/context.template.md',
     'bug-bash/coverage.json', 'bug-bash/report.template.md',
+    'test-categories/README.md',
     'modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md']) {
     assert(skill.includes(`\`${path}\``));
     await access(join(base, path));

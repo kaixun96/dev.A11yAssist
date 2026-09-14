@@ -29,13 +29,15 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Includes the same a11y-knowledge and a11y-setup modules internally; no extra install. Setup defaults to check/planning; installing selected dependencies needs separate host-change authorization. No browser/AT binaries, scanner or live connection supplied. Missing tools or source produce partial coverage, not PASS. No automatic fixes, builds, filing or PRs.
+Bundles a11y-knowledge, a11y-setup and a11y-test-categories; no extra install. Every target/state requires all nine categories and every applicable step, not representative sampling. Missing tools, time or evidence remain explicit gaps. Setup preparation needs separate authorization. No browser/AT binaries or live connection supplied; no automatic fixes, builds, filing or PRs.
 
 ## Reference
 
 - [Bug Bash workflow and boundaries](docs/BUG-BASH.md)
 - [Feature context template](bug-bash/context.template.md)
 - [Findings and coverage report template](bug-bash/report.template.md)
+- [Built-in all-target test categories](modules/a11y-test-categories/docs/TEST-CATEGORIES.md)
+- [Built-in test categories (Chinese)](modules/a11y-test-categories/docs/TEST-CATEGORIES.zh-CN.md)
 - [Built-in environment preparation](modules/a11y-setup/docs/SETUP.md)
 - [Reused internal knowledge review](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
 - [Included project knowledge](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)

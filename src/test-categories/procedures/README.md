@@ -1,20 +1,15 @@
-# Bug Bash test categories
+# Accessibility test categories
 
-These nine procedure documents are copied without content changes from
-[dev.AgentOW PR #84](https://github.com/kaixun96/dev.AgentOW/pull/84), pinned to
-commit `7233b63c416c17c2c362d31aaf6f3c92abd1fb20`.
-The original files are under
-[`copilot/skills/agentow-a11y-explore-test/references/test-procedures/`](https://github.com/kaixun96/dev.AgentOW/tree/7233b63c416c17c2c362d31aaf6f3c92abd1fb20/copilot/skills/agentow-a11y-explore-test/references/test-procedures).
-This imports procedures, not AgentOW's agents, execution/result schemas, report
-tools, setup scripts or an automatic WCAG verdict engine.
+## Review every category for every target/state
 
-## Select applicable procedures
-
-Resolve this folder from the installed plugin root. Read the applicable documents
-before exercising the page. The coverage dimensions below refer to
-`bug-bash/coverage.json`; they remain planning prompts, not automatic findings.
-Several categories can contribute to the same scenario. Reuse its evidence rather
-than repeating an identical interaction merely to increase category counts.
+Resolve this folder from the standalone or bundled module root. Read all nine
+documents before exercising the page. For every in-scope target in each reachable
+state, account for every numbered step in every category. Execute all applicable
+steps in order; record a target-specific reason for every not-applicable step.
+These categories map to Bug Bash's `bug-bash/coverage.json` dimensions below;
+standalone use does not require Bug Bash. They are not automatic findings.
+Evidence may support several rows only when it actually covers each named target,
+state and step; never infer untested coverage from a representative control.
 
 | Category | Coverage dimensions | Procedure |
 |---|---|---|
@@ -35,12 +30,14 @@ expectations from the applicable standard and actual product/library contract.
 
 ## Apply the Bug Bash execution boundaries
 
-- The skill and `docs/BUG-BASH.md` still own scope, authorization, evidence and
+- The calling workflow still owns scope, authorization, evidence and
   reporting. These documents do not authorize setup, installs, product edits,
   filing or publication. Use only existing authorized Windows DevBox tools and
   owned resources. Source-only and plan-only never execute these page procedures.
-- Cover distinct journeys, controls and states using representative fixtures,
-  not every record sharing a template. Stay within the agreed feature and budget.
+- Inventory every in-scope region, control, meaningful content element and
+  reachable state. Do not replace full target coverage with representative
+  sampling. Safe fixtures may bound data volume, but every target in that fixture
+  remains in the matrix. Stay within the agreed feature and budget.
   Actions performed solely to restore test data are cleanup, not extra AT coverage.
 - Shared browser contexts, fixtures, OS focus, clipboard, audio or AT require
   serial execution. Real AT always runs serially; never run NVDA and Narrator
@@ -57,3 +54,14 @@ expectations from the applicable standard and actual product/library contract.
   `finding`, `blocked`, `not-run`, `not-applicable` or `inconclusive`.
   An unexecuted AT check is not a pass, and a completed category does not establish
   WCAG conformance.
+
+## References
+
+The nine procedure bodies are copied without content changes from
+[dev.AgentOW PR #84](https://github.com/kaixun96/dev.AgentOW/pull/84), pinned to
+commit `7233b63c416c17c2c362d31aaf6f3c92abd1fb20`, under
+[`copilot/skills/agentow-a11y-explore-test/references/test-procedures/`](https://github.com/kaixun96/dev.AgentOW/tree/7233b63c416c17c2c362d31aaf6f3c92abd1fb20/copilot/skills/agentow-a11y-explore-test/references/test-procedures).
+This imports procedures, not AgentOW's agents, execution/result schemas, report
+tools, setup scripts or an automatic WCAG verdict engine.
+Where a procedure refers to a sample, apply it to every in-scope target to which
+that step applies. This index and the category skill define full coverage.

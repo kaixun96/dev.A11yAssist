@@ -9,6 +9,7 @@ import { fileHash, hash, readConfig, createRun, executeStage, workflow, loadRun,
 import { capabilities, invokeCapability, validateCapabilityReceipt } from '../src/runtime/capability.mjs';
 import { executeOperation, operationStatus, reconcileOperation } from '../src/runtime/operations.mjs';
 import { computeScenarioHash } from '../src/runtime/evidence-v1.mjs';
+import { capabilityInput } from './fixtures/discovery-plan.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const provider = fileURLToPath(new URL('fixtures/provider.mjs', import.meta.url));
@@ -33,12 +34,14 @@ test('each capability operates without a Bug journal, host roster, previous stag
     await assert.rejects(readConfig(path), /Unsupported configuration\/mode/);
     for (const [action, definition] of Object.entries(capabilities.operations)) {
       if (!definition.plugin) continue;
-      const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, context,
-        ['release-evaluator', 'recover-media', 'recover-nvda'].includes(action) ? { nativeRunId: 'd'.repeat(32) } : {});
+      const binding = action.startsWith('discovery-') ? { ...context, subject: 'task:fixture-test' } : context;
+      const input = action.startsWith('discovery-') ? capabilityInput(action)
+        : ['release-evaluator', 'recover-media', 'recover-nvda'].includes(action) ? { nativeRunId: 'd'.repeat(32) } : {};
+      const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, binding, input);
       assert.equal(result.status, 'finished');
       assert.equal(result.receipt.outcome, 'pass');
       assert.equal(result.receipt.gates.claimOwned, undefined);
-      assert.equal(result.receipt.subject, context.subject);
+      assert.equal(result.receipt.subject, binding.subject);
       assert.equal(result.nextStage, undefined);
     }
     await assert.rejects(access(join(dir, 'runs')), { code: 'ENOENT' });

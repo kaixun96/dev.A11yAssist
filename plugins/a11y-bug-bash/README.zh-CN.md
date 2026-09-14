@@ -29,11 +29,12 @@ copilot plugin install a11y-bug-bash@a11y-assist
 
 ## 能力边界
 
-内置复用 a11y-knowledge 和 a11y-setup，无需另装。环境准备默认检查和规划；按需安装依赖需要单独的主机变更授权。不自带浏览器或 AT 二进制、扫描器和实时连接。缺少工具或源码时报告部分覆盖，不宣称 PASS。不自动修复、构建、提 bug 或建 PR。
+内置 a11y-knowledge 和 a11y-setup，无需另装。可选持久 CLI 需要 Node 22+ 和明确配置的 discovery provider；引导式计划/源码用法仍无需 provider。环境变更需单独授权。不自带浏览器/AT 程序或实时连接。缺少工具/源码仍保留缺口。不自动修复、构建、提 bug 或建 PR。
 
 ## 参考资料
 
 - [Bug Bash 流程与边界](docs/BUG-BASH.md)
+- [可执行组合与持久报告](docs/BUG-BASH-RUNTIME.md)
 - [Feature context 模板](bug-bash/context.template.md)
 - [问题与覆盖率报告模板](bug-bash/report.template.md)
 - [内置环境准备模块](modules/a11y-setup/docs/SETUP.md)

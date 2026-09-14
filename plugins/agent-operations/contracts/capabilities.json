@@ -1,6 +1,10 @@
 {
   "schemaVersion": 1,
   "operations": {
+    "discovery-observe": {"plugin": "a11y-capture", "provider": "capture", "context": ["subject", "scenarioHash", "evaluator"], "gates": ["evaluatorOwned", "runtimeVerified", "scenarioMatched", "artifactsHashed", "rowAccountingVerified"]},
+    "discovery-cancel": {"plugin": "agent-operations", "provider": "operations", "context": ["subject"], "gates": ["exactTaskMatched", "cancelAcknowledged"]},
+    "discovery-cleanup": {"plugin": "agent-operations", "provider": "operations", "context": ["subject"], "gates": ["exactTaskMatched", "ownedProcessesStopped", "settingsRestored", "artifactsPreserved", "ownershipReleased"]},
+    "discovery-deliver": {"plugin": "agent-operations", "provider": "operations", "context": ["subject"], "gates": ["exactTaskMatched", "reportBytesVerified", "reportDelivered"]},
     "release-evaluator": {"plugin": "a11y-resources", "provider": "resources", "context": ["subject", "evaluator"], "gates": ["completedRunMatched", "leaseReleased"]},
     "recover-media": {"plugin": "agent-operations", "provider": "operations", "context": ["subject", "evaluator"], "gates": ["trackedRecorderExitVerified", "defaultEndpointsVerified"]},
     "recover-nvda": {"plugin": "agent-operations", "provider": "operations", "context": ["subject", "evaluator"], "gates": ["startedProcessExitVerified"]},

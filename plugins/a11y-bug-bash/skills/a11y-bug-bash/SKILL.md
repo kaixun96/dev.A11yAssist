@@ -9,6 +9,12 @@ Read `docs/BUG-BASH.md`, `bug-bash/context.template.md`,
 `bug-bash/coverage.json` and `bug-bash/report.template.md` before starting.
 This is a discovery workflow, not the single-Bug remediation workflow.
 
+For explicitly configured executable composition, also read `docs/BUG-BASH-RUNTIME.md`.
+Use the package-local `runtime/bug-bash-cli.mjs`, not the remediation create/run
+commands. The guided plan/source path needs no provider configuration and remains
+valid when the executable path was not requested. Never silently switch a failed
+configured execution into a success-shaped guided result.
+
 ## 1. Establish scope and available capabilities
 
 Extract the feature purpose, user journeys, acceptance/verification steps, URL,
@@ -68,6 +74,13 @@ dynamic feedback before lower-risk variants. Record each matrix row as
 Show the bounded plan, then proceed without a redundant approval pause when
 scope, authorization and capabilities are already clear.
 
+In executable mode, serialize this plan using the versioned runtime contract,
+then `create` it once. Keep the task ID, fixed budget and original provider/profile
+bindings. Use `advance` for the next safe operation; inspect its returned rows and
+continue rather than ending after announcing the next action. Unsupported AT must
+remain a gap without blocking independent browser/source checks. Add discoveries
+through `append`, never rewrite an in-flight request or delete required coverage.
+
 ## 3. Exercise the page and preserve observations
 
 Use only actual available authorized tools. Start from the user's verification
@@ -120,6 +133,11 @@ matrix. Do not upgrade the source finding until actual evidence supports it.
 Do not assert that source explains the deployed page unless their build binding
 is known. Preserve differing or unknown versions in the report.
 
+After the read-only knowledge substep, executable-mode coordination records its
+source-bound analysis with `source`. This bookkeeping is outside the knowledge
+review itself; it does not turn the review into shell execution or runtime proof.
+When a source input is unavailable, record the affected rows with `gap` and a reason.
+
 ## 5. Reconcile and deliver
 
 Use `bug-bash/report.template.md`. Keep page-reproduced findings, code risks,
@@ -143,3 +161,11 @@ before resuming; never replay them under new IDs or steal a lease.
 Close only owned browser/AT sessions, restore changed test settings and release
 resources through their original authority. Do not force-release or broadly kill
 processes. If cleanup is uncertain, report it and keep ownership explicit.
+
+In executable mode, reconcile the original pending operation before advancement.
+Use a real completion callback and independent stall watcher for unattended work;
+neither a CLI reply nor a saved next action installs them. Once rows are accounted
+for, `advance` performs scoped cleanup, report creation and configured private
+delivery. Return the report reference and honest coverage/AT limits to the user.
+For an explicit stop, `cancel` applies only to this task; reconcile its submitted
+bounded work, finish applicable cleanup/delivery and never restart its coverage.

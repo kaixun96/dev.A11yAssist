@@ -9,6 +9,12 @@ use. Its stricter phase ordering is local to that workflow.
 
 ## Interfaces
 
+Bug Bash additionally composes `discovery-observe` through `a11y-capture`, and
+`discovery-cancel`, `discovery-cleanup`, `discovery-deliver` through
+`agent-operations`. These versioned discovery contracts are distinct from
+BEFORE/AFTER and PR publication. They require explicitly compatible trusted
+connections; see the [executable discovery contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-RUNTIME.md).
+
 | Plugin | Independent tool | Context needed |
 |---|---|---|
 | a11y-intake | `a11y_intake_invoke`, action `read-item` | `subject`; built-in ADO connection and input.itemId |

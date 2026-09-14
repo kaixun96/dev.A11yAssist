@@ -4,18 +4,12 @@ import { randomUUID } from 'node:crypto';
 import { VERSION, atomicJson, withDirectoryLock, verifyArtifactFiles, hash, callProvider } from './core.mjs';
 import { operationDefinition, validateContext, validateCapabilityInput, providerFor, invokeCapability, validateCapabilityReceipt } from './capability.mjs';
 import { createWaiting, pendingDetails, validateWaitingConfig } from './waiting.mjs';
+import { canonical } from './canonical.mjs';
 
 function demand(condition, message) { if (!condition) throw new Error(message); }
 function directory(config, operationId) {
   demand(typeof operationId === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,100}$/.test(operationId), 'Invalid operation ID');
   return join(config.stateRoot, 'operations', operationId);
-}
-function canonical(value) {
-  if (Array.isArray(value)) return value.map(canonical);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]));
-  }
-  return value;
 }
 function binding(config, action) {
   const name = providerFor(config, action);

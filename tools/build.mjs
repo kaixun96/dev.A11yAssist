@@ -85,6 +85,13 @@ async function bundleSetup(base) {
   }
   await emit(`${base}/docs/SETUP.md`, await text(join(root, 'docs/SETUP.md')));
 }
+async function bundleRuntime(base) {
+  for (const dir of ['runtime', 'contracts', 'adapters', 'native']) {
+    for (const file of await readdir(join(source, dir))) {
+      await emit(`${base}/${dir}/${file}`, await text(join(source, dir, file)));
+    }
+  }
+}
 const entries = [];
 for (const [name, definition] of Object.entries(plugins)) {
   const base = `plugins/${name}`;
@@ -95,11 +102,7 @@ for (const [name, definition] of Object.entries(plugins)) {
     author: { name: 'kaixun96' }, license: 'Microsoft Internal', mcpServers: { [server]: launch }
   }));
   await emit(`${base}/.mcp.json`, json({ mcpServers: { [server]: launch } }));
-  for (const dir of ['runtime', 'contracts', 'adapters', 'native']) {
-    for (const file of await readdir(join(source, dir))) {
-      await emit(`${base}/${dir}/${file}`, await text(join(source, dir, file)));
-    }
-  }
+  await bundleRuntime(base);
   for (const file of ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md', 'NATIVE-CAPABILITIES.md']) {
     await emit(`${base}/docs/${file}`, await text(join(root, 'docs', file)));
   }
@@ -176,6 +179,9 @@ for (const file of await readdir(join(source, 'bug-bash'))) {
   await emit(`${bugBashBase}/bug-bash/${file}`, await text(join(source, 'bug-bash', file)));
 }
 await emit(`${bugBashBase}/docs/BUG-BASH.md`, await text(join(root, 'docs/BUG-BASH.md')));
+await emit(`${bugBashBase}/docs/BUG-BASH-RUNTIME.md`, await text(join(root, 'docs/BUG-BASH-RUNTIME.md')));
+await emit(`${bugBashBase}/config/example.bug-bash.json`, await text(join(root, 'config/example.bug-bash.json')));
+await bundleRuntime(bugBashBase);
 // Internal instructions retain their own root without registering duplicate public skills.
 await bundleKnowledgeReview(`${bugBashBase}/modules/a11y-knowledge`);
 await bundleSetup(`${bugBashBase}/modules/a11y-setup`);

@@ -15,6 +15,9 @@ certification service. No sibling plugin is required.
 - A staged skill that coordinates page inspection and read-only source review.
 - The same setup skill, profiles and shared host installer as `a11y-setup`,
   privately bundled under `modules/a11y-setup/` for environment preparation.
+- An optional package-local executable coordinator with versioned plans,
+  durable child operations, source-bound risk recording, private reports and
+  separate cleanup/delivery gates. See [executable composition](BUG-BASH-RUNTIME.md).
 - An opt-in disposable browser fixture runner for qualifying the page-observation
   path, with healthy controls and deliberately broken variants. It is not a
   generic product scanner, AT recorder or replacement for the supplied feature.
@@ -64,7 +67,7 @@ authorize installation. Source-only and plan-only never run host setup scripts.
 No extra setup plugin installation is required, and missing optional audio/AT
 must not block unrelated browser checks.
 
-The framework itself has no MCP server and needs no `A11Y_ASSIST_CONFIG`.
+The guided framework has no MCP server and needs no `A11Y_ASSIST_CONFIG`.
 It uses tools already available to the calling Copilot session. Static review
 needs only read-only source access. Live page/AT execution supports the repository's
 Windows DevBox deployments and needs actual authorized, qualified connections
@@ -89,6 +92,9 @@ automatic MCP-to-MCP calls or prerequisites for source review. In particular:
   uncovered scope explicitly rather than assuming success or disabling all work.
 
 No generic product runtime adapter is implemented or qualified by this framework.
+The optional CLI requires Node 22+, private `A11Y_ASSIST_CONFIG` and explicitly
+compatible discovery providers. Its capture contract is separate from BEFORE/AFTER
+and evidence-v1; installation alone does not qualify a deployment adapter.
 Connected execution capabilities retain their existing configuration/protocol
 requirements; see [providers](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/PROVIDERS.md). No live feature has been evaluated
 merely by installing this package.

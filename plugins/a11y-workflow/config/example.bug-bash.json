@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "mode": "cli",
+  "owner": "your-owner-namespace",
+  "stateRoot": "C:\\private-a11y-state",
+  "providers": {},
+  "discoverySourceRoots": [],
+  "discoveryProfiles": {
+    "fixture-browser": {
+      "capabilities": ["browser"],
+      "targets": ["fixture:dialog-form-v1"]
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { pendingDetails, validateRequestWaiting } from './waiting.mjs';
+import { validateDiscoveryInput, validateDiscoveryReceipt } from './discovery-contract.mjs';
 
 export const capabilities = JSON.parse(await readFile(new URL('../contracts/capabilities.json', import.meta.url), 'utf8'));
 const outcomes = new Set(['pass', 'changes-requested', 'not-reproduced', 'blocked', 'inconclusive', 'invalid-evidence', 'abandoned']);
@@ -31,6 +32,7 @@ export function providerFor(config, action) {
 }
 export function validateCapabilityInput(action, input) {
   requireValue(input && typeof input === 'object' && !Array.isArray(input), 'Capability input must be an object');
+  if (action.startsWith('discovery-')) validateDiscoveryInput(action, input);
   if (['release-evaluator', 'recover-media', 'recover-nvda'].includes(action)) {
     requireValue(Object.keys(input).join(',') === 'nativeRunId' && typeof input.nativeRunId === 'string' &&
       /^[a-f0-9]{32}$/.test(input.nativeRunId),
@@ -42,6 +44,7 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
   requireValue(receipt && receipt.stage === action, 'Capability receipt operation mismatch');
   requireValue(outcomes.has(receipt.outcome), 'Unsupported capability outcome');
   requireValue(Array.isArray(receipt.artifacts) && receipt.artifacts.length > 0, 'Durable capability artifacts required');
+  if (action.startsWith('discovery-')) validateDiscoveryReceipt(action, receipt, input);
   if (action === 'recover-media') {
     validateCapabilityInput(action, input);
     requireValue(receipt.nativeRunId === input.nativeRunId &&

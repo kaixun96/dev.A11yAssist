@@ -28,13 +28,13 @@ const completeMatrix = () => {
   return matrix;
 };
 
-test('every target gets all nine categories and every numbered step, without inferred execution', () => {
-  assert.equal(categories.length, 9);
-  assert.deepEqual(procedures.map(procedure => procedure.steps.length), [10, 5, 6, 4, 6, 5, 5, 6, 6]);
+test('every target gets all ten categories and every numbered step, without inferred execution', () => {
+  assert.equal(categories.length, 10);
+  assert.deepEqual(procedures.map(procedure => procedure.steps.length), [10, 5, 6, 4, 6, 5, 5, 6, 6, 8]);
   const matrix = createMatrix(inventory, procedures);
-  assert.equal(matrix.rows.length, 106);
+  assert.equal(matrix.rows.length, 122);
   for (const target of inventory.targets) {
-    assert.equal(matrix.rows.filter(row => row.targetId === target.id).length, 53);
+    assert.equal(matrix.rows.filter(row => row.targetId === target.id).length, 61);
   }
   assert(matrix.rows.every(row => row.status === 'planned' && row.evidence.length === 0));
   assert.equal(checkMatrix(inventory, matrix, procedures).accountingComplete, false);
@@ -45,7 +45,7 @@ test('full accounting is not an evidence verdict and status totals include all g
   const full = checkMatrix(inventory, matrix, procedures);
   assert.equal(full.accountingComplete, true);
   assert.equal(full.evidenceValidated, false);
-  assert.equal(full.executed, 106);
+  assert.equal(full.executed, 122);
   for (const status of ['planned', 'blocked', 'not-run', 'inconclusive']) {
     const partial = completeMatrix();
     partial.rows[0].status = status;
@@ -55,7 +55,7 @@ test('full accounting is not an evidence verdict and status totals include all g
   matrix.rows[0].status = 'not-applicable';
   matrix.rows[0].reason = 'Target-specific feature evidence justifies this step';
   const result = checkMatrix(inventory, matrix, procedures);
-  assert.equal(result.applicable, 105);
+  assert.equal(result.applicable, 121);
   assert.equal(result.counts['not-applicable'], 1);
   assert.equal(result.byCategory['keyboard-focus']['not-applicable'], 1);
   const unknown = { ...inventory, inventoryComplete: false };
@@ -117,7 +117,7 @@ test('standalone and bundled modules share exact source and keep separate public
   const coverage = JSON.parse(await text(join(root, 'src/bug-bash/coverage.json')));
   assert.deepEqual(statuses, coverage.rowStatuses);
   const parent = await text(join(root, 'src/skills/a11y-bug-bash/SKILL.md'));
-  assert.match(parent, /all nine categories and every numbered step/);
+  assert.match(parent, /all ten categories and every numbered step/);
   assert.match(parent, /matrix check against the/);
   assert.match(parent, /exit 2/);
   for (const path of ['docs/TEST-CATEGORIES.md', 'docs/TEST-CATEGORIES.zh-CN.md', 'procedures/README.md']) {

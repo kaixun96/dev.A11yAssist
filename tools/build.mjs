@@ -175,7 +175,7 @@ await bundleSetup(setupBase);
 entries.push({ ...setup, source: `./${setupBase}`, version: pkg.version, author: { name: 'kaixun96' } });
 const testCategories = {
   name: 'a11y-test-categories',
-  description: 'All nine accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.'
+  description: 'All ten accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.'
 };
 const testCategoriesBase = `plugins/${testCategories.name}`;
 await emit(`${testCategoriesBase}/plugin.json`, json({

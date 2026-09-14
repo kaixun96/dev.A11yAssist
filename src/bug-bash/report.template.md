@@ -21,7 +21,7 @@ Source-only/page-only results never imply coverage of the omitted track.
 ## Coverage matrix
 
 - Original target/state inventory and completeness evidence/uncertainty:
-- Full nine-category step matrix and local accounting check result:
+- Full ten-category step matrix and local accounting check result:
 - Category totals/executed/gaps; unknown inventory or unfinished steps mean partial:
 
 | Row ID | Scenario/state and dimension | Track/tool | Expected check | Status | Evidence or gap reason | Finding IDs |

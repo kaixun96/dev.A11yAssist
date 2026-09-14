@@ -39,7 +39,7 @@ instructions/templates.** Other integrations below are conditional or proposed.
 | Bug Bash coordinator | Understand scope, plan coverage, route checks, aggregate results | Feature context + verification steps -> coverage plan + report | Current entry skill and templates; executable durable orchestration is proposed |
 | `a11y-knowledge` | Supply applicable A11y guidance and read-only source review | Stack/version, scoped source and question -> cited guidance or source-supported risks | Already bundled under `modules/a11y-knowledge/`; no extra install or separate agent |
 | `a11y-setup` | Check only the prerequisites needed by selected page/AT checks | Required capabilities + host -> inventory, gaps and preparation plan | Already bundled under `modules/a11y-setup/`; host changes need separate authorization |
-| `a11y-test-categories` | Apply all nine categories and every numbered step to each target/state | Complete target/state inventory -> full step matrix, evidence and explicit gaps | Independently installable; identical skill/procedures/local accounting tool bundled under `modules/a11y-test-categories/`; no live execution backend |
+| `a11y-test-categories` | Apply all ten categories and every numbered step to each target/state | Complete target/state inventory -> full step matrix, evidence and explicit gaps | Independently installable; identical skill/procedures/local accounting tool bundled under `modules/a11y-test-categories/`; no live execution backend |
 | Browser checks / proposed `a11y-browser` | Exercise navigation, focus, semantics and applicable rendered checks | Authorized connection + scenario -> page observations and artifacts | Today uses available caller tools. A reusable typed browser module is proposed, not shipped |
 | `a11y-resources` | Integrate with actual evaluator ownership | Host requirements + task identity -> ownership/status information | Optional connected capability under its real contract; status is not acquisition. General feature-task acquisition needs an explicit adapter |
 | `a11y-capture` | Collect real named-AT/media evidence when required | Owned evaluator + supported sealed scenario -> actual observations/artifacts | Optional only for inputs its existing contract supports; generic Bug Bash discovery adapters are proposed |
@@ -66,7 +66,7 @@ uses tools actually available in the session. The package has no MCP server of
 its own and does not automatically invoke sibling plugins by name.
 
 Before page work, the bundled test-categories plugin expands every in-scope
-target/state into all nine categories and their numbered steps. Every applicable
+target/state into all ten categories and their numbered steps. Every applicable
 step must run; not-applicable steps need target-specific reasons. No representative
 sampling substitutes for this inventory. Its local matrix gate rejects missing
 steps and identifies unfinished coverage; actual evidence assessment remains
@@ -80,7 +80,7 @@ User: feature + verification steps + authorized inputs
              Bug Bash: scope and target/state inventory
                         |
              Bundled a11y-test-categories
-             all nine categories / every step
+             all ten categories / every step
                          |
              +-----------+------------+
              |                        |
@@ -110,7 +110,7 @@ to each substep. It brings observations back to the same coverage row:
 
 | Step | What Bug Bash passes | What it receives and does next |
 |---|---|---|
-| Plan | Every target/state, user journeys, expected behavior, budget and knowledge | Test-categories expands all nine categories/every step; scenarios supply preconditions, actions, expectation, capability and reset |
+| Plan | Every target/state, user journeys, expected behavior, budget and knowledge | Test-categories expands all ten categories/every step; scenarios supply preconditions, actions, expectation, capability and reset |
 | Prepare | Only capabilities required by those rows | Available tools and gaps; check ownership before page interaction; authorize preparation separately |
 | Source review | Relevant component/style paths, revision and stack | Source-supported risks and runtime triggers; add in-scope confirmation rows |
 | Page/AT check | One row, safe data, authorized connection and expected evidence | Actual behavior and artifacts, or a precise reason the row could not run |

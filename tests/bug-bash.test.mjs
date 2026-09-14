@@ -13,7 +13,7 @@ const base = join(root, 'plugins/a11y-bug-bash');
 const categoryFiles = [
   'README.md', 'authentication-forms.md', 'dynamic-content.md', 'keyboard-focus.md',
   'orientation-input-purpose.md', 'screen-reader.md', 'structure-semantics.md',
-  'timing-motion.md', 'touch-pointer.md', 'visual-color.md'
+  'timing-motion.md', 'touch-pointer.md', 'visual-color.md', 'voice-access.md'
 ];
 const digest = body => createHash('sha256').update(body).digest('hex');
 async function filesUnder(directory, prefix = '') {
@@ -94,7 +94,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
   }
 });
 
-test('category index routes all imported procedures without adding an execution backend', async () => {
+test('category index routes all procedures without adding an execution backend', async () => {
   const index = await text(join(base, 'modules/a11y-test-categories/procedures/README.md'));
   assert.deepEqual((await readdir(join(base, 'modules/a11y-test-categories/procedures'))).sort(), categoryFiles);
   for (const file of categoryFiles.filter(file => file !== 'README.md')) {
@@ -107,6 +107,26 @@ test('category index routes all imported procedures without adding an execution 
   assert.match(index, /Source-only and plan-only never execute/);
   assert.match(index, /Real AT always runs serially/);
   assert.match(index, /not new Bug Bash result enums or an installed execution backend/);
+});
+
+test('Voice Access guidance requires actual speech, scoped actions and separate recovery evidence', async () => {
+  const procedure = await text(join(base, 'modules/a11y-test-categories/procedures/voice-access.md'));
+  const index = await text(join(base, 'modules/a11y-test-categories/procedures/README.md'));
+  for (const heading of ['Prerequisites and scope', 'Execute in-scope journeys',
+    'Evidence and outcome', 'Recovery and cleanup']) {
+    assert(procedure.includes(`## ${heading}`));
+  }
+  for (const phrase of ['Click <visible label>', 'Show numbers', 'Show grid',
+    'Scroll down', 'Press Escape', 'Dictation mode', 'Voice access wake up',
+    'non-silent input audio', 'bounded retry', 'not proof of a product defect',
+    'not a screen-reader result', 'Source-only and plan-only']) {
+    assert(procedure.includes(phrase), phrase);
+  }
+  assert(index.includes('authored in\nA11yAssist'));
+  assert.match(procedure, /not silently replace.*mouse\/keyboard/s);
+  assert.match(procedure, /does not prove label-based activation works/);
+  assert.match(procedure, /explicit consent/);
+  assert.match(procedure, /voice-access-command-list/);
 });
 
 test('coverage prompts reuse existing topics and preserve explicit nonpass accounting', async () => {

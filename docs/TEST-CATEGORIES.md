@@ -4,9 +4,9 @@
 
 `a11y-test-categories` is an independently installable procedure plugin. It defines
 what to check, the ordered steps and required evidence for each target/state.
-It includes nine categories: keyboard/focus, screen reader, structure/semantics,
+It includes ten categories: keyboard/focus, screen reader, structure/semantics,
 orientation/input purpose, visual/color, timing/motion, dynamic content,
-touch/pointer, and authentication/forms.
+touch/pointer, authentication/forms, and Voice Access.
 
 ## Composition
 
@@ -15,7 +15,7 @@ Bug Bash bundles the same skill, procedures and local accounting tool under
 consumers use `/a11y-test-categories`. Neither path adds a browser, AT backend,
 MCP server or another agent.
 
-The caller inventories targets and states; this plugin expands all nine categories
+The caller inventories targets and states; this plugin expands all ten categories
 and every numbered step for each target/state. Authorized browser tools perform
 page interactions; real AT/capture tools supply actual AT evidence. The caller
 assesses findings and delivers its report. This plugin prevents missing matrix
@@ -33,7 +33,7 @@ Copilot after installation.
 ```text
 /a11y-test-categories Check every target and reachable state of <feature>
 on <authorized URL and safe fixture>. Use <existing authorized tools>.
-Apply every step of all nine categories. Save to <private directory>.
+Apply every step of all ten categories. Save to <private directory>.
 Budget <duration>; retain anything unfinished as a gap. Do not fix or file.
 ```
 
@@ -44,7 +44,7 @@ targets for global checks. Include every in-scope element of the agreed fixture;
 representative sampling is not full coverage. New targets/states expand the
 inventory and matrix. Unknown inventory completeness makes the result partial.
 
-Each target/state gets every numbered step in all nine categories. Execute
+Each target/state gets every numbered step in all ten categories. Execute
 applicable steps in order. A non-applicable step needs a concrete target-specific
 reason. Missing AT/time/permission is a gap, never non-applicability.
 An existing artifact may cover multiple rows only if it actually demonstrates

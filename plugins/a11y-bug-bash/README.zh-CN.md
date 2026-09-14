@@ -29,7 +29,7 @@ copilot plugin install a11y-bug-bash@a11y-assist
 
 ## 能力边界
 
-内置复用 a11y-knowledge、a11y-setup 和 a11y-test-categories，无需另装。每个对象/状态都展开九类并执行全部适用步骤，不以抽查代替全覆盖；缺少工具、时间或证据必须保留缺口。环境安装准备另需授权。不提供浏览器/AT 程序或实时连接，不自动修复、构建、提 bug 或建 PR。
+内置复用 a11y-knowledge、a11y-setup 和 a11y-test-categories，无需另装。每个对象/状态都展开十类并执行全部适用步骤，不以抽查代替全覆盖；缺少工具、时间或证据必须保留缺口。环境安装准备另需授权。不提供浏览器/AT 程序或实时连接，不自动修复、构建、提 bug 或建 PR。
 
 ## 参考资料
 

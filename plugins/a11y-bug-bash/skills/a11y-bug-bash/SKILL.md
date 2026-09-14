@@ -60,10 +60,10 @@ skill, procedures and accounting tool, bundled without a second public command.
 Follow it inline, not a globally installed same-name skill or another agent.
 Inventory every in-scope region, control and meaningful content element in every
 reachable state, including page-level targets for global checks. For each
-target/state, expand all nine categories and every numbered step with the bundled
+target/state, expand all ten categories and every numbered step with the bundled
 `modules/a11y-test-categories/tools/matrix.mjs` into a private category matrix.
 Retain the original inventory and its explicit completeness/uncertainty.
-Read all nine procedures; execute all applicable steps in order, not just selected
+Read all ten procedures; execute all applicable steps in order, not just selected
 categories or representative controls. Every not-applicable step needs a
 target-specific reason. Tools/time/permission/evidence gaps are not non-applicability.
 Keep the coverage dimensions too: extra feature-specific checks are not removed.

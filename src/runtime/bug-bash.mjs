@@ -200,7 +200,7 @@ async function begin(config, taskId, kind, rowIds = []) {
       input = { taskId, operationIds: state.operations.filter(operation => operation.kind === 'observe').map(operation => operation.id),
         reason: kind === 'cancel' ? state.cancelReason : `Discovery ${kind} for the exact original task` };
       if (kind === 'deliver') input.report = { path: join(current.dir, state.report.relativePath), sha256: state.report.sha256 };
-      plugin = 'agent-operations'; action = `discovery-${kind}`;
+      plugin = 'a11y-bug-bash'; action = `discovery-${kind}`;
     }
     const pending = { id: operationId(taskId, kind, current.revision), kind, plugin, action, context, input, rowIds };
     state.pending = pending;

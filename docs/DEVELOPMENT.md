@@ -12,6 +12,7 @@ Keep migration history and implementation details off the main selection path.
 | `src/catalog.json` | Single catalog for both homepages and all plugin READMEs |
 | `src/skills/`, `src/knowledge/` | Authored instructions and generic reference topics |
 | `src/bug-bash/` | Feature discovery templates and opt-in disposable fixture qualification, not a rule engine |
+| `src/test-categories/` | Shared procedures and local step-level matrix accounting |
 | `src/setup/` | Scenario-scoped dependency profiles and readiness report |
 | `src/runtime/`, `src/contracts/`, `src/adapters/`, `src/native/` | Shared implementation |
 | `src/integrations/` | Integration-specific executable source |
@@ -72,6 +73,12 @@ the same two read-only skills and all references used by `a11y-knowledge` under
 `modules/a11y-knowledge/`, preserving their relative paths without registering
 duplicate public commands or requiring another installation. Its context,
 coverage and report resources are generated from `src/bug-bash/`.
+`bundleTestCategories` packages the same skill, procedures and local matrix tool
+from `src/test-categories/` into standalone `a11y-test-categories` and Bug Bash's
+`modules/a11y-test-categories/`. The standalone package has its own manifest and
+catalog entry; the internal module has no manifest or duplicate public command.
+Bug Bash requires every target/state's full ten-category step matrix and checks
+accounting before completion. This does not implement a live browser/AT backend.
 It has no MCP/configuration server; live checks use the caller's already
 authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it.
 

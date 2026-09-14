@@ -18,6 +18,15 @@
       }
     },
     {
+      "name": "a11y-test-categories",
+      "description": "All ten accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.",
+      "source": "./plugins/a11y-test-categories",
+      "version": "0.16.0",
+      "author": {
+        "name": "kaixun96"
+      }
+    },
+    {
       "name": "a11y-setup",
       "description": "Check and prepare selected Windows accessibility dependencies using the shared host installer; keep consent, restart and live readiness explicit.",
       "source": "./plugins/a11y-setup",
@@ -65,7 +74,7 @@
     {
       "name": "a11y-capture",
       "source": "./plugins/a11y-capture",
-      "description": "Real Windows assistive-technology BEFORE/AFTER evidence under exclusive ownership.",
+      "description": "Real Windows assistive-technology evidence and scoped recovery of owned capture resources.",
       "version": "0.16.0",
       "author": {
         "name": "kaixun96"
@@ -84,15 +93,6 @@
       "name": "a11y-publish",
       "source": "./plugins/a11y-publish",
       "description": "Reviewer-safe Draft PR evidence and live publication validation.",
-      "version": "0.16.0",
-      "author": {
-        "name": "kaixun96"
-      }
-    },
-    {
-      "name": "agent-operations",
-      "source": "./plugins/agent-operations",
-      "description": "Durable task continuation, cleanup, progress assessment and Run Insights.",
       "version": "0.16.0",
       "author": {
         "name": "kaixun96"

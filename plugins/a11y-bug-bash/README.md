@@ -29,7 +29,7 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Includes a11y-knowledge and a11y-setup; no extra install. Optional durable CLI needs Node 22+ and explicitly configured discovery providers; guided plan/source use remains provider-free. Setup changes require separate authorization. No browser/AT binaries or live connection supplied. Missing tools/source remain gaps. No automatic fixes, builds, filing or PRs.
+Bundles a11y-knowledge, a11y-setup and a11y-test-categories; no extra install. Every target/state requires all ten categories and every applicable step, not representative sampling. The durable CLI needs Node 22+ and explicitly configured discovery providers for live effects; plan/source use remains provider-free. Missing tools, time or evidence remain gaps. No automatic installation, fixes, builds, filing or PRs.
 
 ## Reference
 
@@ -37,6 +37,8 @@ Includes a11y-knowledge and a11y-setup; no extra install. Optional durable CLI n
 - [Executable composition and durable reports](docs/BUG-BASH-RUNTIME.md)
 - [Feature context template](bug-bash/context.template.md)
 - [Findings and coverage report template](bug-bash/report.template.md)
+- [Built-in all-target test categories](modules/a11y-test-categories/docs/TEST-CATEGORIES.md)
+- [Built-in test categories (Chinese)](modules/a11y-test-categories/docs/TEST-CATEGORIES.zh-CN.md)
 - [Built-in environment preparation](modules/a11y-setup/docs/SETUP.md)
 - [Reused internal knowledge review](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
 - [Included project knowledge](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)

@@ -67,6 +67,21 @@ them. Use every dimension in `bug-bash/coverage.json` as a planning prompt,
 not a universal rule or automatic failure. Record why a dimension is not applicable.
 Include entry, exit/cancel, error recovery and repeated use, not just the happy path.
 
+Read `modules/a11y-test-categories/skills/a11y-test-categories/SKILL.md`.
+Its root is `modules/a11y-test-categories`; it is the exact standalone plugin's
+skill, procedures and accounting tool, bundled without a second public command.
+Follow it inline, not a globally installed same-name skill or another agent.
+Inventory every in-scope region, control and meaningful content element in every
+reachable state, including page-level targets for global checks. For each
+target/state, expand all ten categories and every numbered step with the bundled
+`modules/a11y-test-categories/tools/matrix.mjs` into a private category matrix.
+Retain the original inventory and its explicit completeness/uncertainty.
+Read all ten procedures; execute all applicable steps in order, not just selected
+categories or representative controls. Every not-applicable step needs a
+target-specific reason. Tools/time/permission/evidence gaps are not non-applicability.
+Keep the coverage dimensions too: extra feature-specific checks are not removed.
+Source-only stays read-only; plan-only does not execute the procedures.
+
 Prioritize primary journeys, keyboard blockers, inaccessible names/focus and
 dynamic feedback before lower-risk variants. Record each matrix row as
 `planned`, `observed-no-issue`, `finding`, `blocked`, `not-run`,
@@ -148,6 +163,13 @@ Give severity with user-impact rationale, confidence and justified standard/topi
 references; never invent a WCAG mapping. Suggested fixes are recommendations only.
 
 Every planned row must have an explicit status, evidence or a gap reason.
+For page-track completion, run the bundled category matrix check against the
+original target inventory. Missing/duplicate steps fail the gate. Valid but
+incomplete accounting (exit 2), unknown inventory completeness or any applicable
+pending/blocked/unrun/inconclusive step forces a partial report. Do not trim the
+inventory or copy evidence from an untested representative to satisfy the gate.
+Verify evidence and non-applicability separately; accountingComplete is not a
+behavioral verdict. Include category counts and preserve the full private matrix.
 A clean scanner, zero findings, static review or a completed plan is not an
 accessibility PASS. Say "no issue observed in these checks", not "fully accessible".
 The round is complete only when in-scope applicable rows have been inspected,
@@ -158,8 +180,14 @@ requires a feature-specific reason and never inflates executed coverage.
 For interruption, preserve scope, row statuses, original resource/operation IDs,
 artifact locations and the exact next safe action. Reconcile unknown effects
 before resuming; never replay them under new IDs or steal a lease.
-Close only owned browser/AT sessions, restore changed test settings and release
-resources through their original authority. Do not force-release or broadly kill
+Ask each capability or caller tool to clean up the temporary resources/settings
+it created or changed, and collect its actual proof and unresolved items.
+Capture owns per-attempt environment preflight, postcheck and recording/AT/audio
+cleanup; browser tools own created browser resources, never borrowed persistent
+contexts or foreign tabs. Use only the connection's supported cleanup/recovery
+scope. Bug Bash coordinates and reports these results; it needs no separate
+cleanup plugin or full workflow. Release resources through their original
+authority with original ownership proof. Do not force-release or broadly kill
 processes. If cleanup is uncertain, report it and keep ownership explicit.
 
 In executable mode, reconcile the original pending operation before advancement.

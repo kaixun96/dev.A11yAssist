@@ -345,7 +345,7 @@ export async function reconcile(config, plugin, runId) {
   return exclusive(config, runId, async dir => {
     const state = await loadRun(config, runId);
     demand(state.pending, 'No pending operation');
-    demand(plugin === 'agent-operations' || plugin === 'a11y-workflow' ||
+    demand(plugin === 'a11y-workflow' ||
       plugins[plugin]?.stages.includes(state.pending.stage), 'Plugin cannot reconcile this operation');
     demand(config.providers[state.pending.provider] &&
       providerFor(config, state.pending.stage) === state.pending.provider &&

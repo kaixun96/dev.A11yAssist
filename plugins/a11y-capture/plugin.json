@@ -1,7 +1,7 @@
 {
   "name": "a11y-capture",
   "version": "0.16.0",
-  "description": "Real Windows assistive-technology BEFORE/AFTER evidence under exclusive ownership.",
+  "description": "Real Windows assistive-technology evidence and scoped recovery of owned capture resources.",
   "author": {
     "name": "kaixun96"
   },

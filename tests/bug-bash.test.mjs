@@ -10,6 +10,11 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const text = async path => (await readFile(path, 'utf8')).replaceAll('\r\n', '\n');
 const load = async path => JSON.parse(await text(path));
 const base = join(root, 'plugins/a11y-bug-bash');
+const categoryFiles = [
+  'README.md', 'authentication-forms.md', 'dynamic-content.md', 'keyboard-focus.md',
+  'orientation-input-purpose.md', 'screen-reader.md', 'structure-semantics.md',
+  'timing-motion.md', 'touch-pointer.md', 'visual-color.md', 'voice-access.md'
+];
 const digest = body => createHash('sha256').update(body).digest('hex');
 async function filesUnder(directory, prefix = '') {
   const files = [];
@@ -59,6 +64,9 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       'docs/BROWSER.md',
       'config/example.bug-bash.json',
       ...resources.map(path => `bug-bash/${path}`),
+      ...(await filesUnder(join(root, 'plugins/a11y-test-categories')))
+        .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
+        .map(path => `modules/a11y-test-categories/${path}`),
       ...expectedModule.map(path => `modules/a11y-knowledge/${path}`),
       ...(await filesUnder(join(root, 'plugins/a11y-setup')))
         .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
@@ -75,7 +83,12 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       assert.equal(await text(join(directory, 'bug-bash', path)),
         await text(join(root, 'src/bug-bash', path)));
     }
+    for (const path of categoryFiles) {
+      assert.equal(await text(join(directory, 'modules/a11y-test-categories/procedures', path)),
+        await text(join(root, 'src/test-categories/procedures', path)));
+    }
     for (const path of ['README.md', 'README.zh-CN.md', 'docs/BUG-BASH.md', 'docs/BUG-BASH-RUNTIME.md',
+      ...categoryFiles.map(path => `modules/a11y-test-categories/procedures/${path}`),
       'modules/a11y-knowledge/knowledge/README.md',
       ...['README.md', 'fluent-spds.md', 'sharepoint.md', 'complete-source-guide.md']
         .map(file => `modules/a11y-knowledge/integrations/agentow/knowledge/${file}`)]) {
@@ -87,6 +100,41 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
   } finally {
     await rm(directory, { recursive: true });
   }
+});
+
+test('category index routes all procedures without adding an execution backend', async () => {
+  const index = await text(join(base, 'modules/a11y-test-categories/procedures/README.md'));
+  assert.deepEqual((await readdir(join(base, 'modules/a11y-test-categories/procedures'))).sort(), categoryFiles);
+  for (const file of categoryFiles.filter(file => file !== 'README.md')) {
+    assert(index.includes(`](${file})`));
+  }
+  const coverage = await load(join(base, 'bug-bash/coverage.json'));
+  for (const dimension of coverage.dimensions) assert(index.includes(`\`${dimension.id}\``));
+  for (const status of coverage.rowStatuses) assert(index.includes(`\`${status}\``));
+  assert.match(index, /7233b63c416c17c2c362d31aaf6f3c92abd1fb20/);
+  assert.match(index, /Source-only and plan-only never execute/);
+  assert.match(index, /Real AT always runs serially/);
+  assert.match(index, /not new Bug Bash result enums or an installed execution backend/);
+});
+
+test('Voice Access guidance requires actual speech, scoped actions and separate recovery evidence', async () => {
+  const procedure = await text(join(base, 'modules/a11y-test-categories/procedures/voice-access.md'));
+  const index = await text(join(base, 'modules/a11y-test-categories/procedures/README.md'));
+  for (const heading of ['Prerequisites and scope', 'Execute in-scope journeys',
+    'Evidence and outcome', 'Recovery and cleanup']) {
+    assert(procedure.includes(`## ${heading}`));
+  }
+  for (const phrase of ['Click <visible label>', 'Show numbers', 'Show grid',
+    'Scroll down', 'Press Escape', 'Dictation mode', 'Voice access wake up',
+    'non-silent input audio', 'bounded retry', 'not proof of a product defect',
+    'not a screen-reader result', 'Source-only and plan-only']) {
+    assert(procedure.includes(phrase), phrase);
+  }
+  assert(index.includes('authored in\nA11yAssist'));
+  assert.match(procedure, /not silently replace.*mouse\/keyboard/s);
+  assert.match(procedure, /does not prove label-based activation works/);
+  assert.match(procedure, /explicit consent/);
+  assert.match(procedure, /voice-access-command-list/);
 });
 
 test('coverage prompts reuse existing topics and preserve explicit nonpass accounting', async () => {
@@ -121,6 +169,7 @@ test('entrypoint and templates retain track isolation, evidence distinctions, sc
   assert.equal(skill, await text(join(root, 'src/skills/a11y-bug-bash/SKILL.md')));
   for (const path of ['docs/BUG-BASH.md', 'bug-bash/context.template.md',
     'bug-bash/coverage.json', 'bug-bash/report.template.md',
+    'modules/a11y-test-categories/skills/a11y-test-categories/SKILL.md',
     'modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md']) {
     assert(skill.includes(`\`${path}\``));
     await access(join(base, path));
@@ -132,7 +181,10 @@ test('entrypoint and templates retain track isolation, evidence distinctions, sc
     /Missing tools are gaps/, /exclusive desktop ownership/,
     /read-only.*handlers, styles/s, /Do not upgrade.*until actual evidence supports it/s,
     /do not claim repeatability|cannot be repeated/, /their build binding\s+is known/,
-    /Reconcile unknown effects/, /Close only owned/, /not a second rule set/,
+    /Reconcile unknown effects/, /each capability or caller tool to clean up/,
+    /never borrowed persistent\s+contexts or foreign tabs/,
+    /per-attempt environment preflight, postcheck/,
+    /needs no separate\s+cleanup plugin or full workflow/, /not a second rule set/,
     /Do not invoke a globally installed same-name skill/
   ]) assert.match(skill, pattern);
   const context = await text(join(base, 'bug-bash/context.template.md'));

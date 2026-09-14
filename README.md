@@ -11,6 +11,7 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
 | [a11y-bug-bash](plugins/a11y-bug-bash/README.md) | Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks | Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks |
+| [a11y-test-categories](plugins/a11y-test-categories/README.md) | Apply all ten accessibility test categories, step by step, to every in-scope target and reachable state | Feature scope and target/state inventory; Node.js 22+ for local accounting; authorized browser/AT tools and ownership for live checks |
 
 ### Environment preparation
 
@@ -30,16 +31,15 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 |---|---|---|
 | [a11y-intake](plugins/a11y-intake/README.md) | Read an authorized work item and prepare acceptance criteria and a reproduction scenario | Configured work-item access; built-in ADO read-item uses host-managed authentication |
 | [a11y-resources](plugins/a11y-resources/README.md) | Inspect resource status; release an explicitly authorized completed evaluator assignment | Authorized resource connection; release additionally needs the original completed, owned assignment |
-| [a11y-capture](plugins/a11y-capture/README.md) | Capture BEFORE/AFTER evidence with real Windows assistive technology | Qualified Windows capture connection, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD |
+| [a11y-capture](plugins/a11y-capture/README.md) | Capture real Windows AT evidence and recover owned recording, audio or NVDA resources | Qualified Windows capture connection with per-attempt preflight/postcheck, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD |
 | [a11y-validate](plugins/a11y-validate/README.md) | Check existing evidence files; optionally request independent behavior evaluation | Node.js 22+ and evidence-v1 files for structural checks; behavior evaluation requires a qualified connection |
 | [a11y-publish](plugins/a11y-publish/README.md) | Attach evidence to an existing Draft PR; integrate broader publication when configured | Authorized PR connection, exact HEAD and hash-bound files; built-in attachment action uses ADO authentication |
-| [agent-operations](plugins/agent-operations/README.md) | Clean up explicitly owned resources and reconcile scoped media or NVDA recovery | Authorized operations connection and original ownership records for the requested scope |
 
 ### Optional complete workflow
 
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
-| [a11y-workflow](plugins/a11y-workflow/README.md) | Optional end-to-end evidence-first remediation workflow | Qualified work-item, resource, Windows capture, source, validation, review, publication and cleanup connections |
+| [a11y-workflow](plugins/a11y-workflow/README.md) | Optional evidence-first remediation workflow, progress and module-owned cleanup coordination | Qualified work-item, resource, Windows capture, source, validation, review, publication and cleanup connections |
 
 ### Existing installations only
 

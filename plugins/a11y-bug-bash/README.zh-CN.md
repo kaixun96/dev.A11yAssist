@@ -29,7 +29,7 @@ copilot plugin install a11y-bug-bash@a11y-assist
 
 ## 能力边界
 
-内置 a11y-knowledge 和 a11y-setup，无需另装。可选持久 CLI 需要 Node 22+ 和明确配置的 discovery provider；引导式计划/源码用法仍无需 provider。环境变更需单独授权。不自带浏览器/AT 程序或实时连接。缺少工具/源码仍保留缺口。不自动修复、构建、提 bug 或建 PR。
+内置复用 a11y-knowledge、a11y-setup 和 a11y-test-categories，无需另装。每个对象/状态都展开十类并执行全部适用步骤，不以抽查代替全覆盖。持久 CLI 需要 Node 22+，现场操作需要明确配置 discovery provider；计划/源码用法无需 provider。缺少工具、时间或证据必须保留缺口。不自动安装、修复、构建、提 bug 或建 PR。
 
 ## 参考资料
 
@@ -37,6 +37,8 @@ copilot plugin install a11y-bug-bash@a11y-assist
 - [可执行组合与持久报告](docs/BUG-BASH-RUNTIME.md)
 - [Feature context 模板](bug-bash/context.template.md)
 - [问题与覆盖率报告模板](bug-bash/report.template.md)
+- [内置全对象测试分类（英文）](modules/a11y-test-categories/docs/TEST-CATEGORIES.md)
+- [内置全对象测试分类](modules/a11y-test-categories/docs/TEST-CATEGORIES.zh-CN.md)
 - [内置环境准备模块](modules/a11y-setup/docs/SETUP.md)
 - [内部复用的知识审查](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
 - [随包项目知识](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)

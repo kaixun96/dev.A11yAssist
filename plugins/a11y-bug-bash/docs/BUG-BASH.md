@@ -10,6 +10,9 @@ certification service. No sibling plugin is required.
 
 - One public entrypoint, `/a11y-bug-bash`.
 - Context, coverage and report templates under `bug-bash/`.
+- The independent `a11y-test-categories` plugin's skill, ten procedures (including
+  dedicated Voice Access steps) and
+  local matrix tool, bundled under `modules/a11y-test-categories/`.
 - The exact two knowledge skills and complete references from `a11y-knowledge`,
   bundled privately within the package at `modules/a11y-knowledge/`.
 - A staged skill that coordinates page inspection and read-only source review.
@@ -57,6 +60,12 @@ authorized page without reading product source. Default `both` attempts both;
 an unavailable track is an explicit gap and makes the overall result partial.
 
 ## Execution boundaries
+
+For the plugin-by-plugin overall flow and the per-scenario action/check loop, see
+the [composition diagrams](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-ARCHITECTURE.md#3-how-are-they-composed-and-used)
+([简体中文](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-ARCHITECTURE.zh-CN.md#3-这些能力怎么组合怎么调用)).
+They name the bundled modules, conditional integrations and proposed browser
+plugin separately; arrows describe caller-directed work, not automatic plugin calls.
 
 Before page execution, the skill reads the internal
 [setup contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/SETUP.md) for check/planning. Its actual bundled
@@ -154,9 +163,21 @@ The coverage file is a planning checklist, not executable assertions or a WCAG
 rule engine. Derive thresholds and component expectations from the applicable
 knowledge and actual product/library contract; do not label every prompt a defect.
 
+For every in-scope region, control and meaningful content element in every
+reachable state, use the bundled category plugin to expand all ten categories
+and every numbered step. Include page-level targets for global checks. Execute
+all applicable steps; give a target-specific reason for each not-applicable step.
+Representative sampling cannot establish full target coverage. Reuse evidence
+only when it actually covers every linked target/state/step.
+Run the bundled local matrix check against the original inventory before page
+completion; missing steps fail, unfinished rows or unknown inventory mean partial.
+The tool checks accounting, not evidence authenticity or behavior. Keep the
+original inventory, full private matrix, evidence and category counts in delivery.
+See the [category contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/TEST-CATEGORIES.md).
+
 Exercise happy paths plus relevant entry/exit, cancellation, repeated use,
-loading/empty/error/permission and responsive states. Prefer depth on primary
-journeys and high-impact blockers over claiming to have sampled everything.
+loading/empty/error/permission and responsive states. Prioritize primary journeys
+and high-impact blockers first without removing other in-scope targets or steps.
 An expiring time budget yields partial coverage with a prioritized remainder.
 Do not silently drop blocked, not-run or inconclusive rows from the denominator.
 
@@ -186,6 +207,15 @@ Save real reports/evidence privately outside the installed plugin, redact before
 approved sharing, and deliver the result to the requester. Restore only settings
 changed by this run and clean up only its owned sessions through their original
 authority. An unresolved cleanup/unknown effect is reported, not hidden.
+
+Cleanup belongs to the module/tool that created or changed each resource.
+Capture performs fresh per-attempt environment checks, postchecks and its own
+recording/AT/audio cleanup; browser tools restore their temporary state without
+closing borrowed authenticated contexts or foreign tabs. Bug Bash collects
+actual proof and unresolved items, then coordinates any release through the
+original authority. No separate cleanup plugin or full workflow is required.
+Supported capture connections must implement the lifecycle; these instructions
+do not add a generic browser/AT backend or automatically replay failed captures.
 
 This request does not authorize product source edits, builds, dependency
 installation, automatic bug filing, PR creation, uploads or remediation. To

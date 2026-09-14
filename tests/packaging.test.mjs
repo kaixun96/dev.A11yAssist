@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { plugins } from '../src/runtime/core.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-test('seven standalone plugin copies can initialize/list tools without repo siblings', async () => {
+test('standalone execution plugin copies can initialize/list tools without repo siblings', async () => {
   for (const name of Object.keys(plugins)) {
     const dir = await mkdtemp(join(tmpdir(), 'standalone-plugin-'));
     try {
@@ -47,6 +47,10 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
   assert.equal(marketplace.name, 'a11y-assist');
   assert.equal(marketplace.metadata.version, pkg.version);
   assert.equal(marketplace.plugins.length, 11);
+  assert(!marketplace.plugins.some(entry => entry.name === 'agent-operations'));
+  assert.equal(plugins['agent-operations'], undefined);
+  await assert.rejects(access(join(root, 'plugins/agent-operations')), { code: 'ENOENT' });
+  await assert.rejects(access(join(root, 'src/skills/agent-operations/SKILL.md')), { code: 'ENOENT' });
   await assert.rejects(access(join(root, '.claude-plugin/marketplace.json')), { code: 'ENOENT' });
   for (const entry of marketplace.plugins) {
     const dir = join(root, entry.source);
@@ -63,7 +67,8 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
     for (const path of entrypoints) {
       assert.doesNotMatch(await readFile(join(dir, path), 'utf8'), /claude/i, `${entry.name}: ${path}`);
     }
-    for (const path of entry.name === 'a11y-setup' ? ['docs/SETUP.md', 'native/windows-host.ps1'] : ['knowledge/README.md',
+    for (const path of entry.name === 'a11y-test-categories' ? ['docs/TEST-CATEGORIES.md', 'procedures/README.md', 'tools/matrix.mjs']
+      : entry.name === 'a11y-setup' ? ['docs/SETUP.md', 'native/windows-host.ps1'] : ['knowledge/README.md',
       ...(manifest.mcpServers ? ['docs/CAPABILITIES.md'] : []),
       ...(entry.name !== 'a11y-knowledge' ? ['integrations/agentow/knowledge/README.md'] : [])]) {
       const contentRoot = entry.name === 'a11y-bug-bash' ? join(dir, 'modules/a11y-knowledge') : dir;

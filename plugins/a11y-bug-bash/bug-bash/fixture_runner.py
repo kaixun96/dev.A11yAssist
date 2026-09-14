@@ -137,6 +137,7 @@ def run(request, output):
                 context.route("**/*", lambda route: route.continue_()
                               if route.request.url.split("?")[0] == allowed else route.abort())
                 page = context.new_page()
+                page.bring_to_front()
                 page.set_default_timeout(5000)
                 page.set_default_navigation_timeout(10000)
                 deadline = time.monotonic() + 180
@@ -146,12 +147,41 @@ def run(request, output):
                     current_row = row
                     row.update(status="inconclusive", reason="Execution started; effects must be reconciled if interrupted")
                     save(state_path, report)
-                    page.goto(f"{allowed}?variant={row['variant']}", wait_until="load")
+                    target = f"{allowed}?variant={row['variant']}"
+                    page.goto(target, wait_until="load")
+                    row["capturePreflight"] = {
+                        "timestamp": stamp(), "url": page.url,
+                        "verified": page.url == target and len(context.pages) == 1 and
+                        page.evaluate("document.visibilityState === 'visible' && document.hasFocus()"),
+                    }
+                    save(state_path, report)
+                    if not row["capturePreflight"]["verified"]:
+                        raise RuntimeError("Fixture capture preflight failed; no trigger or capture")
+                    row["scenarioPreflight"] = row["capturePreflight"]
                     ok, observed, steps = observe(page, row["scenario"])
-                    screenshot = directory / f"{row['id']}.png"
-                    page.screenshot(path=str(screenshot), full_page=True)
-                    snapshot = directory / f"{row['id']}.aria.txt"
-                    snapshot.write_text(page.locator("body").aria_snapshot(), encoding="utf-8")
+                    try:
+                        row["capturePreflight"] = {
+                            "timestamp": stamp(), "url": page.url,
+                            "verified": page.url == target and len(context.pages) == 1 and
+                            page.evaluate("document.visibilityState === 'visible' && document.hasFocus()"),
+                        }
+                        save(state_path, report)
+                        if not row["capturePreflight"]["verified"]:
+                            raise RuntimeError("Fixture environment changed before capture; capture not attempted")
+                        screenshot = directory / f"{row['id']}.png"
+                        page.screenshot(path=str(screenshot), full_page=True)
+                        snapshot = directory / f"{row['id']}.aria.txt"
+                        snapshot.write_text(page.locator("body").aria_snapshot(), encoding="utf-8")
+                    finally:
+                        row["capturePostcheck"] = {
+                            "timestamp": stamp(), "url": page.url,
+                            "verified": not page.is_closed() and page.url == target and
+                            len(context.pages) == 1 and page.evaluate(
+                                "document.visibilityState === 'visible' && document.hasFocus()"),
+                        }
+                        save(state_path, report)
+                    if not row["capturePostcheck"]["verified"]:
+                        raise RuntimeError("Fixture capture postcheck found an unexpected environment state")
                     row.update({
                         "timestamp": stamp(), "url": page.url, "observed": observed, "steps": steps,
                         "reset": "Reload the same bundled fixture before this row",
@@ -176,6 +206,10 @@ def run(request, output):
         report["fixtureQualification"] = "failed"
         report["error"] = {"type": type(error).__name__, "message": str(error)}
         if current_row is not None:
+            current_row.setdefault("capturePostcheck", {
+                "verified": False, "timestamp": stamp(),
+                "reason": "Capture interrupted before verified postcheck; retain cleanup obligation",
+            })
             current_row.update(status="blocked", reason=str(error))
         for row in report["rows"]:
             if row["status"] == "planned":

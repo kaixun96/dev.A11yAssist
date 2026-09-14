@@ -94,6 +94,7 @@ export async function executeOperation(config, plugin, operationId, action, cont
 export async function operationStatus(config, plugin, operationId) {
   const dir = directory(config, operationId);
   const state = await readState(dir);
+  if (!state) throw Object.assign(new Error('Operation state does not exist; reconcile original parent intent'), { code: 'ENOENT' });
   owned(state, config, plugin);
   if (state.status === 'finished') await verifyFinished(dir, state);
   return publicOperation(state);

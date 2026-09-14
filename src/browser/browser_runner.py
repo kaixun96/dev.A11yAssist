@@ -143,6 +143,19 @@ def observe(page, assertion):
             actual = target.get_attribute(assertion["attribute"])
     return {"assertion": assertion, "actual": actual, "met": actual == assertion["expected"]}
 
+def capture_health(page, request, clean):
+    closed = page.is_closed()
+    state = {} if closed else page.evaluate(
+        "() => ({visible: document.visibilityState === 'visible', focused: document.hasFocus()})")
+    value = {"timestamp": stamp(), "url": None if closed else page.url,
+             "visible": state.get("visible", False), "documentFocused": state.get("focused", False),
+             "singlePage": len(page.context.pages) == 1, "viewport": page.viewport_size,
+             "noUnexpectedPageState": clean}
+    value["verified"] = (not closed and value["url"] == request["target"] and
+                         value["visible"] and value["documentFocused"] and value["singlePage"] and
+                         value["viewport"] == request["viewport"] and clean)
+    return value
+
 
 def run(request, output, policy):
     validate_request(request)
@@ -224,6 +237,12 @@ def run(request, output, policy):
                         response = page.goto(request["target"], wait_until="load")
                         if not response or response.status >= 400 or page.url != request["target"]:
                             raise RuntimeError("Expected authorized page did not load")
+                        row["capturePreflight"] = capture_health(
+                            page, request, not errors and not dialogs and critical_failures[0] == failure_start)
+                        row["scenarioPreflight"] = row["capturePreflight"]
+                        save(state_path, report)
+                        if not row["capturePreflight"]["verified"]:
+                            raise RuntimeError("Scenario-scoped capture preflight failed; no trigger or capture")
                         for step in definition["steps"]:
                             if time.monotonic() >= deadline:
                                 raise TimeoutError("Browser scenario budget exhausted")
@@ -254,14 +273,26 @@ def run(request, output, policy):
                         row.pop("reason", None)
                     except (PlaywrightError, RuntimeError, TimeoutError) as error:
                         row.update(status="blocked", reason=str(error))
+                    try:
+                        if row.get("capturePreflight", {}).get("verified"):
+                            row["capturePreflight"] = capture_health(
+                                page, request, not errors and not dialogs and critical_failures[0] == failure_start)
+                            save(state_path, report)
+                            if not row["capturePreflight"]["verified"]:
+                                row.update(status="blocked", reason="Environment changed before capture; capture not attempted")
+                                continue
+                            screenshot = directory / (row["id"] + ".png")
+                            page.screenshot(path=str(screenshot))
+                            tree = directory / (row["id"] + ".aria.txt")
+                            tree.write_text(page.locator("body").aria_snapshot(), encoding="utf-8")
+                            row["evidence"] = [{"path": file.name, "sha256": sha256(file)} for file in (screenshot, tree)]
                     finally:
+                        row["capturePostcheck"] = capture_health(
+                            page, request, not errors and not dialogs and critical_failures[0] == failure_start)
+                        if not row["capturePostcheck"]["verified"]:
+                            row.update(status="inconclusive", reason="Capture postcheck found an unexpected page/environment state")
+                        save(state_path, report)
                         page.remove_listener("pageerror", on_error)
-                    screenshot = directory / (row["id"] + ".png")
-                    page.screenshot(path=str(screenshot))
-                    tree = directory / (row["id"] + ".aria.txt")
-                    tree.write_text(page.locator("body").aria_snapshot(), encoding="utf-8")
-                    row["evidence"] = [{"path": file.name, "sha256": sha256(file)} for file in (screenshot, tree)]
-                    save(state_path, report)
                 report["blockedRequests"] = blocked_requests
                 report["state"] = "completed"
             finally:
@@ -273,6 +304,11 @@ def run(request, output, policy):
         for row in report["rows"]:
             if row["status"] == "planned":
                 row.update(status="not-run", attempted=False, reason="Execution failed before this row")
+            elif row.get("attempted"):
+                row.setdefault("capturePostcheck", {
+                    "verified": False, "timestamp": stamp(),
+                    "reason": "Postcheck did not complete; preserve original operation and cleanup obligation",
+                })
         raise
     finally:
         report["finishedAt"] = stamp()

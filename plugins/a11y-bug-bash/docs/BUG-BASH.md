@@ -64,8 +64,9 @@ an unavailable track is an explicit gap and makes the overall result partial.
 For the plugin-by-plugin overall flow and the per-scenario action/check loop, see
 the [composition diagrams](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-ARCHITECTURE.md#3-how-are-they-composed-and-used)
 ([简体中文](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-ARCHITECTURE.zh-CN.md#3-这些能力怎么组合怎么调用)).
-They name the bundled modules, conditional integrations and proposed browser
-plugin separately; arrows describe caller-directed work, not automatic plugin calls.
+They name bundled modules and conditional integrations. The calling agent owns
+reasoning; the durable CLI dispatches accepted scenarios through configured
+connections, not automatic sibling-plugin calls.
 
 Before page execution, the skill reads the internal
 [setup contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/SETUP.md) for check/planning. Its actual bundled

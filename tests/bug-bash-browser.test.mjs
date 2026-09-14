@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { verifyBrowserObservations } from '../src/runtime/browser-contract.mjs';
 
 test('generic browser schema is bounded, denies scripts/OS keys and needs no browser for validation', () => {
   const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
@@ -15,6 +16,20 @@ base = {"schemaVersion":1,"taskId":"browser-unit-test","target":"https://example
                 {"action":"press","key":"Escape"}],
         "assertions":[{"kind":"focused","target":{"css":"#open"},"expected":True}]}]}
 m.validate_request(base)
+class Page:
+    viewport_size = base["viewport"]
+    url = base["target"]
+    visible = True
+    focused = True
+    def is_closed(self): return False
+    def evaluate(self, script): return {"visible": self.visible, "focused": self.focused}
+page = Page()
+page.context = type("Context", (), {"pages": [page]})()
+assert m.capture_health(page, base, True)["verified"]
+page.focused = False
+assert not m.capture_health(page, base, True)["verified"]
+page.focused = True
+assert not m.capture_health(page, base, False)["verified"]
 cases=[]
 def changed(fn):
     value=copy.deepcopy(base); fn(value); cases.append(value)
@@ -47,4 +62,29 @@ print("Schema and host gates only; no browser or AT execution")
   const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /no browser or AT execution/);
+});
+
+test('shared browser assessment rejects forged comparisons and stale or abnormal capture health', () => {
+  const assertion = { kind: 'focused', target: { css: '#open' }, expected: true };
+  const request = { schemaVersion: 1, taskId: 'browser-unit', target: 'https://example.org/demo',
+    budgetSeconds: 60, viewport: { width: 1280, height: 720 },
+    rows: [{ id: 'open', steps: [], assertions: [assertion] }] };
+  const health = { verified: true, url: request.target, visible: true, documentFocused: true,
+    singlePage: true, noUnexpectedPageState: true, viewport: request.viewport };
+  const report = { request, rows: [{ id: 'open', status: 'observed-no-issue', attempted: true,
+    steps: [], observations: [{ assertion, actual: true, met: true }],
+    capturePreflight: health, capturePostcheck: health }] };
+  verifyBrowserObservations(report, request);
+  for (const change of [
+    row => { row.observations[0].actual = false; },
+    row => { row.observations[0].assertion.target.css = '#wrong'; },
+    row => { row.capturePostcheck.documentFocused = false; },
+    row => { row.capturePreflight.viewport.width = 999; },
+    row => { delete row.capturePreflight; },
+    row => { row.attempted = false; }
+  ]) {
+    const changed = structuredClone(report);
+    change(changed.rows[0]);
+    assert.throws(() => verifyBrowserObservations(changed, request));
+  }
 });

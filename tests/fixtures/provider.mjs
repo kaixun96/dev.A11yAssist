@@ -44,6 +44,8 @@ if (request.operation === 'status') {
     receipt.taskId = request.input.taskId;
     receipt.operationIds = request.input.operationIds;
     if (request.stage === 'discovery-observe') {
+      receipt.capturePreflightArtifacts = [artifact];
+      receipt.capturePostcheckArtifacts = [artifact];
       receipt.planHash = request.input.planHash;
       receipt.observations = request.input.rows.map(row => {
         const status = row.parameters?.status ?? 'observed-no-issue';

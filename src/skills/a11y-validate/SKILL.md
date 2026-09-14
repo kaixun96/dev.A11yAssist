@@ -13,6 +13,13 @@ For local evidence bytes, explicitly supply `artifactRoot` and, for verify,
 local path. Missing/mismatched files reject; remote URIs are never fetched.
 This does not establish media quality or independent behavior acceptance.
 
+For a Bug Bash discovery task, use `a11y_validate_discovery` with its original
+`taskId` and the private owner/state configuration. It is read-only: validates
+hash-linked history, original child receipts, local bytes and full category
+accounting, while retaining the trusted provider's independent behavior
+assessments and gaps separately. It does not accept an arbitrary Markdown report
+as evidence, execute capture or promote source risks into runtime findings.
+
 For an independent behavior evaluation, use `a11y_validate_invoke` with action
 `validate`, a stable operationId, context.scenarioHash and the actual evidence
 input expected by the configured evaluation connection. Include context.head

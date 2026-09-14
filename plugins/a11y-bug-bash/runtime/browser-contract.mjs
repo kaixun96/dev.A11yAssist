@@ -1,4 +1,4 @@
-import { requireDiscovery as demand } from './discovery-contract.mjs';
+import { discoveryHash, requireDiscovery as demand } from './discovery-contract.mjs';
 
 const keys = new Set(['Tab', 'Shift+Tab', 'Enter', 'Space', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End']);
 const attributes = new Set(['aria-invalid', 'aria-describedby', 'aria-expanded', 'aria-selected', 'aria-checked', 'aria-modal', 'tabindex', 'id']);
@@ -46,4 +46,33 @@ export function browserRequest(input, budgetSeconds = 180, viewport = { width: 1
   input.rows.forEach(row => validateBrowserParameters(row.parameters));
   return { schemaVersion: 1, taskId: input.taskId, target: input.target, budgetSeconds, viewport,
     rows: input.rows.map(row => ({ id: row.id, ...row.parameters })) };
+}
+
+export function verifyBrowserObservations(report, expectedRequest) {
+  demand(discoveryHash(report.request) === discoveryHash(expectedRequest) &&
+    Array.isArray(report.rows) && report.rows.length === expectedRequest.rows.length &&
+    new Set(report.rows.map(row => row.id)).size === expectedRequest.rows.length,
+  'Browser request or row accounting differs');
+  for (const row of report.rows) {
+    const expected = expectedRequest.rows.find(item => item.id === row.id);
+    demand(expected && ['finding', 'observed-no-issue', 'blocked', 'not-run', 'inconclusive'].includes(row.status) &&
+      typeof row.attempted === 'boolean', 'Browser coverage identity/attempt accounting differs');
+    if (['finding', 'observed-no-issue'].includes(row.status)) {
+      demand(row.attempted && row.observations?.length === expected.assertions.length &&
+        discoveryHash(row.steps) === discoveryHash(expected.steps), 'Browser steps or observations differ');
+      const results = row.observations.map((value, index) => {
+        demand(discoveryHash(value.assertion) === discoveryHash(expected.assertions[index]) &&
+          value.met === (discoveryHash(value.actual) === discoveryHash(value.assertion.expected)),
+        'Browser verdict is not supported by the requested assertion and actual value');
+        return value.met;
+      });
+      demand(row.capturePreflight?.verified === true && row.capturePostcheck?.verified === true &&
+        [row.capturePreflight, row.capturePostcheck].every(health => health.url === expectedRequest.target &&
+          health.visible === true && health.documentFocused === true && health.singlePage === true &&
+          health.noUnexpectedPageState === true && discoveryHash(health.viewport) === discoveryHash(expectedRequest.viewport)),
+      'Fresh per-row capture preflight/postcheck is required');
+      demand(row.status === (results.every(Boolean) ? 'observed-no-issue' : 'finding'), 'Browser row verdict differs');
+    } else demand(typeof row.reason === 'string' && row.reason.trim() && (row.status !== 'not-run' || !row.attempted),
+      'Browser gap requires a precise non-execution/uncertainty reason');
+  }
 }

@@ -19,8 +19,8 @@ function fields(value, required, optional = [], label = 'discovery record') {
   requireDiscovery(required.every(key => Object.hasOwn(value, key)), `Missing ${label} field`);
   requireDiscovery(Object.keys(value).every(key => [...required, ...optional].includes(key)), `Unknown ${label} field`);
 }
-function strings(value, label, allowEmpty = false) {
-  requireDiscovery(Array.isArray(value) && value.length <= 100 && (allowEmpty || value.length > 0), `Invalid ${label}`);
+function strings(value, label, allowEmpty = false, maximum = 100) {
+  requireDiscovery(Array.isArray(value) && value.length <= maximum && (allowEmpty || value.length > 0), `Invalid ${label}`);
   value.forEach(item => text(item, label));
 }
 export function validateDiscoveryRows(rows, maximum = 200) {
@@ -28,7 +28,7 @@ export function validateDiscoveryRows(rows, maximum = 200) {
   const ids = new Set();
   for (const row of rows) {
     fields(row, ['id', 'journey', 'state', 'dimension', 'track', 'capability', 'preconditions',
-      'actions', 'expected', 'reset'], ['dependsOn', 'parameters']);
+      'actions', 'expected', 'reset'], ['dependsOn', 'parameters', 'coverage']);
     requireDiscovery(typeof row.id === 'string' && idPattern.test(row.id) && !ids.has(row.id), 'Invalid or duplicate coverage row ID');
     ids.add(row.id);
     for (const field of ['journey', 'state', 'dimension', 'expected', 'reset']) text(row[field], field);
@@ -38,6 +38,13 @@ export function validateDiscoveryRows(rows, maximum = 200) {
       (row.track !== 'at' || ['nvda', 'narrator', 'voice-access'].includes(row.capability)), 'Track/capability mismatch');
     if (row.parameters !== undefined) requireDiscovery(object(row.parameters) &&
       JSON.stringify(row.parameters).length <= 16384, 'Invalid bounded provider parameters');
+    if (row.coverage !== undefined) {
+      fields(row.coverage, ['targetId', 'category', 'step', 'procedureHash']);
+      text(row.coverage.targetId, 'coverage target');
+      text(row.coverage.category, 'coverage category');
+      requireDiscovery(Number.isInteger(row.coverage.step) && row.coverage.step > 0 &&
+        sha.test(row.coverage.procedureHash), 'Invalid category step/version');
+    }
     if (row.dependsOn !== undefined) {
       strings(row.dependsOn, 'row dependencies', true);
       requireDiscovery(new Set(row.dependsOn).size === row.dependsOn.length, 'Duplicate row dependency');
@@ -56,7 +63,7 @@ export function validateDiscoveryRows(rows, maximum = 200) {
 }
 export function validateDiscoveryPlan(plan) {
   fields(plan, ['schemaVersion', 'taskId', 'feature', 'mode', 'authorizationReference', 'profile',
-    'target', 'evaluator', 'sourceRoots', 'sourceRevision', 'budgetSeconds', 'maxRows', 'rows']);
+    'target', 'evaluator', 'sourceRoots', 'sourceRevision', 'budgetSeconds', 'maxRows', 'rows'], ['inventory']);
   requireDiscovery(plan.schemaVersion === 1 && /^[a-z][a-z0-9-]{2,47}$/.test(plan.taskId ?? ''), 'Invalid discovery task identity/schema');
   for (const field of ['feature', 'authorizationReference', 'profile']) text(plan[field], field);
   requireDiscovery(['both', 'page-only', 'source-only', 'plan-only'].includes(plan.mode), 'Invalid discovery mode');
@@ -66,13 +73,13 @@ export function validateDiscoveryPlan(plan) {
   requireDiscovery(plan.sourceRevision === null || /^[a-f0-9]{40}$/.test(plan.sourceRevision), 'Invalid declared source revision');
   requireDiscovery(Number.isInteger(plan.budgetSeconds) && plan.budgetSeconds >= 1 && plan.budgetSeconds <= 14400,
     'Discovery budget must be 1-14400 seconds');
-  requireDiscovery(Number.isInteger(plan.maxRows) && plan.maxRows >= 1 && plan.maxRows <= 200, 'Invalid row limit');
+  requireDiscovery(Number.isInteger(plan.maxRows) && plan.maxRows >= 1 && plan.maxRows <= 5000, 'Invalid row limit');
   validateDiscoveryRows(plan.rows, plan.maxRows);
   for (const row of plan.rows) {
     requireDiscovery(plan.mode !== 'source-only' || row.track === 'source', 'Source-only cannot schedule page/AT work');
     requireDiscovery(plan.mode !== 'page-only' || row.track !== 'source', 'Page-only cannot schedule source work');
   }
-  requireDiscovery(Buffer.byteLength(JSON.stringify(plan)) <= 512 * 1024, 'Discovery plan is too large');
+  requireDiscovery(Buffer.byteLength(JSON.stringify(plan)) <= 16 * 1024 * 1024, 'Discovery plan is too large');
   return plan;
 }
 export function validateDiscoveryInput(action, input) {
@@ -86,14 +93,14 @@ export function validateDiscoveryInput(action, input) {
       new Date(input.deadlineAt).toISOString() === input.deadlineAt, 'Invalid discovery deadline');
     validateDiscoveryRows(input.rows);
     if (input.previousOperationIds !== undefined) {
-      strings(input.previousOperationIds, 'previous operation IDs', true);
+      strings(input.previousOperationIds, 'previous operation IDs', true, 5000);
       requireDiscovery(input.previousOperationIds.every(id => /^bb-[a-f0-9]{48}$/.test(id)), 'Invalid previous operation identity');
     }
     requireDiscovery(input.rows.every(row => row.track !== 'source'), 'Capture cannot execute a source review');
   } else {
     fields(input, ['taskId', 'operationIds', 'reason'], action === 'discovery-deliver' ? ['report'] : []);
     requireDiscovery(/^[a-z][a-z0-9-]{2,47}$/.test(input.taskId ?? ''), 'Invalid discovery lifecycle task');
-    strings(input.operationIds, 'owned operation IDs', true); text(input.reason, 'lifecycle reason');
+    strings(input.operationIds, 'owned operation IDs', true, 5000); text(input.reason, 'lifecycle reason');
     requireDiscovery(input.operationIds.every(id => /^bb-[a-f0-9]{48}$/.test(id)), 'Invalid discovery operation identity');
     if (action === 'discovery-deliver') {
       fields(input.report, ['path', 'sha256']);
@@ -117,6 +124,13 @@ export function validateDiscoveryReceipt(action, receipt, input) {
     receipt.observations.length === input.rows.length, 'Discovery result must account for every submitted row');
   const expected = new Map(input.rows.map(row => [row.id, row]));
   const artifactPaths = new Set(receipt.artifacts.map(artifact => artifact.path));
+  if (receipt.outcome === 'pass') {
+    for (const field of ['capturePreflightArtifacts', 'capturePostcheckArtifacts']) {
+      strings(receipt[field], field);
+      requireDiscovery(receipt[field].every(path => artifactPaths.has(path)),
+        'Capture health must reference declared hash-bound diagnostic artifacts');
+    }
+  }
   for (const observation of receipt.observations) {
     fields(observation, ['rowId', 'status', 'actual', 'evidence', 'tool'], ['reason', 'issue', 'attempted']);
     const row = expected.get(observation.rowId);
@@ -137,7 +151,7 @@ export function validateDiscoveryReceipt(action, receipt, input) {
       requireDiscovery(receipt.outcome === 'pass', 'Nonpass provider cannot supply conclusive observations');
     }
     if (observation.status === 'finding') {
-      fields(observation.issue, ['title', 'impact', 'repeatability']);
+      fields(observation.issue, ['title', 'impact', 'repeatability'], ['identity']);
       Object.entries(observation.issue).forEach(([key, value]) => text(value, key));
     } else requireDiscovery(observation.issue === undefined, 'Only findings may carry an issue');
   }

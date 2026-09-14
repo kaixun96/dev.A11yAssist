@@ -6,6 +6,12 @@
   "providers": {},
   "discoverySourceRoots": [],
   "discoveryProfiles": {
+    "public-browser": {
+      "kind": "browser-scenarios",
+      "capabilities": ["browser"],
+      "targets": [],
+      "maxBatchRows": 30
+    },
     "fixture-browser": {
       "capabilities": ["browser"],
       "targets": ["fixture:dialog-form-v1"]

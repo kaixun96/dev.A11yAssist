@@ -248,7 +248,7 @@ test('copied capture recovery and workflow cleanup expose invoke/status/reconcil
       const replies = child.stdout.trim().split('\n').map(JSON.parse);
       const tools = replies.shift().result.tools;
       assert.deepEqual(tools.find(tool => tool.name === `${prefix}_invoke`).inputSchema.properties.action.enum,
-        plugin === 'a11y-capture' ? ['recover-media', 'recover-nvda', 'before', 'after'] : ['cleanup']);
+        plugin === 'a11y-capture' ? ['discovery-observe', 'recover-media', 'recover-nvda', 'before', 'after'] : ['cleanup']);
       assert.equal(tools.some(tool => tool.name === `${prefix}_progress`), plugin === 'a11y-workflow');
       assert.equal(tools.some(tool => tool.name === `${prefix}_abandon`), plugin === 'a11y-workflow');
       for (const reply of replies) assert.equal(reply.result?.isError, undefined, JSON.stringify(reply));

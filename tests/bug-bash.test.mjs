@@ -60,7 +60,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
     const resources = ['context.template.md', 'coverage.json', 'report.template.md', 'dialog-form.html', 'fixture_runner.py'];
     const expected = [
       'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
-      'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md', 'docs/BUG-BASH-RUNTIME.md',
+      'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md', 'docs/BUG-BASH-RUNTIME.md', 'docs/BUG-BASH-RUNTIME.zh-CN.md',
       'docs/BROWSER.md',
       'config/example.bug-bash.json',
       ...resources.map(path => `bug-bash/${path}`),
@@ -72,7 +72,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
         .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
         .map(path => `modules/a11y-setup/${path}`)
     ];
-    for (const subtree of ['runtime', 'contracts', 'adapters', 'native', 'browser']) {
+    for (const subtree of ['runtime', 'contracts', 'adapters', 'native', 'browser', 'test-categories']) {
       for (const file of await filesUnder(join(root, 'src', subtree))) {
         expected.push(`${subtree}/${file}`);
         assert.equal(await text(join(directory, subtree, file)), await text(join(root, 'src', subtree, file)));

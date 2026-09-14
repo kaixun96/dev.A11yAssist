@@ -90,11 +90,14 @@ Show the bounded plan, then proceed without a redundant approval pause when
 scope, authorization and capabilities are already clear.
 
 In executable mode, serialize this plan using the versioned runtime contract,
-then `create` it once. Keep the task ID, fixed budget and original provider/profile
-bindings. Use `advance` for the next safe operation; inspect its returned rows and
+including the complete `inventory`, then `create` it once. The runtime expands
+every category step; use `configure` to bind its generated unexecuted rows to
+concrete scenarios without changing category identity. Keep the task ID, fixed budget and original provider/profile
+bindings. Use bounded `run` or `advance`; inspect returned rows and
 continue rather than ending after announcing the next action. Unsupported AT must
 remain a gap without blocking independent browser/source checks. Add discoveries
-through `append`, never rewrite an in-flight request or delete required coverage.
+through `append` or additive `inventory`; use `exclude` only for justified feature
+non-applicability. Never rewrite an in-flight request or delete required coverage.
 
 ## 3. Exercise the page and preserve observations
 
@@ -191,6 +194,10 @@ authority with original ownership proof. Do not force-release or broadly kill
 processes. If cleanup is uncertain, report it and keep ownership explicit.
 
 In executable mode, reconcile the original pending operation before advancement.
+Use `validate` (the same implementation as `a11y_validate_discovery`) before
+reporting: it checks original child receipts/bytes and category accounting, not
+an arbitrary caller-authored report. Real behavior assessments remain separately
+attributed to the pinned trusted provider.
 Use a real completion callback and independent stall watcher for unattended work;
 neither a CLI reply nor a saved next action installs them. Once rows are accounted
 for, `advance` performs scoped cleanup, report creation and configured private

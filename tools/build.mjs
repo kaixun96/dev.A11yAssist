@@ -90,6 +90,11 @@ async function bundleRuntime(base) {
     for (const file of await readdir(join(source, dir))) {
       await emit(`${base}/${dir}/${file}`, await text(join(source, dir, file)));
     }
+    for (const dir of ['tools', 'procedures']) {
+      for (const file of await readdir(join(source, 'test-categories', dir))) {
+        await emit(`${base}/test-categories/${dir}/${file}`, await text(join(source, 'test-categories', dir, file)));
+      }
+    }
   }
 }
 async function bundleBrowser(base) {
@@ -212,6 +217,7 @@ for (const file of await readdir(join(source, 'bug-bash'))) {
 }
 await emit(`${bugBashBase}/docs/BUG-BASH.md`, await text(join(root, 'docs/BUG-BASH.md')));
 await emit(`${bugBashBase}/docs/BUG-BASH-RUNTIME.md`, await text(join(root, 'docs/BUG-BASH-RUNTIME.md')));
+await emit(`${bugBashBase}/docs/BUG-BASH-RUNTIME.zh-CN.md`, await text(join(root, 'docs/BUG-BASH-RUNTIME.zh-CN.md')));
 await emit(`${bugBashBase}/config/example.bug-bash.json`, await text(join(root, 'config/example.bug-bash.json')));
 await bundleRuntime(bugBashBase);
 await bundleBrowser(bugBashBase);

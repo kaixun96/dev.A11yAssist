@@ -9,7 +9,7 @@ You do not need to understand this directory to install or use a plugin.
 | `skills/` | Authored Copilot skill instructions |
 | `knowledge/` | Generic, read-only accessibility reference topics |
 | `bug-bash/` | Feature context, coverage prompts and discovery report templates |
-| `test-categories/` | Shared nine-category procedures and all-target step accounting |
+| `test-categories/` | Shared ten-category procedures and all-target step accounting |
 | `runtime/` | Shared MCP, capability and workflow implementations |
 | `contracts/` | Capability, plugin and workflow contracts |
 | `adapters/` | Caller adapters |

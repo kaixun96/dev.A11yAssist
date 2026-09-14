@@ -2,7 +2,7 @@
 
 ## Review every category for every target/state
 
-Resolve this folder from the standalone or bundled module root. Read all nine
+Resolve this folder from the standalone or bundled module root. Read all ten
 documents before exercising the page. For every in-scope target in each reachable
 state, account for every numbered step in every category. Execute all applicable
 steps in order; record a target-specific reason for every not-applicable step.
@@ -21,12 +21,16 @@ state and step; never infer untested coverage from a representative control.
 | Timing and motion | `content-motion`, `dynamic` | [timing-motion.md](timing-motion.md) |
 | Dynamic content | `dynamic`, `focus`, `screen-reader` | [dynamic-content.md](dynamic-content.md) |
 | Touch and pointer | `pointer-alternatives` | [touch-pointer.md](touch-pointer.md) |
+| Voice Access | `pointer-alternatives`, `forms`, `focus`, `dynamic` | [voice-access.md](voice-access.md) |
 | Authentication and forms | `forms`, `focus`, `screen-reader` | [authentication-forms.md](authentication-forms.md) |
 
 These procedures supplement, rather than exhaust, the coverage prompts. For
 example, media alternatives and document language still need feature-specific
 checks when applicable. Derive normative thresholds, exceptions and component
 expectations from the applicable standard and actual product/library contract.
+Use `voice-access.md` for real voice-control steps; the short note in
+`touch-pointer.md` is not a complete Voice Access procedure. Keep voice-control
+results separate from screen-reader speech and pointer-only observations.
 
 ## Apply the Bug Bash execution boundaries
 
@@ -57,11 +61,13 @@ expectations from the applicable standard and actual product/library contract.
 
 ## References
 
-The nine procedure bodies are copied without content changes from
+The original nine procedure bodies are copied without content changes from
 [dev.AgentOW PR #84](https://github.com/kaixun96/dev.AgentOW/pull/84), pinned to
 commit `7233b63c416c17c2c362d31aaf6f3c92abd1fb20`, under
 [`copilot/skills/agentow-a11y-explore-test/references/test-procedures/`](https://github.com/kaixun96/dev.AgentOW/tree/7233b63c416c17c2c362d31aaf6f3c92abd1fb20/copilot/skills/agentow-a11y-explore-test/references/test-procedures).
 This imports procedures, not AgentOW's agents, execution/result schemas, report
 tools, setup scripts or an automatic WCAG verdict engine.
+The additional [Voice Access procedure](voice-access.md) is authored in
+A11yAssist; it is not part of that upstream snapshot.
 Where a procedure refers to a sample, apply it to every in-scope target to which
 that step applies. This index and the category skill define full coverage.

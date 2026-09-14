@@ -29,7 +29,7 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Bundles a11y-knowledge, a11y-setup and a11y-test-categories; no extra install. Every target/state requires all nine categories and every applicable step, not representative sampling. Missing tools, time or evidence remain explicit gaps. Setup preparation needs separate authorization. No browser/AT binaries or live connection supplied; no automatic fixes, builds, filing or PRs.
+Bundles a11y-knowledge, a11y-setup and a11y-test-categories; no extra install. Every target/state requires all ten categories and every applicable step, not representative sampling. Missing tools, time or evidence remain explicit gaps. Setup preparation needs separate authorization. No browser/AT binaries or live connection supplied; no automatic fixes, builds, filing or PRs.
 
 ## Reference
 

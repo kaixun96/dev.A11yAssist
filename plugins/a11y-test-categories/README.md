@@ -4,7 +4,7 @@
 
 ## Use this for
 
-Apply all nine accessibility test categories, step by step, to every in-scope target and reachable state
+Apply all ten accessibility test categories, step by step, to every in-scope target and reachable state
 
 ## Prerequisites
 
@@ -22,7 +22,7 @@ Restart Copilot after installation to load the plugin, then follow its usage exa
 ## Example
 
 ```text
-/a11y-test-categories Check every element/state of <feature> using all nine categories; save the full step matrix, evidence and gaps to <private directory>. Do not sample, fix or file.
+/a11y-test-categories Check every element/state of <feature> using all ten categories; save the full step matrix, evidence and gaps to <private directory>. Do not sample, fix or file.
 ```
 
 Replace placeholders with your actual authorized inputs. Examples are prompts, not execution receipts or proof of readiness.

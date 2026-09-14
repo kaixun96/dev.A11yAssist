@@ -39,7 +39,7 @@ instructions/templates.** Other integrations below are conditional or proposed.
 | Bug Bash coordinator | Understand scope, plan coverage, route checks, aggregate results | Feature context + verification steps -> coverage plan + report | Current entry skill and templates; executable durable orchestration is proposed |
 | `a11y-knowledge` | Supply applicable A11y guidance and read-only source review | Stack/version, scoped source and question -> cited guidance or source-supported risks | Already bundled under `modules/a11y-knowledge/`; no extra install or separate agent |
 | `a11y-setup` | Check only the prerequisites needed by selected page/AT checks | Required capabilities + host -> inventory, gaps and preparation plan | Already bundled under `modules/a11y-setup/`; host changes need separate authorization |
-| `a11y-test-categories` | Apply all nine categories and every numbered step to each target/state | Complete target/state inventory -> full step matrix, evidence and explicit gaps | Independently installable; identical skill/procedures/local accounting tool bundled under `modules/a11y-test-categories/`; no live execution backend |
+| `a11y-test-categories` | Apply all ten categories and every numbered step to each target/state | Complete target/state inventory -> full step matrix, evidence and explicit gaps | Independently installable; identical skill/procedures/local accounting tool bundled under `modules/a11y-test-categories/`; no live execution backend |
 | Browser checks / proposed `a11y-browser` | Exercise navigation, focus, semantics and applicable rendered checks | Authorized connection + scenario -> page observations and artifacts | Today uses available caller tools. A reusable typed browser module is proposed, not shipped |
 | `a11y-resources` | Integrate with actual evaluator ownership | Host requirements + task identity -> ownership/status information | Optional connected capability under its real contract; status is not acquisition. General feature-task acquisition needs an explicit adapter |
 | `a11y-capture` | Collect real named-AT/media evidence when required | Owned evaluator + supported sealed scenario -> actual observations/artifacts | Optional only for inputs its existing contract supports; generic Bug Bash discovery adapters are proposed |
@@ -66,7 +66,7 @@ uses tools actually available in the session. The package has no MCP server of
 its own and does not automatically invoke sibling plugins by name.
 
 Before page work, the bundled test-categories plugin expands every in-scope
-target/state into all nine categories and their numbered steps. Every applicable
+target/state into all ten categories and their numbered steps. Every applicable
 step must run; not-applicable steps need target-specific reasons. No representative
 sampling substitutes for this inventory. Its local matrix gate rejects missing
 steps and identifies unfinished coverage; actual evidence assessment remains
@@ -86,7 +86,7 @@ flowchart TD
     U["User input<br/>Feature, URL, verification steps, expectations, source scope"]
     P["1. a11y-bug-bash<br/>Define scope, scenarios, targets and states"]
     S["2. a11y-setup (bundled)<br/>Check required page / AT prerequisites"]
-    C["3. a11y-test-categories (bundled)<br/>Expand nine categories, 53 steps per target / state"]
+    C["3. a11y-test-categories (bundled)<br/>Expand ten categories, 61 steps per target / state<br/>Includes Voice Access"]
     R["4. Caller ownership authority<br/>a11y-resources: conditional integration only"]
     E["5. Execute each scenario (next diagram)<br/>Available browser tools + real AT tools<br/>a11y-browser: proposed; a11y-capture: conditional"]
     K["a11y-knowledge (bundled, independent source track)<br/>Read-only review → source risks / confirmation scenarios"]
@@ -151,7 +151,7 @@ original matrix row:
 | Caller -> executor | Input | Output |
 |---|---|---|
 | Bug Bash -> `a11y-setup` | Required page/AT capabilities and actual host | Available capabilities, gaps and separately authorized preparation plan |
-| Bug Bash -> `a11y-test-categories` | Target/state inventory; original inventory and full result matrix at reconciliation | All nine category procedures; coverage accounting, not behavioral PASS |
+| Bug Bash -> `a11y-test-categories` | Target/state inventory; original inventory and full result matrix at reconciliation | All ten category procedures; coverage accounting, not behavioral PASS |
 | Bug Bash -> `a11y-knowledge` | Scoped source, revision and stack | Source risks and confirmation scenarios, not reproduced page findings |
 | Bug Bash -> ownership authority (optional `a11y-resources`) | Actual task identity and resource requirements | Supported status/ownership results; status grants no control |
 | Bug Bash -> browser tools (proposed `a11y-browser`) | Preconditions, action sequence, target state and reset | Target scenario and actual browser observations |

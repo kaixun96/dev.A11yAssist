@@ -1,11 +1,11 @@
 ---
 name: a11y-test-categories
-description: Plan and account for all nine accessibility test categories, step by step, for every in-scope target and reachable state. Execute applicable procedures only with authorized caller tools; preserve evidence and explicit gaps. No sampling-based completion.
+description: Plan and account for all ten accessibility test categories, step by step, for every in-scope target and reachable state. Execute applicable procedures only with authorized caller tools; preserve evidence and explicit gaps. No sampling-based completion.
 ---
 
 Resolve paths from the plugin root, two directories above this SKILL.md.
 When bundled, use the internal module as that root.
-Read `docs/TEST-CATEGORIES.md` and `procedures/README.md`, then all nine procedures.
+Read `docs/TEST-CATEGORIES.md` and `procedures/README.md`, then all ten procedures.
 This is a reusable test-procedure plugin, not a browser/AT provider or a new agent.
 
 ## Input and inventory
@@ -23,7 +23,7 @@ Source-only does not execute page procedures; plan-only produces planned rows.
 ## Complete matrix
 
 Use `tools/matrix.mjs` to create a private matrix from the caller's inventory.
-For every target/state, retain every numbered step of all nine categories.
+For every target/state, retain every numbered step of all ten categories.
 The tool fills all rows with `planned`; it does not decide applicability.
 Read each procedure's full text, including its final evidence/cleanup paragraph,
 not just the generated step labels. Supply preconditions, exact actions, expected

@@ -10,7 +10,8 @@ certification service. No sibling plugin is required.
 
 - One public entrypoint, `/a11y-bug-bash`.
 - Context, coverage and report templates under `bug-bash/`.
-- The independent `a11y-test-categories` plugin's skill, nine procedures and
+- The independent `a11y-test-categories` plugin's skill, ten procedures (including
+  dedicated Voice Access steps) and
   local matrix tool, bundled under `modules/a11y-test-categories/`.
 - The exact two knowledge skills and complete references from `a11y-knowledge`,
   bundled privately within the package at `modules/a11y-knowledge/`.
@@ -107,7 +108,7 @@ rule engine. Derive thresholds and component expectations from the applicable
 knowledge and actual product/library contract; do not label every prompt a defect.
 
 For every in-scope region, control and meaningful content element in every
-reachable state, use the bundled category plugin to expand all nine categories
+reachable state, use the bundled category plugin to expand all ten categories
 and every numbered step. Include page-level targets for global checks. Execute
 all applicable steps; give a target-specific reason for each not-applicable step.
 Representative sampling cannot establish full target coverage. Reuse evidence

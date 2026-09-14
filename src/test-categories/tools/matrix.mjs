@@ -7,7 +7,7 @@ import { resolve } from 'node:path';
 export const categories = [
   'keyboard-focus', 'screen-reader', 'structure-semantics',
   'orientation-input-purpose', 'visual-color', 'timing-motion',
-  'dynamic-content', 'touch-pointer', 'authentication-forms'
+  'dynamic-content', 'touch-pointer', 'authentication-forms', 'voice-access'
 ];
 export const statuses = [
   'planned', 'observed-no-issue', 'finding', 'blocked',

@@ -74,7 +74,7 @@ coverage and report resources are generated from `src/bug-bash/`.
 from `src/test-categories/` into standalone `a11y-test-categories` and Bug Bash's
 `modules/a11y-test-categories/`. The standalone package has its own manifest and
 catalog entry; the internal module has no manifest or duplicate public command.
-Bug Bash requires every target/state's full nine-category step matrix and checks
+Bug Bash requires every target/state's full ten-category step matrix and checks
 accounting before completion. This does not implement a live browser/AT backend.
 It has no MCP/configuration server; live checks use the caller's already
 authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it.

@@ -19,7 +19,7 @@
     },
     {
       "name": "a11y-test-categories",
-      "description": "All nine accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.",
+      "description": "All ten accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.",
       "source": "./plugins/a11y-test-categories",
       "version": "0.15.0",
       "author": {

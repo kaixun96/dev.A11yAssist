@@ -10,19 +10,19 @@
 
 | 插件与使用说明 | 解决什么问题 | 使用前提 |
 |---|---|---|
-| [a11y-bug-bash](plugins/a11y-bug-bash/README.zh-CN.md) | 面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险 | Feature context 和验证步骤；代码审查需要只读源码；实际页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属 |
+| [a11y-bug-bash](plugins/a11y-bug-bash/README.zh-CN.md) | 面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险 | Feature context 和验证步骤；知识需要 Node.js 22+ 和已启用 MCP 的宿主；代码审查需要只读源码；页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属 |
 
 ### 环境准备
 
 | 插件与使用说明 | 解决什么问题 | 使用前提 |
 |---|---|---|
-| [a11y-setup](plugins/a11y-setup/README.zh-CN.md) | 检查和准备 Windows 无障碍环境：按需安装浏览器、NVDA、音频和 Voice Access 所需依赖 | Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权 |
+| [a11y-setup](plugins/a11y-setup/README.zh-CN.md) | 检查和准备 Windows 无障碍环境：按需安装浏览器、NVDA、音频和 Voice Access 所需依赖 | 知识需要 Node.js 22+ 和已启用 MCP 的宿主；环境检查需要在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权 |
 
 ### 知识与静态审查
 
 | 插件与使用说明 | 解决什么问题 | 使用前提 |
 |---|---|---|
-| [a11y-knowledge](plugins/a11y-knowledge/README.zh-CN.md) | 无障碍知识与静态审查，内置通用基础及 ODSP 子模块（SPDS、Fluent V8/V9、SharePoint） | Copilot CLI，以及待审代码或问题；不需要执行环境配置 |
+| [a11y-knowledge](plugins/a11y-knowledge/README.zh-CN.md) | 使用共享 Common、SPDS、Fluent V8/V9 和 SharePoint 知识进行无障碍代码指导、根因分析、静态及设计审查和测试规划 | Node.js 22+、已启用 MCP 的宿主，以及待审代码或问题；自动解析知识库，无需执行配置或其他插件 |
 
 ### 单项能力
 
@@ -41,15 +41,9 @@
 |---|---|---|
 | [a11y-workflow](plugins/a11y-workflow/README.zh-CN.md) | 可选的、以证据为依据的端到端修复工作流 | 已验收的工作项、资源、Windows 采集、源码、验证、review、发布和清理连接 |
 
-### 仅兼容已有安装
-
-| 插件与使用说明 | 解决什么问题 | 使用前提 |
-|---|---|---|
-| [a11y-knowledge-odsp](plugins/a11y-knowledge-odsp/README.zh-CN.md) | 旧版独立安装入口；已作为子模块内置于 a11y-knowledge | Copilot CLI 和相关项目代码；无需 AgentOW、DevBox 或执行连接 |
-
 点击上面的插件，查看各自的安装命令、使用前提、示例、能力限制和随包参考资料。
 
-知识只需安装 **a11y-knowledge**：通用主题和 SPDS／Fluent／SharePoint 子模块一并提供，按场景读取。旧 **a11y-knowledge-odsp** 仅兼容已有安装，不要重复安装。只有需要整套流程时才选 **a11y-workflow**。
+无障碍代码指导与只读审查选 **a11y-knowledge**；限定范围的 Windows 环境检查和获授权的准备选 **a11y-setup**；feature 发现选 **a11y-bug-bash**，其内部复用相同的知识与环境准备 skill。全部十个插件通过各自的只读知识 MCP 引用当前共享 Common、Fluent 和 SharePoint 知识库，无需另装知识插件。只有需要整套流程时才选 **a11y-workflow**。
 
 ## 安装你选中的插件
 
@@ -62,11 +56,11 @@ copilot plugin install <插件名>@a11y-assist
 
 安装后重启 Copilot 加载插件，再按该插件页面的示例使用。安装不会更新或重启已有 worker。
 
-知识插件无需执行环境配置。执行插件需要 Node.js 22+；证据文件结构检查无需 provider。实际操作需要你配置获授权的连接。安装插件不会自动准备 Windows 评估机，也不会授予服务访问权限。
+知识使用需要 Node.js 22+ 和已启用 MCP 的宿主，但无需 provider 或执行配置。知识库按可选配置根目录、已验证开发布局、共享用户缓存、固定 HTTPS 下载的顺序自动解析，不随插件打包正文。首次无缓存且无有效本地知识库时，需要联网访问已发布的固定制品；本地构建不会发布制品。证据结构检查无需 provider；实际操作需要获授权的配置连接。安装不会自动准备 Windows 评估机或授予服务访问权限。
 
 ## 维护者入口
 
-普通用户只需看插件目录和插件页面。[开发说明](docs/DEVELOPMENT.md) 解释源码、打包及兼容出口；[迁移状态](docs/MIGRATION.md) 和 [发布说明](docs/RELEASING.md) 不再混在用户安装主线上。
+普通用户只需看插件目录和插件页面。[开发说明](docs/DEVELOPMENT.md) 解释源码与打包；[共享知识](docs/KNOWLEDGE.md) 和 [发布说明](docs/RELEASING.md) 介绍知识库分发与发布。
 
 ## 访问与许可
 

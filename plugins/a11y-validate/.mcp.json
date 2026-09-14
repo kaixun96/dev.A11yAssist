@@ -6,6 +6,13 @@
         "${PLUGIN_ROOT}/runtime/mcp.mjs",
         "a11y-validate"
       ]
+    },
+    "a11y_validate_knowledge": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
+        "a11y-validate"
+      ]
     }
   }
 }

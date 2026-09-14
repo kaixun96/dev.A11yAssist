@@ -21,7 +21,7 @@ function binding(config, action) {
   const name = providerFor(config, action);
   demand(config.providers?.[name], `Missing ${name} provider; capability not started`);
   validateWaitingConfig(config.providers[name], config.mode);
-  return hash(JSON.stringify(canonical({ name, definition: config.providers[name], profile: config.workflowProfile ?? 'generic' })));
+  return hash(JSON.stringify(canonical({ name, definition: config.providers[name] })));
 }
 async function readState(dir) {
   try { return JSON.parse(await readFile(join(dir, 'operation.json'), 'utf8')); }

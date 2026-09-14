@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "a11y_setup_knowledge": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
+        "a11y-setup"
+      ]
+    }
+  }
+}

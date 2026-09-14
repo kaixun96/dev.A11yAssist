@@ -3,6 +3,7 @@
 ## Scope and authority
 - Mode, requested profiles and optional capabilities:
 - Actual host/OS, timestamp, plugin/script versions and hashes:
+- Top-level installed plugin root (native script, setup templates, docs and KB references):
 - Private output directory (no credentials/profile contents):
 - Existing deployment ownership/access proof (reference only, no lease tokens):
 - Authorized package agreements, changes and interactive actions:
@@ -21,6 +22,7 @@ capability does not block an unrelated requested capability.
 - Missing installation/configuration/authorization:
 - Driver, first-run consent, elevation or restart remaining:
 - Loaded plugin/MCP connections and target/AT checks still unverified:
+- Read-only knowledge tools, selected KB pin/source status and availability gaps (separate from host readiness):
 
 ## Handoff and cleanup
 - Supported caller scenarios and uncovered capabilities:

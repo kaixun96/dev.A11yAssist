@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readAdoWorkItem } from '../src/native/ado-intake.mjs';
 import { attachPrEvidence } from '../src/native/ado-attachments.mjs';
+import { ADO_PR_DESCRIPTION_MAX_LENGTH, VISUAL_SECTION_START, VISUAL_SECTION_END,
+  preparePrDescriptionUpdate } from '../src/native/pr-description.mjs';
 import { readConfig, hash } from '../src/runtime/core.mjs';
 import { executeOperation, reconcileOperation, operationStatus } from '../src/runtime/operations.mjs';
 
@@ -31,6 +33,7 @@ function service(overrides = {}) {
     assert.equal(init.redirect, 'error');
     assert.equal(init.headers.Authorization, configuration.authorization);
     const method = init.method ?? 'GET';
+    assert(!/\/(threads|comments)(?:[/?]|$)/.test(url), 'Publication must not use discussion endpoints');
     calls.push({ url, method, body: init.body });
     if (method === 'GET' && media.has(url)) return new Response(media.get(url));
     if (method === 'GET') return json(pr);
@@ -85,7 +88,7 @@ test('native publisher uploads actual bytes, preserves text, uses only descripti
   await fixture(async (_, attachment) => {
     const server = service();
     const result = await attachPrEvidence(configuration, {
-      prId: 42, attachments: [attachment], expectedHead: head, commentMarkdown: '![Before]({{before.png}})'
+      prId: 42, attachments: [attachment], expectedHead: head, descriptionMarkdown: '![Before]({{before.png}})'
     }, server);
     assert.deepEqual(server.calls.map(call => call.method), ['GET', 'POST', 'GET', 'GET', 'PATCH', 'GET']);
     assert.equal(Buffer.from(server.calls[1].body).toString(), 'synthetic fixture, not evidence');
@@ -93,12 +96,75 @@ test('native publisher uploads actual bytes, preserves text, uses only descripti
     assert(server.pr.description.includes('/attachments/before.png'));
     assert.equal(result.commentPosted, false);
     assert.equal(result.descriptionUpdated, true);
+    assert(server.pr.description.includes(VISUAL_SECTION_START));
+    assert(server.pr.description.includes(VISUAL_SECTION_END));
     assert(!server.calls.some(call => call.url.includes('/threads')));
   });
 });
 
+test('native publication accepts only the current description field and rejects removed aliases before I/O', async () => {
+  for (const fields of [{ commentMarkdown: 'obsolete' }, { appendToDescription: 'obsolete' },
+    { descriptionMarkdown: 42 }, { descriptionMarkdown: null },
+    { descriptionMarkdown: 'current', commentMarkdown: 'obsolete' }]) {
+    const server = service();
+    await assert.rejects(attachPrEvidence(configuration, {
+      prId: 42, attachments: [], expectedHead: head, ...fields
+    }, server), /Unknown attachment input field|Invalid descriptionMarkdown/);
+    assert.equal(server.calls.length, 0);
+  }
+});
+
+test('native description publication idempotently replaces only current owned markers', async () => {
+  const human = '## Visual Validation\n\nHuman-authored checks\n\n' +
+    '## Visual Validation Attachments\n\nHuman-authored attachment notes';
+  const server = service({ description: human });
+  const input = { prId: 42, attachments: [], expectedHead: head, descriptionMarkdown: 'First evidence' };
+  await attachPrEvidence(configuration, input, server);
+  assert(server.pr.description.startsWith(human));
+  await attachPrEvidence(configuration, { ...input, descriptionMarkdown: 'Updated evidence' }, server);
+  const updated = server.pr.description;
+  await attachPrEvidence(configuration, { ...input, descriptionMarkdown: 'Updated evidence' }, server);
+  assert.equal(server.pr.description, updated);
+  assert.equal(updated.split(VISUAL_SECTION_START).length, 2);
+  assert.equal(updated.split(VISUAL_SECTION_END).length, 2);
+  assert(updated.includes('Updated evidence'));
+  assert(!updated.includes('First evidence'));
+  assert(updated.startsWith(human));
+  assert(server.calls.every(call => ['GET', 'PATCH'].includes(call.method)));
+});
+
+test('description budgeting preserves human and foreign sections and prunes only current disposable markers', () => {
+  assert.equal(ADO_PR_DESCRIPTION_MAX_LENGTH, 4000);
+  assert.equal(VISUAL_SECTION_START, '<!-- a11y-assist:visual-validation:start -->');
+  assert.equal(VISUAL_SECTION_END, '<!-- a11y-assist:visual-validation:end -->');
+  const foreign = '<!-- agentow:visual-validation:start -->\nForeign evidence\n' +
+    '<!-- agentow:visual-validation:end -->';
+  const human = `## Summary\n\nHuman-authored content\n\n${foreign}`;
+  const visual = 'Required current evidence';
+  const baseline = preparePrDescriptionUpdate(human, visual);
+  assert.equal(baseline.replacedVisualSection, false);
+  assert(baseline.description.startsWith(human));
+  const disposable = '\n\n<!-- a11y-assist:disposable:start generated log -->\n' +
+    'x'.repeat(4000) + '\n<!-- a11y-assist:disposable:end -->';
+  const pruned = preparePrDescriptionUpdate(human + disposable, visual);
+  assert.deepEqual(pruned.prunedSections, ['generated log']);
+  assert.equal(pruned.description, baseline.description);
+  const replaced = preparePrDescriptionUpdate(pruned.description, 'Updated evidence');
+  assert.equal(replaced.replacedVisualSection, true);
+  assert(!replaced.description.includes(visual));
+  assert(replaced.description.startsWith(human));
+  assert.equal(preparePrDescriptionUpdate(human, visual, baseline.description.length).description, baseline.description);
+  assert.throws(() => preparePrDescriptionUpdate(human, visual, baseline.description.length - 1),
+    /Human-authored content and required visual evidence were preserved/);
+  assert.throws(() => preparePrDescriptionUpdate('Human text '.repeat(500), visual), /Azure DevOps allows 4000/);
+  assert.throws(() => preparePrDescriptionUpdate(human, 'Required evidence '.repeat(500)), /Azure DevOps allows 4000/);
+  const foreignDisposable = disposable.replaceAll('a11y-assist:', 'agentow:');
+  assert.throws(() => preparePrDescriptionUpdate(human + foreignDisposable, visual), /Azure DevOps allows 4000/);
+});
+
 test('native publication stops before writes for foreign/non-Draft/inactive PR or stale HEAD', async () => {
   for (const change of [{ pullRequestId: 7 }, { isDraft: false }, { status: 'completed' },
+    { lastMergeSourceCommit: undefined }, { lastMergeSourceCommit: { commitId: 'invalid' } },
     { lastMergeSourceCommit: { commitId: 'b'.repeat(40) } }]) {
     const server = service(change);
     await assert.rejects(attachPrEvidence(configuration, { prId: 42, attachments: [], expectedHead: head }, server),
@@ -145,6 +211,60 @@ test('publication does not retry ambiguous uploads and refuses changed HEAD afte
   });
 });
 
+test('native publication rejects corrupt, truncated, oversized and unavailable attachment readback', async () => {
+  await fixture(async (_, attachment) => {
+    const bytes = await readFile(attachment.localPath);
+    for (const response of [new Response(Buffer.alloc(bytes.length)), new Response(bytes.subarray(1)),
+      new Response(Buffer.concat([bytes, Buffer.from('extra')])), new Response(null, { status: 403 })]) {
+      const server = service();
+      await assert.rejects(attachPrEvidence(configuration, {
+        prId: 42, attachments: [attachment], expectedHead: head
+      }, {
+        fetchImpl: server.fetchImpl,
+        readFetch: (url, init) => url.includes('/attachments/') ? response : server.fetchImpl(url, init)
+      }), /readback|bytes do not match/);
+      assert.equal(server.calls.filter(call => call.method === 'POST').length, 1);
+      assert(!server.calls.some(call => call.method === 'PATCH'));
+    }
+  });
+});
+
+test('native publication rechecks active Draft state and preserves description budget after upload', async () => {
+  await fixture(async (_, attachment) => {
+    for (const change of [{ isDraft: false }, { status: 'abandoned' },
+      { description: 42 }, { description: 'Human-authored content '.repeat(200) }]) {
+      const server = service();
+      await assert.rejects(attachPrEvidence(configuration, {
+        prId: 42, attachments: [attachment], expectedHead: head
+      }, {
+        fetchImpl: async (url, init) => {
+          const response = await server.fetchImpl(url, init);
+          if (init.method === 'POST') Object.assign(server.pr, change);
+          return response;
+        }
+      }), /Draft|Invalid live PR description|Azure DevOps allows 4000/);
+      assert(!server.calls.some(call => call.method === 'PATCH'));
+    }
+  });
+});
+
+test('native publication requires final live Draft, HEAD and exact description without retrying PATCH', async () => {
+  for (const change of [{ isDraft: false }, { status: 'completed' },
+    { lastMergeSourceCommit: { commitId: 'b'.repeat(40) } }, { description: 'Unexpected remote content' }]) {
+    const server = service();
+    await assert.rejects(attachPrEvidence(configuration, {
+      prId: 42, attachments: [], expectedHead: head, descriptionMarkdown: 'Current evidence'
+    }, {
+      fetchImpl: async (url, init) => {
+        const response = await server.fetchImpl(url, init);
+        if (init.method === 'PATCH') Object.assign(server.pr, change);
+        return response;
+      }
+    }), /Draft|HEAD\/description/);
+    assert.equal(server.calls.filter(call => call.method === 'PATCH').length, 1);
+  }
+});
+
 test('native operations use the normal independent journal, cached result and no full-workflow prerequisites', async () => {
   await fixture(async (directory, attachment) => {
     const configPath = join(directory, 'config.json');
@@ -161,10 +281,13 @@ test('native operations use the normal independent journal, cached result and no
     globalThis.fetch = server.fetchImpl;
     try {
       const args = [config, 'a11y-publish', 'publish-42', 'attach-evidence', { head },
-        { prId: 42, attachments: [attachment] }];
+        { prId: 42, attachments: [attachment], descriptionMarkdown: '## Current evidence\n\n![Before]({{before.png}})' }];
       const first = await executeOperation(...args);
       const count = server.calls.length;
       assert.equal(first.status, 'finished');
+      assert(server.pr.description.includes('## Current evidence'));
+      assert(server.pr.description.includes('/attachments/before.png'));
+      assert(!server.pr.description.includes('{{before.png}}'));
       assert.deepEqual(await executeOperation(...args), first);
       assert.equal(server.calls.length, count);
       const result = JSON.parse(await readFile(join(directory, 'operations', 'publish-42', 'native-result.json'), 'utf8'));

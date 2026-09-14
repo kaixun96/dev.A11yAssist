@@ -5,5 +5,14 @@
   "author": {
     "name": "kaixun96"
   },
-  "license": "Microsoft Internal"
+  "license": "Microsoft Internal",
+  "mcpServers": {
+    "a11y_bug_bash_knowledge": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
+        "a11y-bug-bash"
+      ]
+    }
+  }
 }

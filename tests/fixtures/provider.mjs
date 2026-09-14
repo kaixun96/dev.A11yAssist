@@ -29,13 +29,12 @@ if (request.operation === 'status') {
     reason: request.input.outcome ? 'Test fixture outcome' : undefined,
     gates: Object.fromEntries([
       ...(request.invocation === 'capability' ? [] : contract.stages.find(s => s.id === request.stage).gates),
-      ...capabilities.operations[request.stage].gates,
-      ...(request.input.legacyProfile ? ['codespaceOwned', 'codespaceReleased', 'freshnessVerifiedOnExecutionHost', 'agentowA11yMode', 'effectiveModelVerified'] : [])
+      ...capabilities.operations[request.stage].gates
     ].map(g => [g, true])),
     scenarioHash: request.run.scenarioHash ?? 'a'.repeat(64),
     evaluator: request.run.evaluator ?? 'box-one',
     head: request.stage === 'source' ? (request.input.head ?? 'b'.repeat(40)) : request.run.head,
-    entrypoint: request.input.legacyProfile ? '/agentow-a11y' : '/test-source', model: request.input.legacyProfile ? 'gpt-6-astra' : 'test-model', prCreated: false,
+    prCreated: false,
     beforeReceiptSha256: request.run.beforeReceiptSha256 ?? request.run.receipts.find(r => r.stage === 'before')?.sha256,
     pr: { url: 'https://example.invalid/pullrequest/123', isDraft: true },
     artifacts: [{ path: artifact, sha256: createHash('sha256').update(data).digest('hex') }]

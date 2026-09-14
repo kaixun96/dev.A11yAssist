@@ -4,6 +4,18 @@ Version 0.5 adds actual service implementations, not another provider protocol.
 They remain small operations in the caller's workflow. None returns an
 accessibility conformance verdict.
 
+Author native implementations in `src/native/` and their runtime callers in
+`src/runtime/`; build generates self-contained execution-plugin copies. Root
+runtime/native compatibility exports and integration-provider aliases are not
+part of this draft. Preserve factual attribution and license notices.
+
+The current `src/native/windows-host.ps1` is the scoped host-preparation feature
+of `a11y-setup`, also reused internally by Bug Bash. It is not a retired root
+export, an ADO operation or an operational MCP server. Setup dependency templates,
+check-only behavior and separately authorized preparation remain distinct from
+provider execution and real AT evidence; see the
+[setup contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/SETUP.md).
+
 ## Work-item and discussion retrieval
 
 Configure only the `intake` connection from `config/example.ado.json`. Supply
@@ -46,16 +58,16 @@ Configure the `publish` connection. Call `a11y_publish_invoke` with action
       "sha256": "<actual 64-character SHA-256>"
     }
   ],
-  "appendToDescription": "## Evidence\n\n![Before]({{before.png}})"
+  "descriptionMarkdown": "## Evidence\n\n![Before]({{before.png}})"
 }
 ```
 
 The implementation reads the live active Draft PR and exact source commit before
 uploading, checks attachment hashes, uploads real bytes and verifies their downloaded
 SHA-256, updates the description
-and reads the PR back to confirm HEAD/description/Draft state. A legacy
-`commentMarkdown` input is folded into the description; no comment endpoint is
-called. Human-authored text is preserved by the shared description budget helper.
+and reads the PR back to confirm HEAD/description/Draft state. Use
+`descriptionMarkdown` for description content; no comment endpoint is called.
+Human-authored text is preserved by the shared description budget helper.
 
 This operation does not create a PR, approve review, open a browser, play media or
 claim behavior PASS. `liveMediaVerified` and `independentBehaviorVerified` are
@@ -67,33 +79,20 @@ journal prevents another execution with the same ID. Reconcile consumes only the
 same persisted native response. If the process failed before that response was
 written, inspect the original PR and uploads; do not change IDs to repeat work.
 
-## Windows tools and compatibility profile
+## Windows AT and deployment responsibilities
 
-`native/windows-host.ps1` is the maintained Windows host setup implementation
-extracted from AgentOW. AgentOW consumes a pinned generated copy at its existing
-path. Its existing action names and default task/profile identity are retained;
-`SetupRoot`, `ConsoleTaskName` and `PersonalEvaluatorSource` can be configured for a
-different independently owned host. Do not use them to create a competing pool.
+The full workflow supports Twinbot with multiple Windows DevBoxes or Copilot CLI
+with one/multiple Windows DevBoxes. Real AT capture requires a separately configured,
+qualified provider and an exclusively owned evaluator. No host setup or browser
+helper is installed or invoked by these native ADO operations.
 
-`Probe` reads prerequisites and writes a capability report; it is not proof of
-live AT behavior. Setup/install/console-transfer actions are explicit administrative
-operations, not automatically invoked by capture or installation of a plugin.
-On Twin-managed machines, use the existing protected deployment/recovery workflow,
-never these standalone administrative actions as an evidence handler.
+Deployment-specific recovery, shared resource ownership and token-bound release,
+real AT handlers, independent media evaluation and end-to-end cleanup belong to
+the authorized deployment's trusted connections. Missing capabilities fail
+explicitly; static reasoning, synthetic media or a successful process exit cannot
+substitute for real AT evidence.
 
-The retained Python personal evaluator is under
-`integrations/agentow/runtime/`, not generic knowledge. It still contains the
-existing AgentOW campaign scenario and host assumptions. It is a compatibility
-implementation, **not a generic NVDA/Narrator/Voice Access recorder**. Both AgentOW
-copies are generated from this one source.
-
-## What has not moved
-
-Deployment-specific Dev Center recovery, shared resource ownership and token-bound
-release, real AT handlers, independent media evaluation and end-to-end cleanup
-remain with the original trusted deployment. No active worker, resource registry,
-browser profile or installed plugin is migrated by this release.
-
-Native ADO tests use synthetic service responses. Windows qualification covers the
-existing read-only Probe and Codespace rejection; it does not establish live
+Native ADO tests use synthetic service responses. They do not establish live
 recording, authentication, actual ADO publication or complete workflow readiness.
+The retained implementations are maintained under the repository's
+[license](../LICENSE); preserve applicable attribution when distributing derived code.

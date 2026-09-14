@@ -1,14 +1,35 @@
 ---
 name: a11y-setup
-description: Check and prepare a Windows accessibility evaluator environment. Reuse the shared AgentOW host installer for selected browser, NVDA, audio and Voice Access prerequisites; distinguish installation, configuration, consent and live readiness. Default check-only; prepare requires explicit host-change authorization.
+description: Check and prepare a Windows accessibility evaluator environment with the current scoped native host script for selected browser, NVDA, audio and Voice Access prerequisites. Distinguish installation, configuration, consent and live readiness. Default check-only; prepare requires explicit host-change authorization.
 ---
 
-Resolve bundled paths from the plugin root, two directories above this SKILL.md,
-not the user's working directory. Read `docs/SETUP.md`, `setup/profiles.json` and
-`setup/report.template.md`. The executable is `native/windows-host.ps1`; its
-bundled personal-browser helper is `integrations/agentow/runtime/personal-evaluator-browser.py`.
-These are the same authored implementations used by existing AgentOW exports,
-not commands to execute from the historical knowledge archive.
+`${PLUGIN_ROOT}` is always the top-level installed plugin root supplied by the
+host, never inferred from this skill's nesting or the user's working directory.
+Read `${PLUGIN_ROOT}/docs/SETUP.md`, `${PLUGIN_ROOT}/setup/profiles.json` and
+`${PLUGIN_ROOT}/setup/report.template.md`. The executable is
+`${PLUGIN_ROOT}/native/windows-host.ps1`. All of these remain top-level in both
+standalone setup and Bug Bash. Only the internal setup skill is nested; it has no
+manifest, resource copies, runtime or MCP registration. Reuse the single current
+authored setup implementation, not a root native export, integration runtime or
+another installed plugin.
+
+Knowledge references always remain at `${PLUGIN_ROOT}/references/README.md` and
+`${PLUGIN_ROOT}/references/knowledge.json`, never under the internal module.
+Use `a11y_bug_bash_knowledge_list`, `a11y_bug_bash_knowledge_search(query)` and
+`a11y_bug_bash_knowledge_read(id)`. Build reuses this SAME skill inside Bug Bash,
+replacing only the knowledge tool prefix to bind the containing plugin's server.
+Use only the containing plugin's actually registered read-only knowledge tools.
+Knowledge selects the 32 current Common/Fluent/SharePoint entries and requires
+Node.js 22+ plus enabled host MCP, not setup, another plugin, a provider or
+`A11Y_ASSIST_CONFIG`. It has no operational MCP. Read actual relevant entries
+with citations/source status; snippets are not full rules and pending sources
+are gaps. Knowledge review permits only those tools and relevant source/reference
+reads, never host setup, shells, tests, browsers or AT. Missing knowledge is an
+explicit gap, not permission to run setup or invent content. The loader uses an
+absolute configured KB root, validated repository layout, verified shared cache,
+then pinned HTTPS download; invalid roots/tampered caches fail without repair.
+Verified cache works offline; first uncached use needs a valid local KB or a
+reachable published pinned artifact. A local build does not establish public availability.
 
 ## 1. Scope and authority
 
@@ -45,7 +66,7 @@ installer does not install these automatically. No unrelated audio or Voice
 Access requirement may block browser-only work.
 
 In check mode, stop with the plan/report: do not install packages, copy the
-browser helper, open a browser/AT, change NVDA settings, accept agreements,
+runtime, open a browser/AT, change NVDA settings, accept agreements,
 elevate, transfer the Console session or reboot.
 
 ## 3. Prepare only the approved subset
@@ -53,8 +74,10 @@ elevate, transfer the Console session or reboot.
 In prepare mode, record explicit authorization for the actual host, selected
 packages, downloads/package agreements and configuration changes first. Existing
 authorization need not be requested twice. Use `InstallSafeDependencies` with
-an explicit `-Dependency` array derived from the chosen profiles, never its
-legacy all-dependencies default. The script adds required Python/Playwright
+an explicit `-Dependency` array derived from the chosen profiles, never an
+implicit all-dependencies selection. An omitted/empty installation selection
+fails; `-Dependency` is valid only for this installation action, not `Probe`.
+The script adds required Python/Playwright
 dependencies, skips installed imports/binaries, and propagates installer errors.
 An NVDA selection also enables Speech Viewer; preserve the prior configuration
 and do not change it while an existing NVDA session owns it.
@@ -65,10 +88,11 @@ authenticated page, install a substitute package after a safety rejection, or
 write dependencies into the product repository. A timeout is unknown execution:
 record command/process identity and inspect that attempt before another install.
 
-For the personal-browser route, follow the dedicated helper installation and
-headed authentication procedure in `docs/SETUP.md`. Reuse a compatible owned
-profile; never copy cookies, start Edge against a Chromium profile or overwrite
-another deployment's helper/profile. Keep owner email process-local. Password,
+For browser access, use an existing approved connection and its documented
+headed authentication procedure in `docs/SETUP.md`. No product-specific browser
+runtime is bundled or installed by this skill. Reuse a compatible owned profile;
+never copy cookies, start Edge against a Chromium profile or overwrite another
+deployment's helper/profile. Keep account identifiers in the trusted connection. Password,
 Windows Hello, MFA, certificates and consent require the owner. A headless login
 result alone is not that blocker; use approved visible silent renewal first.
 
@@ -81,14 +105,14 @@ deploy a runtime or create/overwrite a protected task without its own authorizat
 If the caller explicitly requests additional marketplace plugins, install only
 the needed named packages following their README, preserve existing private
 configuration, and restart Copilot before checking they are actually loaded.
-No AgentOW prerequisite, global same-name skill invocation, sub-agent dispatch
+No peer plugin prerequisite, global same-name skill invocation, sub-agent dispatch
 or automatic MCP-to-MCP connection is introduced by this plugin.
 
 ## 4. Re-probe, qualify and hand back
 
 Re-run Probe after changes and after each manual step/restart. Preserve separate
 raw reports and actual exit codes. Do not interpret `scenarios.*` booleans as
-live readiness: the inherited probe uses legacy browser assumptions and cannot
+live readiness: dependency inventory cannot
 prove Chromium launch, current target authentication, AT output or audio behavior.
 
 With separately authorized owned interactive access, verify only requested

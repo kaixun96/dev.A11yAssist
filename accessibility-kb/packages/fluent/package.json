@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "fluent",
+  "version": "0.1.0",
+  "dependencies": {"common":"0.1.0"},
+  "sources": [
+    {"id":"fluent-docs","authority":"component-contract","status":"review-pending","locator":"https://react.fluentui.dev/","revision":null,"note":"V9 documentation entrypoint only. Resolve installed V8/V9 versions and the corresponding official contract before qualification; V8 source location remains to be confirmed. This pending connection target does not substantiate the draft worksheets as official component rules."}
+  ],
+  "entries": [
+    {"id":"fluent.overview","path":"README.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["fluent"],"sourceIds":["fluent-docs"],"relations":["common.implementation.component-contract"]},
+    {"id":"fluent.v8.component-contract","path":"v8/component-contract.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["fluent-v8"],"sourceIds":["fluent-docs"],"relations":["common.analysis.root-cause"]},
+    {"id":"fluent.v9.component-contract","path":"v9/component-contract.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["fluent-v9"],"sourceIds":["fluent-docs"],"relations":["common.analysis.root-cause"]},
+    {"id":"fluent.selection.components-and-utilities","path":"selection/components-and-utilities.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["fluent-v8","fluent-v9"],"sourceIds":["fluent-docs"],"relations":["common.implementation.component-contract"]}
+  ]
+}

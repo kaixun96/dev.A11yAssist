@@ -1,11 +1,16 @@
 import { mkdir, readFile, readdir, open, realpath, stat, access } from 'node:fs/promises';
 import { dirname, join, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { atomicJson, withDirectoryLock, verifyArtifactFiles, hash } from './core.mjs';
+import { VERSION, atomicJson, withDirectoryLock, verifyArtifactFiles, hash } from './core.mjs';
 import { executeOperation, reconcileOperation, operationStatus } from './operations.mjs';
 import { validateDiscoveryPlan, discoveryHash, conclusive, requireDiscovery as demand } from './discovery-contract.mjs';
+import { validateBrowserParameters } from './browser-contract.mjs';
 
 const taskPattern = /^[a-z][a-z0-9-]{2,47}$/;
+const implementationHash = discoveryHash(await Promise.all([
+  'bug-bash.mjs', 'discovery-contract.mjs', 'browser-contract.mjs', 'operations.mjs',
+  'capability.mjs', 'canonical.mjs', 'core.mjs', 'waiting.mjs', '../contracts/capabilities.json'
+].map(async file => ({ file, sha256: hash(await readFile(new URL(file, import.meta.url))) }))));
 const within = (root, path) => {
   const value = relative(root, path);
   return value !== '..' && !value.startsWith('..' + sep) && !isAbsolute(value);
@@ -47,7 +52,8 @@ async function load(config, taskId) {
     demand(event.revision === index + 1 && event.previousHash === previous &&
       event.stateHash === discoveryHash(event.state), 'Discovery history integrity mismatch');
     demand(event.state.owner === config.owner && event.state.plan.taskId === taskId &&
-      event.state.schemaVersion === 1, 'Foreign owner or incompatible discovery state');
+      event.state.schemaVersion === 1 && event.state.version === VERSION &&
+      event.state.implementationHash === implementationHash, 'Foreign owner or incompatible discovery runtime; retain the original installed version');
     previous = discoveryHash(event); state = event.state;
   }
   return { dir, state, revision: files.length, previous };
@@ -71,12 +77,13 @@ async function mutate(config, taskId, action) {
 function summary(current) {
   const { state } = current;
   const rows = state.plan.rows.map(row => ({ ...row, ...state.rows[row.id] }));
-  const attempted = rows.filter(row => row.attempts.length > 0 || row.sourceReview);
+  const attempted = rows.filter(row => row.sourceReview ||
+    row.attempts.some(attempt => attempt.observation.attempted ?? conclusive.has(attempt.observation.status)));
   const concluded = rows.filter(row => conclusive.has(row.status));
   const coverageOutcome = state.plan.mode === 'plan-only' ? 'plan-only' : concluded.length === rows.length
     ? 'complete' : attempted.length ? 'partial' : 'blocked';
   return { taskId: state.plan.taskId, feature: state.plan.feature, mode: state.plan.mode,
-    revision: current.revision, planHash: discoveryHash(state.plan), deadlineAt: state.deadlineAt,
+    revision: current.revision, profile: state.plan.profile, planHash: discoveryHash(state.plan), deadlineAt: state.deadlineAt,
     rows, coverage: { total: rows.length, attempted: attempted.length, conclusive: concluded.length },
     coverageOutcome, outcome: state.delivered && state.cleaned && !state.pending && !state.cancelRequested
       ? coverageOutcome : state.plan.mode === 'plan-only' ? 'plan-only' : coverageOutcome === 'complete' ? 'partial' : coverageOutcome,
@@ -85,12 +92,20 @@ function summary(current) {
     pending: state.pending, cleaned: state.cleaned, delivered: state.delivered, report: state.report,
     cancelReason: state.cancelReason ?? null,
     cancelOperationIssued: state.operations.some(operation => operation.kind === 'cancel'),
+    lastOperationFailure: state.operations.length && state.operations.at(-1).outcome !== 'pass'
+      ? state.operations.at(-1) : null,
     updatedAt: state.updatedAt, nextAction: state.pending ? 'reconcile the original child operation'
       : state.cancelRequested ? 'reconcile cancellation, clean owned effects and deliver the partial report'
       : 'review remaining source rows or execute supported page rows; then clean, report and deliver' };
 }
 export async function createDiscovery(config, plan) {
   validateDiscoveryPlan(plan);
+  const profile = config.discoveryProfiles?.[plan.profile];
+  if (profile?.maxBatchRows !== undefined) demand(Number.isInteger(profile.maxBatchRows) &&
+    profile.maxBatchRows > 0 && profile.maxBatchRows <= 200, 'Invalid configured batch limit');
+  if (config.discoveryProfiles?.[plan.profile]?.kind === 'browser-scenarios') {
+    plan.rows.filter(row => row.track === 'page').forEach(row => validateBrowserParameters(row.parameters));
+  }
   await privateStorage(config);
   for (const sourceRoot of plan.sourceRoots) {
     const requested = await realpath(sourceRoot);
@@ -105,7 +120,7 @@ export async function createDiscovery(config, plan) {
   await mkdir(dir);
   await mkdir(join(dir, 'events'));
   const state = {
-    schemaVersion: 1, owner: config.owner, plan: structuredClone(plan), binding: binding(config, plan),
+    schemaVersion: 1, version: VERSION, implementationHash, owner: config.owner, plan: structuredClone(plan), binding: binding(config, plan),
     createdAt: new Date().toISOString(), deadlineAt: new Date(Date.now() + plan.budgetSeconds * 1000).toISOString(),
     rows: Object.fromEntries(plan.rows.map(row => [row.id, { status: 'planned', attempts: [] }])),
     operations: [], pending: null, cancelRequested: false, cleaned: true, delivered: false, report: null
@@ -129,6 +144,9 @@ export async function appendDiscoveryRows(config, taskId, rows, reason) {
     demand(!state.cancelRequested && !state.delivered && !state.pending, 'Cannot revise a cancelled, delivered or in-flight plan');
     const next = { ...state.plan, rows: [...state.plan.rows, ...rows] };
     validateDiscoveryPlan(next);
+    if (config.discoveryProfiles?.[next.profile]?.kind === 'browser-scenarios') {
+      rows.filter(row => row.track === 'page').forEach(row => validateBrowserParameters(row.parameters));
+    }
     state.plan = next;
     rows.forEach(row => { state.rows[row.id] = { status: 'planned', attempts: [] }; });
     state.report = null;
@@ -170,7 +188,8 @@ async function begin(config, taskId, kind, rowIds = []) {
       // Dependencies are enforced by the parent; the native request contains only the ready work.
       const rows = selected.map(({ dependsOn, ...row }) => row);
       input = { schemaVersion: 1, taskId, planHash: discoveryHash(plan), profile: plan.profile,
-        authorizationReference: plan.authorizationReference, target: plan.target, deadlineAt: state.deadlineAt, rows };
+        authorizationReference: plan.authorizationReference, target: plan.target, deadlineAt: state.deadlineAt, rows,
+        previousOperationIds: state.cleaned ? [] : state.operations.filter(operation => operation.kind === 'observe').map(operation => operation.id) };
       context = { ...context, scenarioHash: discoveryHash(input), evaluator: plan.evaluator };
       plugin = 'a11y-capture'; action = 'discovery-observe'; state.cleaned = false;
     } else {
@@ -200,7 +219,7 @@ async function consume(config, taskId, pending, result) {
     }
     const receipt = result.receipt;
     state.operations.push({ id: pending.id, kind: pending.kind, plugin: pending.plugin,
-      status: result.status, receiptSha256: result.receiptSha256 });
+      status: result.status, outcome: receipt.outcome, reason: receipt.reason ?? null, receiptSha256: result.receiptSha256 });
     if (pending.kind === 'observe') {
       for (const observation of receipt.observations) {
         const row = state.rows[observation.rowId];
@@ -308,7 +327,8 @@ export async function reportDiscovery(config, taskId) {
     demand(!state.pending && !state.delivered, 'Reconcile pending effects before generating a final report');
     const lines = ['# Feature accessibility bug bash', '', `Feature: ${md(state.plan.feature)}`,
       `Mode: ${state.plan.mode}`, `Coverage outcome: ${result.coverageOutcome}`,
-      `Lifecycle: ${result.lifecycle}; cleanup: ${state.cleaned ? 'verified/no effects' : 'outstanding'}; delivery: pending`,
+      `Cleanup at report creation: ${state.cleaned ? 'verified/no effects' : 'outstanding'}`,
+      'Delivery and final lifecycle status are recorded separately in the task receipt.',
       `Plan SHA-256: ${discoveryHash(state.plan)}`, `Declared source revision: ${state.plan.sourceRevision ?? 'unknown'}`,
       `Target: ${md(state.plan.target ?? 'not supplied')}`, `Budget: ${state.plan.budgetSeconds} seconds`,
       '', '## Coverage matrix', '',
@@ -337,7 +357,7 @@ export async function reportDiscovery(config, taskId) {
     }
     lines.push('', '## Cleanup and resume', '', `Cleanup: ${state.cleaned ? 'verified or no external effects' : 'outstanding; retain original ownership'}`,
       `Cancellation: ${state.cancelRequested ? md(state.cancelReason) : 'not requested'}`,
-      'Delivery: this saved report still requires the configured delivery operation.',
+      'Delivery: consult the task receipt for the verified destination and this report hash.',
       'No automatic product changes, ticket/PR creation or public upload.',
       'No issue observed means only this inspected scope; this report is not WCAG certification.', '');
     const relativePath = `report-${String(current.revision).padStart(6, '0')}.md`;
@@ -375,10 +395,16 @@ export async function advanceDiscovery(config, taskId) {
   const result = await discoveryStatus(config, taskId);
   if (result.lifecycle === 'closed' || result.lifecycle === 'cancelled') return result;
   if (result.pending) return reconcileDiscovery(config, taskId);
+  if (result.lastOperationFailure && ['cleanup','deliver','cancel'].includes(result.lastOperationFailure.kind)) {
+    return { ...result, nextAction: `Recover ${result.lastOperationFailure.kind} before an explicit retry: ${result.lastOperationFailure.reason}` };
+  }
   if (!result.lifecycle.startsWith('cancel') && result.mode !== 'plan-only') {
     const ready = result.rows.filter(row => row.status === 'planned' && row.track !== 'source' &&
       (row.dependsOn ?? []).every(id => conclusive.has(result.rows.find(item => item.id === id).status)));
-    if (ready.length) return observeDiscovery(config, taskId, ready.map(row => row.id));
+    if (ready.length) {
+      const profile = config.discoveryProfiles?.[result.profile];
+      return observeDiscovery(config, taskId, ready.slice(0, profile?.maxBatchRows ?? ready.length).map(row => row.id));
+    }
     const source = result.rows.find(row => row.status === 'planned' && row.track === 'source');
     if (source) return { ...result, nextAction: `Use the bundled read-only knowledge review for ${source.id}, then record its source-bound analysis` };
     const blocked = result.rows.filter(row => row.status === 'planned');

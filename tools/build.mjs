@@ -92,6 +92,12 @@ async function bundleRuntime(base) {
     }
   }
 }
+async function bundleBrowser(base) {
+  for (const file of await readdir(join(source, 'browser'))) {
+    await emit(`${base}/browser/${file}`, await text(join(source, 'browser', file)));
+  }
+  await emit(`${base}/docs/BROWSER.md`, await text(join(root, 'docs/BROWSER.md')));
+}
 const entries = [];
 for (const [name, definition] of Object.entries(plugins)) {
   const base = `plugins/${name}`;
@@ -103,6 +109,7 @@ for (const [name, definition] of Object.entries(plugins)) {
   }));
   await emit(`${base}/.mcp.json`, json({ mcpServers: { [server]: launch } }));
   await bundleRuntime(base);
+  if (name === 'a11y-capture') await bundleBrowser(base);
   for (const file of ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md', 'NATIVE-CAPABILITIES.md']) {
     await emit(`${base}/docs/${file}`, await text(join(root, 'docs', file)));
   }
@@ -182,6 +189,7 @@ await emit(`${bugBashBase}/docs/BUG-BASH.md`, await text(join(root, 'docs/BUG-BA
 await emit(`${bugBashBase}/docs/BUG-BASH-RUNTIME.md`, await text(join(root, 'docs/BUG-BASH-RUNTIME.md')));
 await emit(`${bugBashBase}/config/example.bug-bash.json`, await text(join(root, 'config/example.bug-bash.json')));
 await bundleRuntime(bugBashBase);
+await bundleBrowser(bugBashBase);
 // Internal instructions retain their own root without registering duplicate public skills.
 await bundleKnowledgeReview(`${bugBashBase}/modules/a11y-knowledge`);
 await bundleSetup(`${bugBashBase}/modules/a11y-setup`);

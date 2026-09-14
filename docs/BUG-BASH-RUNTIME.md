@@ -23,6 +23,10 @@ executable protocol. The capture connection must explicitly implement
 automatically understand these actions. No dummy Bug, evidence-v1 request or
 unqualified browser/AT fallback is allowed.
 
+For the shared bounded page runner, use a `browser-scenarios` profile and the
+[typed browser contract](BROWSER.md). It supports approved anonymous/client-side
+HTTPS pages, not just the fixed contact fixture. Source/AT gaps remain separate.
+
 ## Create a plan
 
 The calling agent reads the bundled context/coverage/knowledge, then writes an

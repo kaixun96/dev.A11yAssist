@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.15.0",
+  "version": "0.16.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -17,13 +17,13 @@
   ],
   "knowledge": {
     "manifest": "src/knowledge/manifest.json",
-    "sha256": "8c0a55c5ba48e3218ebde5b7defc144694c8c37cbce5dbce8feff16c098abb01"
+    "sha256": "fea60625a65e601b75b25d0cc2d427197facae70c9cccf2bb69c112c59688291"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "958a5990c14150041ab5a9ce655a6f189a8810fd5a9af5c9b06832f8c5eb2129",
+      "sha256": "8ef304d432ae6914c045d930a721a6b312e4fcbff0a308609d7670e535d5e0dd",
       "plugins": [
         "a11y-intake",
         "a11y-resources",
@@ -50,14 +50,15 @@
     }
   ],
   "hashes": {
+    "src/runtime/browser-contract.mjs": "5264c29a7c1692d8fc11c790c6526f272d8f8ae6d460a62d02f4aaab68c62398",
     "src/runtime/bug-bash-cli.mjs": "5201d6db27c8d08d29a1fb1c7bf9957d236e44552e0e118fe2fe2ae50aa6b940",
-    "src/runtime/bug-bash.mjs": "15415af5b7b90211e19a128e9962e45cad5f117900e3441565823ebcb7deb22d",
+    "src/runtime/bug-bash.mjs": "08c4fa852c56145711880ba03ae6f12b87eff4d509ed08fc7e2055e3d6921456",
     "src/runtime/builtin-ado.mjs": "0c6c559936b24c4549f30484d79bd4620acf2d3b9046d89d9c60371fee73bfda",
     "src/runtime/canonical.mjs": "6bc67fae4ee818fb703df15a52ade792df21f19585c14bb00dbb96ceff300e44",
     "src/runtime/capability.mjs": "30aad991d2dfcbcbf22010e42723f74ac9422fc1255205922a72526b07e81068",
     "src/runtime/cli.mjs": "be6b9b977ab6ff801b47a998db47fd9d11e668a72633c9846b92daee4e5adf46",
     "src/runtime/core.mjs": "33070030f70fd88fc087d6f25a1404407a39c6a689813bbb1a0291d82c358368",
-    "src/runtime/discovery-contract.mjs": "cbf91e74cb27eb5b4f9c0e9239faf9f527da8992532062ec3c595586ef7c00b1",
+    "src/runtime/discovery-contract.mjs": "682fd559795d2fd9df48be9780b53483d6794ba9b3ce1ae5eea360bf2b0d64c7",
     "src/runtime/evidence-files.mjs": "fe5d5a59e7a953ed838777aef2b8923f5f8f3b7b3503b5d349d169744a23877f",
     "src/runtime/evidence-v1.mjs": "6a087bd37a4e83ef3f71fead22a88cc83160776bc671fdaf8e93afc2792b1ff2",
     "src/runtime/mcp.mjs": "6ac8414e4b807d07b1054e838480c37a97a09db979f3336ba6fc2a4951bce2b7",

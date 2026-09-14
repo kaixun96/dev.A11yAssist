@@ -1,6 +1,6 @@
 """Bounded, disposable Windows browser qualification; never product or AT evidence."""
 import argparse
-import hashlib
+import importlib.util
 import importlib.metadata
 import json
 import os
@@ -8,7 +8,6 @@ import platform
 import re
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -27,18 +26,13 @@ def validate_request(value):
     return value
 
 
-def stamp():
-    return datetime.now(timezone.utc).isoformat()
-
-
-def sha256(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def save(path, value):
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(value, indent=2, ensure_ascii=False), encoding="utf-8")
-    temporary.replace(path)
+support_path = Path(__file__).with_name("browser_support.py")
+if not support_path.is_file():
+    support_path = Path(__file__).parent.parent / "browser" / "browser_support.py"
+support_spec = importlib.util.spec_from_file_location("bugbash_browser_support", support_path)
+support = importlib.util.module_from_spec(support_spec)
+support_spec.loader.exec_module(support)
+stamp, sha256, save = support.stamp, support.sha256, support.save
 
 
 def active_id(page):

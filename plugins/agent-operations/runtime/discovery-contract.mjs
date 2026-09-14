@@ -78,13 +78,17 @@ export function validateDiscoveryPlan(plan) {
 export function validateDiscoveryInput(action, input) {
   if (action === 'discovery-observe') {
     fields(input, ['schemaVersion', 'taskId', 'planHash', 'profile', 'authorizationReference',
-      'target', 'deadlineAt', 'rows']);
+      'target', 'deadlineAt', 'rows'], ['previousOperationIds']);
     requireDiscovery(input.schemaVersion === 1 && /^[a-z][a-z0-9-]{2,47}$/.test(input.taskId ?? '') &&
       sha.test(input.planHash ?? ''), 'Invalid discovery request binding');
     for (const field of ['profile', 'authorizationReference', 'target']) text(input[field], field);
     requireDiscovery(typeof input.deadlineAt === 'string' && Number.isFinite(Date.parse(input.deadlineAt)) &&
       new Date(input.deadlineAt).toISOString() === input.deadlineAt, 'Invalid discovery deadline');
     validateDiscoveryRows(input.rows);
+    if (input.previousOperationIds !== undefined) {
+      strings(input.previousOperationIds, 'previous operation IDs', true);
+      requireDiscovery(input.previousOperationIds.every(id => /^bb-[a-f0-9]{48}$/.test(id)), 'Invalid previous operation identity');
+    }
     requireDiscovery(input.rows.every(row => row.track !== 'source'), 'Capture cannot execute a source review');
   } else {
     fields(input, ['taskId', 'operationIds', 'reason'], action === 'discovery-deliver' ? ['report'] : []);
@@ -114,10 +118,13 @@ export function validateDiscoveryReceipt(action, receipt, input) {
   const expected = new Map(input.rows.map(row => [row.id, row]));
   const artifactPaths = new Set(receipt.artifacts.map(artifact => artifact.path));
   for (const observation of receipt.observations) {
-    fields(observation, ['rowId', 'status', 'actual', 'evidence', 'tool'], ['reason', 'issue']);
+    fields(observation, ['rowId', 'status', 'actual', 'evidence', 'tool'], ['reason', 'issue', 'attempted']);
     const row = expected.get(observation.rowId);
     requireDiscovery(row, 'Duplicate or substituted observation row'); expected.delete(observation.rowId);
     requireDiscovery(observationStatuses.has(observation.status), 'Unsupported observation outcome');
+    if (observation.attempted !== undefined) requireDiscovery(typeof observation.attempted === 'boolean' &&
+      (!conclusive.has(observation.status) || observation.attempted) &&
+      (observation.status !== 'not-run' || !observation.attempted), 'Invalid attempted-coverage declaration');
     text(observation.actual, 'actual observation');
     strings(observation.evidence, 'observation evidence', !conclusive.has(observation.status));
     requireDiscovery(observation.evidence.every(path => artifactPaths.has(path)), 'Observation cites an undeclared artifact');

@@ -34,7 +34,9 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
     const moduleRoot = join(directory, 'modules/a11y-knowledge');
     const plugin = await load(join(directory, 'plugin.json'));
     assert.equal(plugin.name, 'a11y-bug-bash');
-    assert.equal(plugin.mcpServers, undefined);
+    const config = await load(join(root, 'src/standards/liquid.mcp.json'));
+    assert.deepEqual(plugin.mcpServers, config.mcpServers);
+    assert.deepEqual(await load(join(directory, '.mcp.json')), config);
     assert.deepEqual(await readdir(join(directory, 'skills')), ['a11y-bug-bash']);
     const expectedModule = [];
     for (const subtree of ['skills', 'knowledge', 'integrations', 'docs']) {
@@ -59,11 +61,11 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
     }
     const resources = ['context.template.md', 'coverage.json', 'report.template.md'];
     const expected = [
-      'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
+      'plugin.json', '.mcp.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
       'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md',
       ...resources.map(path => `bug-bash/${path}`),
       ...(await filesUnder(join(root, 'plugins/a11y-test-categories')))
-        .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
+        .filter(path => !['plugin.json', '.mcp.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
         .map(path => `modules/a11y-test-categories/${path}`),
       ...expectedModule.map(path => `modules/a11y-knowledge/${path}`),
       ...(await filesUnder(join(root, 'plugins/a11y-setup')))

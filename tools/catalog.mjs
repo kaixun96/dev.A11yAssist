@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 const repository = 'https://github.com/kaixun96/dev.A11yAssist';
 const referenceTitles = {
+  'docs/LIQUID-STANDARDS.md': { en: 'Liquid MCP connection and MAS/WCAG retrieval', zh: 'Liquid MCP 连接与 MAS/WCAG 检索' },
   'docs/TEST-CATEGORIES.md': { en: 'All-target test procedures and accounting', zh: '全部对象的测试规程与覆盖核对（英文）' },
   'docs/TEST-CATEGORIES.zh-CN.md': { en: 'Test categories (Chinese)', zh: '测试分类与使用说明' },
   'procedures/README.md': { en: 'Nine-category procedure index', zh: '九类测试规程索引' },

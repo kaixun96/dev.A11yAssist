@@ -123,8 +123,10 @@ for (const name of ['a11y-knowledge', 'a11y-knowledge-odsp']) {
 test(`${name} is complete offline, discoverable and read-only without runtime entrypoints`, async () => {
   const directory = join(root, 'plugins', name);
   const plugin = await load(join(directory, 'plugin.json'));
-  assert.equal(plugin.mcpServers, undefined);
-  for (const forbidden of ['.mcp.json', 'runtime', 'native', 'adapters', 'config']) {
+  const config = await load(join(root, 'src/standards/liquid.mcp.json'));
+  assert.deepEqual(plugin.mcpServers, config.mcpServers);
+  assert.deepEqual(await load(join(directory, '.mcp.json')), config);
+  for (const forbidden of ['runtime', 'native', 'adapters', 'config']) {
     await assert.rejects(access(join(directory, forbidden)), { code: 'ENOENT' });
   }
   const skill = await text(join(directory, 'skills/a11y-knowledge-odsp/SKILL.md'));
@@ -134,6 +136,7 @@ test(`${name} is complete offline, discoverable and read-only without runtime en
   const profile = await load(join(directory, snapshotDirectory, 'manifest.json'));
   const expected = new Set([
     'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md', 'skills/a11y-knowledge-odsp/SKILL.md',
+    '.mcp.json', 'docs/LIQUID-STANDARDS.md',
     ...(name === 'a11y-knowledge' ? ['skills/a11y-knowledge/SKILL.md'] : []),
     `${snapshotDirectory}/manifest.json`, 'knowledge/manifest.json'
   ]);

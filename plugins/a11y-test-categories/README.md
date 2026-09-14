@@ -29,12 +29,13 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Independently installable and bundled in Bug Bash from the same source. No browser/AT backend or MCP server. Local matrix checks detect missing rows, not authentic evidence or WCAG conformance. Not-applicable needs a reason; missing tools/time/evidence remain partial.
+Independently installable and bundled in Bug Bash from the same source. Declares Liquid HTTP MCP for read-only standards lookup; user authentication required. No browser/AT backend. Local matrix checks detect missing rows, not authentic evidence or WCAG conformance. Not-applicable needs a reason; missing tools/time/evidence remain partial.
 
 ## Reference
 
 - [All-target test procedures and accounting](docs/TEST-CATEGORIES.md)
 - [Test categories (Chinese)](docs/TEST-CATEGORIES.zh-CN.md)
+- [Liquid MCP connection and MAS/WCAG retrieval](docs/LIQUID-STANDARDS.md)
 - [Nine-category procedure index](procedures/README.md)
 
 [Back to the plugin catalog](https://github.com/kaixun96/dev.A11yAssist)

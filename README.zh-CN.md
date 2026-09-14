@@ -23,7 +23,7 @@
 
 | 插件与使用说明 | 解决什么问题 | 使用前提 |
 |---|---|---|
-| [a11y-knowledge](plugins/a11y-knowledge/README.zh-CN.md) | 无障碍知识与静态审查，内置通用基础及 ODSP 子模块（SPDS、Fluent V8/V9、SharePoint） | Copilot CLI，以及待审代码或问题；不需要执行环境配置 |
+| [a11y-knowledge](plugins/a11y-knowledge/README.zh-CN.md) | 无障碍知识与静态审查，内置通用基础及 ODSP 子模块（SPDS、Fluent V8/V9、SharePoint） | Copilot CLI，以及待审代码或问题；在线标准检索需要 Liquid 用户认证，离线审查无需执行环境配置 |
 
 ### 单项能力
 

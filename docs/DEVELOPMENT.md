@@ -76,7 +76,10 @@ from `src/test-categories/` into standalone `a11y-test-categories` and Bug Bash'
 catalog entry; the internal module has no manifest or duplicate public command.
 Bug Bash requires every target/state's full ten-category step matrix and checks
 accounting before completion. This does not implement a live browser/AT backend.
-It has no MCP/configuration server; live checks use the caller's already
+Its root declares the Liquid HTTP MCP for standards lookup; internal modules
+reuse that connection. `src/standards/liquid.mcp.json` owns the declaration shared
+by knowledge, the compatibility knowledge plugin, test categories and Bug Bash.
+It supplies no live-execution MCP server; live checks use the caller's already
 authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it.
 
 `bundleSetup` packages the same setup skill, profiles, shared native host script

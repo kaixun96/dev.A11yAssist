@@ -23,7 +23,7 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
-| [a11y-knowledge](plugins/a11y-knowledge/README.md) | Accessibility guidance and static review, with general foundations and a built-in ODSP submodule (SPDS, Fluent V8/V9, SharePoint) | Copilot CLI and the code or question to review; no execution configuration |
+| [a11y-knowledge](plugins/a11y-knowledge/README.md) | Accessibility guidance and static review, with general foundations and a built-in ODSP submodule (SPDS, Fluent V8/V9, SharePoint) | Copilot CLI and the code or question to review; Liquid user authentication for online standards lookup, no execution configuration for offline review |
 
 ### Individual capabilities
 

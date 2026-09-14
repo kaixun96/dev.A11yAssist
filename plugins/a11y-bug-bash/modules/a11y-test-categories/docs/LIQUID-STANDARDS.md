@@ -1,16 +1,54 @@
 # Read MAS and WCAG through Liquid MCP
 
-Use the caller's authenticated connection to `https://mcp.liquid.microsoft.com`
+Use the declared HTTP MCP connection to `https://mcp.liquid.microsoft.com`
 for on-demand Microsoft Accessibility Standard (MAS) and WCAG source retrieval.
 This is a read-only reference operation, not a browser/AT test or a compliance
-verdict. The plugin does not download a standards corpus, register a new MCP
-server, provide credentials or implement a second Liquid client.
+verdict. The plugin declares the remote server, but does not download a standards
+corpus, provide credentials or implement a second Liquid client.
 
 ## Connection and authorization
 
-The caller must configure Liquid in its supported MCP settings, using the
-endpoint above and the service's supported authentication flow. Reuse an existing
-connection; do not overwrite MCP settings or install software from this skill.
+The installable `a11y-knowledge`, compatibility `a11y-knowledge-odsp`,
+`a11y-test-categories` and `a11y-bug-bash` plugins declare this connection in
+their root `plugin.json` and matching `.mcp.json`, following the repository's
+existing packaging convention. Both are generated from
+`src/standards/liquid.mcp.json`; maintain that single source.
+Bug Bash registers Liquid only at its root. Its internal knowledge and category
+modules share that connection and do not contain nested MCP registrations.
+
+```json
+{
+  "mcpServers": {
+    "liquid": {
+      "type": "http",
+      "url": "https://mcp.liquid.microsoft.com",
+      "headers": {},
+      "tools": [
+        "liquid_search",
+        "get_liquid_resource_spec",
+        "describe_liquid_resource",
+        "read_liquid_resource"
+      ]
+    }
+  }
+}
+```
+
+After installation/update, let the host load the plugin configuration and
+complete the service's supported authentication/consent flow. In Copilot CLI,
+use `/mcp show` to inspect the loaded server and exposed tools. Hosts that do not
+consume plugin MCP declarations can merge the same server entry into their
+supported MCP settings; do not replace the whole settings file. If an equivalent
+connection already exists, reuse it and avoid adding another manual entry.
+If a host loads multiple standalone plugins as separate connections, manage
+duplicate entries in that host; internal-module deduplication does not guarantee
+cross-plugin deduplication.
+
+Empty `headers` means no credentials are shipped, not anonymous access. The
+four-tool allowlist limits exposed operations instead of enabling `tools: ["*"]`;
+it does not grant service permissions or replace authentication. Do not add a
+literal bearer token to either the source or generated files.
+Do not overwrite user MCP settings or install software from this skill.
 If connection, account permission, consent or reauthentication is missing, report
 the exact prerequisite and request the caller's action. Never obtain a token from
 browser storage, another account or a local credential file.

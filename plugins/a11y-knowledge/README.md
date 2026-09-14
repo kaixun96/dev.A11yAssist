@@ -8,7 +8,7 @@ Accessibility guidance and static review, with general foundations and a built-i
 
 ## Prerequisites
 
-Copilot CLI and the code or question to review; no execution configuration.
+Copilot CLI and the code or question to review; Liquid user authentication for online standards lookup, no execution configuration for offline review.
 
 ## Install your selection
 
@@ -34,6 +34,7 @@ One installation includes general topics and the complete ODSP references; no ex
 ## Reference
 
 - [General accessibility topics](knowledge/README.md)
+- [Liquid MCP connection and MAS/WCAG retrieval](docs/LIQUID-STANDARDS.md)
 - [Built-in ODSP submodule](skills/a11y-knowledge-odsp/SKILL.md)
 - [Project knowledge index](integrations/agentow/knowledge/README.md)
 - [SPDS and Fluent V8/V9](integrations/agentow/knowledge/fluent-spds.md)

@@ -103,7 +103,7 @@ test('standalone and bundled modules share exact source and keep separate public
   }
   const bundle = join(root, 'plugins/a11y-bug-bash/modules/a11y-test-categories');
   const paths = (await files(base)).filter(path =>
-    !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path));
+    !['plugin.json', '.mcp.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path));
   assert.deepEqual(await files(bundle), paths);
   for (const path of paths) assert.equal(await text(join(base, path)), await text(join(bundle, path)));
   for (const category of categories) {
@@ -112,7 +112,9 @@ test('standalone and bundled modules share exact source and keep separate public
   }
   const manifest = JSON.parse(await text(join(base, 'plugin.json')));
   assert.equal(manifest.name, 'a11y-test-categories');
-  assert.equal(manifest.mcpServers, undefined);
+  const config = JSON.parse(await text(join(root, 'src/standards/liquid.mcp.json')));
+  assert.deepEqual(manifest.mcpServers, config.mcpServers);
+  assert.deepEqual(JSON.parse(await text(join(base, '.mcp.json'))), config);
   assert.deepEqual(await readdir(join(base, 'skills')), ['a11y-test-categories']);
   const coverage = JSON.parse(await text(join(root, 'src/bug-bash/coverage.json')));
   assert.deepEqual(statuses, coverage.rowStatuses);

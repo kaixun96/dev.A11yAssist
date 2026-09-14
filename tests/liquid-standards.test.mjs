@@ -15,8 +15,16 @@ const consumers = [
   ['a11y-bug-bash', 'modules/a11y-test-categories', ['a11y-test-categories']]
 ];
 
-test('isolated consumers resolve the same Liquid guide without adding MCP registrations', async () => {
+test('isolated consumers declare Liquid once at the plugin root and share the guide', async () => {
   const expected = await text(join(root, 'docs/LIQUID-STANDARDS.md'));
+  const config = JSON.parse(await text(join(root, 'src/standards/liquid.mcp.json')));
+  assert.deepEqual(config, { mcpServers: { liquid: {
+    type: 'http', url: 'https://mcp.liquid.microsoft.com', headers: {},
+    tools: ['liquid_search', 'get_liquid_resource_spec', 'describe_liquid_resource', 'read_liquid_resource']
+  } } });
+  const example = expected.match(/```json\n([\s\S]*?)\n```/);
+  assert(example, 'Missing installable HTTP configuration example');
+  assert.deepEqual(JSON.parse(example[1]), config);
   for (const [name, module, skills] of consumers) {
     const directory = await mkdtemp(join(tmpdir(), 'liquid-guidance-'));
     try {
@@ -28,8 +36,12 @@ test('isolated consumers resolve the same Liquid guide without adding MCP regist
           .includes('`docs/LIQUID-STANDARDS.md`'));
       }
       const manifest = JSON.parse(await text(join(directory, 'plugin.json')));
-      assert.equal(manifest.mcpServers, undefined);
-      await assert.rejects(access(join(directory, '.mcp.json')), { code: 'ENOENT' });
+      assert.deepEqual(manifest.mcpServers, config.mcpServers);
+      assert.deepEqual(JSON.parse(await text(join(directory, '.mcp.json'))), config);
+      if (module) {
+        await assert.rejects(access(join(base, '.mcp.json')), { code: 'ENOENT' });
+        await assert.rejects(access(join(base, 'plugin.json')), { code: 'ENOENT' });
+      }
     } finally {
       await rm(directory, { recursive: true });
     }

@@ -80,6 +80,7 @@ test('native dependency selection is side-effect-isolated and propagates failure
   { encoding: 'utf8', timeout: 20000 });
   assert.equal(child.status, 0, child.stdout + child.stderr);
   assert.match(child.stdout, /dependency selection passed/);
+  assert.match(child.stdout, /Scoped inventory passed/);
 });
 
 test('packaged host script rejects Codespaces and invalid dependency selections before any effects', {

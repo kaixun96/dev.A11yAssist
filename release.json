@@ -70,6 +70,6 @@
     "src/native/ado-intake.mjs": "b2646283bd1e20af8dc96bb3ca92b4513a4705d9b83b85559449225d7e6b53af",
     "src/native/pr-description.mjs": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf",
     "src/native/provenance.json": "eb9bfb249f1620d36ca1ea401e51ce312b1e5555bfb8953695f85ded4816dd2d",
-    "src/native/windows-host.ps1": "f12b5ae77fd1b3c3d17efd34943cd0692684da5e535ee12189fdeac56e8cabab"
+    "src/native/windows-host.ps1": "c4e8f8a343e63e4c279c4f867aab94b47c4a8df9a0158bfe53e15b9dc3e631e0"
   }
 }

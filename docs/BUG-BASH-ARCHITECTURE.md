@@ -8,6 +8,12 @@ The current [Bug Bash contract](BUG-BASH.md), [provider protocol](PROVIDERS.md)
 and deployment-specific ownership rules remain authoritative until a separately
 qualified implementation changes them. This document does not authorize deployment.
 
+The reusable [large-plugin design and maintenance method](COMPOSABLE-PLUGIN-DESIGN.md)
+explains the cross-domain reasoning and primary-source limitations. This document
+owns the Bug Bash application: constrained adaptation around verifiable scenarios,
+service-based capability composition and evidence-first execution. Neither document
+installs DeepSeek Harness, Cordis, graph retrieval, skill optimization or memory tools.
+
 ## 1. Product outcome
 
 Given feature context and verification instructions, `/a11y-bug-bash` should
@@ -35,7 +41,7 @@ track does not prevent independent authorized work, but remains a coverage gap.
 
 ## 2. Principles from the primary sources
 
-The six linked pages were read in full, including the workflow article's
+The six foundational pages below were read in full, including the workflow article's
 appendices and the MCP architecture examples. These are selected references,
 not an objective ranking of the "most advanced" architectures.
 
@@ -58,6 +64,26 @@ the extension is assumed available in the installed host. Use the actual
 negotiated SDK/protocol, not hand-written messages copied from newer docs.
 Even a durable MCP task handle does not establish desktop ownership, correct
 evidence, cleanup or guaranteed delivery to the original requester.
+
+### Recent AI-specific sources and decisions
+
+The [reusable guide's source register](COMPOSABLE-PLUGIN-DESIGN.md#10-primary-sources-and-evidence-limits)
+links the reviewed primary sources, dates, methods and limits, including DeepSeek
+Harness's own architecture, Cordis primer and safety notice.
+
+| Source | Bug Bash decision |
+|---|---|
+| DeepSeek Harness / Cordis | Stable service identities, declared dependencies and qualified composition profiles; participating registrations have owned lifetimes, but disposal never substitutes for native cancellation/reconciliation |
+| Empire harness convergence study | Reuse the model loop; concentrate domain work in scenario contracts, durable evidence and explicit capability/context boundaries |
+| Subagents vs Agent Skills | Keep routing and cross-cutting A11y knowledge inline; isolate substantial contracted procedures only when useful; deterministic probes remain tools |
+| SE-GoS | Separate declared hard constraints from learned retrieval relationships; start with explicit profiles, then evaluate bounded offline ranking changes |
+| SkillAdam | Retain issue/attempt history and bounded candidate edits; protect evidence standards and use independent regression/holdout before promotion |
+| Funes | Recall short evidence-backed experience with expansion to original traces; do not confuse historical memory with current authorization, health or task state |
+
+These are design inferences, not measured Bug Bash gains. In particular, SE-GoS's
+held-out +5.4-point gain is inside its reported noise band, its main avoid filter
+was not exercised, and its third evolution round regressed. Neither that result nor
+DeepSeek's developer preview justifies unrestricted auto-composition or live updates.
 
 ## 3. Baseline: reuse before adding modules
 
@@ -136,6 +162,20 @@ interface or the module has a genuinely separate release/permission lifecycle.
 An accepted finding may later enter separately authorized remediation, retaining
 that workflow's actual BEFORE/AFTER, resource, source and publication gates.
 
+### Reasoning is a separate composition choice
+
+The main reasoning context owns the feature goal, coverage gaps and routing.
+It loads relevant standards/project knowledge progressively rather than loading
+every skill. A large source-risk analysis or evidence interpretation may use an
+isolated context with complete scoped inputs, expected output, termination rules
+and expandable evidence pointers. Small lookups and deterministic DOM/focus/hash
+operations remain direct tools. No isolated child is required merely because a
+logical capability exists; no actual sub-agent availability is assumed.
+
+Context isolation does not grant additional permissions or desktop isolation.
+Independent behavior assessment needs its own evidence and rubric; a fresh model
+repeating the producer's conclusion is insufficient.
+
 ## 5. Packaging and actual invocation
 
 One Bug Bash installation remains sufficient for instructions and shared modules.
@@ -190,6 +230,30 @@ stay on their original compatible bindings; incompatible changes fail closed.
 Reinstall changed plugin
 files and restart the host when required, then confirm the actual loaded skill,
 tool and handler versions on the machine that executes them.
+
+### Service resolution and qualified profiles
+
+Treat each capability as a stable service/action contract with an explicit
+definition, one selected provider and potentially multiple consumers. Reuse the
+current capability registry and trusted connections, extending them compatibly;
+do not introduce a second loader, arbitrary executable resolution or a mandatory
+Cordis runtime. Declared prerequisites govern activation. Reject incompatible
+contracts, ambiguous providers and cyclic/unsatisfied hard dependencies before
+effects. A service name or retrieved skill cannot grant execution authority.
+
+A proposed browser-only profile should require only its browser dependencies.
+A proposed named-AT profile adds that AT and required evidence stack, not every
+recorder/driver. Profiles are qualified combinations, not new package names or
+an assertion that those combinations work today. Record the effective profile,
+provider/skill versions, selection-policy/graph revision and model configuration.
+Unknown costs or model backend versions remain explicit.
+
+Metadata is available for selection; detailed instructions load when selected;
+large artifacts are retrieved by reference. Track peak reasoning context and
+aggregate tokens separately, with measured latency/cache effects where available.
+Do not silently hot-replace providers or dispose the supervisor of an active
+operation. Disposal of plugin registrations does not cancel native work, undo
+external effects or release resource ownership.
 
 ## 6. Composition for a large feature
 
@@ -259,6 +323,36 @@ guess. Prioritize primary journeys and high-impact blockers, then relevant
 visual/AT variants. A finite round must name its time/row/confirmation limits
 and reserve cleanup time; it cannot guarantee exhaustive accessibility coverage.
 
+### Constrained adaptive composition
+
+The unit being composed is a verifiable scenario, not an agent or plugin:
+preconditions -> actions -> expected outcome -> capabilities -> evidence -> reset.
+Generate applicable journey/state/dimension combinations, not a blind Cartesian
+product. A different provider must still satisfy the same accepted scenario.
+
+The planner first maps supplied verification instructions and mandatory coverage,
+then proposes a bounded capability shortlist from the catalog and relevant
+experience. Deterministic acceptance checks schemas, dependencies, authority,
+resource compatibility, required evidence and budget before binding a plan.
+
+Keep two distinct relationship classes:
+
+- **Hard:** declared service prerequisites, authorized scope, required rows,
+  desktop exclusivity, evidence gates and budget.
+- **Soft:** retrieved relevance, observed co-use/order/cost and descriptions that
+  improve skill discovery. These influence proposals, never authorize effects.
+
+Learning cannot delete a required screen-reader row because it is expensive or
+rarely successful. Missing AT blocks that row; independent browser/source work
+can proceed. A qualified static profile may replace failed adaptive selection
+only if it satisfies the same scope and contracts, with the choice recorded.
+
+For the picker, discovering asynchronous search results may add focus retention
+and status-announcement scenarios, with real named-AT output where required.
+Accept additions only within scope and remaining budget, as new plan revisions.
+Do not change an in-flight operation or reuse old evidence under a new scenario.
+Every applicable blocked/unrun row remains in the report.
+
 ## 7. Versioned contracts
 
 The following records and semantic operations are **proposed internal contracts**,
@@ -270,8 +364,8 @@ current strict context schema without a compatible versioned extension.
 | Record | Required content |
 |---|---|
 | FeatureContext | Feature ID, user goal, authorization reference, requested tracks, allowed environment/routes/data, verification instructions, source binding or explicit unknown, budget |
-| CoveragePlan | Plan revision/hash; stable row/scenario IDs; preconditions, action/reset, expected behavior, knowledge reference, priority, required capability and evidence types |
-| CapabilityDescriptor | Action/schema versions, supported host, input/output schema, effect class, permissions, mutex requirements, prepare/execute/reconcile/cleanup support, deadline policy |
+| CoveragePlan | Plan revision/hash; stable row/scenario IDs; preconditions, action/reset, expected behavior, knowledge reference, priority, required capability and evidence types; declared constraints, selection reasons and bound profile/provider/skill/retrieval/model configuration |
+| CapabilityDescriptor | Stable service/action ID and schema versions, supported host, input/output schema, declared prerequisites, effect class, permissions, mutex requirements, prepare/execute/reconcile/cancel/cleanup support and limits, deadline policy; reasoning mode, progressive-disclosure/context budget, cost/cache estimates versus observations |
 | CapabilityObservation | Actual host/tool/runtime versions and hashes, observed time, scope, authorization/ownership reference, restart/config gaps; no secret tokens |
 | StepRequest | Parent task/run, step/operation ID, immutable request ID, owner/authority, plan/scenario hash, provider binding, limits and exact inputs |
 | Observation | Row ID, attempted steps, actual result, expected comparison, evidence references, named AT if used, uncertainty and source/deployment binding |
@@ -512,9 +606,61 @@ installs; do not add Temporal or a hosted agent platform; keep report private;
 keep fixes/publication outside discovery. Agent count is an optimization, not a
 correctness requirement, and unavailable sub-agents do not block the base design.
 
+Static supported profiles and explicit capability metadata come first; bounded
+task-driven selection follows only among qualified capabilities. Do not delay the
+existing fixture for a graph database, new harness or skill optimizer. Offline
+evolution is a subsequent opt-in increment, not a prerequisite for increments 1-5.
+
 Before implementation, resolve through host probes and adapter conformance:
 actual Copilot/MCP compatibility, the qualified generic browser connector,
 typed feature execution support in the original resource authority, and the
 first supported real-AT profiles. Unknown answers stay unsupported. Any change
 to these decisions updates this document and its acceptance cases in the same
 reviewed change; publishing this design alone installs or qualifies nothing.
+
+## 13. Evidence-driven maintenance and offline evolution
+
+Keep raw traces/evidence, curated procedures and authoritative execution state
+logically separate. Recalled recovery advice may suggest a hypothesis; the live
+ownership/health check still decides whether it can execute. Keep private source,
+product data and media within approved storage/visibility boundaries; this design
+does not authorize a hosted memory upload.
+
+Initially retain an explicit capability catalog and declared compositions. Once
+real runs reveal selection failures, compare a bounded retrieval/ranking candidate
+against the static baseline on the same feature setup, budget and required rows.
+Record why each capability was selected, excluded or unavailable.
+
+Optimize retrieval edges/descriptions separately from skill procedures. Retain
+failure signatures, proposed edits, rejected attempts and recurring regressions.
+Limit edit scope; freeze the rubric, required evidence and authority gates.
+SkillAdam-style issue memory and edit budgets are ideas to apply through reviewed
+changes, not authorization to let an optimizer edit the checker.
+
+Before promotion, use independent healthy/broken regression cases and held-out
+feature scenarios, beyond the examples that motivated the change. Repeat paired
+runs where variance requires it. Record effect sizes and uncertainty, aggregate
+tokens, peak context, latency and infrastructure failures. The known 16-row
+fixture remains a regression gate, not evidence of generalization to all features.
+
+Additional acceptance cases for adaptive composition:
+
+| Case | Required result |
+|---|---|
+| Required AT skill ranked below retrieval cutoff | Required row retained; include its qualified provider or expose a gap |
+| Learned relation conflicts with ownership/evidence policy | Reject the proposed execution; do not weaken the hard constraint |
+| New skill/provider version arrives mid-run | Existing submitted operation stays pinned; no replacement replay |
+| Skill edit appears to improve score by weakening expectations | Reject candidate; protected rubric and known defect detection unchanged |
+| Candidate succeeds on training cases but regresses held-out cases | Retain baseline or report insufficient evidence; no automatic promotion |
+| Memory recalls a successful recovery on a now-busy host | Respect current ownership; historical success grants no access |
+
+Measure supported conclusive coverage under a fixed budget, known missed defects
+and sampled false positives, not raw bug counts. Keep infrastructure errors in
+end-to-end reliability accounting even when product accuracy is shown separately.
+Require no duplicate effects or ownership violations. Preserve recovery, cleanup
+and delivery obligations; adaptation must not recreate task cancellation coupling.
+
+Promote only independently supported candidates through a reviewed version and
+qualified profile with rollback, for new runs. Keep the last accepted baseline
+when evidence is insufficient. Bound improvement rounds and stop on regression;
+more execution history does not guarantee monotonically better composition.

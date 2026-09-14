@@ -27,6 +27,12 @@ Source-only review requires none of this setup.
 
 ## Check, select, prepare, qualify
 
+The built-in `recover-devbox` adapter can start an existing DevBox under the
+original recovery lease/token and reconcile without replay. Its receipt proves
+cloud power only, not Console/worker/AT readiness. Use a separately configured
+standalone setup call; it does not replace the original pool allocator/status/
+release connection. See [execution adapters](EXECUTION-ADAPTERS.md).
+
 **Resource first:** select an eligible DevBox through the original resource
 manager, obtain task-bound exclusive setup/recovery authority, then check and
 prepare that machine's tools. `a11y_setup_resources` provides status, not
@@ -106,6 +112,11 @@ also changes Speech Viewer settings: preserve prior configuration and avoid
 another session's NVDA. Do not install into product source or modify a worker.
 
 ## Persistent browser
+
+For product-independent bounded scenarios, the shared browser runner now supports
+a protected existing Chromium profile through policy v2, retaining the same
+visible context from renewal through capture. See [execution adapters](EXECUTION-ADAPTERS.md).
+The legacy helper below retains its narrower compatibility behavior.
 
 Prefer an already working authorized connection. For the bundled compatibility
 route, separately authorize helper installation; it copies the packaged helper

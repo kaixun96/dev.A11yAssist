@@ -36,18 +36,18 @@
   {
     "name": "a11y-setup",
     "group": "setup",
-    "docs": ["docs/SETUP.md", "setup/report.template.md"],
+    "docs": ["docs/SETUP.md", "docs/EXECUTION-ADAPTERS.md", "setup/report.template.md"],
     "en": {
       "purpose": "Resource-first DevBox setup: establish ownership, then check and prepare selected Windows accessibility tools",
       "requires": "Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization",
       "example": "/a11y-setup check browser and NVDA on <Windows evaluator>; save installed versions, missing dependencies and exact preparation steps to <private output directory>. Do not install or open apps yet.",
-      "limits": "Includes former resource status and completed-assignment release MCP tools; no separate resources plugin. Establish original DevBox/setup ownership before host changes. Local inventory uses approved host tools; resource MCP calls need a configured connection. No generic allocator, forced release, automatic scanner install or implied readiness."
+      "limits": "Includes resource status/release and an optional original-lease Dev Center start/readback adapter; no separate resources plugin. Cloud power is not Console/AT readiness. Preserve the original allocator and active connections. No forced release, automatic scanner install or implied readiness."
     },
     "zh": {
       "purpose": "先落实 DevBox 资源与归属，再检查和准备所需 Windows 无障碍工具",
       "requires": "Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权",
       "example": "/a11y-setup check <Windows 评估机> 的浏览器和 NVDA 环境，将已安装版本、缺少依赖和具体准备步骤保存到 <私有输出目录>。暂不安装或打开应用。",
-      "limits": "合并原资源状态查询和已完成任务释放的 MCP 工具，不再单装 resources。变更前先取得原资源管理器的 DevBox/setup 归属。主机检查使用获授权工具；资源 MCP 需要配置连接。不提供通用分配器、强制释放或自动扫描器安装；安装不代表就绪。"
+      "limits": "包含资源查询/释放及可选的原 recovery lease 下 Dev Center 启动/回读适配器，不再单装 resources。云端开机不代表 Console/AT 就绪；保留原分配器和进行中连接，不强制释放或自动安装扫描器。"
     }
   },
   {
@@ -138,18 +138,18 @@
   {
     "name": "a11y-capture",
     "group": "capability",
-    "docs": ["docs/CAPABILITIES.md", "docs/PROVIDERS.md"],
+    "docs": ["docs/CAPABILITIES.md", "docs/PROVIDERS.md", "docs/EXECUTION-ADAPTERS.md"],
     "en": {
       "purpose": "Capture real Windows AT evidence and recover owned recording, audio or NVDA resources",
       "requires": "Qualified Windows capture connection with per-attempt preflight/postcheck, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD",
       "example": "/a11y-capture Capture BEFORE for <sealed scenario> on <owned evaluator> using the authorized capture connection.",
-      "limits": "Installation does not provision a DevBox or recorder. No synthetic AT results. Preserve scenario/evaluator identity for AFTER. Explicit recover-media/recover-nvda actions require the original assignment and authorized operations connection; narrow recovery is not full cleanup or resource release."
+      "limits": "Built-in observe-at collects raw NVDA Speech Viewer, Narrator ETW/audio and Voice Access overlay-command/UIA/audio under original ownership. Raw output is not BEFORE/AFTER/discovery PASS; behavior, media and overlay mapping require independent review. No automatic tool installation, borrowed-process stop or lease release."
     },
     "zh": {
       "purpose": "采集真实 Windows AT 证据，恢复自有录制、音频或 NVDA 资源",
       "requires": "已验收且支持每次采集前环境检查和采集后异常检查的 Windows 连接、自有评估机和固定场景；AFTER 还需实际源码 HEAD",
       "example": "/a11y-capture 通过获授权的采集连接，在 <自有评估机> 为 <已固定场景> 采集 BEFORE。",
-      "limits": "安装插件不会自动创建 DevBox 或录制器，也不生成模拟 AT 结果。AFTER 保持相同场景和评估机。明确调用 recover-media/recover-nvda 需要原任务记录和获授权的 operations 连接；窄范围恢复不代表完整清理或资源释放。"
+      "limits": "内置 observe-at 在原归属下采集 NVDA Speech Viewer、Narrator ETW/音频及 Voice Access 数字指令/UIA/音频。原始观测不等于 BEFORE/AFTER/discovery PASS；行为、媒体和标签归属需独立评估。不自动安装工具、停止借用进程或释放租约。"
     }
   },
   {

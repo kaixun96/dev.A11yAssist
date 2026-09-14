@@ -5,6 +5,7 @@ import { discoveryHash, requireDiscovery as demand } from './discovery-contract.
 import { withDirectoryLock } from './core.mjs';
 import { bugDescription } from '../native/bug-description.mjs';
 import { bugDestination, inspectAdoBugDestination } from '../native/ado-bug-client.mjs';
+import { hostAuthorization } from '../native/host-auth.mjs';
 
 export const filingOperationId = (taskId, issueId) =>
   `bug-${discoveryHash({ taskId, issueId }).slice(0, 48)}`;
@@ -111,14 +112,11 @@ export async function inspectDiscoveryBug(config, taskId, issueId) {
   demand(issue, 'Only validated observed-page findings may be inspected for filing');
   const provider = config.providers?.bugs;
   demand(provider?.kind === 'ado', 'Built-in destination inspection requires the configured ADO Bug provider');
-  return inspectAdoBugDestination({ ...provider, authorization: filingAuthorization(provider) }, issue.title);
+  return inspectAdoBugDestination({ ...provider, authorization: await filingAuthorization(provider) }, issue.title);
 }
 
-export function filingAuthorization(provider) {
-  const authorization = process.env[provider.authorizationEnvironmentVariable];
-  demand(typeof authorization === 'string' && /^(Bearer|Basic) \S+$/.test(authorization),
-    'Configured ADO authorization is unavailable; no external operation performed');
-  return authorization;
+export async function filingAuthorization(provider) {
+  return hostAuthorization(provider);
 }
 
 export async function assertFilingContinuation(config, taskId) {

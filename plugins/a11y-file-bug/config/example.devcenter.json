@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "owner": "replace-with-owner",
+  "stateRoot": "C:\\Approved\\A11y\\PrivateState",
+  "providers": {
+    "resources": {
+      "kind": "devcenter",
+      "authorizationEnvironmentVariable": "A11Y_DEVCENTER_AUTHORIZATION",
+      "poolRoot": "C:\\Approved\\A11y\\OriginalPool",
+      "recoveryTokenEnvironmentVariable": "A11Y_ORIGINAL_RECOVERY_TOKEN",
+      "waiting": {"mode": "caller-poll", "pollIntervalSeconds": 30, "timeoutSeconds": 1800},
+      "machines": {
+        "replace-with-machine": {
+          "endpoint": "https://replace-with-endpoint.devcenter.azure.com",
+          "projectName": "replace-with-project",
+          "devBoxName": "replace-with-devbox",
+          "userId": "11111111-2222-3333-4444-555555555555"
+        }
+      }
+    }
+  }
+}

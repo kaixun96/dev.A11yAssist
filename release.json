@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.19.0",
+  "version": "0.20.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -18,13 +18,13 @@
   ],
   "knowledge": {
     "manifest": "src/knowledge/manifest.json",
-    "sha256": "b2b07429f93b4b3a714ce3e041993a143ae07b5e32a1019b3c2458f187d7d5d5"
+    "sha256": "f983381d6b441190ab6126db8f9bb32b6b63ee8381f529418b0e4eef24d6a7ff"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "f6538608eb7c1c835c012874a36cb7caccf5e35523dad3097d82bd21ca085748",
+      "sha256": "13093dd2d61d74f2ee4c5781470506e3cbcedb71158162d71ee7337b5d46b9a6",
       "plugins": [
         "a11y-intake",
         "a11y-setup",
@@ -52,27 +52,29 @@
     }
   ],
   "hashes": {
-    "src/runtime/browser-contract.mjs": "04e1331f4dcdf77f2bac20dfe59b7a13e82e114d0164161e1821fd471de9c2a4",
+    "src/runtime/browser-contract.mjs": "dbd05cd3e1ed7c7f7345e43bfd793cc5a8d9116183158c7bad2b9fed9c53e89f",
     "src/runtime/bug-bash-cli.mjs": "685145007eb9f0831ab0a19af3412b80d8dfaee2466e6373d22298c7c143b7dc",
-    "src/runtime/bug-bash.mjs": "51b917a8d6be48cc53ae77b713f3ccc83ae58b0719dbac236649ba109fee7974",
-    "src/runtime/builtin-ado.mjs": "f7dea7b28e285d185fcfdd3b0f4f8f86bc9488c3592a14c22196df8654617cc8",
+    "src/runtime/bug-bash.mjs": "1235785722f0961049c8f8b33267658aba08f2c45cc7064f464f7cb0a5b10d80",
+    "src/runtime/builtin-ado.mjs": "2373e51d61072a4b8184ee87611dab4b533456c9fcad63c81371d26bbba493aa",
+    "src/runtime/builtin-devcenter.mjs": "8c5be44e0132f1de1eb837936fa181dc1335a2d7b1001bbfc61cfdb342f47ae7",
+    "src/runtime/builtin-windows-at.mjs": "60068129cb04812f775199566ee5d4731799a4f1619c4c28df2bd316ec4f86a9",
     "src/runtime/canonical.mjs": "6bc67fae4ee818fb703df15a52ade792df21f19585c14bb00dbb96ceff300e44",
-    "src/runtime/capability.mjs": "5a0e65afe5411d465757a9c5e3b79cfd56298e25ed6b5578e5e24339134e030c",
+    "src/runtime/capability.mjs": "7b1032298d88ee7c7ad0012c9c787e4d2a19ec0e7b8d731611511b1050a14a2d",
     "src/runtime/category-plugin.mjs": "d4bae894f14d433bfdd7bcd12d288132123467938532ec1c865e297f559ee891",
     "src/runtime/cli.mjs": "8935b905c50770d3d43feca8e005b3de241ca0d75dc14782c32ffa520e033ae7",
-    "src/runtime/core.mjs": "4228e85d83379c74076119cfa1f23513fee78a35b2cfd5d108f26338dea45ed8",
+    "src/runtime/core.mjs": "f22de76d80b4743583b3e4d6f313818ba2a56be709779b512b602002707e865d",
     "src/runtime/discovery-contract.mjs": "44f5337affd8f3ebe0f0e5e22a12352f56ce5cdee32d32f4713be5275754367b",
     "src/runtime/discovery-coverage.mjs": "ffeccd08cd06396313de643e1c953423ee3c2caf75b0716203f978d2b37a82e1",
     "src/runtime/evidence-files.mjs": "fe5d5a59e7a953ed838777aef2b8923f5f8f3b7b3503b5d349d169744a23877f",
     "src/runtime/evidence-v1.mjs": "6a087bd37a4e83ef3f71fead22a88cc83160776bc671fdaf8e93afc2792b1ff2",
-    "src/runtime/file-bug.mjs": "16616d5b81cb413045a2dadd31fbf89ead6ec6ce6a6264fb1f622e613bab9c98",
+    "src/runtime/file-bug.mjs": "4498f774ff51186c5abfafb4daf05fcbbb39157fd01a89a26b44a82494d72d0f",
     "src/runtime/mcp.mjs": "0a09cde3ab27e5e0f47e05dd3a0007abdb1af0f07cc89c31495b0f1de76c7073",
-    "src/runtime/operations.mjs": "ccb31bad9a339864b6a781156e9981d9d864160da6e3cb417a2586fd0c8c35b8",
+    "src/runtime/operations.mjs": "38711dfad295a15c62f2f0845a8a9cd118bd43ff94c7df507bbd783858f180bc",
     "src/runtime/profiles.mjs": "635cb32b7f7d2e26d7f975fbe622727a2d8f35fc9aa82e83b91f8d31aaeedb2d",
     "src/runtime/waiting.mjs": "364bfb314e9ccd459365741d857b281f00362a8bc9562d1ce64c5d30c23ce893",
-    "src/contracts/capabilities.json": "75cf5003059725dbf2adb9196d086fbba03d8ec4a69daeec4fe6920cda8ae9f6",
+    "src/contracts/capabilities.json": "ff897774d65264c06c70b8fa7c31192319123446dfed41116e5de6ab0185e758",
     "src/contracts/plugins.json": "1a1c9dad183f1cfa51e570482e2ff819fc079261d8d1749ee1cb3abe2df17106",
-    "src/contracts/workflow.json": "0779f880c814faa816d39e08693d53ae22d48e5d2045ab30fea4cdcb14713170",
+    "src/contracts/workflow.json": "93707cae5fb4e7041dd3716d43a2302dc79e0023be62b1de930a2dd1101b5260",
     "src/adapters/cli.mjs": "612cb28a5c94f31bf27e6afeb5c4b33d77c6ebcf16272baf567abd0503ea076a",
     "src/adapters/twin.mjs": "9f3288b06c581b280280e4994aa97aaf841da68a3a94174e62d7b066822e2897",
     "src/native/ado-attachments.d.mts": "0e68234f8714b41a926c53ce8974ae549a0a20ebb788d569076e45c3cbfaf480",
@@ -82,8 +84,12 @@
     "src/native/ado-bugs.mjs": "46fc3091dbcedd83369bd3688a7c81f4a99a840aa1117fd8c7c5dd6d327ded26",
     "src/native/ado-intake.mjs": "b2646283bd1e20af8dc96bb3ca92b4513a4705d9b83b85559449225d7e6b53af",
     "src/native/bug-description.mjs": "fd1f4ad7d36e26590917a3268b27661a0fc08286042309f7be757776dfe85c9a",
+    "src/native/devcenter.mjs": "af26465782d3c2fd9b7f1be33a33c95a245fc5f93c286b3c65d8a63688bfe4d6",
+    "src/native/host-auth.mjs": "340b2440d6bfeaf587a4fd912614b5ffe2e0d05a267a96ef8fd1a43d7c11772a",
     "src/native/pr-description.mjs": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf",
     "src/native/provenance.json": "eb9bfb249f1620d36ca1ea401e51ce312b1e5555bfb8953695f85ded4816dd2d",
+    "src/native/windows-at.policy.example.json": "63eeb18489eeaa2daa1b495bc3842243c941bb000a1c84e92b639e37054414a9",
+    "src/native/windows-at.ps1": "c63e64d821d4e60942a04b34ef3e76183087bcb35df4d5a8af5fa128b76d36ba",
     "src/native/windows-host.ps1": "ded63f5d0b1663ae11d05776808a46a484497adf8ffd4d7d501cb1e2d53eb9ae"
   }
 }

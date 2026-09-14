@@ -1,6 +1,6 @@
 # Evidence-first workflow contract
 
-Envelope version: 0.9.0. This is the OPTIONAL full-workflow contract, not a prerequisite
+Envelope version: 0.11.0. This is the OPTIONAL full-workflow contract, not a prerequisite
 for small capabilities. See `CAPABILITIES.md` for caller-owned composition.
 During migration the
 existing deployment's canonical execution contract remains authoritative;

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "owner": "replace-with-owner",
+  "stateRoot": "C:\\Approved\\A11y\\PrivateState",
+  "providers": {
+    "capture": {
+      "kind": "windows-at",
+      "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "executableSha256": "REPLACE_WITH_ACTUAL_SHA256",
+      "policyPath": "C:\\Approved\\A11y\\windows-at-policy.json",
+      "policySha256": "REPLACE_WITH_ACTUAL_SHA256",
+      "driverSha256": "REPLACE_WITH_PACKAGED_NATIVE_WINDOWS_AT_SHA256",
+      "timeoutSeconds": 120
+    }
+  }
+}

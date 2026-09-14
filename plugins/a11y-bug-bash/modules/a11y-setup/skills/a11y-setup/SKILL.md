@@ -41,6 +41,12 @@ acquisition. Record host, task, ownership reference and authorized scope; keep
 lease tokens inside the resource connection. Revalidate ownership on that host
 immediately before each change and after any wait or restart.
 
+For an existing stopped DevBox, `recover-devbox` provides a built-in original-lease
+start/readback adapter. Read `docs/EXECUTION-ADAPTERS.md`; use the exact recovery ID
+and explicit start authorization through a separately configured standalone call.
+Preserve the original allocator/status/release tools. A cloud-power receipt never
+substitutes for actual Console, browser, audio or AT readiness.
+
 If no eligible DevBox exists, queue or use the original manager's authorized
 provision/recovery route; do not install tools on the controller instead. This
 package does not invent a generic allocator. An occupied/unavailable resource
@@ -80,7 +86,7 @@ An NVDA selection also enables Speech Viewer; preserve the prior configuration
 and do not change it while an existing NVDA session owns it.
 
 Use official/organization-approved package sources only. Do not disable signature,
-hash, execution or enterprise controls, inject a downloaded scanner into an
+hash, execution or enterprise controls, inject an unreviewed downloaded scanner into an
 authenticated page, install a substitute package after a safety rejection, or
 write dependencies into the product repository. A timeout is unknown execution:
 record command/process identity and inspect that attempt before another install.

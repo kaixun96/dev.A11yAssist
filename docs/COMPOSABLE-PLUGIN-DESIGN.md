@@ -55,14 +55,11 @@ Package extraction is a later decision when there is a stable independent
 consumer or operational boundary. Start with shared authored modules rather than
 copying implementations into an orchestration package and its sibling packages.
 
-## 3. Use DeepSeek Harness as the service-composition reference
+## 3. Compose through stable service contracts
 
-DeepSeek Harness separates service definitions, providers and consumers. Plugins
-contribute services and registrations through Cordis context; consumers resolve
-stable service identities, and declared dependencies govern activation. Even
-the execution loop can be selected as a service.
-
-Borrow these seams, not an obligation to port to Cordis:
+Separate service definitions, providers and consumers. Consumers resolve stable
+service identities; declared dependencies govern activation. Keep the execution
+loop replaceable without coupling domain logic to a particular framework.
 
 | Mechanism | Reusable design rule |
 |---|---|
@@ -94,9 +91,8 @@ state/evidence semantics.
 Disposal is not cancellation or rollback of arbitrary external effects. Removing
 a listener does not unsend a message; unregistering a provider does not stop its
 remote job or release a lease. Plugin replacement cannot invalidate the only
-supervisor for an unfinished task. DeepSeek itself is a developer preview with
-an explicit unaudited/not-production-secure safety notice; do not use its plugin
-mechanism as a security sandbox or as evidence of our own reliability.
+supervisor for an unfinished task. A plugin mechanism is not a security sandbox
+or evidence of system reliability.
 
 ## 4. Make capability contracts operational
 
@@ -201,8 +197,8 @@ proof of full completion or permission to abandon unresolved effects.
 | Curated procedural knowledge | Explain applicable procedures and prior recovery experience | Current resource health or authorization to replay archived commands |
 | Authoritative execution state | Determine ownership, accepted work and outstanding effects | That an observed behavior is correct without supporting evidence |
 
-Use short retrieval results with expansion to original passages, similar to
-Funes's recall/get pattern. Apply visibility controls, provenance and freshness
+Use short retrieval results with expansion to original passages.
+Apply visibility controls, provenance and freshness
 checks. Treat retrieved content as untrusted evidence, not executable authority.
 Do not export private traces to a cloud memory service merely because it supports
 private datasets or credential scanning. Tool/agent compatibility must be
@@ -225,7 +221,7 @@ are not editable by the optimizer whose result they judge.
    infrastructure and evaluation failures separately.
 2. Select a bounded improvement target using observed evidence, not novelty.
 3. Propose a versioned graph/description or skill change. Retain issue history,
-   rejected attempts, regressions and recurrence, as in SkillAdam's issue tracker.
+   rejected attempts, regressions and recurrence.
 4. Compare baseline and candidate with the same setup and budget. Use independent
    regression and held-out cases, not just the cases that generated the edit.
 5. Accept only with protected behaviors intact, uncertainty reported and an
@@ -240,8 +236,8 @@ conclusive versus attempted coverage, duplicate effects, ownership violations,
 recovery/cleanup/delivery, human interventions and cost. Do not maximize reported
 defect count or reduce the denominator by silently dropping difficult work.
 
-SE-GoS's multi-round regression is a reason for bounded evaluation windows and
-rollback, not an argument for continuous unreviewed skill-graph evolution.
+Bound evaluation windows, stop on regression and retain a rollback path.
+Do not allow continuous unreviewed skill-graph evolution.
 
 ## 9. Adoption and maintenance sequence
 
@@ -257,6 +253,11 @@ permission/context impact; new-versus-active-run behavior; qualification evidenc
 release/rollback owner; and unresolved limits. Exercise restart mid-effect, lost/
 duplicate callback, unrelated-task cancellation, stale runtime and cleanup failure.
 Plugin count and agent count are optimization choices, not release gates.
+
+Keep feature/design document bodies focused on requirements, decisions, interfaces,
+execution and acceptance. Do not interleave article summaries, literature comparisons
+or reading history with the design. Put necessary source links and evidence caveats
+in a final references section; keep extended research discussion in a separate document.
 
 ## 10. Primary sources and evidence limits
 

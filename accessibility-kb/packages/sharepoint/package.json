@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "sharepoint",
+  "version": "0.1.0",
+  "dependencies": {"common":"0.1.0","fluent":"0.1.0"},
+  "sources": [
+    {"id":"sharepoint-support","authority":"product-support","status":"connection-pending","locator":null,"revision":null,"note":"Obtain official per-product accessibility support lists, owners, versions and exception references. No list has been connected."},
+    {"id":"spds-docs","authority":"component-contract","status":"connection-pending","locator":null,"revision":null,"note":"Official SPDS component and utility contracts, installed versions and redistribution permission remain to be confirmed."},
+    {"id":"sharepoint-utilities","authority":"component-contract","status":"connection-pending","locator":null,"revision":null,"note":"Confirm official announcement, keyboard/focus and host utility contracts. No API signatures are inferred."}
+  ],
+  "entries": [
+    {"id":"sharepoint.overview","path":"README.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["sharepoint"],"sourceIds":[],"relations":["common.overview","fluent.overview"]},
+    {"id":"sharepoint.selection.components-and-utilities","path":"selection/components-and-utilities.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["sharepoint"],"sourceIds":["spds-docs","sharepoint-utilities"],"relations":["fluent.selection.components-and-utilities","common.implementation.component-contract"]},
+    {"id":"sharepoint.spds.component-contract","path":"spds/component-contract.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["sharepoint-spds"],"sourceIds":["spds-docs"],"relations":["common.implementation.component-contract"]},
+    {"id":"sharepoint.utilities.announcements-and-focus","path":"utilities/announcements-and-focus.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["sharepoint"],"sourceIds":["sharepoint-utilities"],"relations":["common.topic.dynamic-content","common.topic.keyboard-focus"]},
+    {"id":"sharepoint.profile.support-policy","path":"profiles/support-policy.md","kind":"product-profile","status":"draft","owner":"unassigned","appliesTo":["sharepoint"],"sourceIds":["sharepoint-support"],"relations":["common.requirements.authority-and-applicability"]},
+    {"id":"sharepoint.profile.support-matrix","path":"profiles/support-matrix.json","kind":"product-profile","dataSchema":"support-matrix","status":"draft","owner":"unassigned","appliesTo":["sharepoint"],"sourceIds":["sharepoint-support"],"relations":["sharepoint.profile.support-policy"]},
+    {"id":"sharepoint.verification.themes-and-host","path":"verification/themes-and-host.md","kind":"verification","status":"draft","owner":"unassigned","appliesTo":["sharepoint"],"sourceIds":["sharepoint-utilities"],"relations":["common.verification.dynamic","common.topic.visual-accessibility"]},
+    {"id":"sharepoint.case.duplicate-announcement","path":"cases/duplicate-announcement.md","kind":"case","status":"draft","owner":"unassigned","appliesTo":["sharepoint"],"sourceIds":["spds-docs","sharepoint-utilities"],"relations":["common.analysis.root-cause","sharepoint.utilities.announcements-and-focus"]}
+  ]
+}

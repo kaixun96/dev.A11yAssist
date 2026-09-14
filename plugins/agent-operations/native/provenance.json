@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "origin": {
+    "repository": "kaixun96/dev.AgentOW",
+    "commit": "66eea66533e683492e148f44d361fdd7312c4908"
+  },
+  "extractions": [
+    {
+      "source": "copilot/skills/ow-a11y-host-setup/scripts/setup-windows-a11y.ps1",
+      "canonical": "native/windows-host.ps1",
+      "changes": "Preserved action/default identity; optional setup/task/browser source parameters and packaged source lookup."
+    },
+    {
+      "source": "tools/personal-evaluator-browser.py",
+      "canonical": "integrations/agentow/runtime/personal-evaluator-browser.py",
+      "changes": "Preserved compatibility profile without claiming generic AT capture."
+    },
+    {
+      "source": "ts/src/ow/tools/prDescriptionBudget.js",
+      "canonical": "native/pr-description.mjs",
+      "changes": "Preserved implementation and marker format."
+    },
+    {
+      "source": "ts/src/ow/tools/prAttach.ts",
+      "canonical": "native/ado-attachments.mjs",
+      "changes": "Separated project/authentication from execution; added active Draft/HEAD checks, attachment hash/readback, bounded operation and live description readback."
+    }
+  ]
+}

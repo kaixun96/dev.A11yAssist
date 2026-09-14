@@ -24,14 +24,10 @@ export function validateContext(action, context) {
   if (context.head) requireValue(head.test(context.head), 'Invalid exact HEAD');
   if (context.beforeReceiptSha256) requireValue(sha.test(context.beforeReceiptSha256), 'Invalid BEFORE receipt hash');
 }
-export function rejectRemovedConfiguration(config) {
-  requireValue(!('workflowProfile' in config), 'workflowProfile is no longer supported; omit the selector');
-  requireValue(!(config.providers && typeof config.providers === 'object' && 'agentow' in config.providers),
-    'providers.agentow is no longer supported; configure source and review providers explicitly');
-}
 export function providerFor(config, action) {
-  rejectRemovedConfiguration(config);
-  return operationDefinition(action).provider;
+  const definition = operationDefinition(action);
+  return config.workflowProfile === 'agentow-odsp' && ['source', 'review'].includes(action)
+    ? 'agentow' : definition.provider;
 }
 export function validateCapabilityInput(action, input) {
   requireValue(input && typeof input === 'object' && !Array.isArray(input), 'Capability input must be an object');

@@ -3,9 +3,7 @@ name: agent-operations
 description: Perform explicitly scoped owned cleanup for the caller, with durable operation identity and reconciliation.
 ---
 
-Read `${PLUGIN_ROOT}/docs/CAPABILITIES.md`. `${PLUGIN_ROOT}` is the host-supplied
-top-level installed plugin root, not the working directory.
-Use `agent_operations_invoke` with action `cleanup`,
+Read `docs/CAPABILITIES.md`. Use `agent_operations_invoke` with action `cleanup`,
 a stable operationId, context.subject and the owned resource/process scope
 required by the cleanup connection. No full workflow journal is required.
 
@@ -32,6 +30,6 @@ Return the actual cleanup receipt and unresolved items. Do not decide that the
 caller's full task is complete or start another task. Use
 `agent_operations_operation_status` / `_operation_reconcile` for this operation.
 
-The current progress/abandon/reconcile tools concern the optional full workflow
+The legacy progress/abandon/reconcile tools concern the optional full workflow
 only. A message, busy process or accepted trigger is not proof of work completed.
 Explicit pauses and safety refusals are not permission for an execution retry.

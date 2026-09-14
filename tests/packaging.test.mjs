@@ -13,7 +13,6 @@ test('seven standalone plugin copies can initialize/list tools without repo sibl
     const dir = await mkdtemp(join(tmpdir(), 'standalone-plugin-'));
     try {
       await cp(join(root, 'plugins', name), dir, { recursive: true });
-      await assert.rejects(access(join(dir, 'runtime/profiles.mjs')), { code: 'ENOENT' });
       const manifest = JSON.parse(await readFile(join(dir, 'plugin.json'), 'utf8'));
       assert.equal(manifest.name, name);
       const server = name.replaceAll('-', '_');
@@ -31,12 +30,10 @@ test('seven standalone plugin copies can initialize/list tools without repo sibl
       const env = { ...process.env };
       delete env.A11Y_ASSIST_CONFIG;
       const args = launch.args.map(arg => arg.replaceAll('${PLUGIN_ROOT}', dir));
-      const child = spawnSync(process.execPath, args, { cwd: dir, input, encoding: 'utf8', env, timeout: 15000 });
+      const child = spawnSync(process.execPath, args, { input, encoding: 'utf8', env, timeout: 15000 });
       assert.equal(child.status, 0, child.stderr);
       const messages = child.stdout.trim().split('\n').map(JSON.parse);
       assert.equal(messages[0].result.serverInfo.name, name);
-      const contract = JSON.parse(await readFile(join(dir, 'contracts/workflow.json'), 'utf8'));
-      assert.equal(messages[0].result.serverInfo.version, contract.version);
       assert(messages[1].result.tools.every(t => t.name.startsWith(name.replaceAll('-', '_'))));
       assert.equal(messages[2].result.isError, true);
       assert.match(messages[2].result.content[0].text, /A11Y_ASSIST_CONFIG/);
@@ -49,45 +46,29 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
   const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
   assert.equal(marketplace.name, 'a11y-assist');
   assert.equal(marketplace.metadata.version, pkg.version);
-  assert.equal(marketplace.plugins.length, 10);
+  assert.equal(marketplace.plugins.length, 11);
   await assert.rejects(access(join(root, '.claude-plugin/marketplace.json')), { code: 'ENOENT' });
   for (const entry of marketplace.plugins) {
-    assert.equal(entry.source, `./plugins/${entry.name}`);
     const dir = join(root, entry.source);
     const manifest = JSON.parse(await readFile(join(dir, 'plugin.json'), 'utf8'));
     assert.equal(manifest.name, entry.name);
     assert.equal(manifest.version, pkg.version);
     assert.equal(entry.version, pkg.version);
     await assert.rejects(access(join(dir, '.claude-plugin')), { code: 'ENOENT' });
-    const skillPath = `skills/${entry.name}/SKILL.md`;
-    assert.match(await readFile(join(dir, skillPath), 'utf8'), /\$\{PLUGIN_ROOT\}/);
-    for (const path of ['plugin.json', '.mcp.json', 'AGENTS.md', skillPath,
-      'README.md', 'README.zh-CN.md', 'references/README.md']) {
+    const skillPath = join(dir, 'skills', entry.name, 'SKILL.md');
+    const skill = await readFile(skillPath, 'utf8');
+    assert.match(skill, /plugin root, two directories above this SKILL\.md/);
+    const entrypoints = ['plugin.json', 'AGENTS.md', `skills/${entry.name}/SKILL.md`];
+    if (manifest.mcpServers) entrypoints.push('.mcp.json');
+    for (const path of entrypoints) {
       assert.doesNotMatch(await readFile(join(dir, path), 'utf8'), /claude/i, `${entry.name}: ${path}`);
     }
-    const paths = ['references/README.md', 'references/knowledge.json',
-      ...(Object.hasOwn(plugins, entry.name) ? ['docs/CAPABILITIES.md'] : []),
-      ...(entry.name === 'a11y-setup' ? ['docs/SETUP.md', 'native/windows-host.ps1', 'setup/profiles.json', 'setup/report.template.md'] : []),
-      ...(entry.name === 'a11y-bug-bash' ? ['modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md'] : [])];
-    for (const path of paths) await access(join(dir, path));
-  }
-});
-
-test('source MCP retains current full-workflow create/status/execute and reconciliation APIs', () => {
-  for (const name of Object.keys(plugins)) {
-    const child = spawnSync(process.execPath, [join(root, 'src/runtime/mcp.mjs'), name], {
-      input: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) + '\n',
-      encoding: 'utf8', timeout: 15000
-    });
-    assert.equal(child.status, 0, child.stderr);
-    const tools = JSON.parse(child.stdout.trim()).result.tools;
-    const prefix = name.replaceAll('-', '_');
-    const names = tools.map(tool => tool.name);
-    for (const action of ['status', 'reconcile', ...(plugins[name].stages.length ? ['execute'] : []),
-      ...(['a11y-intake', 'a11y-workflow'].includes(name) ? ['create'] : [])]) {
-      assert(names.includes(`${prefix}_${action}`), `${name} must retain ${action}`);
+    for (const path of entry.name === 'a11y-setup' ? ['docs/SETUP.md', 'native/windows-host.ps1'] : ['knowledge/README.md',
+      ...(manifest.mcpServers ? ['docs/CAPABILITIES.md'] : []),
+      ...(entry.name !== 'a11y-knowledge' ? ['integrations/agentow/knowledge/README.md'] : [])]) {
+      const contentRoot = entry.name === 'a11y-bug-bash' ? join(dir, 'modules/a11y-knowledge') : dir;
+      await access(join(contentRoot, path));
     }
-    assert.doesNotMatch(JSON.stringify(tools), /workflowProfile|agentow-odsp|legacy/i);
   }
 });
 

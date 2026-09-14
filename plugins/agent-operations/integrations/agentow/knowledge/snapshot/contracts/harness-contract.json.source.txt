@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "forbiddenPaths": [
+    ".claude/settings.json",
+    ".claude-plugin/plugin.json",
+    "CLAUDE.md",
+    "copilot/CLAUDE.md",
+    "agents/ow-context-maintainer.md",
+    "agents/ow-evaluator-rule.md",
+    "agents/ow-evaluator-vision.md",
+    "agents/ow-evaluator.md",
+    "agents/ow-generator.md",
+    "agents/ow-orchestrator.md",
+    "agents/ow-planner.md",
+    "agents/ow-review-agent.md",
+    "hooks/check-skill-azcli.sh",
+    "hooks/check-skill-required.sh",
+    "hooks/check-skill-rush.sh",
+    "hooks/hooks.json",
+    "hooks/reset-skill-guards.sh",
+    "hooks/session-guard.sh",
+    "skills/detheme/SKILL.md",
+    "skills/ow-batch/SKILL.md",
+    "skills/ow-context-feedback/SKILL.md",
+    "skills/ow-dev-build/SKILL.md",
+    "skills/ow-dev-debuglink/SKILL.md",
+    "skills/ow-dev-git/SKILL.md",
+    "skills/ow-dev-playwright/SKILL.md",
+    "skills/ow-dev-pr/SKILL.md",
+    "skills/ow-dev-test/SKILL.md",
+    "skills/ow-doctor/SKILL.md",
+    "skills/ow-init/SKILL.md",
+    "skills/ow-ref-external-tools/SKILL.md",
+    "skills/ow-ref-monorepo/SKILL.md",
+    "skills/ow-review/SKILL.md",
+    "skills/ow-team/SKILL.md",
+    "skills/search-odspweb-wiki/SKILL.md",
+    "docs/architecture.md",
+    "docs/BEHAVIORAL-GUIDELINES.md",
+    "docs/PIPELINE.md",
+    "docs/replace-component-recipe.md",
+    "docs/SUCCESS-METRICS.md"
+  ],
+  "frontmatterNamespaces": [
+    {
+      "name": "copilot-agents",
+      "directory": "copilot/agents",
+      "suffix": ".agent.md",
+      "requiredFields": ["name", "description", "model", "tools"],
+      "toolField": "tools"
+    },
+    {
+      "name": "copilot-skills",
+      "directory": "copilot/skills",
+      "basename": "SKILL.md",
+      "requiredFields": ["name", "description"]
+    }
+  ],
+  "thirdPartySkills": [
+    {
+      "directory": "copilot/skills/vercel-react-best-practices",
+      "source": "https://github.com/vercel-labs/agent-skills",
+      "revision": "dc8367e6f91c022d83361f03c3313fa05e848ee5",
+      "version": "1.0.0",
+      "license": "MIT",
+      "sha256": {
+        "SKILL.md": "71ed7794962fa6e803ee83030517b5b93a9f70fbfeb431ec4535c5480a8d8355",
+        "AGENTS.md": "fc93e7421177bbf869cce892bc60a6c83a4517d974bc3bf65c4e2c1e58a6ccf6",
+        "metadata.json": "c4e18bac3290fbe1b471a605867d4df68b03144ea26b8befdbe8f9d8fd124354"
+      }
+    }
+  ],
+  "rolePolicies": [
+    {
+      "file": "copilot/agents/planner.agent.md",
+      "exactTools": ["view", "grep", "glob", "shell"]
+    },
+    {
+      "file": "copilot/agents/evaluator.agent.md",
+      "exactTools": ["view", "grep", "glob", "shell", "ow-debuglink"]
+    },
+    {
+      "file": "copilot/agents/reviewer.agent.md",
+      "exactTools": ["view", "grep", "glob", "shell"]
+    },
+    {
+      "file": "copilot/agents/context-maintainer.agent.md",
+      "exactTools": ["view", "grep", "glob", "shell"]
+    },
+    {
+      "file": "copilot/agents/a11y-evaluator.agent.md",
+      "exactTools": ["view", "grep", "glob", "shell"]
+    }
+  ],
+  "mcpTools": {
+    "registryFile": "ts/src/ow/mcp/owTools.ts",
+    "agentNamespaces": ["copilot-agents"]
+  },
+  "agentReferences": {
+    "directory": "copilot",
+    "prefix": "@agentow-copilot:",
+    "namespace": "copilot-agents"
+  },
+  "pluginManifests": {
+    "marketplace": ".claude-plugin/marketplace.json",
+    "plugins": [
+      {
+        "source": "./copilot",
+        "manifest": "copilot/.claude-plugin/plugin.json",
+        "mcpMirror": "copilot/.mcp.json"
+      }
+    ]
+  },
+  "markerContracts": [
+    {
+      "file": "copilot/skills/agentow/SKILL.md",
+      "ordered": [
+        "agentow-contract:profile:poc",
+        "agentow-contract:profile:standard",
+        "agentow-contract:gate:implement-build:profiles=poc,standard",
+        "agentow-contract:gate:evaluate:profiles=poc,standard",
+        "agentow-contract:gate:review:profiles=poc,standard",
+        "agentow-contract:evidence:review-bound-to-head",
+        "agentow-contract:delivery:draft-pr",
+        "agentow-contract:safety:no-pr-comments",
+        "agentow-contract:insights:local-build"
+      ]
+    },
+    {
+      "file": "copilot/skills/ow-share-insights/SKILL.md",
+      "ordered": [
+        "agentow-contract:insights:explicit-consent"
+      ]
+    },
+    {
+      "file": "copilot/skills/agentow-a11y/SKILL.md",
+      "ordered": [
+        "agentow-contract:a11y:reproduce-before-implement",
+        "agentow-contract:a11y:implement-build",
+        "agentow-contract:a11y:exact-scenario-verify",
+        "agentow-contract:a11y:review",
+        "agentow-contract:a11y:evidence-bound-to-head",
+        "agentow-contract:a11y:delivery:draft-pr"
+      ]
+    }
+  ],
+  "mirrorSets": [
+    {
+      "source": "tools",
+      "mirror": "copilot/tools",
+      "extensions": [".mjs", ".py"],
+      "names": ["package.json", "package-lock.json"]
+    }
+  ],
+  "mirrorFiles": [
+    ["docs/capability-bootstrap.md", "copilot/docs/capability-bootstrap.md"],
+    ["docs/review-contract.md", "copilot/docs/review-contract.md"],
+    ["docs/review-misses.md", "copilot/docs/review-misses.md"],
+    ["docs/run-insights.md", "copilot/docs/run-insights.md"],
+    ["contracts/run-insights.schema.json", "copilot/contracts/run-insights.schema.json"],
+    ["skills/ow-review/references/graduation.md", "copilot/skills/ow-review/references/graduation.md"],
+    ["skills/ow-review/references/shared-utility-reuse.md", "copilot/skills/ow-review/references/shared-utility-reuse.md"],
+    ["skills/ow-review/references/common-review-issues.md", "copilot/skills/ow-review/references/common-review-issues.md"],
+    ["skills/ow-review/references/localization-and-formatting.md", "copilot/skills/ow-review/references/localization-and-formatting.md"],
+    ["skills/ow-review/references/accessibility.md", "copilot/skills/ow-review/references/accessibility.md"],
+    ["skills/ow-review/references/sharepoint-design-system-and-ux-components.md", "copilot/skills/ow-review/references/sharepoint-design-system-and-ux-components.md"],
+    ["skills/ow-review/references/sharepoint-theme-and-detheme.md", "copilot/skills/ow-review/references/sharepoint-theme-and-detheme.md"],
+    ["skills/ow-review/references/ux-architecture-and-bundle-boundaries.md", "copilot/skills/ow-review/references/ux-architecture-and-bundle-boundaries.md"],
+    ["skills/ow-review/references/size-regression.md", "copilot/skills/ow-review/references/size-regression.md"]
+  ],
+  "typescriptPolicies": [
+    {
+      "id": "PR_DRAFT_ONLY",
+      "file": "ts/src/ow/tools/prClient.ts",
+      "kind": "draft-only-pr-client",
+      "methods": ["createPr", "updatePr"],
+      "inputInterfaces": ["PrCreateInput", "PrUpdateInput"]
+    },
+    {
+      "id": "PR_DRAFT_NOT_CALLER_CONTROLLED",
+      "file": "ts/src/ow/mcp/owTools.ts",
+      "kind": "forbid-property",
+      "properties": ["draft"]
+    },
+    {
+      "id": "PR_ATTACH_NEVER_COMMENTS",
+      "file": "ts/src/ow/tools/shared-a11y/ado-attachments.mjs",
+      "kind": "no-pr-comment-write"
+    }
+  ],
+  "commandPolicies": [
+    {
+      "id": "REVIEW_VALIDATES_HEAD",
+      "file": "copilot/skills/agentow/SKILL.md",
+      "startMarker": "agentow-contract:evidence:review-bound-to-head",
+      "endMarker": "agentow-contract:delivery:draft-pr",
+      "commands": [
+        {
+          "contains": "validate-graduation-review-report.mjs",
+          "requiredArgs": ["--expected-head", "--expected-diff-digest"]
+        },
+        {
+          "contains": "validate-review-report.mjs",
+          "requiredArgs": ["--expected-head", "--expected-diff-digest"]
+        }
+      ]
+    }
+  ]
+}

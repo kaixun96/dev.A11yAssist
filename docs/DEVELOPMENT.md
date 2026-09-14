@@ -3,35 +3,32 @@
 The [homepage](../README.md) is a plugin catalog, not an architecture tour.
 Users choose a plugin by purpose, prerequisites and example. Each generated
 plugin directory has English and Chinese READMEs and can be installed alone.
-Keep implementation details off the main selection path. This is a current draft,
-not a compatibility or migration catalog.
+Keep migration history and implementation details off the main selection path.
 
 ## Authoring and distribution
 
 | Directory | Role |
 |---|---|
 | `src/catalog.json` | Single catalog for both homepages and all plugin READMEs |
-| `src/skills/` | Authored instructions; one shared read-only knowledge skill |
+| `src/skills/`, `src/knowledge/` | Authored instructions and generic reference topics |
 | `src/bug-bash/` | Feature discovery context/coverage/report templates, not another rule engine |
 | `src/setup/` | Scenario-scoped dependency profiles and readiness report |
 | `src/runtime/`, `src/contracts/`, `src/adapters/`, `src/native/` | Shared implementation |
-| `accessibility-kb/` | Single current Common, Fluent and SharePoint authoring root |
+| `src/integrations/` | Integration-specific executable source |
 | `plugins/` | Generated, self-contained installation packages; do not edit |
 | `config/` | Placeholder templates, also bundled by execution packages |
-| `knowledge-distribution/` | Pinned current Common and ODSP release artifacts, not authoring |
+| `integrations/agentow/knowledge/` | Preserved source inventory, complete project references and immutable archive |
+| `runtime/`, `native/`, `integrations/agentow/runtime/` | Generated compatibility exports for existing AgentOW consumers |
 | `tools/`, `tests/` | Build/install tooling and regression tests |
 
-The source layout is not the installed layout. Installed skills resolve
-`runtime/`, `references/`, `docs/` and, in execution plugins, `contracts/`
-from the top-level `${PLUGIN_ROOT}` supplied by the host. No package depends on
-this repository's `src/` or another installed package. Neutral discovery uses
-`plugin.json` and `.github/plugin/marketplace.json`; skill discovery, root
-resolution and MCP registration are separate host responsibilities.
+The source layout is not the installed layout. Installed skills still resolve
+`runtime/`, `knowledge/` and `contracts/` from their own plugin root. No package
+depends on this repository's `src/` or another installed package.
 
-There are no root runtime/native compatibility exports, source-local knowledge
-tree, historical integration archives, old knowledge alias or workflow profile
-selector. Configure source and review connections directly. Retain current
-evidence-v1 and native ADO code with factual attribution and license notices.
+The AgentOW updater validates exact public export paths. Retain those generated
+exports and their hashes rather than breaking the consumer for cosmetic layout
+changes. The archived project knowledge retains its original paths and bodies;
+its plugin page provides direct SPDS/Fluent/SharePoint navigation.
 
 ## Local development
 
@@ -45,10 +42,9 @@ npm run check
 
 Change authored files, then regenerate. Build checks that the catalog covers
 every installable plugin and that all bundled reference targets exist. Tests
-check standalone packages, navigation, read-only boundaries and shared KB pins.
-`npm run check` rejects generated drift, including homepages and READMEs.
-Repository KB validation uses the declared development dependencies; installed
-knowledge runtimes use Node builtins and do not require those root dependencies.
+check standalone packages, navigation, read-only boundaries and compatibility
+exports. `npm run check` rejects generated drift, including homepages and READMEs.
+No dependency installation is needed for the existing built-in Node test runner.
 
 Use `npm run doctor` for source-level configuration diagnostics, or the installed
 plugin's own doctor tool. Neither replaces live qualification.
@@ -62,48 +58,26 @@ The optional helper requires an explicit selection and prints commands by defaul
 .\tools\install.ps1 -Plugin a11y-knowledge
 ```
 
-`-Execute` runs the commands; `-Plugin all` selects exactly ten packages:
-seven execution plugins, the single ODSP `a11y-knowledge` plugin and
-`a11y-bug-bash` plus `a11y-setup`. No legacy alias or integration install option
-is supported.
+`-Execute` runs the commands; `-Plugin all` selects the ten non-compatibility
+packages. Knowledge includes its ODSP subskill and full references by default.
+The old standalone ODSP install name remains supported for existing users only.
+Add `-WithAgentOW` only when intentionally installing that separate integration.
 The helper never defaults to the full workflow.
 
-All ten have their own read-only knowledge MCP server and top-level
-`references/knowledge.json` and `references/README.md`, selecting the current
-32 Common/Fluent/SharePoint entries. Node.js 22+ and an MCP-enabled host are
-required; no peer knowledge plugin, provider or `A11Y_ASSIST_CONFIG` is required
-for knowledge access. The loader uses a configured absolute KB root, validated
-repository layout, verified shared cache or lazy pinned release download.
-Invalid roots and tampered caches fail; verified cache works offline, while
-uncached offline use needs a valid local KB. See [knowledge consumption](KNOWLEDGE.md).
-
 `a11y-bug-bash` exposes only its own public skill. `bundleKnowledgeReview` copies
-the SAME `src/skills/a11y-knowledge/SKILL.md` to
-`modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md`, replacing only
-`a11y_knowledge_knowledge_` with `a11y_bug_bash_knowledge_` in tool names.
-The internal module has no manifest, references, runtime or additional public
-command. `${PLUGIN_ROOT}` still means the top-level Bug Bash installation;
-references remain at that root. Coverage uses stable `common.topic.*` KB IDs.
-Context, coverage and report resources are generated from `src/bug-bash/`.
-Knowledge and Bug Bash each carry only `knowledge.mjs` and `knowledge-mcp.mjs`
-under their runtime directory, with no operational MCP/browser/AT implementation.
-Bug Bash live checks use the caller's already-authorized host tools, independently
-of its read-only source track; no automated fixes or filing are authorized.
-Read [the discovery contract](BUG-BASH.md) before extending it.
+the same two read-only skills and all references used by `a11y-knowledge` under
+`modules/a11y-knowledge/`, preserving their relative paths without registering
+duplicate public commands or requiring another installation. Its context,
+coverage and report resources are generated from `src/bug-bash/`.
+It has no MCP/configuration server; live checks use the caller's already
+authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it.
 
-`bundleSetup` packages the same setup skill, dependency-selection templates and
-current scoped `src/native/windows-host.ps1` in standalone `a11y-setup` and Bug Bash.
-Only Bug Bash's internal skill is under `modules/a11y-setup/`, replacing only
-`a11y_setup_knowledge_` with `a11y_bug_bash_knowledge_`. Native script, setup
-templates and `docs/SETUP.md` remain at top-level `${PLUGIN_ROOT}` in both packages.
-No second installer implementation, nested resources or duplicate public command
-is registered. Setup has its own read-only knowledge MCP and top-level
-references, never operational MCP or an integration/browser runtime. Its native
-helper is a current feature, not a root native export or compatibility copy.
-`InstallSafeDependencies -Dependency` selects the explicitly authorized subset.
-Check-only, host rejection, ownership, consent and live qualification boundaries
-remain mandatory. Dependency-selection profiles are not workflow profile selectors.
-Read [setup boundaries](SETUP.md).
+`bundleSetup` packages the same setup skill, profiles, shared native host script
+and compatibility browser helper in standalone `a11y-setup` and Bug Bash's
+`modules/a11y-setup/`. No second installer implementation or duplicate public
+command is registered. `InstallSafeDependencies -Dependency` selects a subset;
+omission preserves the legacy full set. Existing AgentOW consumers remain
+commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
 
 ## Further contracts
 
@@ -112,5 +86,6 @@ Read [setup boundaries](SETUP.md).
 - [Independent capabilities](CAPABILITIES.md)
 - [Provider setup and protocol](PROVIDERS.md)
 - [Optional workflow](WORKFLOW.md)
-- [Knowledge ownership and consumption](KNOWLEDGE.md)
+- [Knowledge ownership and preservation](KNOWLEDGE.md)
+- [Migration status](MIGRATION.md)
 - [Releases and freshness](RELEASING.md)

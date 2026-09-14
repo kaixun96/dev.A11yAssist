@@ -1,0 +1,561 @@
+# AgentOW review contract
+
+The reviewer is an independent pre-PR quality gate, not a summary generator. Author and reviewer work as a pair to improve the product: a defect found before merge is a customer issue and downstream investigation avoided, not a personal failure by the author. Reviews should be direct, respectful, evidence-backed, and educational without weakening the merge standard.
+
+## Before reviewing code
+
+Spend a short, bounded orientation pass on the request, plan, PR title/description when available, linked work item, feature design, or bug reproduction. Record:
+
+1. what issue or feature the change claims to address;
+2. whether the change is necessary and appropriately scoped;
+3. whether the implementation direction matches that intent;
+4. which acceptance criteria and user-visible behaviors must remain true.
+
+Missing optional context is not itself a defect, but the reviewer must state what was unavailable and must not invent intent. A change that materially mismatches its stated purpose is blocking.
+
+### Reviewability gate
+
+Before detailed review, decide whether the change can be reviewed reliably as one unit. This is not the same as whether an agent can read every line. Measure Git numstat, then enumerate independent behavior units and high-risk domains (for example security, permissions, destructive writes, privacy/telemetry, shared UI, migration compatibility, or performance).
+
+A graduation-only PR is exempt from every reviewability size and split threshold. This exemption
+applies only when every substantive change is retirement work under
+`skills/ow-review/references/graduation.md`; mixed PRs do not qualify. Record `graduation-only` in
+`preReview.profiles`, set reviewability to `reviewable` with an `exhaustive` completeness claim,
+and do not create split boundaries or a `reviewability` finding regardless of changed lines, file
+count, behavior-unit count, or high-risk-domain count. Large graduation PRs are expected because
+complete retirement may span all callers and gate artifacts. The exemption removes only size and
+split limits; it does not relax whole-file coverage, consumer tracing, evidence, or defect findings.
+
+- At 5,000 or more total changed lines, the change is always `must-split`; generated/mechanical claims cannot override this hard ceiling.
+- At 2,000 or more substantive changed lines, the change is always `must-split`.
+- At 40 or more files, three or more independent behavior units, or four or more high-risk domains, presume `must-split`.
+- A structurally large change below 2,000 substantive lines may remain reviewable only when it is one coherent behavior unit spanning at most two high-risk domains and every changed path has numstat-bound mechanical/generated evidence.
+- Reading every file, spending more time, or finding several defects is not evidence that the review is exhaustive.
+
+A `must-split` review still performs a preliminary risk scan so known defects are not lost, but it must:
+
+1. add an Important `reviewability` finding;
+2. state that findings are preliminary and non-exhaustive;
+3. propose at least two distinct, evidenced, independently reviewable split boundaries;
+4. continue reviewing the available change and report any independent Critical or Important defects;
+5. treat `reviewability` as advisory for verdict purposes: size, file count, or independent-unit count alone must not produce `REQUEST_CHANGES` or stop the review.
+
+## Required two-pass method
+
+### Pass 1: risk and scope inventory
+
+1. Compute `mergeBase`, `reviewedHead`, and the SHA-256 digest of `git diff <mergeBase>...HEAD`.
+2. Enumerate every changed file from Git. Never trust a caller-provided list as complete. For deleted files, read the merge-base version.
+3. Classify each file as low, medium, or high risk with a concrete rationale.
+4. Identify affected contracts, direct callers/consumers, tests, configuration, generated artifacts, and routed instructions/context.
+
+### Repository specialized review skills
+
+For a general review, the caller runs `tools/build-review-skill-routing.mjs` before dispatch. The
+reviewed repository may declare `.agentow/review-skills.json` with `schemaVersion: 1` and a `skills`
+array. Every skill has a unique `id`, repo-relative `path`, and `triggers` containing `paths` and/or
+`terms`; optional `packs` use the same `id`, `path`, and `triggers` shape. The builder deterministically
+matches those triggers against the immutable changed-file list and diff. It records every skill and
+pack as selected or ignored with evidence, exact paths, content digests, manifest digest, and diff
+identity in `<sessionDir>/specialized-review-routing.json`. Missing configuration produces
+`discovery.status: "unconfigured"` and preserves generic review behavior. Never search arbitrary
+user or home-directory locations or guess a domain skill path.
+
+Read every selected specialized skill completely and follow its full review workflow. If it routes
+to domain knowledge packs, load only the packs applicable to the changed policy, feature, or
+scenario; record selected and ignored packs with reasons and content digests. Do not load every
+pack defensively, and do not invent a pack when no repository-owned match exists. A repository with
+no matching specialized skill continues through the generic review normally.
+
+Specialized review is not limited to changed lines. Reconstruct the complete affected decision
+flow required by the selected skill across callers, identities or input variants, applicability
+gates, bypass and fail-closed paths, managed/native or client/server boundaries, telemetry,
+rollout controls, and tests as applicable. Record that reconstruction and any unresolved edge in
+`preReview.specializedReview`. Findings must name the affected scenario and consequence, cite the
+responsible code, and recommend a concrete correction or appropriate test tier. A specialized
+skill supplements required engineering or security review; it does not replace it.
+
+### Pass 2: adversarial verification
+
+Trace the risky paths through the full changed files and relevant consumers. Check every canonical dimension:
+
+- behavior and acceptance criteria;
+- design and maintainability;
+- callers and consumers;
+- tests and regression coverage;
+- types and API/data contracts;
+- errors, cleanup, concurrency, and edge cases;
+- security and privacy;
+- performance and allocation;
+- accessibility and UI behavior;
+- localization;
+- compatibility and killswitch behavior;
+- telemetry;
+- repository instructions and routed context;
+- dependencies, generated artifacts, and tooling.
+
+Use an explicit adversarial challenge protocol rather than reading only to confirm the author's intended path:
+
+1. For every high-risk file or behavior unit, write at least one falsifiable failure hypothesis before deciding it is correct.
+2. Try to trigger each hypothesis through the strongest applicable counterexample: invalid or adversarial input, null/empty/boundary values, partial failure, retry, cancellation, stale state, concurrent execution, disabled rollout state, or a direct consumer with different assumptions.
+3. Inspect negative and fallback paths independently of the happy path. Tests that only restate the implementation or prove mocks were called do not defeat a failure hypothesis.
+4. Before `APPROVE`, perform a final dissent pass: identify the strongest credible reason the change should not merge, then cite the concrete code, contract, or test evidence that defeats it. If it cannot be defeated, investigate further or raise a finding.
+
+Adversarial means skeptical of the change, not careless with evidence. Do not manufacture findings, inflate severity, or report a concern whose failure mechanism and affected behavior cannot be explained concretely.
+
+Each dimension must be `reviewed` with `file:line`, `command:...`, or `artifact:...` evidence, or `not-applicable` with a specific reason explaining why the dimension cannot affect this diff. Generic claims such as "looks good", "standard change", or "not applicable" are invalid evidence.
+
+Every changed file must include non-empty consumer and test evidence. A file cannot cite itself (including through a normalized path alias) as its direct consumer, and file-based test evidence must point to a test/spec file or directory rather than a helper whose name merely contains "test". When no consumer or test exists, use the canonical safe form `command:rg <consumer-query|test-query> <repo-relative-bounded-path> => no matches` (an optional `--glob <glob>` is allowed). Shell composition, absolute/parent/root paths, arbitrary commands, and artifact references are invalid substitutes. Explain why absence is safe; an empty array or padded "not applicable" statement is invalid. Reviewed dimensions require distinct conclusions that name the dimension-specific concern, rather than repeated boilerplate with counters or dimension names appended.
+
+Apply these concrete standards when relevant:
+
+- Prefer clear, minimal design; flag unnecessary change, deprecated APIs, unexplained hardcoding, duplicated logic, weak naming, overly broad types, unsafe non-null assertions, and public contracts without adequate documentation.
+- Comments explain why, not what. A `TODO` requires a linked work item; avoid leaving deferred work when it is required for correctness.
+- New or changed behavior needs meaningful unit/regression coverage unless a specific, evidence-backed reason makes a test impractical. Test observable contracts and regression risk, not every changed file or function. A trivial Flight/KS constant or pass-through wrapper does not need its own unit test; cover the behavior-owning consumer instead. Direct wrapper tests are warranted only when the wrapper has independent branching, composition, transformation, caching, fallback policy, side effects, or another contract that can regress separately.
+- For test-only code, review test correctness, determinism, isolation, cleanup, and whether assertions prove the intended product scenario. Production-only dimensions, including privacy/security or telemetry rules for test diagnostics, rollout requirements, UI/accessibility, localization, and runtime performance, are not findings unless the test change affects a production sink or exposes credentials/secrets.
+- Handle API failures and cleanup paths explicitly. Never branch on localized API error-message text.
+- New behavior preserves a safe killswitch/flight-off fallback and browser compatibility where applicable.
+- Verify the fallback against the pre-change behavior. Require new KS-activated or Flight-off behavioral coverage only when the current PR changes fallback/disabled behavior; exercise it through the nearest stable consumer rather than testing a trivial gate wrapper. The absence of a pre-existing state test is not a finding in the current PR.
+- Interactive UI is keyboard focusable and exposes correct role, state, and accessible name. Check light, dark, and high-contrast behavior, including a 4.5:1 text contrast target.
+- Localize eligible UI strings through resources/placeholders and use i18n utilities for date, number, currency, address, and phone formatting. Do not localize brand names, usernames, user input, or telemetry.
+- Do not log personal data, resource names, or tenant-location data where policy forbids it; do not prefill user feedback with user/resource data.
+- Inspect telemetry for data classification, useful success/failure coverage, stable event semantics, and absence of sensitive payloads.
+- Treat unexplained bundle-size growth, credible hot-path regressions, and UI that conflicts with common design as blocking until measured or confirmed.
+
+### Focused review checks
+
+Apply these checks when their trigger appears in the changed set:
+
+**Design system and UI**
+
+- In Fluent v9 styles, challenge hardcoded typography, radius, shadow, and pseudo-selector values etc. Check both the component API and the typography preset/token table before accepting that no supported value exists, and cite the relevant Fluent Storybook source https://storybooks.fluentui.dev/react. Prefer semantic preset components when their HTML element is suitable; otherwise spread the preset style onto the required semantic element.
+- Treat a local style helper whose callers immediately override one of its axes as a failed abstraction. Prefer design-system presets over a helper that pins an incompatible size, weight, or line height.
+- Reject selectors that target internal `.fui-*` classes. Do not guess that a token, especially a shadow token, is visually equivalent; verify it against the design source.
+- Ask for the design source behind unexplained fixed pixel values. Check SPDS and Fluent v9 before accepting a new raw-element component; if no component fits, verify the element-level accessibility contract in every supported composition.
+
+**Comments, reuse, and API shape**
+
+- Keep comments to the minimum necessary. Require code to communicate its behavior through clear structure and naming; remove comments and file headers that restate implementation syntax or well-named identifiers. Add a concise comment only when an unavoidable hack, parity requirement, or non-obvious invariant cannot be made clear in code. Public interfaces and API contracts require documentation of purpose and caller-visible constraints or behavior that the type system does not express.
+- Before accepting net-new cross-cutting code such as a REST client, error parser, URL utility, formatter, or date/time utility, run a bounded repo-wide prior-art survey. A similarly named candidate is reusable only after its source and callers show compatible error preservation, option and verb handling, headers/defaults, write support such as `X-RequestDigest`, API stability, and dependency availability. If reusable prior art exists and the PR reimplements it, raise an Important finding unless the PR provides evidence-backed incompatibility.
+- Treat manual formatting of localized numbered placeholders as a mandatory prior-art trigger. Sweep changed TypeScript/TSX for patterns such as `.replace('{0}', value)`, placeholder-matching regular expressions, and local `formatString` helpers; account for every match. Prefer an established formatter from `@msinternal/utilities-strings`, `Text`, or `StringHelper` unless source inspection proves its substitution semantics are incompatible.
+- Delete pure pass-through wrappers that add no contract, policy, or observability. Treat widespread duplication without a proven shared consumer as follow-up extraction work rather than automatically blocking the current PR.
+- New helpers must replace every in-scope instance of the pattern they consolidate. Extraction functions return bare data; presentation formatting belongs at the composition site. Prefer readable `??` or `||` fallback chains when they preserve the intended nullish-versus-falsy semantics.
+- Document non-obvious interface constraints, including relative-versus-absolute paths, value ranges, and required non-empty values, in the type or API documentation even when all callers are in-repo and runtime checks are unnecessary.
+
+**Control flow and edge cases**
+
+- For `ReactNode` render guards, decide explicitly whether `0`, `""`, `false`, and `null` are meaningful. `!== undefined` and boolean coercion are not interchangeable.
+- Put cheap guards before transforms or other expensive work. When behavior depends on iterating a constant array, establish whether the empty case is supported or rejected and cover the invariant with a test.
+
+**Localization and security**
+
+- For localization specifics (count-bearing strings, translator comments, approval-lock metadata, and placeholder handling), use `skills/ow-review/references/localization-and-formatting.md` as the source of truth.
+- Before requesting removal of front-end validation, trace the input source and every pre-server sink. Query parameters such as `Source` and `NextUsing` remain untrusted until validation rejects dangerous schemes, protocol-relative or cross-origin URLs, and control characters; distinguish them from trusted platform values such as `webAbsoluteUrl`.
+
+**Routing, accessibility, and change scope**
+
+- Any `data-interception='off'` requires evidence that disabling SPFx soft routing and discarding navigation preload is correct. Where the server stamps authoritative page identity, preserve its priority over client URL matching and verify related killswitch/ECS, preload, and rights contracts.
+- A raw `<li>` must be owned by a real list container or a component documented to render one. During classic-to-modern ports, do not preserve pre-ARIA workarounds such as `title` as the accessible name, `accesskey`, `tabindex="0"` on static text, or `<a tabindex="-1">` unless observable parity explicitly requires them.
+- Verify delta-neutral moves and extractions mechanically: strings remain byte-identical, dispatch order is preserved, and relocated files are not silently rewritten.
+- Accept a "pre-existing, defer" response only when history verifies the issue predates the PR, the PR relocates rather than rewrites the code, fixing it would introduce an unsupported visual or behavioral delta, and an owner names a concrete follow-up.
+
+## Blocking rules
+
+Request changes when any of these are credible and evidenced:
+
+- the change is too large to review reliably and must be split;
+- logic is wrong, behavior regresses, or implementation materially mismatches the stated intent;
+- the design creates an avoidable correctness or maintainability risk;
+- privacy/security policy is violated or required review is missing;
+- significant size or performance risk is unmeasured;
+- changed behavior lacks unit/regression coverage without a specific good reason;
+- UI is inaccessible, visibly broken, or conflicts with the approved/common design without designer confirmation.
+
+Optional manual testing may supplement evidence, but never substitutes for code, test, and artifact analysis.
+
+## Severity and verdict
+
+| Severity | Meaning | Result |
+|---|---|---|
+| Critical | Credible security, data loss, outage, severe functional, or visible layout regression | Must fix |
+| Important | Credible correctness, contract, consumer-impact, maintainability, missing-test, accessibility, performance, or instruction-compliance defect that should not merge | Must fix |
+| Minor | Non-blocking educational improvement with no credible merge risk | Prefix the description with `Nit:`; comment only |
+
+Style preference and speculative redesign are not findings.
+
+`Nit:` is never mandatory for the current PR. If an issue must be resolved before merge, classify it as Critical or Important instead of disguising it as a nit.
+
+If a concern is found on lines outside the current PR diff hunk (for example, untouched lines in a changed file), treat it as non-blocking follow-up feedback: classify it as `Minor` and start the description with `Nit: [Not related to this PR]`.
+
+Non-diff concerns must not by themselves drive a `REQUEST_CHANGES` verdict for the current PR.
+
+An Important `reviewability` finding asks the author to split an oversized or multi-surface PR, but is advisory for verdict purposes. It does not by itself produce `REQUEST_CHANGES`; only independent Critical or Important findings outside the `reviewability` category do.
+
+The default remains: `REQUEST_CHANGES`: one or more Critical or Important findings. The advisory `reviewability` exception above applies only to PR size, file count, behavior-unit count, and high-risk-domain count.
+
+Verdicts are deterministic:
+
+- `REQUEST_CHANGES`: one or more Critical findings, or one or more Important findings outside `reviewability`.
+- `COMMENT`: Minor findings only, or advisory Important `reviewability` findings.
+- `APPROVE`: zero findings and complete, current-diff coverage.
+
+Draft PR status, AUTO mode, and retry limits do not turn unresolved blocking findings into approval.
+
+## Canonical artifact
+
+The reviewer writes both a concise `review.md` and a machine-readable `review.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "reviewedHead": "<40-char commit>",
+  "mergeBase": "<40-char commit>",
+  "diffDigest": "<64-char sha256>",
+  "verdict": "APPROVE|COMMENT|REQUEST_CHANGES",
+  "summary": "<grounded summary>",
+  "preReview": {
+    "intent": "<issue or feature being addressed>",
+    "evidence": ["artifact:<plan/request/work-item evidence>"],
+    "necessityAndScope": "<why the change is necessary and appropriately scoped>",
+    "intentMatch": "<whether implementation matches the stated intent>",
+    "profiles": ["global", "sp-client when any changed path is under sp-client/"],
+    "ruleChecks": [
+      {
+        "rule": "intent-and-scope|reference-routing|profile-routing|changed-file-coverage|consumer-and-test-coverage|adversarial-pass|size-audit|prior-art|external-contracts|ledger-reconciliation|finding-class-sweep|verdict-reconciliation",
+        "status": "clear|finding|not-applicable",
+        "evidence": ["<path:line, artifact:..., or command:...>"],
+        "conclusion": "<specific result for this rule class>"
+      }
+    ],
+    "rolloutProtection": {
+      "runtimePaths": ["sp-client/src/example.ts"],
+      "reviewContext": "existing-pr|pre-pr",
+      "descriptionStatus": "documented|missing|planned",
+      "descriptionEvidence": ["artifact:pr-description"],
+      "protectionStatus": "protected|incomplete|unprotected|not-applicable",
+      "gateType": "killswitch|flight|killswitch+flight|unprotected|not-applicable",
+      "gateIdentifiers": ["<KS/Flight name or ID>"],
+      "existingUpstreamGate": false,
+      "entryPointEvidence": ["sp-client/src/entry.ts:1"],
+      "gateCheckEvidence": ["sp-client/src/entry.ts:10"],
+      "newPathEvidence": ["sp-client/src/example.ts:1"],
+      "fallbackEvidence": ["sp-client/src/entry.ts:12"],
+      "legacyBehaviorEvidence": ["artifact:base-version predicate and two-state truth table"],
+      "legacyEquivalenceConclusion": "<why fallback results, side effects, and failures equal the pre-change behavior>",
+      "newPathState": "ks-not-activated|flight-enabled|ks-not-activated-and-flight-enabled",
+      "fallbackState": "ks-activated|flight-disabled|ks-activated-or-flight-disabled",
+      "fallbackBehaviorChanged": false,
+      "disabledStateTestEvidence": ["sp-client/src/example.test.ts:1"],
+      "pathCoverage": [
+        {
+          "path": "sp-client/src/example.ts",
+          "changedEvidence": ["sp-client/src/example.ts:1"],
+          "gateEvidence": ["sp-client/src/entry.ts:10"],
+          "fallbackEvidence": ["sp-client/src/entry.ts:12"],
+          "conclusion": "<how this exact changed runtime path is protected>"
+        }
+      ],
+      "conclusion": "<exact gate coverage result>"
+    },
+    "reviewLedger": {
+      "status": "applied|absent",
+      "ledgerPath": "<path consulted>",
+      "entryCount": 0,
+      "carriedCount": 0
+    },
+    "priorArt": [
+      {
+        "symbol": "<symbol exported from a shared-code path>",
+        "path": "<changed path where it is defined>",
+        "searched": "<repo search performed>",
+        "result": "none|reused|justified",
+        "existing": "<path:line of the implementation that already exists>",
+        "justification": "<why the existing implementation cannot be used>"
+      }
+    ],
+    "externalContracts": [
+      {
+        "symbol": "<external symbol the change relies on>",
+        "module": "<package or library it comes from>",
+        "verifiedBehavior": "<what its source actually does>",
+        "evidence": "<path:line outside the changed set>"
+      }
+    ],
+    "profileChecks": [
+      {
+        "id": "<profile-defined check ID>",
+        "status": "reviewed|not-applicable",
+        "evidence": ["src/example.ts:1"],
+        "reason": "<required when not applicable>",
+        "conclusion": "<specific result>"
+      }
+    ],
+    "reviewability": {
+      "status": "reviewable|must-split",
+      "changedFileCount": 1,
+      "additions": 10,
+      "deletions": 2,
+      "generatedOrMechanicalLines": 0,
+      "mechanicalBreakdown": [],
+      "independentBehaviorUnits": [{ "name": "<behavior unit>", "paths": ["src/example.ts"] }],
+      "highRiskDomains": ["<applicable risk domain>"],
+      "rationale": "<why one review is or is not reliable>",
+      "completenessClaim": "exhaustive|preliminary-non-exhaustive",
+      "splitBoundaries": [{ "name": "<independent split>", "paths": ["src/example.ts"], "rationale": "<why this is independently reviewable>", "evidence": ["src/example.ts:1"] }]
+    }
+  },
+  "riskMap": [
+    {
+      "path": "src/example.ts",
+      "risk": "low|medium|high",
+      "rationale": "<specific risk>"
+    }
+  ],
+  "coverage": {
+    "changedFiles": [
+      {
+        "path": "src/example.ts",
+        "reviewedWholeFile": true,
+        "evidence": ["src/example.ts:42"],
+        "directConsumersChecked": ["src/caller.ts:19"],
+        "consumerDisposition": "<consumer impact or why none exist>",
+        "testsChecked": ["src/example.test.ts:20"],
+        "testDisposition": "<coverage result or why tests are not applicable>",
+        "disposition": "<what was verified>"
+      }
+    ],
+    "dimensions": {
+      "behavior": { "status": "reviewed", "evidence": ["src/example.ts:42"], "conclusion": "<result>" }
+    }
+  },
+  "secondPass": {
+    "completed": true,
+    "checks": [
+      {
+        "hypothesis": "<credible failure mode>",
+        "evidence": ["src/example.ts:42"],
+        "result": "<proved safe or finding ID>"
+      }
+    ]
+  },
+  "ruleResults": [
+    {
+      "ruleId": "<exact id from review-rule-inventory.json>",
+      "disposition": "satisfied|not-applicable|finding|carried",
+      "evidence": ["<path:line, artifact:..., or command:...>"],
+      "conclusion": "<specific result for this exact rule>",
+      "findingIds": ["<required for finding>"],
+      "carriedFingerprints": ["<required for carried>" ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "<finding ID>",
+      "severity": "Critical|Important|Minor",
+      "category": "<dimension key>",
+      "path": "<changed path>",
+      "line": 1,
+      "description": "<what is wrong>",
+      "impact": "<what it costs>",
+      "suggestedFix": "<the change to make>",
+      "evidence": ["<path:line>"],
+      "classSweep": {
+        "query": "<regex describing the defect class>",
+        "scope": ["<every changed file swept>"],
+        "accountedFor": ["<path:line found and explained rather than reported>"]
+      }
+    }
+  ],
+  "previouslyAccepted": [],
+  "counts": { "critical": 0, "important": 0, "minor": 0 }
+}
+```
+
+Every behavior unit path must be Git-changed, and their union must cover every changed file. Every non-zero `generatedOrMechanicalLines` claim requires `mechanicalBreakdown` entries with a changed path, exact line count, specific rationale, and cited generation/mechanical evidence. Entry lines must sum exactly to the claim, and the aggregate claimed for each path cannot exceed that path's Git numstat churn. A structural large-change exception requires mechanical evidence for every changed path. A `must-split` report requires at least two distinct `splitBoundaries`, each with a specific name, changed paths, rationale, and evidence. Their union must cover every changed file; multi-file changes cannot assign a path to multiple splits. Its summary must explicitly say the scan is preliminary or non-exhaustive.
+
+`must-split` is a scope warning, not a review rejection. It applies equally to churn thresholds, file-count thresholds, independent behavior-unit count, and high-risk-domain count. The reviewer continues the available risk scan and leaves the Important split recommendation; only separate product defects can block the PR.
+
+The complete set of dimension keys is enforced by `tools/validate-review-report.mjs`.
+
+Before reviewer dispatch, the caller loads `review-rule-registry.json` and runs
+`tools/build-review-rule-inventory.mjs` to freeze every non-example prose, list, and table block,
+reference source digest, registry digest, and diff identity in `review-rule-inventory.json`. The
+canonical registry covers every general-review metric; callers cannot narrow it based on their own
+routing decision. The validator re-reads the registry and source files. Missing, changed, or extra
+references fail validation.
+
+The caller passes the immutable rule inventory and specialized-review routing artifact to the
+reviewer and validator. The reviewer must not create, modify, or narrow either artifact.
+`ruleResults` must contain
+exactly every inventoried rule ID: missing, extra, or duplicate IDs fail validation. Each result
+needs concrete evidence and a specific conclusion; `finding` links current finding IDs and
+`carried` links accepted ledger fingerprints. Every current or carried finding must also be linked
+back from at least one rule result. Adding or changing prose in accessibility, localization,
+design, size/LOC, shared-utility, profile, or future registered references automatically changes
+the required inventory without adding a scenario-specific validator check. Descriptive blocks may
+be marked `not-applicable`; they are intentionally inventoried so wording cannot silently suppress
+a normative rule.
+
+`preReview.ruleChecks` is a separate workflow-accounting manifest. It must contain exactly one
+entry for every rule class in the schema; coverage dimensions do not substitute for it. Populate
+each entry from the corresponding structured evidence already gathered by the review:
+
+- `intent-and-scope`: request evidence, necessity, scope, and intent match.
+- `reference-routing`: every reference trigger in the reviewer routing table was evaluated and each
+  applicable reference was applied.
+- `profile-routing`: global and path/consumer-specific profiles were selected correctly.
+- `changed-file-coverage`: Git changed files exactly match risk and whole-file coverage.
+- `consumer-and-test-coverage`: direct consumers and relevant tests were inspected per changed file.
+- `adversarial-pass`: risk units and falsifiable second-pass hypotheses were completed.
+- `size-audit`: the official size report was located and assessed, or its absence was disclosed.
+- `prior-art`: every applicable cross-cutting candidate has a prior-art disposition.
+- `external-contracts`: every relied-on external semantic contract is verified or specifically
+  inapplicable.
+- `ledger-reconciliation`: accepted findings were matched and carried without re-reporting.
+- `finding-class-sweep`: every blocking defect class was swept and all instances accounted for.
+- `verdict-reconciliation`: findings, counts, reviewability exception, and verdict agree.
+
+Every entry requires concrete evidence and a specific conclusion. An omitted or duplicated class,
+or a placeholder such as `N/A`, is an incomplete review and cannot produce `APPROVE`.
+
+`preReview.profiles` records the applied standards. It always includes `global`; when any changed file is under `sp-client/`, it must also include `sp-client` and the reviewer must read `docs/sp-client-review-profile.md`.
+
+For SP-Client, `preReview.rolloutProtection` is mandatory. The validator derives runtime paths from Git and requires exact coverage. `protected` runtime changes require documented/planned gate metadata, identifiers, code citations for entry/gate/new/fallback paths, evidence of the pre-change behavior, a specific fallback-equivalence conclusion, correct direction, disabled-state test evidence, and one `pathCoverage` entry for every Git-derived runtime path. Each entry must cite that exact changed file plus its gate and fallback. A changed pure helper may execute in fallback state; equivalence is determined from results, side effects, dependency reads, and failure behavior rather than whether the helper is new. `incomplete` and `unprotected` states let the reviewer report missing coverage, wrong direction, fallback, or tests, but require a Critical or Important `rolloutProtection` finding. A `missing` PR-description status also requires that finding. `not-applicable` is accepted only when Git contains no SP-Client runtime path.
+
+## Validation and orchestration
+
+Before accepting the verdict, the orchestrator runs:
+
+```bash
+git diff --no-renames --name-only <mergeBase>...HEAD > <sessionDir>/review-changed-files.txt
+git diff --no-renames --numstat <mergeBase>...HEAD > <sessionDir>/review-numstat.txt
+node "${CLAUDE_PLUGIN_ROOT}/tools/validate-review-report.mjs" \
+  <sessionDir>/review.json \
+  --expected-head "$(git rev-parse HEAD)" \
+  --expected-diff-digest "$(git diff --no-renames <mergeBase>...HEAD | sha256sum | cut -d' ' -f1)" \
+  --changed-files <sessionDir>/review-changed-files.txt \
+  --diff-numstat <sessionDir>/review-numstat.txt \
+  --repo "$(git rev-parse --show-toplevel)"
+```
+
+Malformed, incomplete, or stale review output is a reviewer-spec failure. Re-dispatch the reviewer once against the unchanged implementation. It does not consume a product fix cycle. If validation still fails, stop rather than shipping an unsupported approval.
+
+Any Critical or Important finding enters the product fix loop. After code changes, run a new review against the new commit; never reuse an earlier verdict.
+
+## Review ledger
+
+A branch is reviewed many times: once per fix cycle, and again whenever anyone re-reviews the shipped PR. Because a verdict is never reused, each of those runs starts blank, so an issue that was already raised and consciously accepted is raised again. A PR that was reviewed to completion therefore keeps collecting the same comments.
+
+The ledger is the memory that fixes this. It records, per branch, the findings that were accepted rather than fixed.
+
+Identity cannot be the line number, the category, or the wording; all three drift between reviews of the same defect. In one real run the same magic constant was reported as `maintainability` at line 146, then `designMaintainability` at line 152, then again at 146. What stayed constant was the source line being complained about, so `tools/review-ledger.mjs` anchors identity to that text and hashes it with the path. When the code is edited the anchor stops matching and the finding is correctly treated as new.
+
+The reviewer must, before finalizing:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/tools/review-ledger.mjs" match \
+  --report <sessionDir>/review.json --ledger <ledgerPath> --repo /workspaces/odsp-web
+```
+
+Every finding the matcher reports as `carried` belongs in `previouslyAccepted`, not in `findings`. Re-raising an accepted finding is a reviewer-spec failure, and the orchestrator's validator re-runs the match itself rather than trusting the claim.
+
+## Findings are classes, not lines
+
+A finding names a defect class that happened to be spotted at one location. Reporting the
+location and moving on is how a second instance of the same defect ships: the author fixes the
+line that was cited, and the one that was not stays broken.
+
+Every Critical and Important finding therefore carries `classSweep`:
+
+When a class sweep discovers additional instances outside the current diff hunk, report those instances as separate non-blocking comments using `Nit: [Not related to this PR] ...` and keep them at `Minor` severity.
+
+```json
+"classSweep": {
+  "query": "<regex describing the defect class>",
+  "scope": ["<every changed file swept>"],
+  "accountedFor": ["<path:line found and explained rather than reported>"]
+}
+```
+
+- `query` must match the finding's own cited line. A query that does not match the defect it
+  reports is measuring something else.
+- `scope` must include every changed file that shares the cited file's extension. Sweeping only
+  the file the defect was spotted in reproduces the miss this exists to prevent.
+- Every line the query matches inside `scope` must be accounted for: reported as its own
+  finding, or listed in `accountedFor` because that instance is genuinely safe.
+
+The validator runs `query` itself over `scope` and rejects the report when a match is left
+unaccounted for, so the sweep cannot be claimed without being performed. `reviewability`
+findings are exempt, because they describe the shape of the change rather than a code pattern.
+
+## Capability the platform already provides
+
+Every other dimension asks whether the change is wrong. This one asks whether it should exist.
+Shared code is where capability gets reinvented — a hand-rolled announcement helper, a wrapper
+around a formatting utility the repo already uses in hundreds of files, a literal where a token
+with that exact value is defined.
+
+`preReview.priorArt` answers each symbol exported from a shared-code path — any path with a
+`common`, `shared`, `utilities`, `utils`, `helpers`, `hooks`, or `components` segment — against
+what already exists:
+
+- `none` — the search found nothing equivalent;
+- `reused` — an existing implementation was adopted, cited in `existing`;
+- `justified` — a new implementation is kept, cited against `existing` with a `justification`.
+
+The validator derives the symbol list from the changed sources rather than from the report, so
+an export cannot be skipped by not mentioning it. Feature pages and layouts are exempt: they
+are inherently novel, and demanding a search for each one is noise.
+
+## Contracts the change depends on
+
+Consumer analysis looks downstream, at who calls the changed code. Defects also live upstream,
+in what the changed code calls and what that thing actually promises — a component's treatment
+of its children, a platform structure's units or time base, a monitor's event lifecycle, a
+type's real exported shape. Code that relies on a wrong assumption about a dependency reads
+correctly in isolation; only the dependency's source shows the defect.
+
+`preReview.externalContracts` records each external symbol whose semantics the change depends
+on for correctness, with `evidence` citing that symbol's own source. The cited path must be
+outside the changed set — a contract cannot be evidenced from the file under review. When the
+change genuinely relies on no external contract, use an empty array plus
+`preReview.externalContractsNotApplicableReason`.
+
+`preReview.reviewLedger` is mandatory:
+
+```json
+"reviewLedger": {
+  "status": "applied|absent",
+  "ledgerPath": "<path consulted>",
+  "entryCount": 0,
+  "carriedCount": 0
+}
+```
+
+`absent` is valid only when no ledger exists yet for the branch, and then `entryCount` and `carriedCount` must both be `0`.
+
+`previouslyAccepted` lists what was carried forward, so the artifact stays self-describing:
+
+```json
+"previouslyAccepted": [
+  { "fingerprint": "<32-char hash>", "path": "src/example.ts", "reason": "<why it was accepted>" }
+]
+```
+
+A carried finding is not counted in `counts` and does not affect the verdict. Carrying an accepted nit forward is not approval of the code; it is a record that the decision was already made.
+
+## Disposing of Minor findings
+
+A Minor finding that is neither fixed nor recorded is the direct cause of a shipped PR that still comments on itself. Before shipping, every Minor must be either:
+
+- **fixed**, so the anchor changes and the finding disappears on its own; or
+- **accepted**, with a reason recorded in the ledger and rendered into the PR description.
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/tools/review-ledger.mjs" accept \
+  --report <sessionDir>/review.json --ledger <ledgerPath> \
+  --accept MINOR-1="<why this does not need to block or change this PR>" \
+  --repo /workspaces/odsp-web --branch <branch>
+```
+
+The reason must be a reason, not a restatement: the tool rejects anything under 40 characters or equal to the finding description. A shipped PR carries the accepted set in its description so that a reviewer on another machine, agent or human, sees the same decisions.

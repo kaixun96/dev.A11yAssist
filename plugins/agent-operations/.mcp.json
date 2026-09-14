@@ -6,13 +6,6 @@
         "${PLUGIN_ROOT}/runtime/mcp.mjs",
         "agent-operations"
       ]
-    },
-    "agent_operations_knowledge": {
-      "command": "node",
-      "args": [
-        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
-        "agent-operations"
-      ]
     }
   }
 }

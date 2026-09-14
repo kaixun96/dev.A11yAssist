@@ -3,15 +3,13 @@ name: a11y-intake
 description: Read an authorized work item and prepare accessibility acceptance criteria and a scenario for the caller's own workflow.
 ---
 
-Read `${PLUGIN_ROOT}/docs/CAPABILITIES.md`. `${PLUGIN_ROOT}` is the host-supplied
-top-level installed plugin root, not the working directory.
-Use `a11y_intake_invoke` with action `intake`,
+Read `docs/CAPABILITIES.md`. Use `a11y_intake_invoke` with action `intake`,
 a caller-chosen stable operationId, context.subject and the input required by
 the configured intake tool connection. The subject can identify any supported
 work-item system; do not require a numeric Bug ID or a complete workflow run.
 
 For an ADO item, `read-item` uses the built-in ADO connection to fetch the actual
-item, complete discussion and attachment metadata. Read `${PLUGIN_ROOT}/docs/NATIVE-CAPABILITIES.md`
+item, complete discussion and attachment metadata. Read `docs/NATIVE-CAPABILITIES.md`
 and the returned artifact. Its successful fetch is not interpreted discussion,
 reviewed attachment bytes or finished acceptance criteria. Apply any caller-required
 claim gate before retrieval, then perform the source-based interpretation yourself.
@@ -28,5 +26,5 @@ start the next phase. The caller decides what follows.
 
 For an unknown/pending result, use `a11y_intake_operation_reconcile` with the
 same operationId. Never change IDs to repeat an unreconciled external operation.
-The current create/status/execute workflow tools are only for callers explicitly using
+The legacy create/status/execute tools are only for callers explicitly using
 the optional full workflow.

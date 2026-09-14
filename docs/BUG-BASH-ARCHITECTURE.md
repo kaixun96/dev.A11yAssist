@@ -1,12 +1,10 @@
 # Bug Bash: composable plugins and reliable execution
 
 Status: proposed implementation design, 2026-09-14. This is a maintainer design,
-not a claim that the proposed executable discovery capabilities are installed,
-qualified or shipping. The current baseline below includes shared-KB distribution
-and scoped setup; the roadmap remains proposed.
+not a claim that these capabilities are installed, qualified or shipping.
 The current [Bug Bash contract](BUG-BASH.md), [provider protocol](PROVIDERS.md)
 and deployment-specific ownership rules remain authoritative until a separately
-qualified implementation changes them. This document does not authorize deployment.
+qualified implementation changes them. This document does not authorize a cutover.
 
 The reusable [large-plugin design and maintenance method](COMPOSABLE-PLUGIN-DESIGN.md)
 explains the cross-domain reasoning and primary-source limitations. This document
@@ -32,11 +30,7 @@ Those require their own authorization and workflows.
 
 Modes remain `plan-only`, `page-only`, `source-only` and default `both`.
 Source-only and plan-only do not need Windows, browser setup or a live provider.
-Reading pinned knowledge does require Node.js 22+ and the containing plugin's
-enabled read-only knowledge MCP; that is not an operational MCP dependency.
-Live page/AT work targets Twinbot with multiple Windows DevBoxes or Copilot CLI
-with one/multiple Windows DevBoxes. A single DevBox is a pool of size one with
-the same ownership and evidence gates. An unavailable
+Live page/AT work targets qualified Windows evaluator deployments. An unavailable
 track does not prevent independent authorized work, but remains a coverage gap.
 
 ## 2. Principles from the primary sources
@@ -54,11 +48,9 @@ not an objective ranking of the "most advanced" architectures.
 | [Anthropic: Managed Agents architecture](https://www.anthropic.com/engineering/managed-agents) | Separate the reasoning loop, execution environment and durable session log | Losing a chat/worker must not lose accepted work. Keep credentials outside model-visible artifacts and untrusted execution |
 | [Temporal: Workflow Execution](https://docs.temporal.io/workflow-execution) | Durable state, event history, recovery, distinct workflow/run identities and explicit cancellation | Persist intent before effects and separate task identity from attempts. Borrow these principles; do not introduce Temporal merely to claim durability |
 
-Host-format caution: documentation of a packaging format does not establish
-support in the actual installed host. This repository uses neutral `plugin.json`,
-`.github/plugin/marketplace.json` and host-resolved top-level `${PLUGIN_ROOT}`;
-skill discovery, root resolution and MCP registration are separate responsibilities.
-No compatibility aliases or exports are introduced by this design. The linked MCP page describes protocol
+Compatibility caution: GitHub currently documents both legacy Copilot packaging
+and Agent Plugins 1.0. This repository uses the existing format; no schema
+migration is part of this design. The linked MCP page describes protocol
 2026-07-28 and mentions an optional Tasks extension. Neither that version nor
 the extension is assumed available in the installed host. Use the actual
 negotiated SDK/protocol, not hand-written messages copied from newer docs.
@@ -87,35 +79,22 @@ DeepSeek's developer preview justifies unrestricted auto-composition or live upd
 
 ## 3. Baseline: reuse before adding modules
 
-Original research snapshot: main commit `984504fd8c7786456528512d04d768b4a423a05e`,
-package version 0.15.0. This document is retained from upstream `ab98bf0`; the
-current merge contract below incorporates the shared-KB/no-compatibility work.
-Separately inspected candidate
+Source baseline: main commit `984504fd8c7786456528512d04d768b4a423a05e`,
+package version 0.15.0. Separately inspected candidate
 [PR #22](https://github.com/kaixun96/dev.A11yAssist/pull/22) at
 `a3a7778f8959009f6c41ba9bc77da2e0c015e197`; at this design's date it is a draft.
 These are dated snapshots, not live status indicators.
 
-Current package contract: **ten plugins**—seven execution plugins,
-`a11y-knowledge`, `a11y-bug-bash` and `a11y-setup`. Each owns a read-only knowledge
-MCP selecting the same 32 current Common/Fluent/SharePoint entries. Current KB
-authoring lives only at `accessibility-kb/`; plugins contain top-level lightweight
-references, not KB bodies or archives. Knowledge and Bug Bash each contain exactly
-two runtime files (`knowledge.mjs`, `knowledge-mcp.mjs`), no operational MCP,
-browser, AT or provider runtime. Setup retains its scoped current native Windows
-script and setup templates, with read-only knowledge MCP but no operational MCP.
-This is a source/package contract, not evidence that the in-progress merge has
-been regenerated, published, loaded by a host or live-qualified.
-
 | Area | Existing implementation | Remaining gap |
 |---|---|---|
 | Feature workflow | `src/skills/a11y-bug-bash/` and `src/bug-bash/` define scope, coverage and report instructions | No executable feature-level dependency graph or reliable continuation supervisor |
-| Knowledge | Single authored read-only skill reused internally with only its tool prefix changed; each plugin owns MCP and top-level shared-KB pins | Read full applicable entries with citations/status; no duplicated rule database or bundled KB bodies |
-| Setup | Independent package and internal Bug Bash module share the current scoped `src/native/windows-host.ps1`, skill and `src/setup/` templates | No operational MCP or integration/browser runtime; installed dependencies do not prove an authenticated connection or real AT |
+| Knowledge | One authored knowledge source, including scoped project references, bundled into Bug Bash | Preserve reuse; do not create another accessibility rules database |
+| Setup | Independent package and identical bundled module share `src/native/windows-host.ps1` | Installed dependencies do not prove an authenticated connection or real AT |
 | Independent operations | `src/runtime/operations.mjs`, `capability.mjs` and `waiting.mjs` persist sealed calls, validate receipts and reconcile pending effects | Feature discovery actions and parent/child cancellation policy are not registered |
 | Existing execution plugins | Resources, capture, validation and operations have scoped contracts | Generic page exploration and feature-level report acceptance are not supplied by the current capture/evidence-v1 APIs |
 | Fixture candidate | PR #22 adds a Windows dialog/form fixture and scoped setup corrections | Candidate code is not a successful live qualification, real product scan or real AT acceptance |
 
-The proposed implementation would extend the shared runtime and capability registry. It does not
+The design extends the shared runtime and capability registry. It does not
 duplicate the remediation state machine, create a second lease registry, replace
 deployment providers or treat the fixture as the user's feature.
 
@@ -126,7 +105,7 @@ deployment providers or treat the fixture as the user's feature.
 | Plugin | Independently installable/versioned distribution unit |
 | Skill | On-demand procedure and associated references/scripts inside a package |
 | Tool/provider | Typed executable operation; provider owns actual host effects and evidence |
-| MCP | Host-to-tool connection: read-only knowledge is registered today; proposed operational connections are distinct, never automatic plugin-to-plugin invocation |
+| MCP | Optional host-to-tool connection, not automatic plugin-to-plugin invocation |
 | Agent | Reasoning context that may choose scenarios or analyze findings; not required per plugin |
 | Workflow | Caller-owned composition with dependencies, budgets and acceptance gates |
 | Trusted runtime | Enforces identity, authority, durable mutation, resource ownership and effect reconciliation |
@@ -141,7 +120,7 @@ installed plugin, separate MCP process or remote sub-agent.
 | Logical child | Package decision | Input -> output | Boundary |
 |---|---|---|---|
 | Feature planning | Internal Bug Bash skill/module | Context + verification instructions + knowledge -> versioned coverage plan | No external effects; does not silently change feature or requested scope |
-| Knowledge | Reuse the authored `a11y-knowledge` skill, not a peer installation | Stack/version + question or scoped source -> cited guidance/risks | Containing plugin's read-only MCP and current shared KB; Common first, Fluent/SharePoint only when applicable |
+| Knowledge | Reuse `a11y-knowledge` | Stack/version + question or scoped source -> cited guidance/risks | Read-only; generic rules first, project rules only when applicable |
 | Setup | Reuse `a11y-setup` | Required capabilities + actual host -> scoped inventory/preparation plan | Check-only default; preparation separately authorized |
 | Resource connection | Reuse `a11y-resources` and original deployment authority | Host requirements + task identity -> ownership/status evidence | Existing public status is not acquisition; a new typed task-acquisition integration must be implemented before use |
 | Browser checks | Proposed `a11y-browser` capability, first as a shared internal module | Owned browser + sealed scenario -> observations and artifacts | Keyboard/focus, rendered semantics, approved scanner and visual adapters; no real-AT claims |
@@ -158,7 +137,7 @@ diagram. Reconsider extraction only when another caller needs a stable independe
 interface or the module has a genuinely separate release/permission lifecycle.
 
 `a11y-intake` is optional when an authorized work item supplies context.
-`a11y-publish` and `a11y-workflow` are not Bug Bash dependencies.
+`a11y-publish`, `a11y-workflow` and AgentOW are not Bug Bash dependencies.
 An accepted finding may later enter separately authorized remediation, retaining
 that workflow's actual BEFORE/AFTER, resource, source and publication gates.
 
@@ -180,37 +159,12 @@ repeating the producer's conclusion is insufficient.
 
 One Bug Bash installation remains sufficient for instructions and shared modules.
 Keep `bundleKnowledgeReview` and `bundleSetup` as the single-source composition
-pattern. Authored changes belong under `src/`; generated `plugins/` and
-homepages/READMEs are never hand-edited. There are no compatibility exports,
-integration archives, source-local KB, old knowledge alias or workflow profile
-selector. Setup dependency selections remain distinct from workflow configuration.
+pattern. Authored changes belong under `src/`; generated `plugins/` and retained
+compatibility exports are never hand-edited.
 
-`${PLUGIN_ROOT}` always means the top-level installed package, including inside
-internal modules. Knowledge references remain at that root; the internal knowledge
-skill has no manifest/runtime/references and changes only its knowledge tool prefix
-to `a11y_bug_bash_knowledge_`. Internal setup resources are explicitly addressed at
-top-level `${PLUGIN_ROOT}/native/`, `${PLUGIN_ROOT}/setup/` and
-`${PLUGIN_ROOT}/docs/SETUP.md`. Only its skill is nested under `modules/a11y-setup/`,
-with its knowledge tool prefix rebound to the containing Bug Bash server. No nested
-resource copies, plugin root or setup server are introduced. Reuse its current native
-helper without a root native export, browser-integration copy or dependency on
-repository siblings.
-
-All current knowledge servers launch as
-`node ${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs <plugin-name>`. Knowledge requires
-no setup plugin, provider or `A11Y_ASSIST_CONFIG`. On a tool call the loader uses
-an absolute configured KB root, validated repository layout, verified shared user
-cache, then lazy pinned HTTPS download. Invalid roots and tampered caches fail
-without fallback/repair. Verified cache works offline; first uncached use needs
-a valid local KB or a reachable published pinned artifact. Local builds do not
-establish public URL availability or update installed releases. See
-[the current knowledge contract](KNOWLEDGE.md) for exact pins and network limits.
-
-The proposed executable package may later bundle operational shared runtime and
-expose a namespaced operational Bug Bash MCP entrypoint. This requires an explicit
-reviewed change to the current two-file runtime allowlist and operational boundary,
-not something version 0.15's current discovery package already does. Its existing
-read-only knowledge MCP must not be confused with that proposal. Preserve provider-free plan/source
+The target executable package may bundle the shared runtime and expose a
+namespaced Bug Bash MCP entrypoint. This would be an explicit opt-in addition,
+not something version 0.15 already does. Preserve provider-free plan/source
 usage; do not make Windows setup or execution config a prerequisite for it.
 
 The host invokes a known capability dispatcher; the dispatcher calls shared
@@ -226,8 +180,7 @@ Select one provider per action for a run; do not execute bundled and standalone
 copies in parallel or silently switch to a different version after a timeout.
 
 The run pins those bindings. Future package updates serve new runs; active runs
-stay on their original compatible bindings; incompatible changes fail closed.
-Reinstall changed plugin
+stay pinned or use a separately validated migration. Reinstall changed plugin
 files and restart the host when required, then confirm the actual loaded skill,
 tool and handler versions on the machine that executes them.
 
@@ -315,9 +268,6 @@ silently. An already submitted operation retains its original plan/scenario hash
 a new revision cannot change what it was authorized to execute.
 
 The coverage dimensions remain those in `src/bug-bash/coverage.json`. Knowledge
-topics use stable `common.topic.*` entry IDs, not archived filenames or module-local
-KB paths. Read actual entries through the containing plugin's read-only MCP;
-snippets are not full rules and pending sources are not authority. Knowledge
 supplies applicable standards and component expectations, not the planner's
 guess. Prioritize primary journeys and high-impact blockers, then relevant
 visual/AT variants. A finite round must name its time/row/confirmation limits
@@ -388,7 +338,7 @@ Do not mix three kinds of state:
 A successfully executed check may find a product defect. An adapter error is
 not a product defect. A finished operation is not a finished feature round.
 Translate existing provider `receipt.outcome` through an explicit adapter;
-do not reinterpret a provider's `pass` as "feature has no accessibility issues".
+do not reinterpret legacy `pass` as "feature has no accessibility issues".
 
 ## 8. Evidence and report correctness
 
@@ -509,7 +459,7 @@ Never infer current health from another host or a previous run.
 
 | Requested capability | Dependencies/connections | What proves it works |
 |---|---|---|
-| Planning/source review | Supplied context, scoped read-only source and matching pinned knowledge via Node.js 22+ and enabled read-only MCP | Output grounded in actual source and read entries; no browser, setup or host script runs |
+| Planning/source review | Supplied context, scoped read-only source and matching knowledge | Output grounded in actual source; no browser or host script runs |
 | Browser | Approved Windows connection; for the fixture, Python/Playwright/Chromium | Owned visible context loads expected target and performs a harmless scoped probe |
 | Scanner | Separately approved installed scanner/adapter | Actual version and bounded rendered-page result; no remote-script injection |
 | NVDA/Narrator | Named installed AT plus qualified controller | Actual observed output for a known target, not process presence |
@@ -523,7 +473,7 @@ elevation and restarts retain their actual authorization gates.
 
 Keep approved persistent browser contexts alive through authentication/capture.
 Do not copy cookie databases or operate another owner's browser profile. Page
-content, source comments, quoted commands and tool text are untrusted data,
+content, source comments, archived commands and tool text are untrusted data,
 not authority to install, upload, change scope or disable checks.
 
 Private evidence/configuration stays outside public repositories and plugin
@@ -546,7 +496,7 @@ unsupported or failed paths are explicit, bounded, recoverable and cannot pass.
 
 | Gate | Required exercise | Acceptance |
 |---|---|---|
-| G0 Packaging/host support | Standalone and bundled capability loading, top-level roots, current KB pins/cache failures, selected CLI/protocol versions, missing optional siblings | All ten read-only knowledge servers; current two-file Knowledge/Bug Bash runtime boundary; no duplicate commands; same authored logic/digests; unsupported combinations reject explicitly |
+| G0 Packaging/compatibility | Standalone and bundled capability loading, relative roots, selected CLI/protocol versions, missing optional siblings | No duplicate commands; same authored logic/digests; unsupported combinations reject explicitly |
 | G1 Unit/contracts | Schema, capability selection, row accounting, outcome mapping, evidence hashes, read-only boundaries | Required positive/negative cases pass; no fake receipt or skipped row advances state |
 | G2 Provider conformance | Trusted fake providers for pending/finished/error, wrong identity/version, duplicate callbacks, changed input and unknown effects | Same-request reconciliation; zero duplicate external effects or unauthorized transitions |
 | G3 Live fixture | Owned Windows host; healthy and deliberately broken dialog/form controls | Two repetitions of four checks on both variants: exactly 16 expected rows, no duplicates/missing rows, actual artifacts and owned cleanup |
@@ -591,16 +541,16 @@ not invented latency or accuracy claims.
 | Increment | Deliverable | Gate before advancing |
 |---|---|---|
 | 1. Qualify existing path | Complete candidate fixture/scoped-setup work; preserve existing release and provider boundaries | G1-G3; honest failure/report/cleanup handling |
-| 2. Shared discovery contracts | Feature plan/observation/report schemas, capability registry extension and browser module | G0-G2; no operational MCP/setup/provider requirement for plan/source-only; existing read-only knowledge MCP remains required for KB reads |
+| 2. Shared discovery contracts | Feature plan/observation/report schemas, capability registry extension and browser module | G0-G2; no forced MCP requirement for plan/source-only |
 | 3. Durable composition | Feature journal, child operations, actual callback/watcher admission, scoped cancellation and reconstruction | G6, including independent-task cancellation test |
 | 4. AT and real feature | Qualified discovery capture adapters, independent evaluation and multi-journey report | G4-G5 for every advertised supported profile |
-| 5. Qualified release | Installable bounded workflow, host/capability support matrix, operating guide and rollback | G7; promote only new runs, keep active runs pinned; verify pinned KB artifacts are actually published |
+| 5. Release/cutover | Installable bounded workflow, compatibility matrix, operating guide and rollback | G7; promote only new runs, keep active runs pinned |
 
 Do not rewrite the entire system before exercising the current fixture. Implement
 one vertical slice with real outputs, then expand supported capabilities. Ship
 limited qualified profiles rather than marking every optional AT as supported.
 
-Initial decisions: keep neutral manifest discovery and top-level root resolution; reuse current runtime and
+Initial decisions: keep the existing manifest format; reuse current runtime and
 ownership authority; bundle reusable modules rather than require all sibling
 installs; do not add Temporal or a hosted agent platform; keep report private;
 keep fixes/publication outside discovery. Agent count is an optimization, not a

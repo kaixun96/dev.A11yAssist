@@ -3,9 +3,7 @@ name: a11y-validate
 description: Validate caller-supplied accessibility evidence independently, without requiring this repository's full workflow or fixing product code.
 ---
 
-Read `${PLUGIN_ROOT}/docs/CAPABILITIES.md`. `${PLUGIN_ROOT}` is the host-supplied
-top-level installed plugin root, not the working directory.
-For evidence-v1 structural checking, use
+Read `docs/CAPABILITIES.md`. For evidence-v1 structural checking, use
 `a11y_validate_evidence` with request/result files and the required baseline/HEAD
 inputs for verify. It needs no provider configuration, Bug claim or run journal.
 Its result says whether the artifact contract is valid, not whether an

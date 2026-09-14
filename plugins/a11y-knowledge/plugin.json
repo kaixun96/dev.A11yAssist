@@ -1,18 +1,9 @@
 {
   "name": "a11y-knowledge",
-  "description": "Unified ODSP accessibility knowledge for accessible code generation, root-cause analysis, static/design review and test planning across Common, SPDS, Fluent V8/V9 and SharePoint; read-only, no execution.",
+  "description": "Read-only accessibility knowledge for any project, including built-in SPDS, Fluent V8/V9 and SharePoint/ODSP guidance selected only when relevant. One installation; no execution setup.",
   "version": "0.15.0",
   "author": {
     "name": "kaixun96"
   },
-  "license": "Microsoft Internal",
-  "mcpServers": {
-    "a11y_knowledge_knowledge": {
-      "command": "node",
-      "args": [
-        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
-        "a11y-knowledge"
-      ]
-    }
-  }
+  "license": "Microsoft Internal"
 }

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "source": "native/windows-host.ps1",
+      "targets": ["copilot/skills/ow-a11y-host-setup/scripts/setup-windows-a11y.ps1"]
+    },
+    {
+      "source": "integrations/agentow/runtime/personal-evaluator-browser.py",
+      "targets": ["tools/personal-evaluator-browser.py", "copilot/tools/personal-evaluator-browser.py"]
+    },
+    {
+      "source": "native/ado-attachments.mjs",
+      "targets": ["ts/src/ow/tools/shared-a11y/ado-attachments.mjs"]
+    },
+    {
+      "source": "native/ado-attachments.d.mts",
+      "targets": ["ts/src/ow/tools/shared-a11y/ado-attachments.d.mts"]
+    },
+    {
+      "source": "native/pr-description.mjs",
+      "targets": ["ts/src/ow/tools/shared-a11y/pr-description.mjs"]
+    }
+  ]
+}

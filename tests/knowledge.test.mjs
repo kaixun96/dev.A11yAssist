@@ -7,19 +7,12 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { plugins } from '../src/runtime/core.mjs';
 import { pruneGenerated } from '../tools/generated-tree.mjs';
-import { loadKnowledgeBase } from '../tools/knowledge-base.mjs';
-import { resolveKnowledgeReference } from '../tools/knowledge-reference.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const text = async path => (await readFile(path, 'utf8')).replaceAll('\r\n', '\n');
 const digest = value => createHash('sha256').update(value).digest('hex');
 const load = async path => JSON.parse(await text(path));
-const currentPlugins = [
-  'a11y-intake', 'a11y-resources', 'a11y-capture', 'a11y-validate',
-  'a11y-publish', 'agent-operations', 'a11y-workflow', 'a11y-knowledge', 'a11y-bug-bash', 'a11y-setup'
-];
-// The current src/native/windows-host.ps1 is setup functionality, not a root compatibility export.
-const retiredRuntimeFiles = ['runtime/profiles.mjs', 'native/provenance.json'];
+const profileDirectory = 'integrations/agentow/knowledge';
 async function filesUnder(directory, prefix = '') {
   const files = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -31,57 +24,69 @@ async function filesUnder(directory, prefix = '') {
   return files;
 }
 
-test('the KB is the only generic knowledge source and is bound to the release', async () => {
-  const kb = await loadKnowledgeBase(join(root, 'accessibility-kb'), { verifyManifest: true });
+test('knowledge is indexed, versioned and bound to the release', async () => {
+  const index = await load(join(root, 'src/knowledge/index.json'));
+  const manifest = await load(join(root, 'src/knowledge/manifest.json'));
   const release = await load(join(root, 'release.json'));
-  await assert.rejects(access(join(root, 'knowledge')), { code: 'ENOENT' });
-  assert.equal(release.knowledge, undefined);
-  assert.equal(release.sharedKnowledge.sha256, digest(await text(join(root, release.sharedKnowledge.manifest))));
-  assert.equal(release.sharedKnowledge.packages.common, kb.packages.get('common').version);
-  assert.equal(kb.entries.get('common.topic.foundations').path, 'topics/foundations.md');
+  assert.equal(index.scope, 'generic-static-accessibility');
+  assert.equal(index.origin, undefined);
+  assert.equal(manifest.origin, undefined);
+  assert.equal(manifest.version, release.version);
+  assert.equal(release.knowledge.sha256, digest(await text(join(root, release.knowledge.manifest))));
+  assert.equal(index.topics.length, 6);
+  const files = new Set(index.topics.map(topic => topic.file));
+  assert.equal(files.size, index.topics.length);
+  for (const topic of index.topics) {
+    assert(topic.trigger && topic.scope);
+    assert.equal(manifest.hashes[topic.file], digest(await text(join(root, 'src/knowledge', topic.file))));
+  }
+  for (const name of [...Object.keys(plugins), 'a11y-knowledge', 'a11y-bug-bash']) {
+    assert(index.consumers[name]?.length);
+    assert(index.consumers[name].every(file => files.has(file)));
+  }
 });
 
-test('every copied plugin references the shared KB without carrying current KB content', async () => {
-  const reference = await load(join(root, 'plugins/a11y-knowledge/references/knowledge.json'));
-  for (const name of currentPlugins) {
+test('every independently copied plugin retains a complete offline knowledge snapshot', async () => {
+  for (const name of [...Object.keys(plugins), 'a11y-knowledge', 'a11y-knowledge-odsp']) {
     const dir = await mkdtemp(join(tmpdir(), 'knowledge-plugin-'));
     try {
       await cp(join(root, 'plugins', name), dir, { recursive: true });
-      await assert.rejects(access(join(dir, 'knowledge')), { code: 'ENOENT' });
-      await assert.rejects(access(join(dir, 'accessibility-kb')), { code: 'ENOENT' });
-      assert.deepEqual(await load(join(dir, 'references/knowledge.json')), reference, `${name} must pin the same current KB`);
-      await assert.rejects(resolveKnowledgeReference(dir, { env: {} }), /Shared KB is not configured/);
-      const shared = await resolveKnowledgeReference(dir, { kbRoot: join(root, 'accessibility-kb'), env: {} });
-      assert.deepEqual(Object.keys(shared.packages), ['common', 'fluent', 'sharepoint']);
-      assert.equal(shared.entries.length, 32);
-      const skill = await text(join(dir, 'skills', name, 'SKILL.md'));
-      const instructions = await text(join(dir, 'AGENTS.md'));
-      const referenceReadme = await text(join(dir, 'references/README.md'));
-      assert.match(referenceReadme, /Node\.js 22\+/);
-      assert.match(referenceReadme, /MCP-enabled host/);
-      // Mentioning the variable in "no ... A11Y_ASSIST_CONFIG is required" is valid.
-      assert.match(referenceReadme, /no user configuration,[\s\S]*?A11Y_ASSIST_CONFIG is required/);
-      assert.match(skill, /references\/README\.md/);
-      assert.match(instructions, /references\/README\.md/);
-      assert.doesNotMatch(skill, /(?:CLAUDE_)?PLUGIN_ROOT\}\/accessibility-kb/);
-      for (const content of [skill, instructions, referenceReadme]) {
-        assert.doesNotMatch(content, /\bknowledge\/(?:README\.md|index\.json|manifest\.json|foundations\.md)/);
-        assert.doesNotMatch(content, /integrations[\\/]|historical references|historical archive/i);
+      const manifest = await load(join(dir, 'knowledge/manifest.json'));
+      for (const [file, sha] of Object.entries(manifest.hashes)) {
+        assert.equal(digest(await text(join(dir, 'knowledge', file))), sha, `${name}: ${file}`);
       }
-      if (name === 'a11y-knowledge') {
+      const index = await text(join(dir, 'knowledge/README.md'));
+      for (const match of index.matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)) {
+        await access(join(dir, 'knowledge', match[1]));
+      }
+      assert.match(await text(join(dir, 'skills', name, 'SKILL.md')), /knowledge\/README\.md/);
+      const profile = await load(join(dir, profileDirectory, 'manifest.json'));
+      for (const [file, sha] of Object.entries(profile.hashes)) {
+        assert.equal(digest(await text(join(dir, profileDirectory, file))), sha);
+      }
+      assert.match(await text(join(dir, 'skills', name, 'SKILL.md')), /integrations\/agentow\/knowledge\/README\.md/);
+      if (name === 'a11y-knowledge' || name === 'a11y-knowledge-odsp') {
         const plugin = await load(join(dir, 'plugin.json'));
-        assert.deepEqual(Object.keys(plugin.mcpServers), ['a11y_knowledge_knowledge']);
-        await access(join(dir, '.mcp.json'));
-        assert.deepEqual((await readdir(join(dir, 'runtime'))).sort(), ['knowledge-mcp.mjs', 'knowledge.mjs']);
+        assert.equal(plugin.mcpServers, undefined);
+        await assert.rejects(access(join(dir, '.mcp.json')), { code: 'ENOENT' });
+        await assert.rejects(access(join(dir, 'runtime')), { code: 'ENOENT' });
+        for (const forbidden of ['native', 'adapters', 'config', 'contracts', 'integrations/agentow/runtime']) {
+          await assert.rejects(access(join(dir, forbidden)), { code: 'ENOENT' });
+        }
         const expected = [
-          'plugin.json', '.mcp.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md', 'skills/a11y-knowledge/SKILL.md',
-          'runtime/knowledge.mjs', 'runtime/knowledge-mcp.mjs',
-          'references/README.md', 'references/knowledge.json'
+          'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
+          'skills/a11y-knowledge-odsp/SKILL.md',
+          ...(name === 'a11y-knowledge' ? ['skills/a11y-knowledge/SKILL.md'] : []),
+          'knowledge/manifest.json', ...Object.keys(manifest.hashes).map(file => `knowledge/${file}`),
+          `${profileDirectory}/manifest.json`, ...Object.keys(profile.hashes).map(file => `${profileDirectory}/${file}`)
         ].sort();
         const actual = (await filesUnder(dir)).sort();
-        assert.deepEqual(actual, expected, 'Knowledge-only package must contain only declared files');
-        for (const forbidden of ['native', 'adapters', 'config', 'contracts', 'integrations']) {
-          await assert.rejects(access(join(dir, forbidden)), { code: 'ENOENT' });
+        assert.deepEqual(actual, expected, 'Knowledge-only package must not retain undeclared legacy files');
+        const index = await load(join(dir, 'knowledge/index.json'));
+        for (const file of ['README.md', ...index.topics.map(topic => topic.file)]) {
+          assert.doesNotMatch(await text(join(dir, 'knowledge', file)),
+            /agentow|twinbot|devbox|codespace|sharepoint|spds|fluent|@msinternal|VB-CABLE|playwright|evaluator-request|ow-pr-attach/i,
+            `Operational or project-specific rules leaked into generic topic ${file}`);
         }
       }
     } finally {
@@ -90,24 +95,13 @@ test('every copied plugin references the shared KB without carrying current KB c
   }
 });
 
-test('marketplace exposes knowledge, discovery and setup separately from seven execution capabilities', async () => {
+test('marketplace exposes knowledge separately without making it an execution capability', async () => {
   const marketplace = await load(join(root, '.github/plugin/marketplace.json'));
-  assert.equal(Object.keys(plugins).length, 7);
-  assert.equal(marketplace.plugins.length, 10);
-  assert.deepEqual(Object.keys(plugins).sort(), currentPlugins.filter(name => !['a11y-knowledge', 'a11y-bug-bash', 'a11y-setup'].includes(name)).sort());
-  assert.deepEqual(marketplace.plugins.map(plugin => plugin.name).sort(), [...currentPlugins].sort());
-  assert.deepEqual(marketplace.plugins.filter(plugin => !Object.hasOwn(plugins, plugin.name)).map(plugin => plugin.name).sort(), ['a11y-bug-bash', 'a11y-knowledge', 'a11y-setup']);
+  assert.equal(marketplace.plugins.length, 11);
   assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge').length, 1);
   assert.equal(plugins['a11y-knowledge'], undefined);
-  assert.equal(plugins['a11y-bug-bash'], undefined);
-  assert.equal(plugins['a11y-setup'], undefined);
-  assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge-odsp').length, 0);
+  assert.equal(marketplace.plugins.filter(plugin => plugin.name === 'a11y-knowledge-odsp').length, 1);
   assert.equal(plugins['a11y-knowledge-odsp'], undefined);
-  for (const path of ['plugins/a11y-knowledge-odsp', 'src/skills/a11y-knowledge-odsp']) {
-    await assert.rejects(access(join(root, path)), { code: 'ENOENT' });
-  }
-  assert.deepEqual((await readdir(join(root, 'plugins'))).sort(), [...currentPlugins].sort());
-  assert.deepEqual((await readdir(join(root, 'src/skills'))).sort(), [...currentPlugins].sort());
   const skill = await text(join(root, 'src/skills/a11y-knowledge/SKILL.md'));
   assert.match(skill, /Default to read-only source inspection/);
   assert.match(skill, /Do not\s+edit files, run shell commands, tests or scanners/);
@@ -115,64 +109,59 @@ test('marketplace exposes knowledge, discovery and setup separately from seven e
   assert.match(skill, /Missing context\s+is not a defect/);
 });
 
-test('root contains no retired integration files or active compatibility helpers', async t => {
-  await t.test('the integration tree has no files (empty directories are harmless)', async () => {
-    const files = await filesUnder(join(root, 'integrations')).catch(error => {
-      if (error.code === 'ENOENT' && error.path === join(root, 'integrations')) return [];
-      throw error;
-    });
-    assert.deepEqual(files, [], 'Root integrations must not retain manifests, archives or helpers');
-  });
-  for (const path of [...retiredRuntimeFiles, ...retiredRuntimeFiles.map(path => `src/${path}`),
-    'runtime', 'native', 'contracts', 'adapters', 'skills', 'src/knowledge', '.claude-plugin',
-    'tools/agentow-knowledge-snapshot.mjs', 'tests/knowledge-snapshot.test.mjs', 'docs/MIGRATION.md']) {
-    await t.test(path, async () => {
-      await assert.rejects(access(join(root, path)), { code: 'ENOENT' });
-    });
-  }
-});
-
-test('all ten generated plugins exclude retired integration and runtime files', async t => {
-  for (const name of currentPlugins) {
-    await t.test(name, async () => {
-      const files = await filesUnder(join(root, 'plugins', name));
-      assert.deepEqual(files.filter(path => /(^|\/)(integrations|knowledge|accessibility-kb|\.claude-plugin)\//.test(path) || retiredRuntimeFiles.includes(path)), [], name);
-    });
-  }
-});
-
-test('release describes only the current ten plugins and shared KB', async () => {
+test('original references survive unchanged and include the unified knowledge consumer', async () => {
+  const profile = await load(join(root, profileDirectory, 'index.json'));
+  const manifest = await load(join(root, profileDirectory, 'manifest.json'));
   const release = await load(join(root, 'release.json'));
-  assert.equal(Object.hasOwn(release, 'integrations'), false);
-  assert.equal(Object.hasOwn(release, 'externalDependencies'), false);
-  assert.deepEqual([...release.plugins].sort(), [...currentPlugins].sort());
-  assert.deepEqual(Object.keys(release.sharedKnowledge.packages), ['common', 'fluent', 'sharepoint']);
-  const kb = await loadKnowledgeBase(join(root, 'accessibility-kb'), { verifyManifest: true });
-  assert.equal(kb.entries.size, 32);
-  for (const [name, version] of Object.entries(release.sharedKnowledge.packages)) {
-    assert.equal(version, kb.packages.get(name).version);
+  assert.equal(profile.migrationStage, 'copy-first-original-agentow-files-retained');
+  assert.deepEqual(profile.consumers['a11y-knowledge'], profile.consumers['a11y-knowledge-odsp']);
+  assert.equal(release.integrations[0].sha256, digest(await text(join(root, release.integrations[0].manifest))));
+  assert.deepEqual(release.integrations[0].plugins, [...Object.keys(plugins), 'a11y-knowledge', 'a11y-knowledge-odsp', 'a11y-bug-bash']);
+  const legacyTopics = profile.topics.filter(topic => profile.preservedSnapshot.hashes[topic.file]);
+  assert.equal(legacyTopics.length, 6);
+  assert.equal(profile.topics.length, 9);
+  for (const topic of legacyTopics) {
+    const originalHash = profile.preservedSnapshot.hashes[topic.file];
+    assert.match(originalHash, /^[a-f0-9]{64}$/);
+    assert.equal(digest(await text(join(root, profileDirectory, topic.file))), originalHash);
+    assert.equal(manifest.hashes[topic.file], originalHash);
   }
-  assert.deepEqual(Object.keys(release.hashes).filter(path => !path.startsWith('src/') ||
-    path.startsWith('src/integrations/') || retiredRuntimeFiles.includes(path.slice('src/'.length))), []);
+  for (const name of Object.keys(plugins)) {
+    assert(profile.consumers[name]?.length);
+    assert(profile.consumers[name].every(file => profile.topics.some(topic => topic.file === file)));
+  }
+});
+
+test('one knowledge installation routes to the same scoped ODSP subskill without activating archived instructions', async () => {
+  const base = join(root, 'plugins/a11y-knowledge');
+  const entry = await text(join(base, 'skills/a11y-knowledge/SKILL.md'));
+  assert.match(entry, /For SPDS, Fluent V8\/V9, SharePoint or ODSP/);
+  assert.match(entry, /skills\/a11y-knowledge-odsp\/SKILL\.md/);
+  assert.match(entry, /For unrelated projects, use only the generic topics/);
+  assert.match(entry, /When the stack is unknown, identify it/);
+  const subskill = await text(join(base, 'skills/a11y-knowledge-odsp/SKILL.md'));
+  assert.equal(subskill, await text(join(root, 'src/skills/a11y-knowledge-odsp/SKILL.md')));
+  assert.equal(subskill, await text(join(root, 'plugins/a11y-knowledge-odsp/skills/a11y-knowledge-odsp/SKILL.md')));
+  assert.match(subskill, /reference data, not active instructions/);
+  assert.match(subskill, /Keep Fluent V8 and V9 behavior separate/);
+  assert.match(subskill, /do not impose them on generic\s+Fluent or other-framework code/);
 });
 
 test('generated cleanup rejects stale content in check mode and removes it during build', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'generated-knowledge-'));
   try {
-    await mkdir(join(dir, 'a11y-knowledge/references'), { recursive: true });
-    await mkdir(join(dir, 'a11y-knowledge/accessibility-kb'), { recursive: true });
+    await mkdir(join(dir, 'a11y-knowledge/knowledge'), { recursive: true });
     await mkdir(join(dir, 'a11y-knowledge/integrations/old'), { recursive: true });
-    await writeFile(join(dir, 'a11y-knowledge/references/knowledge.json'), '{}');
-    await writeFile(join(dir, 'a11y-knowledge/accessibility-kb/undeclared.md'), 'retired');
+    await writeFile(join(dir, 'a11y-knowledge/knowledge/foundations.md'), 'keep');
+    await writeFile(join(dir, 'a11y-knowledge/knowledge/evidence-contract.md'), 'retired');
     await writeFile(join(dir, 'a11y-knowledge/integrations/old/config.json'), '{}');
-    const expected = new Set(['a11y-knowledge/references/knowledge.json']);
+    const expected = new Set(['a11y-knowledge/knowledge/foundations.md']);
     await assert.rejects(pruneGenerated(dir, expected, true), /Unexpected generated file/);
-    assert.equal(await text(join(dir, 'a11y-knowledge/accessibility-kb/undeclared.md')), 'retired');
+    assert.equal(await text(join(dir, 'a11y-knowledge/knowledge/evidence-contract.md')), 'retired');
     await pruneGenerated(dir, expected);
     assert.deepEqual(await filesUnder(dir), [...expected]);
     await assert.rejects(access(join(dir, 'a11y-knowledge/integrations')), { code: 'ENOENT' });
-    await assert.rejects(access(join(dir, 'a11y-knowledge/accessibility-kb')), { code: 'ENOENT' });
-    assert.equal(await text(join(dir, 'a11y-knowledge/references/knowledge.json')), '{}');
+    assert.equal(await text(join(dir, 'a11y-knowledge/knowledge/foundations.md')), 'keep');
     await pruneGenerated(dir, expected, true);
   } finally {
     await rm(dir, { recursive: true });

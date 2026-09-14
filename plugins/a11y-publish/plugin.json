@@ -1,7 +1,7 @@
 {
   "name": "a11y-publish",
-  "description": "Reviewer-safe Draft PR evidence and live publication validation.",
   "version": "0.15.0",
+  "description": "Reviewer-safe Draft PR evidence and live publication validation.",
   "author": {
     "name": "kaixun96"
   },
@@ -11,13 +11,6 @@
       "command": "node",
       "args": [
         "${PLUGIN_ROOT}/runtime/mcp.mjs",
-        "a11y-publish"
-      ]
-    },
-    "a11y_publish_knowledge": {
-      "command": "node",
-      "args": [
-        "${PLUGIN_ROOT}/runtime/knowledge-mcp.mjs",
         "a11y-publish"
       ]
     }

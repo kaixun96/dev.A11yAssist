@@ -1,0 +1,16 @@
+{
+  "name": "agentow-copilot",
+  "description": "GitHub Copilot CLI agentOW harness with standard, POC, batch, review, and Accessibility workflows.",
+  "version": "0.1.45",
+  "author": {
+    "name": "kaixun"
+  },
+  "license": "Microsoft Internal",
+  "keywords": ["odsp", "odsp-web", "rush", "codespace", "mcp", "sharepoint", "copilot-cli"],
+  "mcpServers": {
+    "ow": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/ts/dist/ow/index.js", "mcp"]
+    }
+  }
+}

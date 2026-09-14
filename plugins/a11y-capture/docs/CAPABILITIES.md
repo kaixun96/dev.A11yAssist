@@ -9,6 +9,20 @@ use. Its stricter phase ordering is local to that workflow.
 
 ## Interfaces
 
+Bug Bash additionally composes `discovery-observe` through `a11y-capture`, and
+`discovery-cancel`, `discovery-cleanup`, `discovery-deliver` through
+Bug Bash's own durable coordinator (not another MCP server or the optional
+remediation workflow). These versioned discovery contracts are distinct from
+BEFORE/AFTER and PR publication. They require explicitly compatible trusted
+connections; see the [executable discovery contract](https://github.com/kaixun96/dev.A11yAssist/blob/main/docs/BUG-BASH-RUNTIME.md).
+
+`a11y_validate_discovery` reads the original private task, verifies its
+history/receipts/bytes and category accounting, and separates trusted-provider
+behavior assessments from integrity. The same implementation is bundled in
+Bug Bash's `validate` command; it never calls another installed MCP server.
+Discovery capture v0.8 requires fresh preflight/postcheck artifact references and
+independent behavior-assessment gates as well as exact row accounting.
+
 | Plugin | Independent tool | Context needed |
 |---|---|---|
 | a11y-intake | `a11y_intake_invoke`, action `read-item` | `subject`; built-in ADO connection and input.itemId |

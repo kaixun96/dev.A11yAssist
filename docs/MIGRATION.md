@@ -2,6 +2,26 @@
 
 ## Current delivery
 
+v0.17 completes the source discovery chain: accepted plans, per-target category
+expansion, concrete scenario configuration, bounded run/advance, original-effect
+reconciliation, source analysis recording, compatible discovery validation,
+module-owned cleanup and private report delivery. The shared typed browser module
+is bundled, not another mandatory package.
+
+Execution/envelope v0.8 fences these new discovery semantics and lifecycle owners.
+Discovery calls from an older draft must retain their original full runtime and
+provider; never rewrite their journals into this version. BEFORE/AFTER retain the
+v0.7 health requirements below. Discovery adds bound health diagnostic references
+and independent assessment gates. The actual provider/handler must implement and
+qualify those checks before new execution; updating a registry alone is insufficient.
+There is no operations-plugin revival. Unsupported AT/scanner/visual/authenticated
+adapters remain explicit gaps, not implicit browser fallbacks.
+
+This is source publication, not a deployment or live-qualification claim. No
+active evaluator, browser/AT session, lease, original operation or AgentOW pin is
+changed, and no live test is resumed. Plan/source-only local delivery sends no
+Teams message. See [runtime usage](BUG-BASH-RUNTIME.md).
+
 v0.16 removes the independently installable `agent-operations` package, skill,
 MCP server and catalog/installer entry. New calls move as follows:
 

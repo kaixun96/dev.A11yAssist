@@ -26,7 +26,7 @@ Source-only review requires none of this setup.
 
 ## Check, select, prepare, qualify
 
-Default `check` runs only a host inventory and writes a private report.
+Default `check` runs only a scoped host inventory and writes a private report.
 It does not install packages, open AT/browser, authenticate or change settings.
 Select profiles in `setup/profiles.json`; combine only the capabilities needed.
 
@@ -53,7 +53,8 @@ do not use it concurrently or silently create a different profile.
 ```powershell
 $setup = Join-Path $pluginRoot 'native\windows-host.ps1'
 $probe = Join-Path $output 'before.json'
-& $setup -Action Probe -SetupRoot $setupRoot -OutputPath $probe
+& $setup -Action Probe -Dependency Python,Playwright,Chromium `
+  -SetupRoot $setupRoot -OutputPath $probe
 
 # Prepare mode only, after authorization for these packages and agreements:
 & $setup -Action InstallSafeDependencies -Dependency Python,Playwright,Chromium `
@@ -67,6 +68,21 @@ The installer checks presence before installation and stops on nonzero exits.
 It does not upgrade installed tools merely to obtain the newest version.
 Omitting `-Dependency` retains the legacy full dependency set for compatibility;
 the new skill always supplies an explicit subset.
+The same selection applies to `Probe` and the inventory after installation.
+`-Dependency Chromium` alone also selects Python and Playwright, and can be passed
+as one value through `powershell.exe -File`. Browser-only inventory does not
+execute unrelated FFmpeg version checks or inspect audio/NVDA configuration.
+Use `probeScope.unrequestedDependencies` and `assessment: not-requested` to
+distinguish unassessed components from missing installations; false legacy
+readiness flags outside the selected scope do not mean those tools are absent.
+
+For a caller that runs Python in isolated mode, use `Probe -ProbePythonPath
+<absolute-python.exe> -IsolatedPython` with the same selected dependencies.
+The report records `prerequisites.python.isolatedMode`; imports use that exact
+interpreter with `-I`, so packages visible only in the user site are not reported
+as available to an isolated runner. These options are Probe-only and do not install
+anything or change the legacy interpreter/import defaults. Prepare a separately
+authorized environment if the actual runner's dependencies are missing.
 
 Winget uses `NVAccess.NVDA`, `Gyan.FFmpeg` and `Python.Python.3.12`; Python
 modules come from the host's approved pip source and AudioDeviceCmdlets from

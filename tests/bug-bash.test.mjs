@@ -27,7 +27,7 @@ async function filesUnder(directory, prefix = '') {
   return files.sort();
 }
 
-test('isolated Bug Bash has one public skill and the exact complete knowledge module, without runtime dependencies', async () => {
+test('isolated Bug Bash has one public skill and the exact complete knowledge module, without an MCP runtime', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'bug-bash-plugin-'));
   try {
     await cp(base, directory, { recursive: true });
@@ -57,10 +57,12 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
         if (path.startsWith('snapshot/')) assert.match(path, /\.source\.(md|txt)$/);
       }
     }
-    const resources = ['context.template.md', 'coverage.json', 'report.template.md'];
+    const resources = ['context.template.md', 'coverage.json', 'report.template.md', 'dialog-form.html', 'fixture_runner.py'];
     const expected = [
       'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
-      'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md',
+      'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md', 'docs/BUG-BASH-RUNTIME.md', 'docs/BUG-BASH-RUNTIME.zh-CN.md',
+      'docs/BROWSER.md',
+      'config/example.bug-bash.json',
       ...resources.map(path => `bug-bash/${path}`),
       ...(await filesUnder(join(root, 'plugins/a11y-test-categories')))
         .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
@@ -70,6 +72,12 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
         .filter(path => !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path))
         .map(path => `modules/a11y-setup/${path}`)
     ];
+    for (const subtree of ['runtime', 'contracts', 'adapters', 'native', 'browser', 'test-categories']) {
+      for (const file of await filesUnder(join(root, 'src', subtree))) {
+        expected.push(`${subtree}/${file}`);
+        assert.equal(await text(join(directory, subtree, file)), await text(join(root, 'src', subtree, file)));
+      }
+    }
     assert.deepEqual(await filesUnder(directory), expected.sort());
     for (const path of resources) {
       assert.equal(await text(join(directory, 'bug-bash', path)),
@@ -79,7 +87,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       assert.equal(await text(join(directory, 'modules/a11y-test-categories/procedures', path)),
         await text(join(root, 'src/test-categories/procedures', path)));
     }
-    for (const path of ['README.md', 'README.zh-CN.md', 'docs/BUG-BASH.md',
+    for (const path of ['README.md', 'README.zh-CN.md', 'docs/BUG-BASH.md', 'docs/BUG-BASH-RUNTIME.md',
       ...categoryFiles.map(path => `modules/a11y-test-categories/procedures/${path}`),
       'modules/a11y-knowledge/knowledge/README.md',
       ...['README.md', 'fluent-spds.md', 'sharepoint.md', 'complete-source-guide.md']

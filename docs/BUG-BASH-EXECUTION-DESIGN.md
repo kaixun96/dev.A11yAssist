@@ -4,11 +4,15 @@
 
 Maintain both language versions together when changing this design.
 
-Status: proposed implementation design, 2026-09-14. This is a maintainer design,
-not a claim that these capabilities are installed, qualified or shipping.
-The current [Bug Bash contract](BUG-BASH.md), [provider protocol](PROVIDERS.md)
-and deployment-specific ownership rules remain authoritative until a separately
-qualified implementation changes them. This document does not authorize a cutover.
+Status: maintainer design with an implemented v0.17 source baseline, 2026-09-14.
+The [runtime contract](BUG-BASH-RUNTIME.md) is authoritative for callable fields
+and commands; this broader design also retains future adaptive-service proposals.
+Section 3 records the historical starting point, not current missing features.
+The durable coordinator, full category accounting, typed shared browser module,
+discovery capture/validation and cleanup/report delivery chain now have source
+implementations. Actual host deployment and live qualification remain separate.
+The [provider protocol](PROVIDERS.md) and deployment ownership rules remain binding;
+this document does not authorize a runtime cutover.
 
 This supporting document details execution contracts, reliability and qualification.
 Start with the [plugin design](BUG-BASH-ARCHITECTURE.md) for purpose, child

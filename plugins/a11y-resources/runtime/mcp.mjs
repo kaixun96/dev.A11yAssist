@@ -28,6 +28,12 @@ if (['a11y-validate', 'a11y-workflow'].includes(plugin)) tools.push({
   }, required: ['phase', 'requestPath', 'resultPath'], additionalProperties: false }
 });
 const actions = Object.entries(capabilities.operations).filter(([, value]) => value.plugin === plugin).map(([action]) => action);
+if (plugin === 'a11y-validate') tools.push({
+  name: `${prefix}_discovery`,
+  description: 'Read-only discovery journal, original child receipts, artifact bytes and category accounting. Keeps trusted-provider behavior assessments separate from integrity and source risks; never executes page/AT work.',
+  inputSchema: { type: 'object', properties: { taskId: { type: 'string' } },
+    required: ['taskId'], additionalProperties: false }
+});
 const operationSchema = { type: 'object', properties: { operationId: { type: 'string' } },
   required: ['operationId'], additionalProperties: false };
 if (actions.length) {
@@ -96,6 +102,7 @@ async function handle(request) {
     const config = action === 'evidence' ? null : await readConfig(undefined, { fullWorkflow });
     let result;
     if (action === 'evidence') result = await validateEvidenceFiles(args);
+    else if (action === 'discovery') result = await (await import('./bug-bash.mjs')).validateDiscovery(config, args.taskId);
     else if (action === 'invoke') result = await executeOperation(config, plugin, args.operationId, args.action, args.context, args.input ?? {});
     else if (action === 'operation_status') result = await operationStatus(config, plugin, args.operationId);
     else if (action === 'operation_reconcile') result = await reconcileOperation(config, plugin, args.operationId);

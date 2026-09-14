@@ -85,6 +85,24 @@ async function bundleSetup(base) {
   }
   await emit(`${base}/docs/SETUP.md`, await text(join(root, 'docs/SETUP.md')));
 }
+async function bundleRuntime(base) {
+  for (const dir of ['runtime', 'contracts', 'adapters', 'native']) {
+    for (const file of await readdir(join(source, dir))) {
+      await emit(`${base}/${dir}/${file}`, await text(join(source, dir, file)));
+    }
+    for (const dir of ['tools', 'procedures']) {
+      for (const file of await readdir(join(source, 'test-categories', dir))) {
+        await emit(`${base}/test-categories/${dir}/${file}`, await text(join(source, 'test-categories', dir, file)));
+      }
+    }
+  }
+}
+async function bundleBrowser(base) {
+  for (const file of await readdir(join(source, 'browser'))) {
+    await emit(`${base}/browser/${file}`, await text(join(source, 'browser', file)));
+  }
+  await emit(`${base}/docs/BROWSER.md`, await text(join(root, 'docs/BROWSER.md')));
+}
 async function bundleTestCategories(base) {
   await emit(`${base}/skills/a11y-test-categories/SKILL.md`,
     await text(join(source, 'skills/a11y-test-categories/SKILL.md')));
@@ -108,11 +126,8 @@ for (const [name, definition] of Object.entries(plugins)) {
     author: { name: 'kaixun96' }, license: 'Microsoft Internal', mcpServers: { [server]: launch }
   }));
   await emit(`${base}/.mcp.json`, json({ mcpServers: { [server]: launch } }));
-  for (const dir of ['runtime', 'contracts', 'adapters', 'native']) {
-    for (const file of await readdir(join(source, dir))) {
-      await emit(`${base}/${dir}/${file}`, await text(join(source, dir, file)));
-    }
-  }
+  await bundleRuntime(base);
+  if (name === 'a11y-capture') await bundleBrowser(base);
   for (const file of ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md', 'NATIVE-CAPABILITIES.md']) {
     await emit(`${base}/docs/${file}`, await text(join(root, 'docs', file)));
   }
@@ -201,6 +216,11 @@ for (const file of await readdir(join(source, 'bug-bash'))) {
   await emit(`${bugBashBase}/bug-bash/${file}`, await text(join(source, 'bug-bash', file)));
 }
 await emit(`${bugBashBase}/docs/BUG-BASH.md`, await text(join(root, 'docs/BUG-BASH.md')));
+await emit(`${bugBashBase}/docs/BUG-BASH-RUNTIME.md`, await text(join(root, 'docs/BUG-BASH-RUNTIME.md')));
+await emit(`${bugBashBase}/docs/BUG-BASH-RUNTIME.zh-CN.md`, await text(join(root, 'docs/BUG-BASH-RUNTIME.zh-CN.md')));
+await emit(`${bugBashBase}/config/example.bug-bash.json`, await text(join(root, 'config/example.bug-bash.json')));
+await bundleRuntime(bugBashBase);
+await bundleBrowser(bugBashBase);
 // Internal instructions retain their own root without registering duplicate public skills.
 await bundleKnowledgeReview(`${bugBashBase}/modules/a11y-knowledge`);
 await bundleSetup(`${bugBashBase}/modules/a11y-setup`);

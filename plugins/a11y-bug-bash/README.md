@@ -29,11 +29,12 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Bundles a11y-knowledge, a11y-setup and a11y-test-categories; no extra install. Every target/state requires all ten categories and every applicable step, not representative sampling. Missing tools, time or evidence remain explicit gaps. Setup preparation needs separate authorization. No browser/AT binaries or live connection supplied; no automatic fixes, builds, filing or PRs.
+Bundles a11y-knowledge, a11y-setup and a11y-test-categories; no extra install. Every target/state requires all ten categories and every applicable step, not representative sampling. The durable CLI needs Node 22+ and explicitly configured discovery providers for live effects; plan/source use remains provider-free. Missing tools, time or evidence remain gaps. No automatic installation, fixes, builds, filing or PRs.
 
 ## Reference
 
 - [Bug Bash workflow and boundaries](docs/BUG-BASH.md)
+- [Executable composition and durable reports](docs/BUG-BASH-RUNTIME.md)
 - [Feature context template](bug-bash/context.template.md)
 - [Findings and coverage report template](bug-bash/report.template.md)
 - [Built-in all-target test categories](modules/a11y-test-categories/docs/TEST-CATEGORIES.md)

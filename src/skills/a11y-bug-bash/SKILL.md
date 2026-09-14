@@ -9,6 +9,12 @@ Read `docs/BUG-BASH.md`, `bug-bash/context.template.md`,
 `bug-bash/coverage.json` and `bug-bash/report.template.md` before starting.
 This is a discovery workflow, not the single-Bug remediation workflow.
 
+For explicitly configured executable composition, also read `docs/BUG-BASH-RUNTIME.md`.
+Use the package-local `runtime/bug-bash-cli.mjs`, not the remediation create/run
+commands. The guided plan/source path needs no provider configuration and remains
+valid when the executable path was not requested. Never silently switch a failed
+configured execution into a success-shaped guided result.
+
 ## 1. Establish scope and available capabilities
 
 Extract the feature purpose, user journeys, acceptance/verification steps, URL,
@@ -31,6 +37,13 @@ connection on a Windows DevBox; real AT needs its own qualified connection and
 exclusive desktop ownership. Missing tools are gaps, not a reason to invent tool
 names or receipts. Follow deployment ownership gates before interactive control.
 Do not acquire resources with a dummy Bug or fake capture request.
+
+If the user explicitly requests tooling qualification rather than a product
+round, `docs/BUG-BASH.md` describes the optional bounded
+`bug-bash/fixture_runner.py` and its disposable healthy/broken controls.
+Use actual owned Windows execution and the browser setup profile. Its seeded
+findings and qualification result never replace product coverage or real AT.
+Normal feature requests must not silently switch to this fixture.
 
 For requested live page/AT checks, read the bundled
 `modules/a11y-setup/skills/a11y-setup/SKILL.md` for environment check/planning.
@@ -75,6 +88,16 @@ dynamic feedback before lower-risk variants. Record each matrix row as
 `not-applicable` or `inconclusive`. Keep page and source rows distinct.
 Show the bounded plan, then proceed without a redundant approval pause when
 scope, authorization and capabilities are already clear.
+
+In executable mode, serialize this plan using the versioned runtime contract,
+including the complete `inventory`, then `create` it once. The runtime expands
+every category step; use `configure` to bind its generated unexecuted rows to
+concrete scenarios without changing category identity. Keep the task ID, fixed budget and original provider/profile
+bindings. Use bounded `run` or `advance`; inspect returned rows and
+continue rather than ending after announcing the next action. Unsupported AT must
+remain a gap without blocking independent browser/source checks. Add discoveries
+through `append` or additive `inventory`; use `exclude` only for justified feature
+non-applicability. Never rewrite an in-flight request or delete required coverage.
 
 ## 3. Exercise the page and preserve observations
 
@@ -128,6 +151,11 @@ matrix. Do not upgrade the source finding until actual evidence supports it.
 Do not assert that source explains the deployed page unless their build binding
 is known. Preserve differing or unknown versions in the report.
 
+After the read-only knowledge substep, executable-mode coordination records its
+source-bound analysis with `source`. This bookkeeping is outside the knowledge
+review itself; it does not turn the review into shell execution or runtime proof.
+When a source input is unavailable, record the affected rows with `gap` and a reason.
+
 ## 5. Reconcile and deliver
 
 Use `bug-bash/report.template.md`. Keep page-reproduced findings, code risks,
@@ -164,3 +192,15 @@ scope. Bug Bash coordinates and reports these results; it needs no separate
 cleanup plugin or full workflow. Release resources through their original
 authority with original ownership proof. Do not force-release or broadly kill
 processes. If cleanup is uncertain, report it and keep ownership explicit.
+
+In executable mode, reconcile the original pending operation before advancement.
+Use `validate` (the same implementation as `a11y_validate_discovery`) before
+reporting: it checks original child receipts/bytes and category accounting, not
+an arbitrary caller-authored report. Real behavior assessments remain separately
+attributed to the pinned trusted provider.
+Use a real completion callback and independent stall watcher for unattended work;
+neither a CLI reply nor a saved next action installs them. Once rows are accounted
+for, `advance` performs scoped cleanup, report creation and configured private
+delivery. Return the report reference and honest coverage/AT limits to the user.
+For an explicit stop, `cancel` applies only to this task; reconcile its submitted
+bounded work, finish applicable cleanup/delivery and never restart its coverage.

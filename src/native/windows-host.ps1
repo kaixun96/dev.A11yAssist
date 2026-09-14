@@ -8,6 +8,8 @@ param(
     [string]$SetupRoot,
     [string]$ConsoleTaskName = 'AgentOW-A11Y-TransferToConsole',
     [string]$PersonalEvaluatorSource,
+    [string]$ProbePythonPath,
+    [switch]$IsolatedPython,
     [ValidateNotNullOrEmpty()]
     [ValidateSet('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')]
     [string[]]$Dependency = @('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch')
@@ -21,6 +23,9 @@ if ($env:CODESPACES -eq 'true' -or -not [string]::IsNullOrWhiteSpace($env:CODESP
 
 if ($env:OS -ne 'Windows_NT') {
     throw 'ow-a11y-host-setup must run on the Windows evaluator host'
+}
+if (($ProbePythonPath -or $IsolatedPython) -and $Action -ne 'Probe') {
+    throw 'ProbePythonPath and IsolatedPython are supported only for Probe.'
 }
 
 $vbCableUrl = 'https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip'
@@ -49,6 +54,14 @@ function Get-ExistingPath {
 }
 
 function Get-PythonPath {
+    param([string]$RequestedPath)
+    if ($RequestedPath) {
+        if ($RequestedPath -notmatch '^[A-Za-z]:\\.+\.exe$' -or
+            -not (Test-Path -LiteralPath $RequestedPath -PathType Leaf)) {
+            throw 'Requested Python must be an existing absolute executable path.'
+        }
+        return [IO.Path]::GetFullPath($RequestedPath)
+    }
     $candidates = @(
         (Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'),
         (Join-Path $env:LOCALAPPDATA 'Programs\Python\Python311\python.exe')
@@ -65,16 +78,30 @@ function Get-PythonPath {
     return $null
 }
 
+function Resolve-Dependencies {
+    param([string[]]$Dependencies = @('NVDA', 'FFmpeg', 'AudioDeviceCmdlets', 'Python', 'Playwright', 'Chromium', 'MSS', 'PyAudioWPatch'))
+
+    $selected = @($Dependencies | Select-Object -Unique)
+    if ('Chromium' -in $selected -and 'Playwright' -notin $selected) { $selected += 'Playwright' }
+    if (@($selected | Where-Object { $_ -in @('Playwright', 'MSS', 'PyAudioWPatch') }).Count -gt 0 -and
+        'Python' -notin $selected) { $selected += 'Python' }
+    return $selected
+}
+
 function Test-PythonModule {
     param(
         [string]$PythonPath,
-        [string]$Module
+        [string]$Module,
+        [switch]$Isolated
     )
 
     if (-not $PythonPath) {
         return $false
     }
-    & $PythonPath -c "import $Module" 2>$null
+    $arguments = @()
+    if ($Isolated) { $arguments += '-I' }
+    $arguments += @('-c', "import $Module")
+    & $PythonPath @arguments 2>$null
     return $LASTEXITCODE -eq 0
 }
 
@@ -504,26 +531,40 @@ function Get-VoiceAccessState {
 }
 
 function Get-Capabilities {
-    $python = Get-PythonPath
-    $nvda = Get-ExistingPath @(
+    param([string[]]$Dependencies, [string]$PythonPath, [switch]$IsolatedPython)
+
+    $selected = @(if ($PSBoundParameters.ContainsKey('Dependencies')) {
+        Resolve-Dependencies -Dependencies $Dependencies
+    } else {
+        Resolve-Dependencies
+    })
+    $unrequested = @(Resolve-Dependencies | Where-Object { $_ -notin $selected })
+    $fullInventory = $unrequested.Count -eq 0
+    $probeBrowser = 'Playwright' -in $selected
+    $probeAudio = 'AudioDeviceCmdlets' -in $selected -or 'PyAudioWPatch' -in $selected
+    $python = if ('Python' -in $selected) { Get-PythonPath -RequestedPath $PythonPath } else { $null }
+    $nvda = if ('NVDA' -in $selected) { Get-ExistingPath @(
         (Join-Path $env:ProgramFiles 'NVDA\nvda.exe'),
         (Join-Path ${env:ProgramFiles(x86)} 'NVDA\nvda.exe')
-    )
-    $edge = Get-ExistingPath @(
+    ) } else { $null }
+    $edge = if ($probeBrowser -or 'NVDA' -in $selected) { Get-ExistingPath @(
         (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'),
         (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe')
-    )
-    $audioEndpoints = @(Get-AudioEndpoints)
-    $persistedAudioEndpoints = @(Get-PersistedAudioEndpoints)
+    ) } else { $null }
+    $audioEndpoints = @(if ($probeAudio) { Get-AudioEndpoints })
+    $persistedAudioEndpoints = @(if ($probeAudio) { Get-PersistedAudioEndpoints })
     $cableInput = @($persistedAudioEndpoints |
         Where-Object { $_.type -eq 'Render' -and $_.name -match '^CABLE Input' -and $_.state -eq 1 })
     $cableOutput = @($persistedAudioEndpoints |
         Where-Object { $_.type -eq 'Capture' -and $_.name -match '^CABLE Output' -and $_.state -eq 1 })
     $activeCableEndpoints = @($audioEndpoints | Where-Object { $_.name -match '^CABLE (Input|Output)' })
-    $audioModule = Get-Module -ListAvailable AudioDeviceCmdlets |
-        Sort-Object Version -Descending |
-        Select-Object -First 1
-    if (-not $audioModule) {
+    $audioModule = $null
+    if ('AudioDeviceCmdlets' -in $selected) {
+        $audioModule = Get-Module -ListAvailable AudioDeviceCmdlets |
+            Sort-Object Version -Descending |
+            Select-Object -First 1
+    }
+    if ('AudioDeviceCmdlets' -in $selected -and -not $audioModule) {
         $moduleManifest = Get-ChildItem `
             (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\AudioDeviceCmdlets') `
             -Filter 'AudioDeviceCmdlets.psd1' `
@@ -536,11 +577,17 @@ function Get-Capabilities {
             $audioModule = Test-ModuleManifest -Path $moduleManifest.FullName
         }
     }
-    $ffmpeg = Get-CommandInfo 'ffmpeg.exe'
-    $wpr = Get-CommandInfo 'wpr.exe'
-    $wpa = Get-CommandInfo 'wpa.exe'
+    $ffmpeg = if ('FFmpeg' -in $selected) { Get-CommandInfo 'ffmpeg.exe' } else {
+        [ordered]@{ available = $false; assessment = 'not-requested' }
+    }
+    $wpr = if ($fullInventory) { Get-CommandInfo 'wpr.exe' } else {
+        [ordered]@{ available = $false; assessment = 'not-requested' }
+    }
+    $wpa = if ($fullInventory) { Get-CommandInfo 'wpa.exe' } else {
+        [ordered]@{ available = $false; assessment = 'not-requested' }
+    }
     $sessionType = Get-SessionType
-    $defaultRecordingEndpoint = Get-DefaultRecordingEndpoint $audioModule
+    $defaultRecordingEndpoint = if ($probeAudio) { Get-DefaultRecordingEndpoint $audioModule } else { $null }
 
     $prerequisites = [ordered]@{
         edge = [ordered]@{
@@ -552,7 +599,9 @@ function Get-Capabilities {
             available = [bool]$nvda
             path = $nvda
             version = if ($nvda) { [string](Get-Item -LiteralPath $nvda).VersionInfo.ProductVersion } else { $null }
-            speechViewer = Get-NvdaSpeechViewerState
+            speechViewer = if ('NVDA' -in $selected) { Get-NvdaSpeechViewerState } else {
+                [ordered]@{ configured = $false; assessment = 'not-requested' }
+            }
         }
         ffmpeg = $ffmpeg
         audioDeviceCmdlets = [ordered]@{
@@ -563,14 +612,19 @@ function Get-Capabilities {
         python = [ordered]@{
             available = [bool]$python
             path = $python
-            playwright = Test-PythonModule $python 'playwright'
-            mss = Test-PythonModule $python 'mss'
-            pyAudioWPatch = Test-PythonModule $python 'pyaudiowpatch'
+            isolatedMode = [bool]$IsolatedPython
+            playwright = [bool]($probeBrowser -and (Test-PythonModule $python 'playwright' -Isolated:$IsolatedPython))
+            mss = [bool]('MSS' -in $selected -and (Test-PythonModule $python 'mss' -Isolated:$IsolatedPython))
+            pyAudioWPatch = [bool]('PyAudioWPatch' -in $selected -and (Test-PythonModule $python 'pyaudiowpatch' -Isolated:$IsolatedPython))
         }
         windowsPerformanceRecorder = $wpr
         windowsPerformanceAnalyzer = $wpa
-        personalEvaluatorBrowser = Get-PersonalEvaluatorState
-        voiceAccess = Get-VoiceAccessState $cableOutput $audioEndpoints $defaultRecordingEndpoint
+        personalEvaluatorBrowser = if ($probeBrowser) { Get-PersonalEvaluatorState } else {
+            [ordered]@{ installed = $false; profileExists = $false; authenticated = $false; assessment = 'not-requested' }
+        }
+        voiceAccess = if ($probeAudio) { Get-VoiceAccessState $cableOutput $audioEndpoints $defaultRecordingEndpoint } else {
+            [ordered]@{ available = $false; languageModel = 'not-assessed'; microphoneReady = $false; assessment = 'not-requested' }
+        }
         vbCable = [ordered]@{
             renderEndpointReady = $cableInput.Count -gt 0
             captureEndpointReady = $cableOutput.Count -gt 0
@@ -581,7 +635,9 @@ function Get-Capabilities {
         session = [ordered]@{
             type = $sessionType
             persistentConsoleReady = $sessionType -eq 'Console'
-            consoleTransfer = Get-ConsoleTransferState
+            consoleTransfer = if ($probeAudio) { Get-ConsoleTransferState } else {
+                [ordered]@{ available = $false; assessment = 'not-requested' }
+            }
         }
     }
 
@@ -596,6 +652,10 @@ function Get-Capabilities {
         schemaVersion = 1
         generatedAt = (Get-Date).ToUniversalTime().ToString('o')
         host = 'windows'
+        probeScope = [ordered]@{
+            dependencies = @($selected)
+            unrequestedDependencies = $unrequested
+        }
         prerequisites = $prerequisites
         scenarios = [ordered]@{
             browserKeyboard = [bool]($prerequisites.edge.available -and
@@ -621,7 +681,11 @@ function Get-Capabilities {
 }
 
 function Write-Capabilities {
-    $capabilities = Get-Capabilities
+    $capabilities = if ($Action -in @('Probe', 'InstallSafeDependencies')) {
+        Get-Capabilities -Dependencies $Dependency -PythonPath $ProbePythonPath -IsolatedPython:$IsolatedPython
+    } else {
+        Get-Capabilities
+    }
     $json = $capabilities | ConvertTo-Json -Depth 8
     if ($OutputPath) {
         $parent = Split-Path -Parent $OutputPath
@@ -659,6 +723,7 @@ function Invoke-WingetInstall {
 function Install-SafeDependencies {
     param([string[]]$Dependencies)
 
+    $Dependencies = @(Resolve-Dependencies -Dependencies $Dependencies)
     if ('NVDA' -in $Dependencies -and -not (Get-ExistingPath @(
         (Join-Path $env:ProgramFiles 'NVDA\nvda.exe'),
         (Join-Path ${env:ProgramFiles(x86)} 'NVDA\nvda.exe')

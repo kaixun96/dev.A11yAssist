@@ -11,6 +11,7 @@ const referenceTitles = {
   'setup/report.template.md': { en: 'Capability readiness report', zh: '环境能力就绪报告' },
   'modules/a11y-setup/docs/SETUP.md': { en: 'Built-in environment preparation', zh: '内置环境准备模块' },
   'docs/BUG-BASH.md': { en: 'Bug Bash workflow and boundaries', zh: 'Bug Bash 流程与边界' },
+  'docs/BUG-BASH-RUNTIME.md': { en: 'Executable composition and durable reports', zh: '可执行组合与持久报告' },
   'bug-bash/context.template.md': { en: 'Feature context template', zh: 'Feature context 模板' },
   'bug-bash/report.template.md': { en: 'Findings and coverage report template', zh: '问题与覆盖率报告模板' },
   'modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md': { en: 'Reused internal knowledge review', zh: '内部复用的知识审查' },

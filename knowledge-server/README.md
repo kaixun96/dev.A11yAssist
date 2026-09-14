@@ -11,6 +11,12 @@ For contributors and maintainers, see the
 [technical design and extension guide (简体中文)](TECH-DESIGN.md): architecture,
 content placement, entry/package examples, source review, schemas, tests and releases.
 
+**Planned, not implemented:** section 11 of that design specifies one KB MCP
+entrypoint for both local knowledge and authoritative MAS rules, with a MAS MCP
+adapter inside this service. Hosts will not need to orchestrate a second MAS
+server registration. Deployment credentials stay outside the package. No MAS
+connection, proposed MAS tool, or basis-completeness check is available yet.
+
 ## Host registration
 
 Use Node.js 22 or later. Configure a **stdio** MCP server in the host's supported
@@ -51,7 +57,9 @@ The full selected package closure is cached once per user and snapshot, not
 copied into plugins. Hashes, file inventory, dependencies and package versions
 are verified on every read. Corruption fails without automatic replacement.
 Downloads are limited to 15 seconds and 8 MiB with no redirects, credentials or
-caller-selected URLs. Search queries and source code are never uploaded.
+caller-selected URLs. Current local knowledge searches do not upload queries or
+source code. Planned explicit MAS queries will send only necessary query context
+to the configured MAS service under the separate boundaries in the design.
 Validated cached content works offline; a cold offline install fails explicitly.
 
 **Release gate:** generated URLs target reviewed artifacts on `main`. A PR build

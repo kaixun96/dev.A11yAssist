@@ -10,7 +10,7 @@ certification service. No sibling plugin is required.
 
 - One public entrypoint, `/a11y-bug-bash`.
 - Context, coverage and report templates under `bug-bash/`.
-- Nine category procedures and their index under `test-categories/`, used to
+- Ten category procedures, including dedicated Voice Access steps, and their index under `test-categories/`, used to
   turn applicable coverage prompts into page checks, not executable tooling.
 - The exact two knowledge skills and complete references from `a11y-knowledge`,
   bundled privately within the package at `modules/a11y-knowledge/`.

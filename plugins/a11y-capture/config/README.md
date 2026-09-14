@@ -9,6 +9,8 @@ configure only the connections you are authorized to use:
 | Template | Use |
 |---|---|
 | [example.ado.json](example.ado.json) | Native ADO work-item retrieval or existing Draft PR attachments |
+| [example.windows-at.json](example.windows-at.json) | Raw native AT observation under the original execution lease |
+| [example.devcenter.json](example.devcenter.json) | Original recovery-lease Dev Center start/readback, explicit caller polling |
 | [example.capability.json](example.capability.json) | One independent capability through a trusted provider |
 | [example.cli.json](example.cli.json) | Optional full CLI workflow |
 | [example.twin.json](example.twin.json) | Optional full Twin workflow |
@@ -31,3 +33,6 @@ check is not proof of live service, resource or assistive-technology readiness.
 
 See [the provider protocol](../docs/PROVIDERS.md) and
 [native connection requirements](../docs/NATIVE-CAPABILITIES.md).
+The [execution-adapter guide](../docs/EXECUTION-ADAPTERS.md) covers exact supported
+scope, native policies and optional host Azure CLI authentication. Neither new
+connection is a drop-in replacement for an active multi-action provider.

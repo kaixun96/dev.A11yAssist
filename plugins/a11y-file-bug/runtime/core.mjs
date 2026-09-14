@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { invokeCapability, providerFor } from './capability.mjs';
 import { validateProfileReceipt } from './profiles.mjs';
 import { validateAdoProvider, callAdoProvider } from './builtin-ado.mjs';
+import { validateDevCenter, callDevCenterProvider } from './builtin-devcenter.mjs';
+import { validateWindowsAtProvider, callWindowsAtProvider } from './builtin-windows-at.mjs';
 import { createWaiting, pendingDetails, validateWaitingConfig } from './waiting.mjs';
 
 const contractDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../contracts');
@@ -49,6 +51,17 @@ export async function readConfig(path = process.env.A11Y_ASSIST_CONFIG, { fullWo
       validateAdoProvider(provider);
       continue;
     }
+    if (provider?.kind === 'devcenter') {
+      demand(name === 'resources' && provider.waiting?.mode === 'caller-poll',
+        'Dev Center recovery requires resources and explicit caller polling');
+      validateDevCenter(provider);
+      continue;
+    }
+    if (provider?.kind === 'windows-at') {
+      demand(name === 'capture', 'Windows AT observation belongs to capture');
+      validateWindowsAtProvider(provider);
+      continue;
+    }
     demand(provider && typeof provider.executable === 'string' && isAbsolute(provider.executable) &&
       Array.isArray(provider.args) && provider.args.every(a => typeof a === 'string') &&
       shaPattern.test(provider.executableSha256 ?? ''), `Invalid pinned provider: ${name}`);
@@ -69,9 +82,21 @@ export async function doctor(config) {
   for (const name of ['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'bugs', 'operations', 'resources']) {
     const provider = config.providers[name];
     if (!provider) { capabilities[name] = 'not-configured'; continue; }
-    if (provider.kind === 'ado') {
-      capabilities[name] = process.env[provider.authorizationEnvironmentVariable]
+    if (['ado', 'devcenter'].includes(provider.kind)) {
+      capabilities[name] = provider.authentication || process.env[provider.authorizationEnvironmentVariable]
         ? 'configured-not-live-verified' : 'authorization-unavailable';
+      continue;
+    }
+    if (provider.kind === 'windows-at') {
+      try {
+        capabilities[name] = await fileHash(provider.executable) === provider.executableSha256 &&
+          await fileHash(provider.policyPath) === provider.policySha256 &&
+          await fileHash(new URL('../native/windows-at.ps1', import.meta.url)) === provider.driverSha256
+          ? 'configured-not-live-verified' : 'native-policy-or-executable-hash-mismatch';
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        capabilities[name] = 'native-dependency-missing';
+      }
       continue;
     }
     try {
@@ -153,6 +178,8 @@ export async function callProvider(config, providerName, request) {
   const provider = config.providers[providerName];
   demand(provider, `Provider ${providerName} is not configured; no live operation performed`);
   if (provider.kind === 'ado') return callAdoProvider(provider, request, config);
+  if (provider.kind === 'devcenter') return callDevCenterProvider(provider, request);
+  if (provider.kind === 'windows-at') return callWindowsAtProvider(provider, request);
   demand(await fileHash(provider.executable) === provider.executableSha256, 'Provider executable hash changed');
   return new Promise((resolveResult, reject) => {
     const child = spawn(provider.executable, provider.args, {

@@ -63,7 +63,7 @@ export async function executeOperation(config, plugin, operationId, action, cont
   validateCapabilityInput(action, input);
   if (action === 'file-bug') {
     const { withValidatedFiling, filingAuthorization } = await import('./file-bug.mjs');
-    if (config.providers?.bugs?.kind === 'ado') filingAuthorization(config.providers.bugs);
+    if (config.providers?.bugs?.kind === 'ado') await filingAuthorization(config.providers.bugs);
     return withValidatedFiling(config, operationId, context, input,
       () => executeValidatedOperation(config, plugin, operationId, action, context, input));
   }

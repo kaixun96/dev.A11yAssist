@@ -30,11 +30,18 @@ export function validateBrowserParameters(value) {
     } else throw new Error('Unsupported browser action; arbitrary scripts are forbidden');
   }
   for (const assertion of value.assertions) {
-    exact(assertion, ['kind', 'target', 'expected', ...(assertion.kind === 'attribute' ? ['attribute'] : [])]);
+    exact(assertion, ['kind', 'target', 'expected', ...(assertion.kind === 'attribute' ? ['attribute']
+      : assertion.kind === 'target-size' ? ['minimum'] : [])]);
     locator(assertion.target);
     const expected = assertion.expected;
-    if (['focused', 'visible'].includes(assertion.kind)) demand(typeof expected === 'boolean', 'Expected boolean browser assertion');
+    if (assertion.kind === 'target-size') {
+      exact(assertion.minimum, ['width', 'height']);
+      demand(Object.values(assertion.minimum).every(value => typeof value === 'number' && Number.isFinite(value) &&
+        value >= 1 && value <= 1920), 'Invalid minimum CSS-pixel size');
+    }
+    if (['focused', 'visible', 'target-size'].includes(assertion.kind)) demand(typeof expected === 'boolean', 'Expected boolean browser assertion');
     else if (assertion.kind === 'count') demand(Number.isInteger(expected) && expected >= 0 && expected <= 100, 'Invalid expected count');
+    else if (assertion.kind === 'axe-violations') demand(Number.isInteger(expected) && expected >= 0 && expected <= 10000, 'Invalid scanner violation count');
     else if (assertion.kind === 'text') demand(typeof expected === 'string' && expected.length <= 4096, 'Invalid expected text');
     else if (assertion.kind === 'attribute') demand(attributes.has(assertion.attribute) &&
       (expected === null || typeof expected === 'string' && expected.length <= 4096), 'Invalid attribute assertion');
@@ -64,6 +71,17 @@ export function verifyBrowserObservations(report, expectedRequest) {
         demand(discoveryHash(value.assertion) === discoveryHash(expected.assertions[index]) &&
           value.met === (discoveryHash(value.actual) === discoveryHash(value.assertion.expected)),
         'Browser verdict is not supported by the requested assertion and actual value');
+        if (value.assertion.kind === 'target-size') {
+          demand(['width', 'height', 'x', 'y', 'deviceScale'].every(key =>
+            typeof value.measurement?.[key] === 'number' && Number.isFinite(value.measurement[key])) &&
+            value.measurement.width >= 0 && value.measurement.height >= 0 && value.measurement.deviceScale > 0 &&
+            value.actual === ['width', 'height'].every(key => value.measurement[key] >= value.assertion.minimum[key]),
+          'Target size verdict differs from measured CSS-pixel dimensions');
+        }
+        if (value.assertion.kind === 'axe-violations') demand(typeof value.scanner?.version === 'string' &&
+          Array.isArray(value.scanner.violations) && Array.isArray(value.scanner.incomplete) &&
+          value.scanner.incomplete.length === 0 && value.actual === value.scanner.violations.length,
+        'Scanner verdict requires actual versioned results without incomplete checks');
         return value.met;
       });
       demand(row.capturePreflight?.verified === true && row.capturePostcheck?.verified === true &&

@@ -5,7 +5,7 @@
 Maintain both language versions together. This document describes what the plugin
 does, its child capabilities, how they work together, and the user-facing input
 and output. Current behavior and proposed extensions are marked separately.
-Baseline: version 0.19.0, 2026-09-14. The source orchestration chain is implemented;
+Baseline: version 0.20.0, 2026-09-14. The source orchestration chain is implemented;
 deployment and live qualification are separate. Supported adapters, not a generic
 promise about every browser/AT combination, define executable coverage.
 
@@ -53,11 +53,13 @@ Browser behavior is a shared module; extract at most one new
 `a11y-browser` package when independent reuse justifies it. Real-AT adapters belong
 within capture, not one mandatory package per AT.
 
-**Not supplied as generic built-ins:** NVDA/Narrator/Voice Access capture drivers,
-authenticated/server-backed browser transactions, scanners/visual measurements,
-cloud resource recovery and credential brokers. Their typed integration boundaries
-exist, but each requires an actual deployment implementation and qualification.
-The source orchestration and filing chain must not be advertised as those missing
+**Bounded native adapters are implemented:** persistent Chromium and explicit
+server routes, local pinned axe-core and CSS-pixel size measurement, raw NVDA/
+Narrator/Voice Access observations, original-lease Dev Center start and host
+Azure CLI authentication. See [execution adapters](EXECUTION-ADAPTERS.md) for
+actual inputs, outputs and remaining limitations. Raw AT output and cloud power
+do not replace independent behavior evidence or complete environment recovery.
+The source orchestration and filing chain must not be advertised as arbitrary
 drivers, or as complete real-world coverage merely because every matrix row exists.
 
 Bug Bash does not require every sibling plugin to be installed. `a11y-intake` is
@@ -215,10 +217,11 @@ Cleanup and delivery have their own receipts. Plan/source-only tasks can deliver
 verified local files without any live provider. Adaptive provider learning remains
 a future extension; it cannot drop required checks or alter submitted operations.
 
-The shipped native browser module is bounded to approved anonymous/client-side
-HTTPS scenarios. Authenticated transactions, scanners, visual measurement and
-named real AT require explicit compatible deployment adapters; their absence is
-reported, never replaced with DOM evidence or silently treated as complete.
+The native browser retains anonymous/client-side defaults and offers protected
+policy-v2 persistent sessions, explicit server routes, pinned axe-core and size
+measurements. Raw named-AT adapters still require qualified scenario/behavior
+assessment; unsupported checks remain gaps, never DOM substitutes or assumed
+completion. See [execution adapters](EXECUTION-ADAPTERS.md).
 
 ## 4. How does a user run it?
 

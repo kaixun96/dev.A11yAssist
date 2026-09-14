@@ -4,6 +4,7 @@ import { readAdoWorkItem } from '../native/ado-intake.mjs';
 import { attachPrEvidence } from '../native/ado-attachments.mjs';
 import { createAdoBug } from '../native/ado-bugs.mjs';
 import { atomicJson, hash } from './core.mjs';
+import { validateHostAuthentication, hostAuthorization } from '../native/host-auth.mjs';
 
 function demand(condition, message) { if (!condition) throw new Error(message); }
 
@@ -15,8 +16,7 @@ export function validateAdoProvider(provider) {
   demand(typeof provider.project === 'string' && provider.project.trim(), 'ADO project is required');
   demand(provider.repositoryId === undefined || (typeof provider.repositoryId === 'string' && provider.repositoryId.trim()),
     'Invalid ADO repository ID');
-  demand(typeof provider.authorizationEnvironmentVariable === 'string' &&
-    /^[A-Z][A-Z0-9_]{0,100}$/.test(provider.authorizationEnvironmentVariable), 'Expected authorization environment-variable NAME');
+  validateHostAuthentication(provider);
 }
 
 export async function callAdoProvider(provider, request, config) {
@@ -41,10 +41,7 @@ export async function callAdoProvider(provider, request, config) {
   }
   demand(request.operation === 'execute' ||
     (['reconcile', 'resume', 'discard-unstarted'].includes(request.operation) && request.stage === 'file-bug'), 'Unsupported native operation');
-  const authorization = process.env[provider.authorizationEnvironmentVariable];
-  demand(request.operation === 'discard-unstarted' ||
-    (typeof authorization === 'string' && /^(Bearer|Basic) \S+$/.test(authorization)),
-    'Configured ADO authorization is unavailable; no external operation performed');
+  const authorization = request.operation === 'discard-unstarted' ? undefined : await hostAuthorization(provider);
   const configuration = { ...provider, authorization };
   let result, gates;
   if (request.stage === 'read-item') {

@@ -2,7 +2,10 @@
 
 Bug Bash and capture share one authored browser module. It runs explicit keyboard,
 focus, rendered-name/state and text checks on an operator-approved HTTPS page.
-It is not a scanner, a real-AT adapter or permission to modify production data.
+Policy v2 additionally supports a persistent authenticated Chromium profile,
+explicit server routes, pinned axe-core scanning and actual target-size measurements.
+It is not a real-AT adapter or blanket permission to modify production data.
+Read [execution adapters](EXECUTION-ADAPTERS.md) for the exact bounds.
 
 ## Inputs
 
@@ -28,8 +31,9 @@ Locators use an exact element ID (`#open`) or an exact role/name pair. Actions a
 Escape and arrows. Arbitrary JavaScript, shell commands, OS shortcuts and password
 entry are not supported.
 
-Assertions are `focused`, `visible`, `count`, `text` and a small allow-list of
-accessibility attributes. Expected values are typed booleans, bounded counts/text
+Assertions are `focused`, `visible`, `count`, `text`, `target-size`,
+`axe-violations` and a small allow-list of accessibility attributes.
+Expected values are typed booleans, bounded counts/text
 or the appropriate nullable attribute value. A missing/ambiguous action target,
 lost document focus, script error or unexpected dialog/popup is a coverage gap,
 not automatically a product defect.
@@ -42,13 +46,15 @@ the original owner/evaluator gates before execution. The deployed
 `browser-policy.json` is operator-controlled and hash-bound, not a model-supplied
 allow-list. The shipped example enables no target.
 
-The current runner supports anonymous, client-side HTTPS scenarios. It starts an
+The default v1 policy supports anonymous, client-side HTTPS scenarios. It starts an
 owned visible Chromium context, resets the exact page before each row and records
 actual assertions, screenshots and an accessibility-tree snapshot. Only permitted
 GET/HEAD assets are allowed; other document destinations, fetch/XHR, WebSockets
 and service workers are blocked. This deliberately excludes server-backed
-transactions and authenticated/private-profile workflows until a separately
-qualified connection supports them.
+transactions and authenticated/private-profile workflows. Policy v2 explicitly
+opts into a protected existing profile, authentication origins and exact request
+rules; defaults are not widened. A server mutation is journaled before dispatch
+and requires independent server-state/reset reconciliation before another row.
 
 Use actual compatible Python/Playwright/Chromium dependencies under the same
 interpreter/import mode as setup. `--validate-only` checks request shape without

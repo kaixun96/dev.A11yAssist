@@ -2,6 +2,23 @@
 
 ## Current delivery
 
+v0.20 / envelope v0.11 introduces real bounded execution adapters described in
+[EXECUTION-ADAPTERS.md](EXECUTION-ADAPTERS.md). New `observe-at` and `recover-devbox`
+receipts intentionally prove only raw native observation or cloud power. They
+cannot replace BEFORE/AFTER/discovery behavior evidence, complete recovery,
+pool allocation, or release. Native AT borrows already-owned configured processes.
+
+Browser policy v1 remains the restrictive default; v2 explicitly opts into
+persistent Chromium, protected auth origins/network routes and a local pinned
+axe-core script. Server mutations remain journaled/inconclusive until original
+effects and reset are independently reconciled. Host Azure CLI auth is optional;
+existing environment-header configuration is unchanged.
+
+Retain original v0.10 runtime/provider/browser/category closures for unfinished
+work. Do not change their version, request or policy to adopt these adapters.
+No installed worker, resource, browser/AT session or AgentOW pin is changed.
+Source publication is not deployment or live qualification.
+
 v0.19 / execution envelope v0.10 adds process-field and bounded duplicate
 inspection, configurable description/ReproSteps fields, explicitly configured
 chunked WIT uploads, correlation-based lost-create readback, explicit safe

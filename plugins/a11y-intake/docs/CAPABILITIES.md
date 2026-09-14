@@ -1,5 +1,10 @@
 # Independent capabilities and optional composition
 
+Package v0.20 adds `observe-at` (raw native AT output, not behavior PASS) and
+`recover-devbox` (original-lease cloud start/readback, not interactive readiness).
+Their distinct gates cannot replace BEFORE/AFTER/discovery/cleanup.
+Read [execution adapters](EXECUTION-ADAPTERS.md) for supported inputs and limitations.
+
 Small plugins do one job inside the caller's workflow. The caller chooses the
 order, interprets the result and decides what happens next. They do not require
 this repository's intake, a global Bug/run journal, AgentOW or unrelated stages.

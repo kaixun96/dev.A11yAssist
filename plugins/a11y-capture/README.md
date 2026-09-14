@@ -33,11 +33,12 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Installation does not provision a DevBox or recorder. No synthetic AT results. Preserve scenario/evaluator identity for AFTER. Explicit recover-media/recover-nvda actions require the original assignment and authorized operations connection; narrow recovery is not full cleanup or resource release.
+Built-in observe-at collects raw NVDA Speech Viewer, Narrator ETW/audio and Voice Access overlay-command/UIA/audio under original ownership. Raw output is not BEFORE/AFTER/discovery PASS; behavior, media and overlay mapping require independent review. No automatic tool installation, borrowed-process stop or lease release.
 
 ## Reference
 
 - [Capability interfaces and boundaries](docs/CAPABILITIES.md)
 - [Connection setup and protocol](docs/PROVIDERS.md)
+- [Built-in execution adapters and supported scope](docs/EXECUTION-ADAPTERS.md)
 
 [Back to the plugin catalog](https://github.com/kaixun96/dev.A11yAssist)

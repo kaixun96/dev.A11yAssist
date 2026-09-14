@@ -15,6 +15,12 @@ spec = importlib.util.spec_from_file_location("bugbash_browser_support", ROOT / 
 support = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(support)
 save, sha256, stamp = support.save, support.sha256, support.stamp
+spec = importlib.util.spec_from_file_location("bugbash_browser_policy", ROOT / "browser_policy.py")
+policy_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(policy_module)
+spec = importlib.util.spec_from_file_location("bugbash_browser_measurements", ROOT / "browser_measurements.py")
+measurements = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(measurements)
 KEYS = {"Tab", "Shift+Tab", "Enter", "Space", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"}
 ATTRIBUTES = {"aria-invalid", "aria-describedby", "aria-expanded", "aria-selected", "aria-checked", "aria-modal", "tabindex", "id"}
 
@@ -85,15 +91,24 @@ def validate_request(value):
             if not isinstance(assertion, dict):
                 raise ValueError("Assertion must be an object")
             kind = assertion.get("kind")
-            fields = {"kind", "target", "expected"} | ({"attribute"} if kind == "attribute" else set())
-            if set(assertion) != fields or kind not in {"focused", "visible", "count", "text", "attribute"}:
+            fields = {"kind", "target", "expected"} | ({"attribute"} if kind == "attribute" else
+                                                       {"minimum"} if kind == "target-size" else set())
+            if set(assertion) != fields or kind not in {"focused", "visible", "count", "text", "attribute",
+                                                       "target-size", "axe-violations"}:
                 raise ValueError("Unsupported typed assertion")
             locator_spec(assertion["target"])
             expected = assertion["expected"]
-            if kind in {"focused", "visible"} and type(expected) is not bool:
+            if kind in {"focused", "visible", "target-size"} and type(expected) is not bool:
                 raise ValueError("Visibility/focus expectations must be booleans")
             if kind == "count" and (type(expected) is not int or not 0 <= expected <= 100):
                 raise ValueError("Count expectation must be bounded")
+            if kind == "axe-violations" and (type(expected) is not int or not 0 <= expected <= 10000):
+                raise ValueError("Scanner violation count expectation must be bounded")
+            if kind == "target-size":
+                minimum = assertion["minimum"]
+                if (not isinstance(minimum, dict) or set(minimum) != {"width", "height"} or
+                        any(type(minimum[k]) not in {int, float} or not 1 <= minimum[k] <= 1920 for k in minimum)):
+                    raise ValueError("Target size requires bounded minimum CSS-pixel dimensions")
             if kind == "text" and (not isinstance(expected, str) or len(expected) > 4096):
                 raise ValueError("Invalid expected text")
             if kind == "attribute" and (assertion["attribute"] not in ATTRIBUTES or
@@ -103,27 +118,14 @@ def validate_request(value):
 
 
 def validate_policy(policy):
-    if (not isinstance(policy, dict) or set(policy) != {"schemaVersion", "allowedTargets", "assetHosts"} or
-            type(policy["schemaVersion"]) is not int or policy["schemaVersion"] != 1 or
-            not isinstance(policy["allowedTargets"], list) or len(policy["allowedTargets"]) > 100 or
-            not isinstance(policy["assetHosts"], list) or len(policy["assetHosts"]) > 30):
-        raise ValueError("Invalid protected browser policy")
-    for target in policy["allowedTargets"]:
-        if not isinstance(target, str) or len(target) > 2048:
-            raise ValueError("Invalid authorized target")
-        parsed = urlsplit(target)
-        if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
-            raise ValueError("Authorized targets must be credential-free HTTPS")
-    if any(not isinstance(host, str) or not re.fullmatch(r"[a-z0-9.-]{1,253}", host) for host in policy["assetHosts"]):
-        raise ValueError("Asset hosts must be explicit DNS names without wildcards")
-    return policy
+    return policy_module.validate(policy)
 
 
 def locate(page, target):
     return page.locator(target["css"]) if "css" in target else page.get_by_role(target["role"], name=target["name"], exact=True)
 
 
-def observe(page, assertion):
+def observe(page, assertion, policy=None, timeout_milliseconds=15000):
     target = locate(page, assertion["target"])
     kind = assertion["kind"]
     if kind == "count":
@@ -135,7 +137,17 @@ def observe(page, assertion):
     else:
         if target.count() != 1:
             raise RuntimeError("Assertion target is missing or ambiguous")
-        if kind == "focused":
+        if kind == "target-size":
+            geometry = measurements.measure_size(target)
+            actual = all(geometry[key] >= assertion["minimum"][key] for key in ("width", "height"))
+            return {"assertion": assertion, "actual": actual, "met": actual == assertion["expected"],
+                    "measurement": geometry}
+        elif kind == "axe-violations":
+            result = measurements.scan(page, target, policy or {}, timeout_milliseconds)
+            actual = len(result["violations"])
+            return {"assertion": assertion, "actual": actual, "met": actual == assertion["expected"],
+                    "scanner": result}
+        elif kind == "focused":
             actual = target.evaluate("element => element === document.activeElement")
         elif kind == "text":
             actual = target.inner_text()
@@ -173,10 +185,14 @@ def run(request, output, policy):
     report = {"schemaVersion": 1, "scope": "authorized-browser-scenarios", "taskId": request["taskId"],
               "state": "running", "startedAt": stamp(), "request": request,
               "runnerSha256": sha256(Path(__file__)), "supportSha256": sha256(ROOT / "browser_support.py"),
+              "policyImplementationSha256": sha256(ROOT / "browser_policy.py"),
+              "measurementImplementationSha256": sha256(ROOT / "browser_measurements.py"),
               "ownedBrowserClosed": False, "realAssistiveTechnologyVerified": False,
+              "transactions": [],
               "rows": [{"id": row["id"], "status": "planned"} for row in request["rows"]]}
     save(state_path, report)
     browser = None
+    context = None
     browser_error = RuntimeError
     deadline = time.monotonic() + request["budgetSeconds"]
     try:
@@ -185,43 +201,57 @@ def run(request, output, policy):
         report["playwrightVersion"] = importlib.metadata.version("playwright")
         with sync_playwright() as playwright:
             try:
-                browser = playwright.chromium.launch(headless=False)
-                report["browserVersion"] = browser.version
-                context = browser.new_context(viewport=request["viewport"], device_scale_factor=1,
-                                              locale="en-US", reduced_motion="reduce", service_workers="block")
-                target_origin = urlsplit(request["target"]).netloc
+                browser, context = policy_module.open_context(playwright, request, policy)
+                report["browserVersion"] = browser.version if browser else "unavailable"
+                if browser is None:
+                    raise RuntimeError("Actual browser identity is unavailable")
+                report["connectionMode"] = policy.get("connection", {}).get("mode", "ephemeral")
                 blocked_requests = []
                 critical_failures = [0]
+                authenticating = [report["connectionMode"] == "persistent"]
 
                 def route_request(route):
                     parsed = urlsplit(route.request.url)
-                    permitted = (route.request.method in {"GET", "HEAD"} and
-                                 route.request.resource_type not in {"fetch", "xhr", "websocket", "eventsource"} and parsed.scheme == "https" and
-                                 parsed.netloc in {target_origin, *policy.get("assetHosts", [])})
-                    if route.request.resource_type == "document":
-                        permitted = permitted and route.request.url.split("#")[0] == request["target"]
+                    permitted = policy_module.permits(policy, request["target"], route.request, authenticating[0])
                     if permitted:
+                        if (route.request.method not in {"GET", "HEAD"} and
+                                not (authenticating[0] and policy_module.authentication_request(policy, route.request))):
+                            if len(report["transactions"]) >= 100:
+                                critical_failures[0] += 1
+                                route.abort()
+                                return
+                            report["transactions"].append({"method": route.request.method,
+                                "url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+                                "state": "submitted-unknown", "timestamp": stamp()})
+                            save(state_path, report)
                         route.continue_()
                     else:
-                        if route.request.resource_type in {"script", "document", "stylesheet"}:
+                        if route.request.resource_type in {"script", "document", "stylesheet", "fetch", "xhr"}:
                             critical_failures[0] += 1
                         if len(blocked_requests) < 200:
-                            blocked_requests.append({"url": route.request.url, "type": route.request.resource_type})
+                            blocked_requests.append({"url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+                                                     "type": route.request.resource_type})
                         route.abort()
 
                 context.route("**/*", route_request)
                 context.route_web_socket("**/*", lambda socket: socket.close())
-                page = context.new_page()
+                if len(context.pages) > 1:
+                    raise RuntimeError("Existing profile opened multiple pages; do not alter an ambiguous session")
+                page = context.pages[0] if context.pages else context.new_page()
                 page.bring_to_front()
                 page.set_default_timeout(5000)
                 page.set_default_navigation_timeout(15000)
                 def failed_response(response):
-                    if response.status >= 400 and response.request.resource_type in {"script", "document", "stylesheet"}:
+                    if response.status >= 400 and response.request.resource_type in {"script", "document", "stylesheet", "fetch", "xhr"}:
                         critical_failures[0] += 1
                 page.on("response", failed_response)
                 dialogs = []
                 page.on("dialog", lambda dialog: (dialogs.append(dialog.type), dialog.dismiss()))
                 for definition, row in zip(request["rows"], report["rows"]):
+                    if report.get("unresolvedTransaction"):
+                        row.update(status="not-run", attempted=False, reason="Earlier transaction effects require reconciliation")
+                        save(state_path, report)
+                        continue
                     if time.monotonic() >= deadline:
                         row.update(status="not-run", attempted=False, reason="Original browser budget exhausted")
                         save(state_path, report)
@@ -231,10 +261,16 @@ def run(request, output, policy):
                     errors = []
                     on_error = errors.append
                     failure_start = critical_failures[0]
+                    transaction_start = len(report["transactions"])
                     dialogs.clear()
                     page.on("pageerror", on_error)
                     try:
                         response = page.goto(request["target"], wait_until="load")
+                        if authenticating[0]:
+                            policy_module.wait_authenticated(page, request, policy, deadline, time.monotonic)
+                            authenticating[0] = False
+                        if len(report["transactions"]) > transaction_start:
+                            raise RuntimeError("Page startup dispatched a server mutation; reconcile it before triggering the scenario")
                         if not response or response.status >= 400 or page.url != request["target"]:
                             raise RuntimeError("Expected authorized page did not load")
                         row["capturePreflight"] = capture_health(
@@ -267,7 +303,16 @@ def run(request, output, policy):
                         row["documentFocused"] = page.evaluate("document.hasFocus()")
                         if any(item["kind"] == "focused" for item in definition["assertions"]) and not row["documentFocused"]:
                             raise RuntimeError("Document focus is not established for a focus assertion")
-                        observations = [observe(page, assertion) for assertion in definition["assertions"]]
+                        observations = []
+                        for assertion in definition["assertions"]:
+                            remaining_ms = int((deadline - time.monotonic()) * 1000)
+                            if remaining_ms <= 0:
+                                raise TimeoutError("Original browser observation budget exhausted")
+                            page.set_default_timeout(min(5000, remaining_ms))
+                            observations.append(observe(page, assertion, policy, remaining_ms))
+                        row["observations"] = observations
+                        if any(item.get("scanner", {}).get("incomplete") for item in observations):
+                            raise RuntimeError("axe-core returned incomplete checks; preserve results for independent review")
                         row.update(status="observed-no-issue" if all(item["met"] for item in observations) else "finding",
                                    observations=observations, steps=definition["steps"], timestamp=stamp(), url=page.url)
                         row.pop("reason", None)
@@ -291,14 +336,23 @@ def run(request, output, policy):
                             page, request, not errors and not dialogs and critical_failures[0] == failure_start)
                         if not row["capturePostcheck"]["verified"]:
                             row.update(status="inconclusive", reason="Capture postcheck found an unexpected page/environment state")
+                        if len(report["transactions"]) > transaction_start:
+                            report["unresolvedTransaction"] = True
+                            row.update(status="inconclusive",
+                                       reason="Server mutation dispatched; independent server-state/reset verification required before another row")
                         save(state_path, report)
                         page.remove_listener("pageerror", on_error)
                 report["blockedRequests"] = blocked_requests
                 report["state"] = "completed"
             finally:
-                if browser is not None:
-                    browser.close()
-                    report["ownedBrowserClosed"] = not browser.is_connected()
+                try:
+                    if context is not None:
+                        context.close()
+                finally:
+                    if browser is not None:
+                        if browser.is_connected():
+                            browser.close()
+                        report["ownedBrowserClosed"] = not browser.is_connected()
     except (OSError, ValueError, RuntimeError, TimeoutError, ImportError, browser_error) as error:
         report.update(state="failed", error={"type": type(error).__name__, "message": str(error)})
         for row in report["rows"]:

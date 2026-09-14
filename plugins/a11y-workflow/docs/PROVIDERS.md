@@ -2,6 +2,12 @@
 
 ## What is executable today
 
+v0.20 / envelope v0.11 adds bounded executable integrations for persistent
+Chromium/authenticated routes, local pinned axe-core and target-size measurement,
+raw named-AT observation, original-lease Dev Center start/reconciliation and
+host Azure CLI authentication. Read [supported execution adapters](EXECUTION-ADAPTERS.md)
+before configuring them; narrow raw/power receipts do not certify a workflow stage.
+
 v0.19 / envelope v0.10 completes the built-in `bugs` connection's bounded
 chunked transfer, process-field/duplicate inspection, original-create correlation,
 explicit safe continuation and proven-unstarted abandonment. All filing entrypoints
@@ -22,18 +28,20 @@ optional persistent workflow state machine,
 stage gates, artifact hashing, version/owner fencing, bounded subprocess RPC,
 request reconciliation, progress assessment, packaging checks and tests.
 
-They do **not** contain a generic live Dev Center recovery driver, AT recorder,
-ADO credential broker or a new AgentOW implementation. Those remain the existing
-deployment's trusted programs until migrated/qualified. Missing configuration
-fails explicitly; `doctor` never reports configuration as live readiness.
+The native `windows-at` connection implements only `observe-at`; the native
+`devcenter` connection implements only caller-polled `recover-devbox`.
+Do not replace a multi-action deployment provider with these narrower mappings
+for an active run. Missing configuration fails explicitly; `doctor` never reports
+configuration as live readiness. No new AgentOW implementation is supplied.
 
 This boundary is intentional: publishing private scripts wholesale would leak
 personal infrastructure assumptions and could establish a second unsafe pool.
-The bundled browser runner is limited to the anonymous/client-side scenarios in
-[BROWSER.md](BROWSER.md). Authenticated transactions, scanner/visual measurement
-and named real-AT capture drivers are **not implemented as generic built-ins**.
-Existing qualified deployment programs can implement the typed contracts; merely
-setting a profile does not supply those implementations.
+The bundled browser retains anonymous/client-side defaults and adds explicit
+policy-v2 routes in [BROWSER.md](BROWSER.md). Native AT produces raw observations,
+not speech interpretation, complete Voice Access label attribution or an accepted
+discovery/evidence-v1 verdict. Server mutation/reset semantics, arbitrary visual
+checks, cloud provisioning/Console readiness and product-specific behavior
+assessment remain separately supported/qualified capabilities.
 Installing the full workflow is not yet proof that a fresh user's environment
 can autonomously complete a real A11y Bug.
 

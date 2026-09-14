@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { pendingDetails, validateRequestWaiting } from './waiting.mjs';
 import { validateDiscoveryInput, validateDiscoveryReceipt } from './discovery-contract.mjs';
+import { validateAtInput } from './builtin-windows-at.mjs';
 
 export const capabilities = JSON.parse(await readFile(new URL('../contracts/capabilities.json', import.meta.url), 'utf8'));
 const outcomes = new Set(['pass', 'changes-requested', 'not-reproduced', 'blocked', 'inconclusive', 'invalid-evidence', 'abandoned']);
@@ -33,11 +34,17 @@ export function providerFor(config, action) {
 export function validateCapabilityInput(action, input) {
   requireValue(input && typeof input === 'object' && !Array.isArray(input), 'Capability input must be an object');
   if (action.startsWith('discovery-')) validateDiscoveryInput(action, input);
+  if (action === 'observe-at') validateAtInput(input);
   if (action === 'file-bug') requireValue(
     typeof input.taskId === 'string' && typeof input.issueId === 'string' && input.details &&
     input.approval?.approved === true && sha.test(input.approval.draftSha256 ?? '') &&
     typeof input.approval.reference === 'string' && input.approval.reference.trim(),
   'Bug filing requires a validated task/finding and explicit hash-bound draft approval');
+  if (action === 'recover-devbox') requireValue(
+    Object.keys(input).sort().join(',') === 'authorizationReference,recoveryId' &&
+    /^[a-f0-9]{32}$/.test(input.recoveryId ?? '') &&
+    typeof input.authorizationReference === 'string' && input.authorizationReference.trim(),
+  'DevBox recovery requires the original recovery ID and explicit start authorization');
   if (['release-evaluator', 'recover-media', 'recover-nvda'].includes(action)) {
     requireValue(Object.keys(input).join(',') === 'nativeRunId' && typeof input.nativeRunId === 'string' &&
       /^[a-f0-9]{32}$/.test(input.nativeRunId),
@@ -50,6 +57,14 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
   requireValue(outcomes.has(receipt.outcome), 'Unsupported capability outcome');
   requireValue(Array.isArray(receipt.artifacts) && receipt.artifacts.length > 0, 'Durable capability artifacts required');
   if (action.startsWith('discovery-')) validateDiscoveryReceipt(action, receipt, input);
+  if (action === 'observe-at') requireValue(receipt.nativeRunId === input.nativeRunId && receipt.at === input.at &&
+    receipt.scope === 'raw-at-output' && receipt.behaviorVerdict === 'not-evaluated' &&
+    receipt.independentBehaviorVerified === false && receipt.fullCleanupVerified === false &&
+    receipt.borrowedAtStopped === false, 'Raw AT observation cannot certify behavior or stop/release borrowed resources');
+  if (action === 'recover-devbox') requireValue(receipt.recoveryId === input.recoveryId &&
+    receipt.scope === 'devbox-power-start-only' && receipt.interactiveReady === false &&
+    receipt.atReady === false && receipt.leaseReleased === false,
+  'Cloud power readback does not establish interactive/AT readiness or release authority');
   if (action === 'recover-media') {
     validateCapabilityInput(action, input);
     requireValue(receipt.nativeRunId === input.nativeRunId &&
@@ -103,7 +118,7 @@ export function validateCapabilityReceipt(action, receipt, context, input = {}) 
   }
 }
 export async function invokeCapability(config, action, request, transport) {
-  if (['release-evaluator', 'recover-media', 'recover-nvda'].includes(action)) validateCapabilityInput(action, request.input);
+  if (['release-evaluator', 'recover-media', 'recover-nvda', 'recover-devbox', 'observe-at'].includes(action)) validateCapabilityInput(action, request.input);
   const provider = providerFor(config, action);
   validateRequestWaiting(config, provider, request);
   const response = await transport(config, provider, request);

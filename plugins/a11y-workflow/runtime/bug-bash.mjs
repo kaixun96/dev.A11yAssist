@@ -14,7 +14,9 @@ const implementationHash = discoveryHash(await Promise.all([
   'bug-bash.mjs', 'discovery-contract.mjs', 'discovery-coverage.mjs', 'browser-contract.mjs', 'operations.mjs',
   'capability.mjs', 'canonical.mjs', 'core.mjs', 'waiting.mjs', '../contracts/capabilities.json',
   'category-plugin.mjs', 'file-bug.mjs', 'builtin-ado.mjs', '../native/ado-bugs.mjs',
-  '../native/ado-bug-client.mjs', '../native/ado-bug-evidence.mjs', '../native/bug-description.mjs'
+  '../native/ado-bug-client.mjs', '../native/ado-bug-evidence.mjs', '../native/bug-description.mjs',
+  '../native/host-auth.mjs', 'builtin-devcenter.mjs', '../native/devcenter.mjs',
+  'builtin-windows-at.mjs', '../native/windows-at.ps1'
 ].map(async file => ({ file,
   sha256: hash((await readFile(new URL(file, import.meta.url), 'utf8')).replaceAll('\r\n', '\n'))
 }))));

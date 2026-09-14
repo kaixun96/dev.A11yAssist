@@ -1,6 +1,6 @@
 {
   "name": "a11y-report",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "Generate the aggregate discovery report: distinct issues, filed Bugs, coverage, evidence, gaps and cleanup.",
   "author": {
     "name": "kaixun96"

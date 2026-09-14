@@ -84,6 +84,7 @@ async function bundleSetup(base, includeSkill = true) {
     await emit(`${base}/setup/${file}`, await text(join(source, 'setup', file)));
   }
   await emit(`${base}/docs/SETUP.md`, await text(join(root, 'docs/SETUP.md')));
+  await emit(`${base}/docs/EXECUTION-ADAPTERS.md`, await text(join(root, 'docs/EXECUTION-ADAPTERS.md')));
   await bundleRuntime(base);
 }
 async function bundleRuntime(base) {
@@ -98,6 +99,7 @@ async function bundleBrowser(base) {
     await emit(`${base}/browser/${file}`, await text(join(source, 'browser', file)));
   }
   await emit(`${base}/docs/BROWSER.md`, await text(join(root, 'docs/BROWSER.md')));
+  await emit(`${base}/docs/EXECUTION-ADAPTERS.md`, await text(join(root, 'docs/EXECUTION-ADAPTERS.md')));
 }
 async function bundleTestCategories(base) {
   await emit(`${base}/skills/a11y-test-categories/SKILL.md`,
@@ -127,7 +129,7 @@ for (const [name, definition] of Object.entries(plugins)) {
   if (name === 'a11y-file-bug') await emit(`${base}/docs/FILE-BUG.md`, await text(join(root, 'docs/FILE-BUG.md')));
   if (name === 'a11y-report') await emit(`${base}/docs/REPORT.md`, await text(join(root, 'docs/REPORT.md')));
   if (name === 'a11y-capture') await bundleBrowser(base);
-  for (const file of ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md', 'NATIVE-CAPABILITIES.md', 'FILE-BUG.md', 'REPORT.md']) {
+  for (const file of ['CAPABILITIES.md', 'WORKFLOW.md', 'PROVIDERS.md', 'NATIVE-CAPABILITIES.md', 'FILE-BUG.md', 'REPORT.md', 'EXECUTION-ADAPTERS.md']) {
     await emit(`${base}/docs/${file}`, await text(join(root, 'docs', file)));
   }
   for (const file of await readdir(join(root, 'config'))) {

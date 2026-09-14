@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "allowedTargets": [],
+  "assetHosts": [],
+  "connection": {
+    "mode": "persistent",
+    "userDataDirectory": "C:\\Approved\\A11y\\ChromiumProfile",
+    "authenticationOrigins": [],
+    "timeoutSeconds": 60,
+    "ready": {"css": "#authenticated-content"}
+  },
+  "requests": [],
+  "scanner": null
+}

@@ -24,8 +24,9 @@ export async function callAdoProvider(provider, request, config) {
   demand(request.invocation === 'capability' && ['read-item', 'attach-evidence', 'file-bug'].includes(request.stage),
     'Built-in ADO transport supports only read-item, attach-evidence and file-bug; it cannot certify an entire workflow stage');
   const responsePath = join(request.stateDirectory, 'native-response.json');
-  const identity = hash(JSON.stringify({ ...request, operation: 'execute' }));
-  if (request.operation === 'reconcile') {
+  const { abandonReason, ...originalRequest } = request;
+  const identity = hash(JSON.stringify({ ...originalRequest, operation: 'execute' }));
+  if (['reconcile', 'resume', 'discard-unstarted'].includes(request.operation)) {
     let stored;
     try { stored = JSON.parse(await readFile(responsePath, 'utf8')); }
     catch (error) {
@@ -38,9 +39,11 @@ export async function callAdoProvider(provider, request, config) {
       return stored.response;
     }
   }
-  demand(request.operation === 'execute' || (request.operation === 'reconcile' && request.stage === 'file-bug'), 'Unsupported native operation');
+  demand(request.operation === 'execute' ||
+    (['reconcile', 'resume', 'discard-unstarted'].includes(request.operation) && request.stage === 'file-bug'), 'Unsupported native operation');
   const authorization = process.env[provider.authorizationEnvironmentVariable];
-  demand(typeof authorization === 'string' && /^(Bearer|Basic) \S+$/.test(authorization),
+  demand(request.operation === 'discard-unstarted' ||
+    (typeof authorization === 'string' && /^(Bearer|Basic) \S+$/.test(authorization)),
     'Configured ADO authorization is unavailable; no external operation performed');
   const configuration = { ...provider, authorization };
   let result, gates;
@@ -50,24 +53,44 @@ export async function callAdoProvider(provider, request, config) {
   } else if (request.stage === 'file-bug') {
     demand(config, 'Bug filing requires the original discovery configuration');
     const { prepareDiscoveryBug, validateFilingApproval } = await import('./file-bug.mjs');
-    const prepared = await prepareDiscoveryBug(config, request.input.taskId, request.input.issueId, request.input.details);
+    const draftPath = join(request.stateDirectory, 'native-bug-draft.json');
+    let prepared;
+    if (request.operation === 'execute') {
+      prepared = await prepareDiscoveryBug(config, request.input.taskId, request.input.issueId, request.input.details);
+      await atomicJson(draftPath, { identity, prepared, sha256: hash(JSON.stringify(prepared)) });
+    } else {
+      const stored = JSON.parse(await readFile(draftPath, 'utf8'));
+      demand(stored.identity === identity && stored.sha256 === hash(JSON.stringify(stored.prepared)),
+        'Original approved Bug draft identity/hash mismatch');
+      prepared = stored.prepared;
+    }
     validateFilingApproval(config, prepared, request.input.approval);
     demand(request.run.subject === prepared.draft.taskId &&
       request.run.scenarioHash === prepared.draft.planHash && request.run.runId === prepared.draft.operationId,
     'Filing operation must bind the original task, validated plan and deterministic issue identity');
     const progressPath = join(request.stateDirectory, 'native-bug-progress.json');
     let progress;
-    if (request.operation === 'reconcile') {
+    if (request.operation !== 'execute') {
       const stored = JSON.parse(await readFile(progressPath, 'utf8'));
       demand(stored.identity === identity && stored.sha256 === hash(JSON.stringify(stored.progress)),
         'Native Bug progress identity/hash mismatch');
       progress = stored.progress;
     }
-    result = await createAdoBug(configuration, prepared.draft, {
-      progress, reconcile: request.operation === 'reconcile',
-      checkpoint: progress => atomicJson(progressPath, { identity, progress, sha256: hash(JSON.stringify(progress)) })
-    });
-    gates = { validatedFinding: true, explicitFilingAuthorization: true,
+    if (request.operation === 'discard-unstarted') {
+      demand(progress?.schemaVersion === 1 && progress.phase === 'prepared' &&
+        progress.uploaded?.length === 0 && progress.bugId === null &&
+        typeof abandonReason === 'string' && abandonReason.trim(),
+      'Only a proven pre-mutation checkpoint may be abandoned; unknown effects must remain pending');
+      result = { scope: 'validated-discovery-bug', outcome: 'abandoned', reason: abandonReason,
+        externalMutationsStarted: false, artifactsPreserved: true };
+    } else {
+      result = await createAdoBug(configuration, prepared.draft, {
+        progress, reconcile: request.operation === 'reconcile',
+        resume: request.operation === 'resume', duplicateReview: request.input.approval.duplicateReview,
+        checkpoint: progress => atomicJson(progressPath, { identity, progress, sha256: hash(JSON.stringify(progress)) })
+      });
+    }
+    gates = result.outcome ? {} : { validatedFinding: true, explicitFilingAuthorization: true,
       descriptionComplete: true, attachmentsVerified: true, bugReadbackVerified: true };
   } else {
     demand(Array.isArray(request.input.attachments) && request.input.attachments.every(
@@ -80,7 +103,8 @@ export async function callAdoProvider(provider, request, config) {
   await atomicJson(join(request.stateDirectory, artifact), result);
   const bytes = await readFile(join(request.stateDirectory, artifact));
   const receipt = {
-    ...request.run, requestId: request.requestId, stage: request.stage, outcome: 'pass', gates,
+    ...request.run, requestId: request.requestId, stage: request.stage, outcome: result.outcome ?? 'pass', gates,
+    ...(result.reason ? { reason: result.reason } : {}),
     scope: result.scope, independentBehaviorVerified: false,
     ...(result.bug ? { bug: result.bug, draftSha256: request.input.approval.draftSha256 } : {}),
     artifacts: [{ path: artifact, sha256: hash(bytes) }]

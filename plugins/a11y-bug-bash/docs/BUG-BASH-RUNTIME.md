@@ -2,7 +2,7 @@
 
 **English** | [简体中文](BUG-BASH-RUNTIME.zh-CN.md)
 
-Package v0.18 / execution contract v0.9. Source implementation is separate from
+Package v0.19 / execution contract v0.10. Source implementation is separate from
 deployment and live qualification. This release never resumes an old task.
 
 The optional package-local CLI turns an accepted coverage plan into a durable
@@ -76,6 +76,9 @@ each observed finding is filed or explicitly skipped with a reason. Use
 No flag automatically authorizes uploads. `a11y-report` generates the aggregate
 report, including actual Bug links and failed/skipped filing; pending effects
 block final reporting. See [filing](FILE-BUG.md) and [reporting](REPORT.md).
+Filing now includes actual process-field/duplicate inspection, approved chunked
+video transfer and original-checkpoint recovery. Read-only reconciliation is
+separate from explicit continuation; unknown uploads cannot be restarted.
 
 Each row has `id`, `journey`, `state`, `dimension`, `track`, `capability`,
 `preconditions`, `actions`, `expected` and `reset`. Tracks are `page`, `source`

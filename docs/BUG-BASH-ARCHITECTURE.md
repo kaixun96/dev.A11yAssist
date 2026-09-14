@@ -5,7 +5,7 @@
 Maintain both language versions together. This document describes what the plugin
 does, its child capabilities, how they work together, and the user-facing input
 and output. Current behavior and proposed extensions are marked separately.
-Baseline: version 0.18.0, 2026-09-14. The source execution chain is implemented;
+Baseline: version 0.19.0, 2026-09-14. The source orchestration chain is implemented;
 deployment and live qualification are separate. Supported adapters, not a generic
 promise about every browser/AT combination, define executable coverage.
 
@@ -45,13 +45,20 @@ into Bug Bash. Filing and aggregate reporting have dedicated plugins.**
 | Browser checks / shared `a11y-browser` module | Exercise keyboard, focus, rendered semantics and text | Authorized connection + typed scenario -> page observations and artifacts | Implemented in `browser/` and `runtime/browser-contract.mjs`, bundled into Bug Bash/capture; not a separate installed package |
 | `a11y-capture` | Collect scenario/AT/media observations | Owned evaluator + sealed `discovery-observe` request -> row-bound evidence | Typed discovery action implemented; fresh preflight/postcheck and independent assessment required. Unsupported named-AT adapters remain gaps |
 | `a11y-validate` | Validate discovery history, receipts, bytes and category accounting | Original task ID -> integrity, accepted behavior assessments and gaps | `a11y_validate_discovery`, or the same package-local `validate` CLI; evidence-v1 remains separate |
-| `a11y-file-bug` | Create explicitly approved Bugs after validation | Validated finding + detailed draft + approved evidence -> actual Bug ID/URL and attachments | Native ADO WIT upload/create/readback; video requires playback review, timestamps and text alternative |
+| `a11y-file-bug` | Create explicitly approved Bugs after validation | Validated finding + detailed draft + approved evidence -> actual Bug ID/URL and attachments | Process fields/duplicate candidates, bounded chunked WIT upload, correlation readback and checkpoint continuation; video still requires real playback review |
 | `a11y-report` | Produce the overall report | Coverage + observations + filing results + cleanup -> private report | Independent MCP plugin; one shared generator also backs the coordinator CLI |
 
 Planning stays in the coordinator; filing and reporting have independent entrypoints.
 Browser behavior is a shared module; extract at most one new
 `a11y-browser` package when independent reuse justifies it. Real-AT adapters belong
 within capture, not one mandatory package per AT.
+
+**Not supplied as generic built-ins:** NVDA/Narrator/Voice Access capture drivers,
+authenticated/server-backed browser transactions, scanners/visual measurements,
+cloud resource recovery and credential brokers. Their typed integration boundaries
+exist, but each requires an actual deployment implementation and qualification.
+The source orchestration and filing chain must not be advertised as those missing
+drivers, or as complete real-world coverage merely because every matrix row exists.
 
 Bug Bash does not require every sibling plugin to be installed. `a11y-intake` is
 optional if an authorized work item supplies context. `a11y-publish`,
@@ -97,7 +104,7 @@ flowchart TD
     G["7. a11y-test-categories (separate plugin)<br/>matrix check: reject missing steps, retain unfinished coverage"]
     A["8. a11y-bug-bash<br/>Assess expectations, deduplicate; separate source risks from page findings"]
     O["9. Each module cleans its owned resources<br/>Capture: AT / recording / audio; browser tools: created sessions<br/>a11y-bug-bash: aggregate proof and unresolved items"]
-    B["10. a11y-file-bug (explicitly authorized)<br/>Detailed draft and cause / reproduction<br/>Upload and verify evidence, create Bug, read back links<br/>Otherwise record why not filed"]
+    B["10. a11y-file-bug (explicitly authorized)<br/>Inspect fields / duplicate candidates, approve detailed draft<br/>Bounded simple / chunked evidence upload, create and read back<br/>Original-checkpoint recovery or explicit unfiled reason"]
     F["11. a11y-report<br/>Issue counts / categories, actual Bug links, evidence, full coverage and cleanup"]
     U --> P
     P --> R --> S --> C --> E --> V --> G --> A --> O --> B --> F

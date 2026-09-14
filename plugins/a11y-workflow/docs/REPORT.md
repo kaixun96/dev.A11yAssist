@@ -21,6 +21,11 @@ connection. Provider-free source/plan runs retain verified local file delivery
 with `messageSent:false`. New Bug-filing outcomes invalidate an older report:
 generate again before delivery. Unknown delivery retains its original operation
 ID and must be reconciled, not submitted to another destination.
+Filing submission, continuation, reconciliation and the final delivery gate use
+the same task lock. Report freshness is rechecked while recording delivery intent,
+not in an earlier unlocked read. A provider's finished nonpass outcome remains
+reportable using its original request's task identity; it does not need a passing
+receipt or a fabricated Bug URL. Proven-unstarted abandonment is reported, not hidden.
 
 The report plugin is independently callable; Bug Bash's bounded orchestration
 reuses its shared implementation without an implicit MCP-to-MCP call. Category

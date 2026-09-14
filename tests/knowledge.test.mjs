@@ -75,6 +75,7 @@ test('every independently copied plugin retains a complete offline knowledge sna
         }
         const expected = [
           'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
+          'docs/LIQUID-STANDARDS.md',
           'skills/a11y-knowledge-odsp/SKILL.md',
           ...(name === 'a11y-knowledge' ? ['skills/a11y-knowledge/SKILL.md'] : []),
           'knowledge/manifest.json', ...Object.keys(manifest.hashes).map(file => `knowledge/${file}`),

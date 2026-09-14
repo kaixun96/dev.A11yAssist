@@ -12,6 +12,9 @@ matching complete source documents routed by `fluent-spds.md`, `sharepoint.md`
 or `complete-source-guide.md`. Use `knowledge/README.md` for generic principles.
 All references are bundled; do not require AgentOW, another plugin, a provider,
 a DevBox, or an execution workflow to read them.
+For official MAS/WCAG requirements, read `docs/LIQUID-STANDARDS.md` and use the
+caller's authenticated Liquid MCP read-only tools. Bundled project references
+are not current MAS/WCAG retrieval; retain source access and freshness gaps.
 
 Default to read-only source inspection of the user's supplied code and relevant
 documents. Do not edit files, run shell commands, tests or scanners, launch a

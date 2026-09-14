@@ -37,7 +37,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
     assert.equal(plugin.mcpServers, undefined);
     assert.deepEqual(await readdir(join(directory, 'skills')), ['a11y-bug-bash']);
     const expectedModule = [];
-    for (const subtree of ['skills', 'knowledge', 'integrations']) {
+    for (const subtree of ['skills', 'knowledge', 'integrations', 'docs']) {
       for (const path of await filesUnder(join(root, 'plugins/a11y-knowledge', subtree))) {
         const relative = `${subtree}/${path}`;
         expectedModule.push(relative);

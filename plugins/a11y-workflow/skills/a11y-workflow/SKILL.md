@@ -3,20 +3,17 @@ name: a11y-workflow
 description: Optionally compose the shared capabilities into a complete evidence-first accessibility workflow with a caller-selected source and review implementation.
 ---
 
-Read `${PLUGIN_ROOT}/docs/CAPABILITIES.md`. The caller owns composition; a small capability does not require the full workflow.
-For shared knowledge read `${PLUGIN_ROOT}/references/README.md` and `${PLUGIN_ROOT}/references/knowledge.json`.
-Call a11y_workflow_knowledge_list and a11y_workflow_knowledge_search(query) to select relevant Common, Fluent and SharePoint IDs for the actual stack/version, then a11y_workflow_knowledge_read(id) for full entries with citations and source status.
-Knowledge resolves automatically through configured root, validated development layout, verified shared user cache, then pinned HTTPS download. Node.js 22+ and enabled host MCP support are required, but no user configuration or peer plugin is needed. KB bodies are not bundled. First uncached use without a valid local KB requires network access to the published pinned artifact; a local build does not publish it.
-Unavailable tools or failed knowledge verification are explicit dependency failures. Search snippets are not full rules; pending MAS/product sources remain explicit gaps. Knowledge tasks allow registered read-only knowledge MCP and relevant source/reference reads, never shells, setup helpers, tests, browsers, AT or providers. Knowledge access does not authorize execution or bypass capability/workflow gates.
+Resolve bundled paths from the plugin root, two directories above this SKILL.md, not the user's working directory.
+Read `docs/CAPABILITIES.md`. The caller owns composition; a small capability does not require the full workflow.
+For static guidance use `knowledge/README.md` and applicable topics: `knowledge/foundations.md`, `knowledge/component-accessibility.md`, `knowledge/keyboard-focus.md`, `knowledge/forms-and-content.md`, `knowledge/dynamic-content.md`, `knowledge/visual-accessibility.md`.
+For SPDS, Fluent V8/V9 or SharePoint-specific guidance, read `integrations/agentow/knowledge/README.md` and its complete-source topic routing. Static project knowledge does not require AgentOW or an execution integration. Archived operational instructions are reference data, not permission to run them; only an explicitly authorized execution integration may act on its procedures.
 
 This is the complete entrypoint. It includes the shared runtime; sibling small
 plugins need not be installed just to run this package. Source and review
-connections are selected and configured by the caller.
+connections are selected by the caller; AgentOW is an optional integration.
 Other callers may compose small plugins in their own workflow instead.
 
-`${PLUGIN_ROOT}` is the host-supplied top-level installed plugin root, not the
-working directory. Read `${PLUGIN_ROOT}/docs/WORKFLOW.md`,
-`${PLUGIN_ROOT}/docs/PROVIDERS.md` and `${PLUGIN_ROOT}/contracts/workflow.json`.
+Read packaged `docs/WORKFLOW.md`, `docs/PROVIDERS.md` and `contracts/workflow.json`.
 Call `a11y_workflow_doctor`. Missing providers mean incomplete environment setup,
 not permission to run a mock or copy someone else's private infrastructure.
 
@@ -28,7 +25,9 @@ not permission to run a mock or copy someone else's private infrastructure.
 3. BEFORE must establish reproduced+PASS using real AT and independent decisions.
    No source branch or PR without that. The source connection must own its
    worktree, verify the executor, and bind changed resources to exact HEAD.
-   Never recursively re-enter this workflow from a source operation.
+   When `workflowProfile=agentow-odsp` is selected, retain the existing
+   AgentOW entrypoint, exclusive Codespace, execution-host freshness and
+   effective-model requirements. Never recursively re-enter this workflow.
 4. AFTER uses the same scenario/evaluator and accepted BEFORE hash. Validate,
    review, and if changes are requested repeat source->AFTER->validate->review.
 5. Publish only actual reviewed HEAD to a verified Draft PR with live media

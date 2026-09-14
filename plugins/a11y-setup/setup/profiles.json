@@ -4,8 +4,8 @@
   "defaultMode": "check",
   "installer": "native/windows-host.ps1",
   "profiles": [
-    { "id": "source-only", "dependencies": [], "next": "No host probe or installation; use the containing plugin's registered read-only knowledge MCP and top-level shared KB references." },
-    { "id": "browser", "dependencies": ["Python", "Playwright", "Chromium"], "next": "Use an existing approved browser connection on the actual owned Windows host; qualify visible launch and authorized target authentication. No browser connector is bundled." },
+    { "id": "source-only", "dependencies": [], "next": "No host probe or installation; use bundled knowledge in the caller." },
+    { "id": "browser", "dependencies": ["Python", "Playwright", "Chromium"], "next": "Use an existing approved browser connection or separately install/bootstrap the bundled personal evaluator helper." },
     { "id": "nvda", "dependencies": ["NVDA"], "next": "Enables Speech Viewer configuration; qualify real NVDA output on an owned desktop. Combine with browser only if needed." },
     { "id": "audio", "dependencies": ["Python", "FFmpeg", "AudioDeviceCmdlets", "MSS", "PyAudioWPatch"], "next": "VB-CABLE, Console and audio/desktop checks require separately authorized setup. Not required for browser screenshots." },
     { "id": "voice-access", "dependencies": ["Python", "FFmpeg", "AudioDeviceCmdlets", "MSS", "PyAudioWPatch"], "next": "Windows Voice Access availability, first-run consent/model, VB-CABLE and actual recognition must be qualified separately." }

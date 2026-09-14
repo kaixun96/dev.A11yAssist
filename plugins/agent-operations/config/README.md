@@ -1,21 +1,10 @@
 # Private connection setup
 
-Knowledge access in all ten plugins requires none of these files. Enable the
-selected plugin's registered read-only knowledge MCP with Node.js 22+; no peer
-knowledge plugin or provider is needed. Knowledge, Bug Bash and setup have no execution
-configuration requirement. Neither does the `a11y_validate_evidence`
-file-checking tool. Bug Bash live page/AT checks use already-authorized host
-tools and owned resources; installation supplies no browser or operational MCP.
-Setup uses its current scoped Windows host script and dependency templates only
-with the applicable host authorization; it registers read-only knowledge MCP,
-not an operational server. Knowledge use does not require running setup.
+Knowledge plugins require none of these files. Neither does the
+`a11y_validate_evidence` file-checking tool.
 
 For live operations, copy the appropriate template to a private location and
 configure only the connections you are authorized to use:
-
-For full workflows, configure `source` and `review` directly; no workflow profile
-selector or integration-provider alias is used. A single Windows DevBox is a
-pool of size one with the same ownership and evidence gates.
 
 | Template | Use |
 |---|---|

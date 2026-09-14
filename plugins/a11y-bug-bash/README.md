@@ -8,9 +8,7 @@ Feature accessibility bug bash: plan from context and verification steps, inspec
 
 ## Prerequisites
 
-Feature context and verification steps; Node.js 22+ and enabled host MCP for knowledge; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks.
-
-This plugin registers its own read-only knowledge MCP for shared Common, Fluent and SharePoint entries. Knowledge use requires Node.js 22+ and enabled host MCP support; no peer plugin, provider or `A11Y_ASSIST_CONFIG` is required. Resolution is automatic: optional configured KB root, validated repository layout, verified shared user cache, then pinned HTTPS download. KB bodies are not bundled. First uncached use without a valid local KB needs network access and the published pinned artifact; a local build does not publish it. Cached/local use works offline. Invalid configured roots or tampered caches fail explicitly, without fallback or repair. Read full entries with citations and source status; pending sources are gaps, not authority. See [knowledge availability](references/README.md).
+Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks.
 
 ## Install your selection
 
@@ -31,16 +29,15 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Discovery framework with read-only knowledge MCP only; no browser, scanner, AT or provider runtime. Internally reuses the single knowledge and setup skills with this plugin's knowledge tools and top-root KB references; setup resources use an explicit internal directory, not a second plugin root. No peer plugin, duplicate public skill or bundled KB bodies. Setup defaults to check/planning; preparing selected dependencies needs separate host-change authorization and actual ownership. First uncached knowledge use needs a valid local KB or network access to the published pinned artifact. Missing tools or source produce explicit partial coverage, not PASS. No automatic source edits, builds, bug filing or PRs.
+Includes the same a11y-knowledge and a11y-setup modules internally; no extra install. Setup defaults to check/planning; installing selected dependencies needs separate host-change authorization. No browser/AT binaries, scanner or live connection supplied. Missing tools or source produce partial coverage, not PASS. No automatic fixes, builds, filing or PRs.
 
 ## Reference
 
 - [Bug Bash workflow and boundaries](docs/BUG-BASH.md)
 - [Feature context template](bug-bash/context.template.md)
 - [Findings and coverage report template](bug-bash/report.template.md)
-- [Environment setup and authorization gates](docs/SETUP.md)
-- [Reused internal environment setup](modules/a11y-setup/skills/a11y-setup/SKILL.md)
+- [Built-in environment preparation](modules/a11y-setup/docs/SETUP.md)
 - [Reused internal knowledge review](modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md)
-- [Shared KB pins and automatic knowledge MCP](references/README.md)
+- [Included project knowledge](modules/a11y-knowledge/integrations/agentow/knowledge/README.md)
 
 [Back to the plugin catalog](https://github.com/kaixun96/dev.A11yAssist)

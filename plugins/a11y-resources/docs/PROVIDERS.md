@@ -1,4 +1,4 @@
-# Trusted provider protocol
+# Trusted provider protocol and migration boundary
 
 ## What is executable today
 
@@ -13,8 +13,8 @@ stage gates, artifact hashing, version/owner fencing, bounded subprocess RPC,
 request reconciliation, progress assessment, packaging checks and tests.
 
 They do **not** contain a generic live Dev Center recovery driver, AT recorder,
-or ADO credential broker. Deployment-specific operations require explicitly
-configured and qualified trusted programs. Missing configuration
+ADO credential broker or a new AgentOW implementation. Those remain the existing
+deployment's trusted programs until migrated/qualified. Missing configuration
 fails explicitly; `doctor` never reports configuration as live readiness.
 
 This boundary is intentional: publishing private scripts wholesale would leak
@@ -23,15 +23,6 @@ Installing the full workflow is not yet proof that a fresh user's environment
 can autonomously complete a real A11y Bug.
 
 ## Configuration
-
-Knowledge access in all ten plugins needs Node.js 22+ and the selected plugin's
-registered read-only MCP, not providers or `A11Y_ASSIST_CONFIG`. Knowledge and
-Bug Bash carry no operational MCP; Bug Bash page/AT checks require separately
-authorized host tools and owned resources. The configuration below is for
-execution operations, not knowledge or discovery installation.
-Setup likewise registers only read-only knowledge MCP; its scoped native Windows
-script and dependency templates use separately authorized host tools, not this
-provider protocol. Installation is neither live readiness nor execution authority.
 
 Independent operations use `config/example.capability.json`: only owner,
 stateRoot and the needed provider mapping are required. The full workflow
@@ -98,11 +89,9 @@ Echo `schemaVersion`, `requestId`, `runId`, `owner` at top level.
   only the callback, not durable progress or native executor supervision.
 - `state: finished` requires a `receipt` with the same identity, `stage`, outcome
   and directory-relative artifacts with SHA-256. A pass must include its local
-  capability gates from `src/contracts/capabilities.json` (installed as
-  `contracts/capabilities.json`) and echo the supplied
+  capability gates from `contracts/capabilities.json` and echo the supplied
   subject/scenario/evaluator/HEAD/baseline bindings. Workflow requests additionally
-  require their stage gates from `src/contracts/workflow.json` and `docs/WORKFLOW.md`
-  (installed as `contracts/workflow.json` and `docs/WORKFLOW.md`).
+  require their stage gates from `workflow.json` and `WORKFLOW.md`.
 
 The provider is the trusted evidence authority; the model cannot submit a
 fabricated receipt directly to advance the runtime. Boolean gates are not
@@ -118,8 +107,8 @@ workflow they lead to cleanup. `changes-requested` is allowed only from
 review/validate; the full workflow uses it to reopen source.
 
 For source pass provide exact 40-character `head`, matching scenario/evaluator
-and `prCreated: false`. The configured source connection must establish owned
-worktree, verified executor and exact-HEAD resource bindings.
+and `prCreated: false`. Only the explicit `agentow-odsp` profile also requires
+`/agentow-a11y`, `model: gpt-6-astra` and its Codespace/freshness gates.
 For full-workflow AFTER provide the accepted BEFORE receipt SHA from run.receipts.
 For independent AFTER echo context.beforeReceiptSha256 when supplied.
 Publish pass requires `pr: { url: "https://...", isDraft: true }`.
@@ -203,18 +192,19 @@ native effect, reconstruct missing proof from absent state, or release resources
 The original media credential belongs in the protected connection, not argv,
 public configuration, operation inputs or output.
 
-| Provider | Capability to implement or qualify |
+| Provider | Existing capability to wrap/qualify |
 |---|---|
 | intake | Authorized item/comment/attachment intake; claim only when the caller's deployment policy requires it |
-| resources | authoritative evaluator/worktree/recovery registries; status exposes public fields only |
+| resources | authoritative evaluator/Codespace/recovery registries; status exposes public fields only |
 | capture | validated worker requests, deployed hash checks, real Windows AT and evidence artifacts |
 | validate | deterministic validator and independent accessibility evaluator |
+| agentow | Copilot AgentOW in the leased Codespace, freshness and exact-HEAD handoff |
 | source / review | Generic caller-selected source implementation and independent code review |
 | publish | actual ADO Draft PR operations, evidence upload and live media checks; no comments |
 | operations | cleanup/release, insights, original-entrypoint notification and continuation watchers |
 
 In the full workflow, resource mutations belong inside the stage provider that owns their timing
-(intake claims, BEFORE evaluator acquisition, source worktree acquisition,
+(intake claims, BEFORE evaluator acquisition, source Codespace acquisition,
 cleanup token-bound release). The standalone resources plugin exposes status
 and ownership diagnosis plus explicit `release-evaluator` for one exact completed
 native assignment. It does not acquire resources. That release must use the
@@ -227,10 +217,10 @@ automatically takes over the caller's workflow or changes another operation.
 
 ## Entry adapters
 
-`src/adapters/cli.mjs` renders progress and declares detached-executor requirements.
+`adapters/cli.mjs` renders progress and declares detached-executor requirements.
 The terminal can exit after a pending receipt; reopen the same operation/run and
 reconcile. In caller-poll mode the caller's scheduler must survive that terminal.
-`src/adapters/twin.mjs` offers scoped system notifications through the actual
+`adapters/twin.mjs` offers scoped system notifications through the actual
 runtime.json endpoint. It checks exact enabled conversation identity, never
 uses sendAsUserId, resets a binding or disguises the event as the owner.
 Persist notification intent before calling it and reconcile ambiguous sends.
@@ -242,7 +232,3 @@ availability. `notifyTwin` repeats the check at delivery time.
 Neither adapter owns the resource pool. Both use the same provider and run
 identity. Normal responses use the host's own UI; a notification is never proof
 that the worker resumed.
-
-Generated execution packages place these adapters under their own `adapters/`.
-Full workflows configure `source` and `review` connections directly; no workflow
-profile selector or integration-provider alias is used.

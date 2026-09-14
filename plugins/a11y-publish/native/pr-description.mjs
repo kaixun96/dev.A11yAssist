@@ -1,12 +1,9 @@
-// Adapted from kaixun96/dev.AgentOW@66eea66533e683492e148f44d361fdd7312c4908,
-// ts/src/ow/tools/prDescriptionBudget.js. Microsoft Internal; see LICENSE at the repository or plugin root.
-// Source attribution only; marker ownership belongs to A11yAssist.
 export const ADO_PR_DESCRIPTION_MAX_LENGTH = 4000;
-export const VISUAL_SECTION_START = "<!-- a11y-assist:visual-validation:start -->";
-export const VISUAL_SECTION_END = "<!-- a11y-assist:visual-validation:end -->";
+export const VISUAL_SECTION_START = "<!-- agentow:visual-validation:start -->";
+export const VISUAL_SECTION_END = "<!-- agentow:visual-validation:end -->";
 
 const DISPOSABLE_SECTION_PATTERN =
-  /<!-- a11y-assist:disposable:start(?:\s+([^>]+?))?\s*-->[\s\S]*?<!-- a11y-assist:disposable:end -->\s*/gi;
+  /<!-- agentow:disposable:start(?:\s+([^>]+?))?\s*-->[\s\S]*?<!-- agentow:disposable:end -->\s*/gi;
 
 function compactMarkdown(markdown) {
   return markdown
@@ -15,6 +12,21 @@ function compactMarkdown(markdown) {
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+function removeLegacyVisualSections(markdown) {
+  const lines = markdown.split("\n");
+  const result = [];
+  let skipping = false;
+  for (const line of lines) {
+    if (/^## Visual Validation(?: Attachments)?\s*$/i.test(line)) {
+      skipping = true;
+      continue;
+    }
+    if (skipping && /^##\s/.test(line)) skipping = false;
+    if (!skipping) result.push(line);
+  }
+  return result.join("\n").trim();
 }
 
 function replaceVisualSection(existing, visualBlock) {
@@ -28,11 +40,12 @@ function replaceVisualSection(existing, visualBlock) {
     };
   }
 
+  const withoutLegacyVisual = removeLegacyVisualSections(existing);
   return {
-    markdown: existing
-      ? `${existing}\n\n${visualBlock}`
+    markdown: withoutLegacyVisual
+      ? `${withoutLegacyVisual}\n\n${visualBlock}`
       : visualBlock,
-    replaced: false,
+    replaced: withoutLegacyVisual !== existing.trim(),
   };
 }
 
@@ -60,7 +73,7 @@ export function preparePrDescriptionUpdate(existing, visualMarkdown, maxLength =
     throw new Error(
       `PR description would be ${description.length} characters after replacing visual evidence; ` +
       `Azure DevOps allows ${maxLength}. Mark low-value generated content with ` +
-      `<!-- a11y-assist:disposable:start label --> ... <!-- a11y-assist:disposable:end --> or shorten it. ` +
+      `<!-- agentow:disposable:start label --> ... <!-- agentow:disposable:end --> or shorten it. ` +
       `Human-authored content and required visual evidence were preserved.`,
     );
   }

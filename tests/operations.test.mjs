@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { fileHash, hash, readConfig, createRun, executeStage, workflow, loadRun, reconcile, assessProgress } from '../src/runtime/core.mjs';
-import { capabilities, invokeCapability, providerFor, validateCapabilityReceipt } from '../src/runtime/capability.mjs';
+import { capabilities, invokeCapability, validateCapabilityReceipt } from '../src/runtime/capability.mjs';
 import { executeOperation, operationStatus, reconcileOperation } from '../src/runtime/operations.mjs';
 import { computeScenarioHash } from '../src/runtime/evidence-v1.mjs';
 
@@ -18,14 +18,15 @@ async function fixture(body) {
   const stateRoot = await mkdtemp(join(tmpdir(), 'capability-operations-'));
   const config = { schemaVersion: 1, owner: 'caller-owner', stateRoot, providers: {} };
   const executableSha256 = await fileHash(process.execPath);
-  for (const name of ['intake', 'capture', 'validate', 'publish', 'operations', 'resources', 'source', 'review']) {
+  for (const name of ['intake', 'capture', 'validate', 'publish', 'operations', 'resources', 'source', 'review', 'agentow']) {
     config.providers[name] = { executable: process.execPath, args: [provider], executableSha256, timeoutSeconds: 10 };
   }
   try { await body(config, stateRoot); } finally { await rm(stateRoot, { recursive: true }); }
 }
 
-test('each capability operates without a Bug journal, host roster or previous stages', async () => {
+test('each capability operates without a Bug journal, host roster, previous stages or AgentOW', async () => {
   await fixture(async (config, dir) => {
+    delete config.providers.agentow;
     const path = join(dir, 'config.json');
     await writeFile(path, JSON.stringify(config));
     const independent = await readConfig(path, { fullWorkflow: false });
@@ -228,6 +229,7 @@ test('optional full workflow shares capability gates and keeps its own strict or
   await fixture(async config => {
     config.mode = 'cli';
     config.devboxes = ['box-one'];
+    delete config.providers.agentow;
     const run = await createRun(config, 'external-project:task-42');
     await assert.rejects(executeStage(config, 'a11y-workflow', run.runId, 'publish'), /Phase ordering/);
     await assert.rejects(executeStage(config, 'a11y-workflow', run.runId, 'intake', { badGate: 'itemRead' }), /Missing capability gate/);
@@ -238,27 +240,18 @@ test('optional full workflow shares capability gates and keeps its own strict or
   });
 });
 
-test('removed profiles and AgentOW mappings cannot route any capability or invoke a provider', async () => {
-  await fixture(async (config, dir) => {
-    const invalid = [
-      ...['agentow-odsp', 'generic', null, false, '', undefined].map(workflowProfile => ({ ...config, workflowProfile })),
-      ...[config.providers.source, null, false, '', undefined].map(agentow => ({ ...config,
-        providers: { ...config.providers, agentow } }))
-    ];
-    let calls = 0;
-    for (const changed of invalid) {
-      for (const action of ['intake', 'source', 'review']) {
-        assert.throws(() => providerFor(changed, action), /workflowProfile|providers\.agentow/);
-        await assert.rejects(invokeCapability(changed, action, {}, async () => { calls++; }),
-          /workflowProfile|providers\.agentow/);
-      }
-      await assert.rejects(executeOperation(changed, 'a11y-intake', 'removed-config', 'intake', context),
-        /workflowProfile|providers\.agentow/);
+test('explicit legacy profile retains model, host and source gates without forcing them on generic runs', async () => {
+  await fixture(async config => {
+    config.mode = 'cli'; config.devboxes = ['box-one']; config.workflowProfile = 'agentow-odsp';
+    delete config.providers.source; delete config.providers.review;
+    const rejected = await createRun(config, 'legacy-item');
+    for (const stage of ['intake', 'before']) await executeStage(config, 'a11y-workflow', rejected.runId, stage);
+    await assert.rejects(executeStage(config, 'a11y-workflow', rejected.runId, 'source'), /AgentOW profile/);
+    const accepted = await createRun(config, 'legacy-other');
+    for (const stage of workflow.stages) {
+      await executeStage(config, 'a11y-workflow', accepted.runId, stage.id, { legacyProfile: true });
     }
-    assert.equal(calls, 0);
-    await assert.rejects(access(join(dir, 'operations')), { code: 'ENOENT' });
-    assert.equal(providerFor(config, 'source'), 'source');
-    assert.equal(providerFor(config, 'review'), 'review');
+    assert.equal((await loadRun(config, accepted.runId)).status, 'terminal');
   });
 });
 

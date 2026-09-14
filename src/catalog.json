@@ -2,58 +2,75 @@
   {
     "name": "a11y-bug-bash",
     "group": "discovery",
-  "docs": ["docs/BUG-BASH.md", "bug-bash/context.template.md", "bug-bash/report.template.md", "docs/SETUP.md", "modules/a11y-setup/skills/a11y-setup/SKILL.md", "modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md", "references/README.md"],
+    "docs": ["docs/BUG-BASH.md", "bug-bash/context.template.md", "bug-bash/report.template.md", "modules/a11y-setup/docs/SETUP.md", "modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md", "modules/a11y-knowledge/integrations/agentow/knowledge/README.md"],
     "en": {
       "purpose": "Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks",
-      "requires": "Feature context and verification steps; Node.js 22+ and enabled host MCP for knowledge; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks",
+      "requires": "Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks",
       "example": "/a11y-bug-bash Review <feature>: <context and expected behavior>. Verify using <steps> on <authorized test URL and safe fixture>; source <paths/revision>. Use my existing browser connection, budget 30 minutes, save to <private output directory>. Report page bugs and code risks separately; do not fix or file.",
-  "limits": "Discovery framework with read-only knowledge MCP only; no browser, scanner, AT or provider runtime. Internally reuses the single knowledge and setup skills with this plugin's knowledge tools and top-root KB references; setup resources use an explicit internal directory, not a second plugin root. No peer plugin, duplicate public skill or bundled KB bodies. Setup defaults to check/planning; preparing selected dependencies needs separate host-change authorization and actual ownership. First uncached knowledge use needs a valid local KB or network access to the published pinned artifact. Missing tools or source produce explicit partial coverage, not PASS. No automatic source edits, builds, bug filing or PRs."
+      "limits": "Includes the same a11y-knowledge and a11y-setup modules internally; no extra install. Setup defaults to check/planning; installing selected dependencies needs separate host-change authorization. No browser/AT binaries, scanner or live connection supplied. Missing tools or source produce partial coverage, not PASS. No automatic fixes, builds, filing or PRs."
     },
     "zh": {
       "purpose": "面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险",
-      "requires": "Feature context 和验证步骤；知识需要 Node.js 22+ 和已启用 MCP 的宿主；代码审查需要只读源码；页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属",
+      "requires": "Feature context 和验证步骤；代码审查需要只读源码；实际页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属",
       "example": "/a11y-bug-bash 检查 <feature>：<context 和预期行为>。按 <验证步骤> 操作 <获授权测试 URL 和安全数据>，源码在 <路径/版本>。使用已有浏览器连接，预算 30 分钟，报告保存到 <私有输出目录>。分开报告页面 bug 和代码风险，不修改代码或提单。",
-  "limits": "发现框架仅提供只读知识 MCP，不包含浏览器、扫描器、AT 或 provider 运行时。内部复用单一知识与环境准备 skill，使用本插件知识工具及顶层知识库引用；环境准备资源使用明确的内部目录，不是第二个插件根目录。无需其他插件、不重复注册公共 skill，不打包知识库正文。环境准备默认检查和规划；按需安装依赖需要单独的主机变更授权及实际归属。首次无缓存的知识使用需要有效本地知识库或联网访问已发布的固定制品。缺少工具或源码时明确报告部分覆盖，不宣称 PASS。不自动改代码、构建、提 bug 或建 PR。"
+      "limits": "内置复用 a11y-knowledge 和 a11y-setup，无需另装。环境准备默认检查和规划；按需安装依赖需要单独的主机变更授权。不自带浏览器或 AT 二进制、扫描器和实时连接。缺少工具或源码时报告部分覆盖，不宣称 PASS。不自动修复、构建、提 bug 或建 PR。"
     }
   },
   {
     "name": "a11y-setup",
     "group": "setup",
-    "docs": ["docs/SETUP.md", "setup/report.template.md", "references/README.md"],
+    "docs": ["docs/SETUP.md", "setup/report.template.md"],
     "en": {
       "purpose": "Check and prepare a Windows A11y environment: selected browser, NVDA, audio and Voice Access dependencies",
-      "requires": "Node.js 22+ and enabled host MCP for knowledge; authorized shell access on the actual Windows evaluator for setup checks; preparation needs host ownership and change authorization",
+      "requires": "Copilot with authorized shell access on the actual Windows evaluator; preparation needs host ownership and change authorization",
       "example": "/a11y-setup check browser and NVDA on <Windows evaluator>; save installed versions, missing dependencies and exact preparation steps to <private output directory>. Do not install or open apps yet.",
-      "limits": "Uses the shared scoped native setup helper and its own read-only knowledge MCP for Common, Fluent and SharePoint. No peer plugin, operational MCP, browser helper, provider or bundled KB bodies. Knowledge access grants no setup authority; first uncached use needs a valid local KB or network access to the published pinned artifact. Plugin installation does not install third-party tools. Prepare only an explicitly approved dependency subset; driver, consent, elevation and restart are separate gates. No automatic scanner/ADK installation or live provider setup. Installed does not mean runtime-ready."
+      "limits": "Reuses AgentOW's shared host installer; no AgentOW or MCP dependency. Plugin installation does not install third-party tools. Prepare only an approved subset; driver, consent, elevation and restart are separate gates. No automatic scanner/ADK installation or live provider setup. Installed does not mean runtime-ready."
     },
     "zh": {
       "purpose": "检查和准备 Windows 无障碍环境：按需安装浏览器、NVDA、音频和 Voice Access 所需依赖",
-      "requires": "知识需要 Node.js 22+ 和已启用 MCP 的宿主；环境检查需要在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权",
+      "requires": "Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权",
       "example": "/a11y-setup check <Windows 评估机> 的浏览器和 NVDA 环境，将已安装版本、缺少依赖和具体准备步骤保存到 <私有输出目录>。暂不安装或打开应用。",
-      "limits": "使用共享的限定范围原生准备脚本及独立的只读知识 MCP，读取 Common、Fluent 和 SharePoint。无需其他插件，不包含操作 MCP、浏览器助手、provider 或知识库正文。知识访问不授予环境准备权限；首次无缓存时需要有效本地知识库或联网访问已发布的固定制品。装插件不等于安装第三方工具；仅准备明确获授权的依赖子集。驱动、同意提示、提权和重启单独处理，不自动安装扫描器、ADK 或配置实时 provider。安装成功不代表运行就绪。"
+      "limits": "复用 AgentOW 使用的共享安装脚本，无需 AgentOW 或 MCP。装插件不等于安装第三方工具；仅准备获授权的依赖子集。驱动、同意提示、提权和重启单独处理，不自动安装扫描器、ADK 或配置实时 provider。安装成功不代表运行就绪。"
     }
   },
   {
     "name": "a11y-knowledge",
     "group": "knowledge",
-    "docs": ["references/README.md", "skills/a11y-knowledge/SKILL.md"],
+    "docs": ["knowledge/README.md", "skills/a11y-knowledge-odsp/SKILL.md", "integrations/agentow/knowledge/README.md", "integrations/agentow/knowledge/fluent-spds.md", "integrations/agentow/knowledge/sharepoint.md", "integrations/agentow/knowledge/complete-source-guide.md"],
     "en": {
-      "purpose": "Accessible code guidance, root-cause analysis, static/design review and test planning using shared Common, SPDS, Fluent V8/V9 and SharePoint knowledge",
-      "requires": "Node.js 22+, enabled host MCP and the code or question to review; automatic KB resolution, no execution configuration or peer plugin",
-      "example": "/a11y-knowledge Review this Fluent V9 dialog for keyboard, focus restoration and announcements using the pinned shared component knowledge; cite full entries and source status.",
-      "limits": "Read-only knowledge MCP, no operational runtime, scanners or real AT. References pin shared Common, Fluent and SharePoint packages; KB bodies are not bundled. Select project guidance only for the actual stack/version. First uncached use needs a valid local KB or network access to the published pinned artifact; a local build does not publish it. Read full entries: search snippets are not rules and pending sources are gaps. Knowledge grants no execution authority."
+      "purpose": "Accessibility guidance and static review, with general foundations and a built-in ODSP submodule (SPDS, Fluent V8/V9, SharePoint)",
+      "requires": "Copilot CLI and the code or question to review; no execution configuration",
+      "example": "/a11y-knowledge Review this Fluent V9 dialog for keyboard, focus restoration and announcements using the built-in component knowledge.",
+      "limits": "One installation includes general topics and the complete ODSP references; no extra plugin is needed. Select project guidance only for the matching stack/version; unrelated projects use general topics only. Read-only, no scanners or real AT. Archived commands are inert reference data, not execution authority."
     },
     "zh": {
-      "purpose": "使用共享 Common、SPDS、Fluent V8/V9 和 SharePoint 知识进行无障碍代码指导、根因分析、静态及设计审查和测试规划",
-      "requires": "Node.js 22+、已启用 MCP 的宿主，以及待审代码或问题；自动解析知识库，无需执行配置或其他插件",
-      "example": "/a11y-knowledge 使用固定版本的共享组件知识，审查这个 Fluent V9 对话框的键盘、焦点恢复和播报，引用完整条目及来源状态。",
-      "limits": "仅提供只读知识 MCP，不包含操作运行时、扫描器或真实 AT。引用锁定共享 Common、Fluent 和 SharePoint 包，正文不随插件打包。按实际技术栈和版本读取；首次无缓存时需要有效本地知识库或联网访问已发布的固定制品，本地构建不会发布制品。读取完整条目，搜索摘要不是规则，pending 来源是缺口。知识不授予执行权限。"
+      "purpose": "无障碍知识与静态审查，内置通用基础及 ODSP 子模块（SPDS、Fluent V8/V9、SharePoint）",
+      "requires": "Copilot CLI，以及待审代码或问题；不需要执行环境配置",
+      "example": "/a11y-knowledge 使用内置组件知识，审查这个 Fluent V9 对话框的键盘、焦点恢复和播报。",
+      "limits": "一次安装包含通用主题和完整 ODSP 参考资料，无需另装插件。按实际技术栈和版本读取；其他项目只使用通用知识，不套用 ODSP 约定。只读，不运行扫描器或真实辅助技术；归档命令只是参考资料，不是执行授权。"
+    }
+  },
+  {
+    "name": "a11y-knowledge-odsp",
+    "group": "compatibility",
+    "docs": ["integrations/agentow/knowledge/README.md", "integrations/agentow/knowledge/fluent-spds.md", "integrations/agentow/knowledge/sharepoint.md", "integrations/agentow/knowledge/complete-source-guide.md"],
+    "en": {
+      "purpose": "Legacy standalone installation; already included as a submodule of a11y-knowledge",
+      "requires": "Copilot CLI and relevant project code; no AgentOW, DevBox or provider required",
+      "example": "/a11y-knowledge-odsp Review this Fluent V9 dialog's focus restoration and announcements.",
+      "limits": "New users install a11y-knowledge only. This name remains for existing installations; do not install both packages because they expose the same ODSP skill. No references were removed. Read-only; archived commands are data, not execution authority."
+    },
+    "zh": {
+      "purpose": "旧版独立安装入口；已作为子模块内置于 a11y-knowledge",
+      "requires": "Copilot CLI 和相关项目代码；无需 AgentOW、DevBox 或执行连接",
+      "example": "/a11y-knowledge-odsp 审查这个 Fluent V9 对话框的焦点恢复和播报。",
+      "limits": "新用户只需安装 a11y-knowledge。此名称保留兼容已有安装；两者提供相同 ODSP skill，不要重复安装。知识原文没有删减；只读，归档命令不构成执行授权。"
     }
   },
   {
     "name": "a11y-intake",
     "group": "capability",
-    "docs": ["docs/NATIVE-CAPABILITIES.md", "docs/CAPABILITIES.md", "references/README.md"],
+    "docs": ["docs/NATIVE-CAPABILITIES.md", "docs/CAPABILITIES.md"],
     "en": {
       "purpose": "Read an authorized work item and prepare acceptance criteria and a reproduction scenario",
       "requires": "Configured work-item access; built-in ADO read-item uses host-managed authentication",
@@ -70,7 +87,7 @@
   {
     "name": "a11y-resources",
     "group": "capability",
-    "docs": ["docs/CAPABILITIES.md", "references/README.md"],
+    "docs": ["docs/CAPABILITIES.md"],
     "en": {
       "purpose": "Inspect resource status; release an explicitly authorized completed evaluator assignment",
       "requires": "Authorized resource connection; release additionally needs the original completed, owned assignment",
@@ -87,7 +104,7 @@
   {
     "name": "a11y-capture",
     "group": "capability",
-    "docs": ["docs/CAPABILITIES.md", "docs/PROVIDERS.md", "references/README.md"],
+    "docs": ["docs/CAPABILITIES.md", "docs/PROVIDERS.md"],
     "en": {
       "purpose": "Capture BEFORE/AFTER evidence with real Windows assistive technology",
       "requires": "Qualified Windows capture connection, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD",
@@ -104,7 +121,7 @@
   {
     "name": "a11y-validate",
     "group": "capability",
-    "docs": ["docs/CAPABILITIES.md", "docs/WORKFLOW.md", "references/README.md"],
+    "docs": ["docs/CAPABILITIES.md", "integrations/agentow/knowledge/evidence-contract.md"],
     "en": {
       "purpose": "Check existing evidence files; optionally request independent behavior evaluation",
       "requires": "Node.js 22+ and evidence-v1 files for structural checks; behavior evaluation requires a qualified connection",
@@ -121,7 +138,7 @@
   {
     "name": "a11y-publish",
     "group": "capability",
-    "docs": ["docs/NATIVE-CAPABILITIES.md", "docs/CAPABILITIES.md", "references/README.md"],
+    "docs": ["docs/NATIVE-CAPABILITIES.md", "docs/CAPABILITIES.md"],
     "en": {
       "purpose": "Attach evidence to an existing Draft PR; integrate broader publication when configured",
       "requires": "Authorized PR connection, exact HEAD and hash-bound files; built-in attachment action uses ADO authentication",
@@ -138,7 +155,7 @@
   {
     "name": "agent-operations",
     "group": "capability",
-    "docs": ["docs/CAPABILITIES.md", "docs/PROVIDERS.md", "references/README.md"],
+    "docs": ["docs/CAPABILITIES.md", "docs/PROVIDERS.md"],
     "en": {
       "purpose": "Clean up explicitly owned resources and reconcile scoped media or NVDA recovery",
       "requires": "Authorized operations connection and original ownership records for the requested scope",
@@ -155,18 +172,18 @@
   {
     "name": "a11y-workflow",
     "group": "workflow",
-    "docs": ["docs/WORKFLOW.md", "docs/PROVIDERS.md", "docs/CAPABILITIES.md", "references/README.md"],
+    "docs": ["docs/WORKFLOW.md", "docs/PROVIDERS.md", "docs/CAPABILITIES.md"],
     "en": {
       "purpose": "Optional end-to-end evidence-first remediation workflow",
       "requires": "Qualified work-item, resource, Windows capture, source, validation, review, publication and cleanup connections",
       "example": "/a11y-workflow Check my configuration for <exact Bug>; report missing connections before starting any execution.",
-      "limits": "Includes the shared capabilities; sibling plugins are not prerequisites. Supports Twinbot with multiple Windows DevBoxes, or Copilot CLI with one or multiple Windows DevBoxes; a single DevBox is a pool of one with the same gates. Configure source and review connections directly. Installation is not a ready-to-run environment. No reproduced BEFORE means no source change or PR; no unverified publication fallback."
+      "limits": "Includes the shared capabilities; sibling plugins are not prerequisites. AgentOW is optional. Installation is not a ready-to-run environment. No reproduced BEFORE means no source change or PR; no unverified publication fallback."
     },
     "zh": {
       "purpose": "可选的、以证据为依据的端到端修复工作流",
       "requires": "已验收的工作项、资源、Windows 采集、源码、验证、review、发布和清理连接",
       "example": "/a11y-workflow 检查 <指定 Bug> 所需的配置，在开始执行前报告缺少的连接。",
-      "limits": "已包含共用能力，不要求安装其他小插件。支持 Twinbot 配合多个 Windows DevBox，或 Copilot CLI 配合一个或多个 Windows DevBox；单机是大小为一的资源池，遵守相同门禁。直接配置源码和 review 连接。安装不等于环境已就绪。没有已复现的 BEFORE 就不改源码或建 PR，也不允许未验证发布。"
+      "limits": "已包含共用能力，不要求安装其他小插件；AgentOW 可选。安装不等于环境已就绪。没有已复现的 BEFORE 就不改源码或建 PR，也不允许未验证发布。"
     }
   }
 ]

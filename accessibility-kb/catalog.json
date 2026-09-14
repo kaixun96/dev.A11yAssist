@@ -1,8 +1,0 @@
-{
-  "schemaVersion": 1,
-  "packages": [
-    {"id": "common", "path": "packages/common/package.json"},
-    {"id": "fluent", "path": "packages/fluent/package.json"},
-    {"id": "sharepoint", "path": "packages/sharepoint/package.json"}
-  ]
-}

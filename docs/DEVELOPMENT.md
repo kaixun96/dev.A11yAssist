@@ -59,7 +59,7 @@ The optional helper requires an explicit selection and prints commands by defaul
 .\tools\install.ps1 -Plugin a11y-knowledge
 ```
 
-`-Execute` runs the commands; `-Plugin all` selects the eleven non-compatibility
+`-Execute` runs the commands; `-Plugin all` selects the ten non-compatibility
 packages. Knowledge includes its ODSP subskill and full references by default.
 The old standalone ODSP install name remains supported for existing users only.
 Add `-WithAgentOW` only when intentionally installing that separate integration.

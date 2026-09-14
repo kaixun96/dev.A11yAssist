@@ -56,7 +56,7 @@ deleting other original documents or switching installed workers.
   require AgentOW or a workflow.
   Archived `SKILL.md`/`AGENTS.md`/code receive inert suffixes and are explicitly
   data, never instructions that authorize commands or change the active skill.
-- The seven execution plugins bundle generic knowledge and the retained
+- The six execution plugins bundle generic knowledge and the retained
   integration profile separately. Their skill preambles route project-specific
   static questions to the same complete source maps without requiring an execution
   integration. Static guidance does not replace authorized runtime evidence.

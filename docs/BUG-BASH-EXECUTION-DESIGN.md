@@ -106,7 +106,7 @@ installed plugin, separate MCP process or remote sub-agent.
 | Source review | Reuse knowledge's read-only review as a child step | Scoped source/revision + context -> source-supported risks | No separate `a11y-source-review` package initially; no source edits, tests or shell execution within knowledge review |
 | Evidence integrity and behavior | Extend `a11y-validate`; reuse artifact hashing | Discovery evidence manifest -> separate integrity and behavior decisions | New discovery schema required; current evidence-v1 checker cannot accept an arbitrary Bug Bash report |
 | Report | Internal pure Bug Bash module initially | Coverage + accepted observations + source risks + gaps -> private report | No `a11y-publish` dependency; report generation is not ticket/PR publication |
-| Recovery, cleanup, delivery | Reuse `agent-operations` through scoped providers | Original operation/ownership + progress -> reconciliation, cleanup and delivery receipts | Narrow recovery never substitutes for complete cleanup; no broad process termination |
+| Recovery, cleanup, delivery | Each module owns its cleanup; Bug Bash aggregates and delivers | Original operation/ownership + module results -> cleanup proof, unresolved items and delivery | Capture owns preflight/postcheck and narrow media/NVDA recovery; original authority owns release; no separate operations plugin or broad process termination |
 
 Thus the first implementation should add at most one new package
 (`a11y-browser`), after its independent contract is useful. It should not create

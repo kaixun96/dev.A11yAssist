@@ -4,11 +4,11 @@
 
 ## Use this for
 
-Capture BEFORE/AFTER evidence with real Windows assistive technology
+Capture real Windows AT evidence and recover owned recording, audio or NVDA resources
 
 ## Prerequisites
 
-Qualified Windows capture connection, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD.
+Qualified Windows capture connection with per-attempt preflight/postcheck, owned evaluator and a sealed scenario; AFTER needs the actual source HEAD.
 
 Node.js 22+.
 
@@ -33,7 +33,7 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Installation does not provision a DevBox or recorder. No synthetic AT results. Preserve scenario/evaluator identity for AFTER; missing capabilities are explicit blockers.
+Installation does not provision a DevBox or recorder. No synthetic AT results. Preserve scenario/evaluator identity for AFTER. Explicit recover-media/recover-nvda actions require the original assignment and authorized operations connection; narrow recovery is not full cleanup or resource release.
 
 ## Reference
 

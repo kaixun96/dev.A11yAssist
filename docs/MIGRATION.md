@@ -2,6 +2,37 @@
 
 ## Current delivery
 
+v0.16 removes the independently installable `agent-operations` package, skill,
+MCP server and catalog/installer entry. New calls move as follows:
+
+| Retired entrypoint | New owner |
+|---|---|
+| `agent_operations_invoke` / `recover-media`, `recover-nvda` | `a11y_capture_invoke`; same narrow original-instance recovery contracts |
+| `agent_operations_invoke` / `cleanup` | `a11y_workflow_invoke`; same independently authorized scoped cleanup, not full-workflow completion |
+| Workflow cleanup stage, progress, abandonment and reconciliation | `a11y_workflow_execute`, `_progress`, `_abandon`, `_reconcile` |
+| Independent operation status/reconciliation | New owning plugin's `_operation_status` / `_operation_reconcile`, for new operations only |
+
+Normal cleanup belongs to each module; Bug Bash aggregates actual proof and
+unresolved items without depending on the full workflow. Internal shared
+operations code and the qualified `operations` provider mapping remain; no
+second recovery engine or implicit fallback to the `capture` provider is added.
+Eleven package names remain installable, ten selected by `all`.
+
+Contract/envelope v0.7 adds mandatory `capturePreflightVerified` and
+`capturePostcheckVerified` pass gates to BEFORE/AFTER, including workflow capture.
+Connections must perform current scenario-scoped checks before every capture and
+postcheck/owned cleanup after every attempt, including failure or interruption.
+See [the lifecycle contract](CAPABILITIES.md#capture-lifecycle-package-v016-contract-v07).
+Provider qualification is required; gate checking is not a remote health probe.
+
+**Cutover is for new operations only.** Do not uninstall or replace the only
+runtime supervising unfinished work. Reconcile old operations using their
+original pinned package/provider and IDs, preserve evidence, and close or
+explicitly hand off ownership before an installation upgrade. Old journals fail
+the v0.7 fence; do not edit their plugin/version fields, silently rebind provider
+connections or retry with fresh IDs. This source release neither uninstalls a
+running plugin nor deploys providers, changes existing workers or resumes tests.
+
 v0.15 extracts the AgentOW host-setup tutorial into independent `a11y-setup`
 and bundles that same module into Bug Bash's preparation step. It reuses the
 shared Windows host installer and retained browser helper, not a second

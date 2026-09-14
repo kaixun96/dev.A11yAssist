@@ -4,7 +4,7 @@
 
 ## Use this for
 
-Optional end-to-end evidence-first remediation workflow
+Optional evidence-first remediation workflow, progress and module-owned cleanup coordination
 
 ## Prerequisites
 

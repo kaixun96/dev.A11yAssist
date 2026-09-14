@@ -55,10 +55,10 @@ if (plugins[plugin].stages.length) tools.push({
 if (['a11y-resources', 'a11y-workflow'].includes(plugin)) tools.push({
   name: `${prefix}_resources`, description: 'Read public resource health/ownership from the configured authoritative pool.', inputSchema: empty
 });
-if (['agent-operations', 'a11y-workflow'].includes(plugin)) tools.push({
+if (plugin === 'a11y-workflow') tools.push({
   name: `${prefix}_progress`, description: 'Identify permitted continuation/reconciliation action; a reply is not execution recovery.', inputSchema: runSchema
 });
-if (['agent-operations', 'a11y-workflow'].includes(plugin)) tools.push({
+if (plugin === 'a11y-workflow') tools.push({
   name: `${prefix}_abandon`, description: 'Record an explicit abandonment reason and require cleanup; never releases resources itself.',
   inputSchema: { type: 'object', properties: { runId: { type: 'string' }, reason: { type: 'string' } },
     required: ['runId', 'reason'], additionalProperties: false }
@@ -91,7 +91,7 @@ async function handle(request) {
   validateArguments(tool, args);
   try {
     const action = tool.name.slice(prefix.length + 1);
-    const fullWorkflow = plugin === 'a11y-workflow' ||
+    const fullWorkflow = (plugin === 'a11y-workflow' && action === 'doctor') ||
       ['create', 'status', 'reconcile', 'execute', 'progress', 'abandon'].includes(action);
     const config = action === 'evidence' ? null : await readConfig(undefined, { fullWorkflow });
     let result;

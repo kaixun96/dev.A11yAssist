@@ -19,9 +19,9 @@ use. Its stricter phase ordering is local to that workflow.
 | a11y-validate | `a11y_validate_evidence` | Version-1 request/result files; verify also needs baseline files and repository root |
 | a11y-validate | `a11y_validate_invoke`, action `validate` | `scenarioHash`; include HEAD/baseline binding when requested |
 | a11y-publish | `a11y_publish_invoke`, action `publish` | Exact `head` and caller-authorized publication input |
-| agent-operations | `agent_operations_invoke`, action `cleanup` | `subject` and explicitly owned cleanup scope |
-| agent-operations | `agent_operations_invoke`, action `recover-media` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original media recovery connection |
-| agent-operations | `agent_operations_invoke`, action `recover-nvda` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original NVDA instance connection |
+| a11y-workflow | `a11y_workflow_invoke`, action `cleanup` | `subject` and explicitly owned cleanup scope; no full workflow run required |
+| a11y-capture | `a11y_capture_invoke`, action `recover-media` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original media recovery connection |
+| a11y-capture | `a11y_capture_invoke`, action `recover-nvda` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original NVDA instance connection |
 | a11y-resources | `a11y_resources_resources` | Authorized resource connection; read-only status |
 | a11y-resources | `a11y_resources_invoke`, action `release-evaluator` | `subject`, `evaluator`, exact `input.nativeRunId`; explicitly authorized completed assignment |
 
@@ -51,9 +51,56 @@ an A11y Assist run:
 Send that input to `a11y_validate_invoke`. The caller supplies the real hashes
 and its connection's evidence input schema; the placeholders are not valid data.
 
-## Scoped media recovery (v0.9)
+## Capture lifecycle (package v0.16, contract v0.7)
 
-`recover-media` uses the same independent operation journal as other effects.
+Every BEFORE/AFTER connection must implement **fresh preflight -> capture once ->
+postcheck and owned cleanup**, on the actual evaluator and within the original
+exclusive assignment. Initial `a11y-setup` inventory does not replace per-capture
+health. The MCP host validates the returned gates/artifact hashes; it does not
+probe a remote desktop itself or supply a new generic capture backend.
+
+| Required pass gate | Evidence the trusted connection must establish |
+|---|---|
+| `capturePreflightVerified` | Before any capture trigger: current ownership/runtime, expected browser/session/scene, readiness of only required AT/audio/recorder capabilities, and baseline settings plus owned/borrowed resource identities needed for restoration |
+| `capturePostcheckVerified` | After the attempt: expected scene changes versus anomalies, readable/complete required media and artifacts, owned recorder/AT lifecycle, restoration of changed temporary settings and preservation of borrowed sessions; no unresolved capture-owned anomaly or unknown effect |
+
+Persist these observations as hash-bound diagnostic artifacts in the same
+receipt, separate from product observations. A failed preflight returns an
+explicit nonpass without starting capture. Postcheck is required after every
+attempt, including failure, cancellation or interruption: preserve the original
+error/evidence and report what was checked, restored or remains unknown. On loss
+of contact, keep the original operation pending and reconcile it; do not claim
+postcheck succeeded, invoke a competing recovery effect or re-trigger capture.
+Only after original effect state is resolved may explicitly authorized scoped
+recovery run. Recovery does not retroactively make invalid evidence pass.
+
+Missing either gate rejects a pass for independent capture and for the optional
+workflow. This enforces receipt acceptance, not the honesty of a provider:
+deployment qualification must prove the actual preflight, failure/postcheck and
+restoration paths. No automatic install, restart, login bypass or lease release
+is authorized by these checks. Browser-only/screenshot checks must not depend on
+unneeded NVDA, audio or Voice Access.
+
+## Cleanup ownership
+
+Each capability cleans up the temporary resources/settings it actually created
+or changed and returns proof and unresolved items. Capture owns recording/AT/audio
+cleanup; browser tools own their created browser resources, not borrowed persistent
+contexts or foreign tabs. The caller coordinates order and reports actual results.
+Resource release remains with the original authority and original ownership proof.
+
+Bug Bash needs no separate cleanup plugin or full workflow. The optional
+`a11y-workflow` owns overall progress, abandonment and cleanup aggregation.
+Its standalone `cleanup` operation retains the authorized scoped connection and
+narrow gates; its `execute` cleanup stage still requires every workflow gate.
+Neither a narrow recovery receipt nor standalone cleanup advances a full run.
+Shared operation identity, state and no-replay logic remain internal runtime code.
+The `operations` provider key is retained for existing qualified recovery/cleanup
+connections; it is not an installed plugin or a new capture provider fallback.
+
+## Scoped media recovery (introduced v0.9)
+
+`a11y_capture_invoke` action `recover-media` uses the same independent operation journal as other effects.
 Supply only `input.nativeRunId` (32 lowercase hex characters), plus the subject
 and evaluator. Ownership credentials stay inside the trusted connection, never
 in tool inputs or receipts. Configure only the relevant `operations` connection;
@@ -68,7 +115,7 @@ They remain nonpass with a reason and durable diagnostic artifacts.
 
 This is not general `cleanup`, evidence acceptance, all-process/all-audio-role
 verification, artifact preservation or resource release. The optional full
-package exposes the same operation for composition; its workflow cleanup stage
+workflow uses the same internal capability implementation; its workflow cleanup stage
 still requires every original, broader cleanup gate. Do not replace that stage's
 receipt with this narrow result or dispatch evidence capture as a cleanup transport.
 
@@ -81,12 +128,12 @@ the generic package's contract tests.
 
 ## Scoped NVDA recovery (v0.10)
 
-Use `agent_operations_invoke` with action `recover-nvda`, an original
+Use `a11y_capture_invoke` with action `recover-nvda`, an original
 `context.subject` and `context.evaluator`, and only `input.nativeRunId`.
 Configure the authorized `operations` connection for this scope. Do not supply
 a PID, process creation time, private journal path or credential in tool inputs.
-The small plugin and optional full package use the same operation implementation;
-neither requires a full workflow run or unrelated prior capability calls.
+The capture plugin uses the shared internal operation implementation;
+it requires neither a full workflow run nor unrelated prior capability calls.
 
 This connects an existing controller, not a replacement NVDA startup/cleanup
 engine. The connection must derive the instance from its original protected
@@ -109,7 +156,7 @@ persisted response, not another execution or a fresh operation ID. No helper,
 descendant, respawn, audio, browser, artifact preservation or resource-release
 gate is established. This receipt cannot replace `cleanup` or make a capture
 pass. Installation and real AT qualification remain deployment responsibilities;
-existing capture defaults do not change.
+the original recovery scope does not change.
 
 ## Read-only evidence checking
 
@@ -240,10 +287,18 @@ small capability at its authorized cleanup step, but must separately establish
 every remaining cleanup gate. No automatic phase transition was added.
 
 Private deployment implementations/configuration remain outside this package.
-The unchanged workflow/envelope version remains 0.6; this additive capability
-does not migrate active journals, replace pinned source or update installed workers.
+The release capability does not migrate active journals, replace pinned source
+or update installed workers. Contract v0.7 adds capture lifecycle gates separately.
 
 ## Full workflow and compatibility
+
+Package v0.16 removes the standalone `agent-operations` package and its MCP prefix.
+New media/NVDA recovery calls use capture; standalone cleanup and workflow
+progress/abandonment use workflow. Do not rename old operation journals or
+resubmit unknown effects with new IDs. Keep unfinished operations on their
+original pinned package/provider until reconciled and safely closed.
+Contract v0.7 rejects older journals rather than silently upgrading their
+capture acceptance gates. See [migration](MIGRATION.md).
 
 The full workflow calls the same `invokeCapability` implementation and then
 applies its own phase, baseline, affinity, review and cleanup gates. It does not

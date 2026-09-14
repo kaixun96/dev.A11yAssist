@@ -173,7 +173,10 @@ test('entrypoint and templates retain track isolation, evidence distinctions, sc
     /Missing tools are gaps/, /exclusive desktop ownership/,
     /read-only.*handlers, styles/s, /Do not upgrade.*until actual evidence supports it/s,
     /do not claim repeatability|cannot be repeated/, /their build binding\s+is known/,
-    /Reconcile unknown effects/, /Close only owned/, /not a second rule set/,
+    /Reconcile unknown effects/, /each capability or caller tool to clean up/,
+    /never borrowed persistent\s+contexts or foreign tabs/,
+    /per-attempt environment preflight, postcheck/,
+    /needs no separate\s+cleanup plugin or full workflow/, /not a second rule set/,
     /Do not invoke a globally installed same-name skill/
   ]) assert.match(skill, pattern);
   const context = await text(join(base, 'bug-bash/context.template.md'));

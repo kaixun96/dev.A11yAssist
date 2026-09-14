@@ -49,7 +49,7 @@ test('nonreproduced BEFORE cannot produce a branch or PR and still requires clea
     const before = await executeStage(cfg, 'a11y-capture', run.runId, 'before', { outcome: 'not-reproduced' });
     assert.equal(before.status, 'needs-cleanup');
     await assert.rejects(executeStage(cfg, 'a11y-workflow', run.runId, 'source'), /Phase ordering/);
-    const end = await executeStage(cfg, 'agent-operations', run.runId, 'cleanup');
+    const end = await executeStage(cfg, 'a11y-workflow', run.runId, 'cleanup');
     assert.equal(end.outcome, 'not-reproduced');
     assert.equal(end.status, 'terminal');
   });
@@ -64,6 +64,26 @@ test('pending result reconciles same ID and prevents duplicate execute', async (
     const next = await reconcile(cfg, 'a11y-intake', run.runId);
     assert.equal(next.nextStage, 'before');
     assert.equal(next.receipts[0].requestId, first.pending.requestId);
+  });
+
+  test('workflow capture rejects missing lifecycle proof and retains pending identity', async () => {
+    for (const stage of ['before', 'after']) {
+      for (const gate of ['capturePreflightVerified', 'capturePostcheckVerified']) {
+        await fixture(async cfg => {
+          const run = await createRun(cfg, `lifecycle-${stage}-${gate}`);
+          for (const prior of stage === 'before' ? ['intake'] : ['intake', 'before', 'source']) {
+            await executeStage(cfg, 'a11y-workflow', run.runId, prior);
+          }
+          await assert.rejects(executeStage(cfg, 'a11y-workflow', run.runId, stage, { badGate: gate }),
+            new RegExp(`Missing capability gate: ${gate}`));
+          const pending = await loadRun(cfg, run.runId);
+          assert.equal(pending.nextStage, stage);
+          assert(pending.pending);
+          await assert.rejects(reconcile(cfg, 'agent-operations', run.runId), /cannot reconcile/);
+          await assert.rejects(executeStage(cfg, 'a11y-workflow', run.runId, stage), /pending/);
+        });
+      }
+    }
   });
 });
 

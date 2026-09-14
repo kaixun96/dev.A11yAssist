@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "modes": ["twin", "cli"],
   "stages": [
     {"id": "intake", "phase": "0-1", "plugin": "a11y-intake", "provider": "intake", "gates": ["claimOwned", "commentsReviewed", "attachmentsReviewed", "acceptanceDefined", "scenarioSealed"]},
@@ -10,7 +10,7 @@
     {"id": "validate", "phase": "7", "plugin": "a11y-validate", "provider": "validate", "gates": ["scenarioEquivalent", "exactHeadMatched", "validatorPass", "independentEvaluatorPass"]},
     {"id": "review", "phase": "8", "plugin": "a11y-workflow", "provider": "review", "gates": ["exactHeadMatched", "adversarialReviewPass", "noCriticalOrImportantFindings"]},
     {"id": "publish", "phase": "9", "plugin": "a11y-publish", "provider": "publish", "gates": ["exactHeadMatched", "reviewedHeadPushed", "draftPrVerified", "descriptionComplete", "liveMediaVerified", "noPrComments"]},
-    {"id": "cleanup", "phase": "10", "plugin": "agent-operations", "provider": "operations", "gates": ["ownedProcessesStopped", "audioRestored", "debugPortsClosed", "artifactsPreserved", "worktreeReleased", "evaluatorReleased", "claimReleased", "insightsWritten", "ownerSummaryDelivered"]}
+    {"id": "cleanup", "phase": "10", "plugin": "a11y-workflow", "provider": "operations", "gates": ["ownedProcessesStopped", "audioRestored", "debugPortsClosed", "artifactsPreserved", "worktreeReleased", "evaluatorReleased", "claimReleased", "insightsWritten", "ownerSummaryDelivered"]}
   ],
   "terminalOutcomes": ["completed", "not-reproduced", "blocked", "inconclusive", "invalid-evidence", "abandoned"]
 }

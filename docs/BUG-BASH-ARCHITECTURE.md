@@ -1,5 +1,9 @@
 # Bug Bash: composable plugins and reliable execution
 
+**English** | [简体中文](BUG-BASH-ARCHITECTURE.zh-CN.md)
+
+Maintain both language versions together when changing this design.
+
 Status: proposed implementation design, 2026-09-14. This is a maintainer design,
 not a claim that these capabilities are installed, qualified or shipping.
 The current [Bug Bash contract](BUG-BASH.md), [provider protocol](PROVIDERS.md)

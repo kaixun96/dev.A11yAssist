@@ -1,5 +1,9 @@
 # Designing and maintaining large composable AI plugins
 
+**English** | [简体中文](COMPOSABLE-PLUGIN-DESIGN.zh-CN.md)
+
+Maintain both language versions together when changing this design.
+
 Status: recommended engineering method, 2026-09-14. This is a reusable design
 reference, not an installed framework, a new protocol or a claim of production
 qualification. The [Bug Bash architecture](BUG-BASH-ARCHITECTURE.md) applies it

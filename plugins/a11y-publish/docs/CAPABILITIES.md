@@ -36,8 +36,10 @@ independent behavior-assessment gates as well as exact row accounting.
 | a11y-workflow | `a11y_workflow_invoke`, action `cleanup` | `subject` and explicitly owned cleanup scope; no full workflow run required |
 | a11y-capture | `a11y_capture_invoke`, action `recover-media` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original media recovery connection |
 | a11y-capture | `a11y_capture_invoke`, action `recover-nvda` | `subject`, `evaluator`, exact `input.nativeRunId`; authorized original NVDA instance connection |
-| a11y-resources | `a11y_resources_resources` | Authorized resource connection; read-only status |
-| a11y-resources | `a11y_resources_invoke`, action `release-evaluator` | `subject`, `evaluator`, exact `input.nativeRunId`; explicitly authorized completed assignment |
+| a11y-setup | `a11y_setup_resources` | Authorized resource connection; establish original DevBox/setup authority before preparing tools; status is not acquisition |
+| a11y-setup | `a11y_setup_invoke`, action `release-evaluator` | `subject`, `evaluator`, exact `input.nativeRunId`; explicitly authorized completed assignment |
+| a11y-file-bug | `a11y_file_bug_draft`, `_submit`, `_skip` | Validated original discovery finding, detailed reproduction/cause, reviewed evidence and explicit draft/destination approval; actual Bug/attachment readback |
+| a11y-report | `a11y_report_generate`, `_deliver` | Original discovery task, completed or explicitly skipped filing, verified evidence and owned cleanup; immutable aggregate report |
 
 `context` may contain `subject`, `scenarioHash`, `evaluator`, `head` and
 `beforeReceiptSha256`. Supplied bindings must match a successful receipt.

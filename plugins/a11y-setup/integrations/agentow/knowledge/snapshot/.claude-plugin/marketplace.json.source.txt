@@ -1,0 +1,22 @@
+{
+  "name": "agentOW",
+  "owner": {
+    "name": "kaixun"
+  },
+  "metadata": {
+    "description": "GitHub Copilot CLI harness for odsp-web development in Codespaces",
+    "version": "0.1.45"
+  },
+  "plugins": [
+    {
+      "name": "agentow-copilot",
+      "source": "./copilot",
+      "description": "GitHub Copilot CLI agentOW harness with standard, POC, batch, review, and Accessibility workflows.",
+      "version": "0.1.45",
+      "author": {
+        "name": "kaixun"
+      },
+      "repository": "https://dev.azure.com/onedrive/ODSP-Web"
+    }
+  ]
+}

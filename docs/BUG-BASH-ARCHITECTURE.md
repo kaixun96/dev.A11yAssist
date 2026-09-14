@@ -5,7 +5,7 @@
 Maintain both language versions together. This document describes what the plugin
 does, its child capabilities, how they work together, and the user-facing input
 and output. Current behavior and proposed extensions are marked separately.
-Baseline: version 0.17.0, 2026-09-14. The source execution chain is implemented;
+Baseline: version 0.18.0, 2026-09-14. The source execution chain is implemented;
 deployment and live qualification are separate. Supported adapters, not a generic
 promise about every browser/AT combination, define executable coverage.
 
@@ -21,7 +21,7 @@ reopening. The plugin checks applicable keyboard, focus, semantics, visual,
 dynamic-state and real assistive-technology (AT) behavior across those journeys.
 It checks reachable, relevant combinations, not every theoretical combination.
 
-Bug Bash owns the feature scope, plan, coordination and final report. Reusable
+Bug Bash owns feature scope, planning and coordination; `a11y-report` owns the final report. Reusable
 capabilities supply knowledge, environment checks, page observations and source
 analysis. The user uses one entrypoint: `/a11y-bug-bash`.
 
@@ -32,23 +32,23 @@ A completed round is not accessibility certification.
 ## 2. Which child plugins and modules does it use?
 
 "Child plugin" here means a reusable capability in the composition, not necessarily
-another installed package or another agent. **Today, knowledge, setup and test categories are
-bundled internally; planning uses the calling Copilot, while the durable CLI
-coordinates accepted scenarios, validates results and generates reports.**
+another installed package or another agent. **Knowledge and setup are bundled
+internally. Test categories are a separately installed dependency, never copied
+into Bug Bash. Filing and aggregate reporting have dedicated plugins.**
 
 | Component | Responsibility | Input -> output | Integration and status |
 |---|---|---|---|
 | Bug Bash coordinator | Understand scope, plan coverage, route checks, aggregate results | Feature context + verification steps -> coverage plan + report | Skill plus durable `create/configure/run/advance/reconcile/cancel` CLI; append-only history and bounded execution |
 | `a11y-knowledge` | Supply applicable A11y guidance and read-only source review | Stack/version, scoped source and question -> cited guidance or source-supported risks | Already bundled under `modules/a11y-knowledge/`; no extra install or separate agent |
-| `a11y-setup` | Check only the prerequisites needed by selected page/AT checks | Required capabilities + host -> inventory, gaps and preparation plan | Already bundled under `modules/a11y-setup/`; host changes need separate authorization |
-| `a11y-test-categories` | Apply all ten categories and every numbered step to each target/state | Complete target/state inventory -> full step matrix, evidence and explicit gaps | Independently installable; identical skill/procedures/local accounting tool bundled under `modules/a11y-test-categories/`; no live execution backend |
+| `a11y-setup` | Establish DevBox resource authority, then prepare selected tools | Task + host requirements -> original ownership, scoped inventory and preparation | Includes former resources tools; shared setup module remains bundled. No host change before authorized ownership |
+| `a11y-test-categories` | Own all ten categories and every numbered step | Target/state inventory -> complete matrix and accounting | Separate installation; explicit `pluginRoots.testCategories`, version/hash-bound API. No bundled copies or live backend |
 | Browser checks / shared `a11y-browser` module | Exercise keyboard, focus, rendered semantics and text | Authorized connection + typed scenario -> page observations and artifacts | Implemented in `browser/` and `runtime/browser-contract.mjs`, bundled into Bug Bash/capture; not a separate installed package |
-| `a11y-resources` | Integrate with actual evaluator ownership | Complete request + task identity -> original ownership/dispatch receipt | Trusted discovery connection acquires or dispatches through the deployment's original authority; status never substitutes for acquisition |
 | `a11y-capture` | Collect scenario/AT/media observations | Owned evaluator + sealed `discovery-observe` request -> row-bound evidence | Typed discovery action implemented; fresh preflight/postcheck and independent assessment required. Unsupported named-AT adapters remain gaps |
 | `a11y-validate` | Validate discovery history, receipts, bytes and category accounting | Original task ID -> integrity, accepted behavior assessments and gaps | `a11y_validate_discovery`, or the same package-local `validate` CLI; evidence-v1 remains separate |
-| Report module | Separate findings, risks and gaps | Coverage rows + observations + evidence -> private report | Implemented immutable Markdown report and verified delivery; seeded defects and repeated observations are not new production issues |
+| `a11y-file-bug` | Create explicitly approved Bugs after validation | Validated finding + detailed draft + approved evidence -> actual Bug ID/URL and attachments | Native ADO WIT upload/create/readback; video requires playback review, timestamps and text alternative |
+| `a11y-report` | Produce the overall report | Coverage + observations + filing results + cleanup -> private report | Independent MCP plugin; one shared generator also backs the coordinator CLI |
 
-Planning and reporting stay internal because they belong to the feature workflow.
+Planning stays in the coordinator; filing and reporting have independent entrypoints.
 Browser behavior is a shared module; extract at most one new
 `a11y-browser` package when independent reuse justifies it. Real-AT adapters belong
 within capture, not one mandatory package per AT.
@@ -62,14 +62,14 @@ optional if an authorized work item supplies context. `a11y-publish`,
 ### Current composition
 
 Installing Bug Bash loads its public skill and bundled modules. The calling
-Copilot follows that skill: it reads the bundled setup, knowledge and test-categories instructions and
+Copilot follows that skill: it reads bundled setup/knowledge and the installed category plugin instructions and
 uses tools actually available in the session. The package has no MCP server of
 its own and does not automatically invoke sibling plugins by name. The calling
 Copilot uses the bundled [durable CLI](BUG-BASH-RUNTIME.md) to execute accepted
 plans through explicitly configured providers. `run` continues safe deterministic
 steps; it yields for source analysis, pending callbacks or a bounded limit.
 
-Before page work, the bundled test-categories plugin expands every in-scope
+Before page work, the separately installed test-categories plugin expands every in-scope
 target/state into all ten categories and their numbered steps. Every applicable
 step must run; not-applicable steps need target-specific reasons. No representative
 sampling substitutes for this inventory. Its local matrix gate rejects missing
@@ -88,25 +88,26 @@ records the plan and dispatches/validates its deterministic child operations.
 flowchart TD
     U["User input<br/>Feature, URL, verification steps, expectations, source scope"]
     P["1. a11y-bug-bash<br/>Define scope, scenarios, targets and states"]
-    S["2. a11y-setup (bundled)<br/>Check required page / AT prerequisites"]
-    C["3. a11y-test-categories (bundled)<br/>Expand ten categories, 61 steps per target / state<br/>Includes Voice Access"]
-    R["4. Caller ownership authority<br/>a11y-resources: conditional integration only"]
+    R["2a. a11y-setup / original resource authority<br/>Select DevBox and establish task-bound setup ownership"]
+    S["2b. a11y-setup<br/>Only then check / prepare authorized page and AT tools"]
+    C["3. a11y-test-categories (separate plugin)<br/>Call versioned matrix API: ten categories, 61 steps per target"]
     E["5. a11y-bug-bash run / advance<br/>a11y-capture discovery-observe<br/>Shared a11y-browser module or configured named-AT adapter"]
     K["a11y-knowledge (bundled, independent source track)<br/>Read-only review → source risks / confirmation scenarios"]
     V["6. a11y-validate discovery<br/>Original receipts + artifact hashes + complete row accounting<br/>Independent behavior assessment remains explicit"]
-    G["7. a11y-test-categories (bundled)<br/>matrix check: reject missing steps, retain unfinished coverage"]
+    G["7. a11y-test-categories (separate plugin)<br/>matrix check: reject missing steps, retain unfinished coverage"]
     A["8. a11y-bug-bash<br/>Assess expectations, deduplicate; separate source risks from page findings"]
     O["9. Each module cleans its owned resources<br/>Capture: AT / recording / audio; browser tools: created sessions<br/>a11y-bug-bash: aggregate proof and unresolved items"]
-    F["10. a11y-bug-bash<br/>Deliver: issue count, categories, list + evidence / coverage gaps"]
+    B["10. a11y-file-bug (explicitly authorized)<br/>Detailed draft and cause / reproduction<br/>Upload and verify evidence, create Bug, read back links<br/>Otherwise record why not filed"]
+    F["11. a11y-report<br/>Issue counts / categories, actual Bug links, evidence, full coverage and cleanup"]
     U --> P
-    P --> S --> C --> R --> E --> V --> G --> A --> O --> F
+    P --> R --> S --> C --> E --> V --> G --> A --> O --> B --> F
     P --> K
     K --> A
     K -. "Add in-scope confirmation scenarios, not reproduced findings" .-> C
 ```
 
 Missing prerequisites create gaps for affected steps, not deleted steps. Actual
-ownership must precede any live interaction; `a11y-resources` status is not acquire.
+ownership must precede any host preparation or live interaction; setup resource status is not acquire.
 Never fabricate Bugs, leases or capture requests just to route through a named
 plugin. If inventory needs live discovery, first establish readiness and ownership,
 then update the original inventory and regenerate the complete matrix.
@@ -157,15 +158,15 @@ original matrix row:
 
 | Caller -> executor | Input | Output |
 |---|---|---|
-| Bug Bash -> `a11y-setup` | Required page/AT capabilities and actual host | Available capabilities, gaps and separately authorized preparation plan |
+| Bug Bash -> `a11y-setup` | Task, DevBox and required page/AT capabilities | Original resource authority first, then scoped preparation and gaps |
 | Bug Bash -> `a11y-test-categories` | Target/state inventory; original inventory and full result matrix at reconciliation | All ten category procedures; coverage accounting, not behavioral PASS |
 | Bug Bash -> `a11y-knowledge` | Scoped source, revision and stack | Source risks and confirmation scenarios, not reproduced page findings |
-| Bug Bash -> ownership authority (optional `a11y-resources`) | Actual task identity and resource requirements | Supported status/ownership results; status grants no control |
 | Bug Bash -> shared `a11y-browser` module | Typed preconditions, action sequence, target state and reset | Scenario-bound browser observations and per-capture health artifacts |
 | Bug Bash -> AT/media tools (conditional `a11y-capture`) | Owned evaluator, real tools, supported scenario and evidence requirements | Actual output/artifacts, or why execution was unavailable |
 | Bug Bash -> `a11y-validate` discovery | Original task ID and private operation store | Verified receipts/bytes, category accounting and separately identified trusted behavior assessments |
 | Bug Bash -> each module/tool, then original resource authority | Original operation/ownership identity and state changed by this run | Module-owned cleanup proof, unresolved effects and separately authorized release results |
-| Bug Bash -> user | All results, evidence, gaps and actual cleanup state | Concise issue-count/category summary and private report location |
+| Bug Bash -> `a11y-file-bug` | Validated finding, detailed environment/cause/reproduction and explicit hash-bound approval | Actual Bug and reviewed attachments, or a precise skip/failure |
+| Bug Bash -> `a11y-report` -> user | All results, filing receipts, evidence, gaps and cleanup | Concise issue-count/category summary, Bug links and immutable private report |
 
 **Cleanup belongs to the capability that created or changed the resource.**
 Capture owns recording/AT/audio lifecycle, including fresh preflight and
@@ -219,9 +220,16 @@ reported, never replaced with DOM evidence or silently treated as complete.
 ```powershell
 copilot plugin marketplace add kaixun96/dev.A11yAssist
 copilot plugin install a11y-bug-bash@a11y-assist
+copilot plugin install a11y-test-categories@a11y-assist
+copilot plugin install a11y-file-bug@a11y-assist
+copilot plugin install a11y-report@a11y-assist
 ```
 
-Restart Copilot to load the plugin. No separate knowledge/setup/test-categories install is needed.
+The commands show the complete composition: omit file-bug when not filing and
+omit the standalone report install when using the coordinator's shared report CLI.
+Categories must be installed separately with their real root in
+`pluginRoots.testCategories`; missing dependencies fail without fallback.
+Restart Copilot. Knowledge/setup need no separate installation.
 Live page checks need an existing authorized Windows DevBox browser connection;
 real AT needs its own usable connection and exclusive desktop ownership.
 The installation supplies neither browser/AT binaries nor a live connection.

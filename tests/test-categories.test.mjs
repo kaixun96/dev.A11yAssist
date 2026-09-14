@@ -91,7 +91,7 @@ test('rejects omitted, duplicate, foreign, modified and unsupported step results
   assert.throws(() => createMatrix({ ...inventory, targets: [inventory.targets[0], inventory.targets[0]] }, procedures));
 });
 
-test('standalone and bundled modules share exact source and keep separate public entrypoints', async () => {
+test('only the category plugin distributes procedures and matrix tools, with an explicit consumer API', async () => {
   async function files(directory, prefix = '') {
     const found = [];
     for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -102,10 +102,12 @@ test('standalone and bundled modules share exact source and keep separate public
     return found.sort();
   }
   const bundle = join(root, 'plugins/a11y-bug-bash/modules/a11y-test-categories');
-  const paths = (await files(base)).filter(path =>
-    !['plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md'].includes(path));
-  assert.deepEqual(await files(bundle), paths);
-  for (const path of paths) assert.equal(await text(join(base, path)), await text(join(bundle, path)));
+  await assert.rejects(access(bundle), { code: 'ENOENT' });
+  for (const plugin of await readdir(join(root, 'plugins'))) {
+    if (plugin === 'a11y-test-categories') continue;
+    assert(!(await files(join(root, 'plugins', plugin))).some(path =>
+      path.includes('test-categories/') || path.endsWith('/matrix.mjs')), `Duplicated category payload in ${plugin}`);
+  }
   for (const category of categories) {
     assert.equal(await text(join(base, 'procedures', `${category}.md`)),
       await text(join(root, 'src/test-categories/procedures', `${category}.md`)));
@@ -117,7 +119,7 @@ test('standalone and bundled modules share exact source and keep separate public
   const coverage = JSON.parse(await text(join(root, 'src/bug-bash/coverage.json')));
   assert.deepEqual(statuses, coverage.rowStatuses);
   const parent = await text(join(root, 'src/skills/a11y-bug-bash/SKILL.md'));
-  assert.match(parent, /all ten categories and every numbered step/);
+  assert.match(parent, /all ten categories and\s+every numbered step/);
   assert.match(parent, /matrix check against the/);
   assert.match(parent, /exit 2/);
   for (const path of ['docs/TEST-CATEGORIES.md', 'docs/TEST-CATEGORIES.zh-CN.md', 'procedures/README.md']) {

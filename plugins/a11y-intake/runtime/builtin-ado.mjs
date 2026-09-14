@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readAdoWorkItem } from '../native/ado-intake.mjs';
 import { attachPrEvidence } from '../native/ado-attachments.mjs';
+import { createAdoBug } from '../native/ado-bugs.mjs';
 import { atomicJson, hash } from './core.mjs';
 
 function demand(condition, message) { if (!condition) throw new Error(message); }
@@ -18,10 +19,10 @@ export function validateAdoProvider(provider) {
     /^[A-Z][A-Z0-9_]{0,100}$/.test(provider.authorizationEnvironmentVariable), 'Expected authorization environment-variable NAME');
 }
 
-export async function callAdoProvider(provider, request) {
+export async function callAdoProvider(provider, request, config) {
   validateAdoProvider(provider);
-  demand(request.invocation === 'capability' && ['read-item', 'attach-evidence'].includes(request.stage),
-    'Built-in ADO transport supports only read-item and attach-evidence; it cannot certify an entire workflow stage');
+  demand(request.invocation === 'capability' && ['read-item', 'attach-evidence', 'file-bug'].includes(request.stage),
+    'Built-in ADO transport supports only read-item, attach-evidence and file-bug; it cannot certify an entire workflow stage');
   const responsePath = join(request.stateDirectory, 'native-response.json');
   const identity = hash(JSON.stringify({ ...request, operation: 'execute' }));
   if (request.operation === 'reconcile') {
@@ -29,13 +30,15 @@ export async function callAdoProvider(provider, request) {
     try { stored = JSON.parse(await readFile(responsePath, 'utf8')); }
     catch (error) {
       if (error.code !== 'ENOENT') throw error;
-      throw new Error('No native result receipt exists; inspect the original remote operation before retrying. No mutation was replayed.');
+      if (request.stage !== 'file-bug') throw new Error('No native result receipt exists; inspect the original remote operation before retrying. No mutation was replayed.');
     }
-    demand(stored.identity === identity && stored.sha256 === hash(JSON.stringify(stored.response)),
-      'Native response identity/hash mismatch');
-    return stored.response;
+    if (stored) {
+      demand(stored.identity === identity && stored.sha256 === hash(JSON.stringify(stored.response)),
+        'Native response identity/hash mismatch');
+      return stored.response;
+    }
   }
-  demand(request.operation === 'execute', 'Unsupported native operation');
+  demand(request.operation === 'execute' || (request.operation === 'reconcile' && request.stage === 'file-bug'), 'Unsupported native operation');
   const authorization = process.env[provider.authorizationEnvironmentVariable];
   demand(typeof authorization === 'string' && /^(Bearer|Basic) \S+$/.test(authorization),
     'Configured ADO authorization is unavailable; no external operation performed');
@@ -44,6 +47,28 @@ export async function callAdoProvider(provider, request) {
   if (request.stage === 'read-item') {
     result = await readAdoWorkItem(configuration, request.input);
     gates = { itemRead: true, commentsFetched: true, attachmentsIndexed: true };
+  } else if (request.stage === 'file-bug') {
+    demand(config, 'Bug filing requires the original discovery configuration');
+    const { prepareDiscoveryBug, validateFilingApproval } = await import('./file-bug.mjs');
+    const prepared = await prepareDiscoveryBug(config, request.input.taskId, request.input.issueId, request.input.details);
+    validateFilingApproval(config, prepared, request.input.approval);
+    demand(request.run.subject === prepared.draft.taskId &&
+      request.run.scenarioHash === prepared.draft.planHash && request.run.runId === prepared.draft.operationId,
+    'Filing operation must bind the original task, validated plan and deterministic issue identity');
+    const progressPath = join(request.stateDirectory, 'native-bug-progress.json');
+    let progress;
+    if (request.operation === 'reconcile') {
+      const stored = JSON.parse(await readFile(progressPath, 'utf8'));
+      demand(stored.identity === identity && stored.sha256 === hash(JSON.stringify(stored.progress)),
+        'Native Bug progress identity/hash mismatch');
+      progress = stored.progress;
+    }
+    result = await createAdoBug(configuration, prepared.draft, {
+      progress, reconcile: request.operation === 'reconcile',
+      checkpoint: progress => atomicJson(progressPath, { identity, progress, sha256: hash(JSON.stringify(progress)) })
+    });
+    gates = { validatedFinding: true, explicitFilingAuthorization: true,
+      descriptionComplete: true, attachmentsVerified: true, bugReadbackVerified: true };
   } else {
     demand(Array.isArray(request.input.attachments) && request.input.attachments.every(
       attachment => /^[a-f0-9]{64}$/.test(attachment.sha256 ?? '')), 'Each attachment requires its expected SHA-256');
@@ -57,6 +82,7 @@ export async function callAdoProvider(provider, request) {
   const receipt = {
     ...request.run, requestId: request.requestId, stage: request.stage, outcome: 'pass', gates,
     scope: result.scope, independentBehaviorVerified: false,
+    ...(result.bug ? { bug: result.bug, draftSha256: request.input.approval.draftSha256 } : {}),
     artifacts: [{ path: artifact, sha256: hash(bytes) }]
   };
   delete receipt.receipts;

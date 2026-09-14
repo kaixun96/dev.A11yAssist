@@ -46,7 +46,7 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
   const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
   assert.equal(marketplace.name, 'a11y-assist');
   assert.equal(marketplace.metadata.version, pkg.version);
-  assert.equal(marketplace.plugins.length, 11);
+  assert.equal(marketplace.plugins.length, 12);
   assert(!marketplace.plugins.some(entry => entry.name === 'agent-operations'));
   assert.equal(plugins['agent-operations'], undefined);
   await assert.rejects(access(join(root, 'plugins/agent-operations')), { code: 'ENOENT' });

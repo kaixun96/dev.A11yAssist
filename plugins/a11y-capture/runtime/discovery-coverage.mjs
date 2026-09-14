@@ -1,10 +1,9 @@
-import { createMatrix, checkMatrix, loadProcedures } from '../test-categories/tools/matrix.mjs';
 import { discoveryHash, requireDiscovery as demand } from './discovery-contract.mjs';
 
-export const procedures = await loadProcedures();
 const key = value => JSON.stringify([value.targetId, value.category, value.step]);
 
-export function orderedCoverageRows(rows) {
+export function orderedCoverageRows(rows, categories) {
+  const procedures = categories?.procedures ?? [];
   return [...rows].sort((a, b) => {
     if (!a.coverage || !b.coverage) return Number(Boolean(a.coverage)) - Number(Boolean(b.coverage));
     return a.coverage.targetId.localeCompare(b.coverage.targetId) ||
@@ -18,9 +17,10 @@ export function earlierCategoryRows(plan, row) {
     other.coverage.step < row.coverage.step) : [];
 }
 
-export function expandCoverage(plan) {
+export function expandCoverage(plan, categories) {
   if (!plan.inventory || plan.mode === 'source-only') return structuredClone(plan);
-  const matrix = createMatrix(plan.inventory, procedures);
+  demand(categories, 'The a11y-test-categories plugin is required for category expansion');
+  const matrix = categories.createMatrix(plan.inventory, categories.procedures);
   const expected = new Map(matrix.rows.map(row => [key(row), row]));
   const assigned = new Set();
   for (const row of plan.rows) {
@@ -54,11 +54,11 @@ export function expandCoverage(plan) {
   return { ...structuredClone(plan), rows: [...plan.rows, ...generated] };
 }
 
-export function categoryCoverage(plan, rows) {
+export function categoryCoverage(plan, rows, categories) {
   if (!plan.inventory || plan.mode === 'source-only') return null;
-  const expanded = expandCoverage(plan);
+  const expanded = expandCoverage(plan, categories);
   demand(expanded.rows.length === plan.rows.length, 'Accepted plan lost required category steps');
-  const matrix = createMatrix(plan.inventory, procedures);
+  const matrix = categories.createMatrix(plan.inventory, categories.procedures);
   const assignments = new Map(rows.filter(row => row.coverage).map(row => [key(row.coverage), row]));
   for (const step of matrix.rows) {
     const row = assignments.get(key(step));
@@ -68,7 +68,7 @@ export function categoryCoverage(plan, rows) {
     step.evidence = (row.observation?.evidence ?? []).map(path =>
       `${row.attempts.at(-1).operationId}:${path}`);
   }
-  return { ...checkMatrix(plan.inventory, matrix, procedures), matrix };
+  return { ...categories.checkMatrix(plan.inventory, matrix, categories.procedures), matrix };
 }
 
 export function issueSummary(rows) {

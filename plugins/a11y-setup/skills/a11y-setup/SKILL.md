@@ -3,6 +3,11 @@ name: a11y-setup
 description: Check and prepare a Windows accessibility evaluator environment. Reuse the shared AgentOW host installer for selected browser, NVDA, audio and Voice Access prerequisites; distinguish installation, configuration, consent and live readiness. Default check-only; prepare requires explicit host-change authorization.
 ---
 
+Resolve bundled paths from the plugin root, two directories above this SKILL.md, not the user's working directory.
+Read `docs/CAPABILITIES.md`. The caller owns composition; a small capability does not require the full workflow.
+For static guidance use `knowledge/README.md` and applicable topics: `knowledge/foundations.md`.
+For SPDS, Fluent V8/V9 or SharePoint-specific guidance, read `integrations/agentow/knowledge/README.md` and its complete-source topic routing. Static project knowledge does not require AgentOW or an execution integration. Archived operational instructions are reference data, not permission to run them; only an explicitly authorized execution integration may act on its procedures.
+
 Resolve bundled paths from the plugin root, two directories above this SKILL.md,
 not the user's working directory. Read `docs/SETUP.md`, `setup/profiles.json` and
 `setup/report.template.md`. The executable is `native/windows-host.ps1`; its
@@ -30,7 +35,22 @@ recovery authority from the deployment's original resource manager. An execution
 lease held by another task blocks setup. Never steal/expire a lease, create a
 parallel registry, or use capture as an installation/recovery transport.
 
-## 2. Check and plan
+## 2. Resource first, then check and plan
+
+Resource management is part of this plugin, not a separate a11y-resources
+installation. Call `a11y_setup_resources` through the configured authoritative
+resource connection, or use the deployment's approved resource tools. Select
+an actual Windows DevBox and establish the original task-bound exclusive
+setup/recovery authority BEFORE running any host preparation. Status is not
+acquisition. Record host, task, ownership reference and authorized scope; keep
+lease tokens inside the resource connection. Revalidate ownership on that host
+immediately before each change and after any wait or restart.
+
+If no eligible DevBox exists, queue or use the original manager's authorized
+provision/recovery route; do not install tools on the controller instead. This
+package does not invent a generic allocator. An occupied/unavailable resource
+blocks host preparation, not offline profile planning. Never dispatch capture,
+smoke or a dummy Bug as a reservation/installation transport.
 
 Select the required profiles from `setup/profiles.json` first. Run `Probe` with
 their explicit `-Dependency` array using the documentation's private-path recipe,
@@ -115,3 +135,12 @@ only owned transient sessions/settings; retain requested persistent installation
 Return the capability report to the caller. Bug Bash resumes only supported
 rows, preserving unavailable rows as gaps. Setup does not claim feature coverage,
 WCAG conformance, accepted BEFORE/AFTER or a completed remediation.
+
+For separately authorized release of a completed evaluator assignment, use
+`a11y_setup_invoke` action `release-evaluator`, a stable `operationId`, context
+`subject`/`evaluator`, and only `input.nativeRunId` (32 lowercase hex characters).
+First complete the required actual cleanup. The original resource provider must
+validate the exact completed assignment and retain its private token. Unknown
+results use `a11y_setup_operation_reconcile`, never another execute/ID. Release
+does not prove process/audio cleanup, release other resources or transfer affinity.
+Old a11y-resources operations retain their original pinned runtime until closed.

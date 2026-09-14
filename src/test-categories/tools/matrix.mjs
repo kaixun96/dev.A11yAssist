@@ -4,6 +4,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
+export const apiVersion = 1;
 export const categories = [
   'keyboard-focus', 'screen-reader', 'structure-semantics',
   'orientation-input-purpose', 'visual-color', 'timing-motion',

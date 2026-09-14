@@ -6,7 +6,7 @@
 
 ## 如何组合
 
-Bug Bash 将同一份 skill、规程和本地覆盖核对工具内置于 `modules/a11y-test-categories/`，无需用户另装。其他调用方可使用独立入口 `/a11y-test-categories`。两种方式都不新增浏览器、AT 后端、MCP server 或 Agent。
+只有本插件分发测试规程与矩阵工具。Bug Bash 需要单独安装本插件，并通过 `pluginRoots.testCategories` 明确配置真实绝对安装路径，调用 `tools/matrix.mjs` 的版本化 API（`apiVersion:1`，loadProcedures/createMatrix/checkMatrix）。任务固定插件版本、工具内容及规程哈希；缺少或变化就明确失败，不使用隐藏副本。独立入口 `/a11y-test-categories` 保留，不新增浏览器、AT 后端、MCP server 或 Agent。
 
 调用方先列出对象及状态；本插件为每一项展开全部十类的每个编号步骤。浏览器工具执行页面操作，真实 AT/capture 工具提供实际辅助技术证据。调用方判断问题并交付报告。本插件防止漏掉矩阵行却宣称完整覆盖，不自动判断 WCAG。
 

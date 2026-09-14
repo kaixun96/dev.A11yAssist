@@ -42,10 +42,10 @@ export async function readConfig(path = process.env.A11Y_ASSIST_CONFIG, { fullWo
     'Twin mode requires an exact conversation binding and local runtime metadata path');
   }
   for (const [name, provider] of Object.entries(config.providers)) {
-    demand(['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources'].includes(name), 'Unknown provider');
+    demand(['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'bugs', 'operations', 'resources'].includes(name), 'Unknown provider');
     validateWaitingConfig(provider, config.mode);
     if (provider?.kind === 'ado') {
-      demand(['intake', 'publish'].includes(name), 'ADO built-in connection supports only intake/publication');
+      demand(['intake', 'publish', 'bugs'].includes(name), 'ADO built-in connection supports only intake/publication/Bug filing');
       validateAdoProvider(provider);
       continue;
     }
@@ -66,7 +66,7 @@ export async function fileHash(path) {
 
 export async function doctor(config) {
   const capabilities = {};
-  for (const name of ['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'operations', 'resources']) {
+  for (const name of ['intake', 'capture', 'source', 'review', 'agentow', 'validate', 'publish', 'bugs', 'operations', 'resources']) {
     const provider = config.providers[name];
     if (!provider) { capabilities[name] = 'not-configured'; continue; }
     if (provider.kind === 'ado') {
@@ -152,7 +152,7 @@ export async function createRun(config, bug) {
 export async function callProvider(config, providerName, request) {
   const provider = config.providers[providerName];
   demand(provider, `Provider ${providerName} is not configured; no live operation performed`);
-  if (provider.kind === 'ado') return callAdoProvider(provider, request);
+  if (provider.kind === 'ado') return callAdoProvider(provider, request, config);
   demand(await fileHash(provider.executable) === provider.executableSha256, 'Provider executable hash changed');
   return new Promise((resolveResult, reject) => {
     const child = spawn(provider.executable, provider.args, {

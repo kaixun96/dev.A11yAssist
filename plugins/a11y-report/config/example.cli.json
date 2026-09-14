@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "mode": "cli",
+  "owner": "replace-with-your-session-owner",
+  "stateRoot": "C:\\REPLACE_WITH_SHARED_PRIVATE_STORAGE\\a11y-assist",
+  "devboxes": ["replace-with-your-devbox"],
+  "providers": {}
+}

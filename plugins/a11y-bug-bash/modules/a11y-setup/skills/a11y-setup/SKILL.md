@@ -30,7 +30,22 @@ recovery authority from the deployment's original resource manager. An execution
 lease held by another task blocks setup. Never steal/expire a lease, create a
 parallel registry, or use capture as an installation/recovery transport.
 
-## 2. Check and plan
+## 2. Resource first, then check and plan
+
+Resource management is part of this plugin, not a separate a11y-resources
+installation. Call `a11y_setup_resources` through the configured authoritative
+resource connection, or use the deployment's approved resource tools. Select
+an actual Windows DevBox and establish the original task-bound exclusive
+setup/recovery authority BEFORE running any host preparation. Status is not
+acquisition. Record host, task, ownership reference and authorized scope; keep
+lease tokens inside the resource connection. Revalidate ownership on that host
+immediately before each change and after any wait or restart.
+
+If no eligible DevBox exists, queue or use the original manager's authorized
+provision/recovery route; do not install tools on the controller instead. This
+package does not invent a generic allocator. An occupied/unavailable resource
+blocks host preparation, not offline profile planning. Never dispatch capture,
+smoke or a dummy Bug as a reservation/installation transport.
 
 Select the required profiles from `setup/profiles.json` first. Run `Probe` with
 their explicit `-Dependency` array using the documentation's private-path recipe,
@@ -115,3 +130,12 @@ only owned transient sessions/settings; retain requested persistent installation
 Return the capability report to the caller. Bug Bash resumes only supported
 rows, preserving unavailable rows as gaps. Setup does not claim feature coverage,
 WCAG conformance, accepted BEFORE/AFTER or a completed remediation.
+
+For separately authorized release of a completed evaluator assignment, use
+`a11y_setup_invoke` action `release-evaluator`, a stable `operationId`, context
+`subject`/`evaluator`, and only `input.nativeRunId` (32 lowercase hex characters).
+First complete the required actual cleanup. The original resource provider must
+validate the exact completed assignment and retain its private token. Unknown
+results use `a11y_setup_operation_reconcile`, never another execute/ID. Release
+does not prove process/audio cleanup, release other resources or transfer affinity.
+Old a11y-resources operations retain their original pinned runtime until closed.

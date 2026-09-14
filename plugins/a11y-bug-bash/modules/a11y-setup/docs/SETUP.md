@@ -19,12 +19,25 @@ save the plan to <private directory>`. To authorize changes, request
 dependencies; keep driver/elevation/restart actions separate`.
 
 Installation loads a skill plus scripts, not the third-party software itself.
-There is no MCP server, Node dependency or `A11Y_ASSIST_CONFIG` requirement for
-this setup package. Copilot must have authorized shell/file tools on the actual
-Windows host. Codespaces and non-Windows hosts stop before probing or installing.
+Resource status/release now use this package's MCP server (Node 22+ and a private
+`A11Y_ASSIST_CONFIG` with a resources provider). Local inventory still uses
+authorized shell/file tools on the actual Windows host without a provider.
+Codespaces and non-Windows hosts stop before probing or installing.
 Source-only review requires none of this setup.
 
 ## Check, select, prepare, qualify
+
+**Resource first:** select an eligible DevBox through the original resource
+manager, obtain task-bound exclusive setup/recovery authority, then check and
+prepare that machine's tools. `a11y_setup_resources` provides status, not
+acquisition. A status row, powered-on host or local report grants no authority.
+No available resource means queue/recover/provision through that manager's
+authorized route, not install on the controller. Recheck actual ownership before
+each change and after any wait/restart. Never use capture as a reservation.
+
+`a11y_setup_invoke` action `release-evaluator` retains the exact completed native
+assignment contract from the retired resources plugin. It is separately
+authorized, token-bound in the provider, and does not prove broader cleanup.
 
 Default `check` runs only a scoped host inventory and writes a private report.
 It does not install packages, open AT/browser, authenticate or change settings.

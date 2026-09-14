@@ -12,12 +12,13 @@
 |---|---|---|
 | [a11y-bug-bash](plugins/a11y-bug-bash/README.zh-CN.md) | 面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险 | Feature context 和验证步骤；代码审查需要只读源码；实际页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属 |
 | [a11y-test-categories](plugins/a11y-test-categories/README.zh-CN.md) | 对范围内每个对象和可达状态，逐项执行全部十类无障碍测试规程 | Feature 范围和对象/状态清单；本地覆盖核对需要 Node.js 22+；现场检查需要获授权的浏览器/AT 工具及资源归属 |
+| [a11y-report](plugins/a11y-report/README.zh-CN.md) | 在验证及获授权提单之后生成整体无障碍报告 | 原始私有发现日志、证据文件及兼容的测试分类插件版本 |
 
 ### 环境准备
 
 | 插件与使用说明 | 解决什么问题 | 使用前提 |
 |---|---|---|
-| [a11y-setup](plugins/a11y-setup/README.zh-CN.md) | 检查和准备 Windows 无障碍环境：按需安装浏览器、NVDA、音频和 Voice Access 所需依赖 | Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权 |
+| [a11y-setup](plugins/a11y-setup/README.zh-CN.md) | 先落实 DevBox 资源与归属，再检查和准备所需 Windows 无障碍工具 | Copilot 可在实际 Windows 评估机执行获授权命令；安装准备需要主机归属和变更授权 |
 
 ### 知识与静态审查
 
@@ -30,7 +31,7 @@
 | 插件与使用说明 | 解决什么问题 | 使用前提 |
 |---|---|---|
 | [a11y-intake](plugins/a11y-intake/README.zh-CN.md) | 读取获授权的工作项，整理验收条件和复现场景 | 配置工作项访问连接；内置 ADO read-item 使用主机管理的认证 |
-| [a11y-resources](plugins/a11y-resources/README.zh-CN.md) | 查看资源状态；按明确授权释放已完成的评估机任务 | 获授权的资源连接；释放还需要原始、已完成且仍归本任务所有的记录 |
+| [a11y-file-bug](plugins/a11y-file-bug/README.zh-CN.md) | 验证后按明确授权创建 Bug，包含详细复现、原因及不确定性、校验后的证据附件 | 已验证的原始发现任务/问题、审阅后的附件、项目字段及获授权提单连接 |
 | [a11y-capture](plugins/a11y-capture/README.zh-CN.md) | 采集真实 Windows AT 证据，恢复自有录制、音频或 NVDA 资源 | 已验收且支持每次采集前环境检查和采集后异常检查的 Windows 连接、自有评估机和固定场景；AFTER 还需实际源码 HEAD |
 | [a11y-validate](plugins/a11y-validate/README.zh-CN.md) | 检查已有证据文件；按需请求独立行为评估 | 结构检查只需 Node.js 22+ 和 evidence-v1 文件；行为评估需要已验收的连接 |
 | [a11y-publish](plugins/a11y-publish/README.zh-CN.md) | 向已有 Draft PR 附加证据；配置后接入更完整的发布流程 | 获授权的 PR 连接、精确 HEAD 和哈希绑定文件；内置附件操作使用 ADO 认证 |

@@ -2,6 +2,27 @@
 
 ## Current delivery
 
+v0.18 / execution envelope v0.9 changes plugin boundaries:
+
+| Previous surface | New owner / action |
+|---|---|
+| Separate `a11y-resources` installation and `a11y_resources_*` tools | `a11y-setup`, `a11y_setup_resources` and `_invoke` release-evaluator; establish DevBox authority before tool preparation |
+| Category files inside Bug Bash/runtime packages | Only `a11y-test-categories`; install separately and configure `pluginRoots.testCategories` |
+| Manual post-validation filing handoff | `a11y-file-bug` draft/submit/skip, native WIT attachments and Bug readback, explicit exact-draft approval |
+| Internal-only final reporting | Independent `a11y-report` generate/deliver plus the same shared coordinator implementation |
+
+There are twelve packages, eleven non-compatibility names. Category consumers
+pin the external plugin version/tool/procedures and never load a bundled fallback.
+For requested filing, `filingRequested:true` yields before reporting until each
+finding has an actual result or explicit skip reason. No automatic Bug creation
+or upload is authorized by discovery. Media bytes and caller playback review
+remain separate; the native simple uploader is bounded to 128 MiB total.
+
+**New operations only:** preserve old resources-plugin operations, category
+copies and provider/runtime pins until their original work is reconciled and
+closed. Do not rewrite old journals or uninstall their sole supervisor. This
+publication does not deploy, run live tests, create actual Bugs or release leases.
+
 v0.17 completes the source discovery chain: accepted plans, per-target category
 expansion, concrete scenario configuration, bounded run/advance, original-effect
 reconciliation, source analysis recording, compatible discovery validation,

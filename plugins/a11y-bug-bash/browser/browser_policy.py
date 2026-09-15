@@ -480,7 +480,12 @@ def enable_guarded_network(context, page):
     # A restored document must not run before request routing has been installed.
     if page.url != "about:blank":
         raise RuntimeError("Browser startup restored a nonblank page; retain profile state and reconcile before navigation")
+    # service_workers="block" prevents registration, not an existing profile worker.
+    session = context.new_cdp_session(page)
+    session.send("Network.enable")
+    session.send("Network.setBypassServiceWorker", {"bypass": True})
     context.set_offline(False)
+    return session
 
 
 def forward_without_redirects(route, timeout_ms):

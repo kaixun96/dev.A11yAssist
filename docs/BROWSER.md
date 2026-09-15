@@ -21,6 +21,14 @@ without the guard. `networkStartup` records this boundary, not evidence that old
 runs had no unobserved traffic. This context-level guard is not an OS firewall or
 a claim to intercept the approved authentication extension's own transport.
 
+Playwright's registration block does not remove existing service workers from
+a persistent profile. Before enabling networking, the runner also sets Chromium
+`Network.setBypassServiceWorker` on the page's retained CDP session. Failure is
+fatal before target navigation; there is no ungated fallback. Existing
+registrations/caches are not deleted and cookies are not copied. The report
+states the page-CDP scope explicitly; this does not claim control of independent
+extension traffic or unrelated browser targets.
+
 Permitted requests are forwarded once with `route.fetch(max_redirects=0)`, then
 the unmodified origin response is delivered to the browser. Redirect responses
 (3xx other than 304) are aborted, never relayed or followed: browser redirect hops

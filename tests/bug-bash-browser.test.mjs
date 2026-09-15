@@ -337,6 +337,30 @@ assert {item["path"] for item in report["rows"][0]["evidence"]} == {
     request["rows"][0]["id"] + ".png", request["rows"][0]["id"] + ".aria.txt"}
 assert report["rows"][0]["pageErrors"] == ["unit page-script error"]
 assert "no trigger" in report["rows"][0]["scenarioFailure"]
+class SettlingErrorPage(Page):
+    def wait_for_timeout(self, milliseconds): self.waited = milliseconds
+settling = copy.deepcopy(request)
+settling["rows"][0]["steps"] = [{"action":"observe","milliseconds":250},
+                               {"action":"click","target":{"css":"#forbidden"}}]
+page = SettlingErrorPage(); context = Context(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(settling, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+assert page.waited == 250
+assert report["rows"][0]["diagnosticObservation"]["state"] == "completed"
+assert "steps" not in report["rows"][0]
+assert report["rows"][0]["status"] == "inconclusive"
+assert report["rows"][0]["pageErrors"] == ["unit page-script error"]
+assert not report["rows"][0]["capturePostcheck"]["verified"]
+location = m.error_locations(types.SimpleNamespace(stack="Error at https://example.org/app.js?token=private:4:5"))
+assert location["frames"] == [{"url":"https://example.org/app.js","line":4,"column":5}]
+assert "private" not in json.dumps(location)
+assert m.error_locations("undefined")["frames"] == []
+assert m.error_locations(types.SimpleNamespace(stack="at https://user:private@example.org/app.js:1:2"))["frames"] == []
 class ConsumedQueryPage(Page):
     def goto(self, url, **kwargs):
         self.visited = url

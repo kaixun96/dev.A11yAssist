@@ -41,6 +41,27 @@ def query_shape(query):
             "duplicateQueryKeys": len(keys) != len(set(keys))}
 
 
+def error_locations(error):
+    stack = getattr(error, "stack", "")
+    frames = []
+    if isinstance(stack, str):
+        for match in re.finditer(r"https://[^\s)]+", stack[:8192]):
+            location = re.fullmatch(r"(.+):([0-9]{1,9}):([0-9]{1,9})", match.group())
+            if not location:
+                continue
+            try:
+                parsed = urlsplit(location[1])
+            except ValueError:
+                continue
+            if parsed.username or parsed.password or not parsed.hostname:
+                continue
+            frames.append({"url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+                           "line": int(location[2]), "column": int(location[3])})
+            if len(frames) == 20:
+                break
+    return {"type": type(error).__name__, "frames": frames}
+
+
 def locator_spec(value):
     if not isinstance(value, dict):
         raise ValueError("Locator must be a typed object")
@@ -565,6 +586,20 @@ def run(request, output, policy):
                                     raise RuntimeError("Failure diagnostics are restricted to the original target")
                                 if credential_inputs_present(page):
                                     raise RuntimeError("Credential-entry pages are excluded from failure diagnostics")
+                                leading = definition["steps"][0] if definition["steps"] else None
+                                if leading and leading["action"] == "observe":
+                                    if leading["milliseconds"] >= int((deadline - time.monotonic()) * 1000):
+                                        raise TimeoutError("Diagnostic settling exceeds the original remaining budget")
+                                    started = time.monotonic()
+                                    row["diagnosticObservation"] = {"state": "observing",
+                                        "requestedMilliseconds": leading["milliseconds"], "startedAt": stamp()}
+                                    save(state_path, report)
+                                    page.wait_for_timeout(leading["milliseconds"])
+                                    row["diagnosticObservation"].update(state="completed", finishedAt=stamp(),
+                                        elapsedMilliseconds=round((time.monotonic() - started) * 1000))
+                                    remaining_ms = int((deadline - time.monotonic()) * 1000)
+                                    if remaining_ms <= 0 or page.url != row_request["target"] or credential_inputs_present(page):
+                                        raise RuntimeError("Diagnostic settling left the authorized page or budget")
                                 screenshot = directory / (row["id"] + ".png")
                                 image_bytes = page.screenshot(timeout=min(5000, remaining_ms))
                                 remaining_ms = int((deadline - time.monotonic()) * 1000)
@@ -587,6 +622,7 @@ def run(request, output, policy):
                                 row["diagnosticCaptureError"] = str(error)
                     finally:
                         row["pageErrors"] = [str(error) for error in errors[:20]]
+                        row["pageErrorLocations"] = [error_locations(error) for error in errors[:20]]
                         row["unexpectedDialogs"] = dialogs[:20]
                         row["criticalRequestFailures"] = critical_failures[0] - failure_start
                         row["capturePostcheck"] = capture_health(

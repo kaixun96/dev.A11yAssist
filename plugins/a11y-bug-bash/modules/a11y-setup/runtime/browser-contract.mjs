@@ -16,9 +16,12 @@ function locator(value) {
   }
 }
 export function validateBrowserParameters(value) {
-  exact(value, ['steps', 'assertions']);
+  const inspection = value && Object.hasOwn(value, 'inspection');
+  exact(value, ['steps', 'assertions', ...(inspection ? ['inspection'] : [])]);
+  if (inspection) demand(value.inspection === true, 'Document inspection must be explicitly true');
   demand(Array.isArray(value.steps) && value.steps.length <= 30 &&
-    Array.isArray(value.assertions) && value.assertions.length >= 1 && value.assertions.length <= 20, 'Invalid browser scenario budget');
+    Array.isArray(value.assertions) && value.assertions.length >= (inspection ? 0 : 1) &&
+    value.assertions.length <= 20, 'Invalid browser scenario budget');
   for (const step of value.steps) {
     if (step.action === 'press') {
       exact(step, ['action', 'key']); demand(keys.has(step.key), 'Unsupported browser key');
@@ -64,7 +67,25 @@ export function verifyBrowserObservations(report, expectedRequest) {
     const expected = expectedRequest.rows.find(item => item.id === row.id);
     demand(expected && ['finding', 'observed-no-issue', 'blocked', 'not-run', 'inconclusive'].includes(row.status) &&
       typeof row.attempted === 'boolean', 'Browser coverage identity/attempt accounting differs');
+    if (Object.hasOwn(row, 'documentInspection')) demand(expected.inspection === true, 'Document inspection was not requested');
+    if (expected.inspection && row.documentInspection) {
+      const value = row.documentInspection;
+      demand(row.attempted && discoveryHash(row.inspectionSteps) === discoveryHash(expected.steps) &&
+        value.schemaVersion === 1 && value.scope === 'raw-document-inspection' &&
+        value.url === expectedRequest.target &&
+        discoveryHash(value.viewport) === discoveryHash(expectedRequest.viewport) &&
+        value.traversal === 'light-dom-only' && value.textAndInputValuesOmitted === true &&
+        value.frameContentsIncluded === false && Number.isInteger(value.frameElements) && value.frameElements >= 0 &&
+        Number.isInteger(value.totalElements) && value.totalElements >= 1 &&
+        Array.isArray(value.nodes) && value.nodes.length === Math.min(value.totalElements, 1000) &&
+        value.truncated === (value.totalElements > 1000), 'Invalid bounded document inspection');
+    }
+    if (expected.inspection && expected.assertions.length === 0) {
+      demand(['blocked', 'not-run', 'inconclusive'].includes(row.status),
+        'Raw document inspection cannot supply an accessibility verdict');
+    }
     if (['finding', 'observed-no-issue'].includes(row.status)) {
+      if (expected.inspection) demand(row.documentInspection, 'Requested document inspection is missing');
       demand(row.attempted && row.observations?.length === expected.assertions.length &&
         discoveryHash(row.steps) === discoveryHash(expected.steps), 'Browser steps or observations differ');
       const results = row.observations.map((value, index) => {

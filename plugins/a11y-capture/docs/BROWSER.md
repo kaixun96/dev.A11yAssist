@@ -103,6 +103,34 @@ This is neither a blanket POST exception nor an accessibility verdict.
 
 ## Outputs and completion
 
+### Explicit document inspection
+
+An optional `inspection: true` row parameter captures bounded, read-only DOM
+accessibility attributes, computed styles and element rectangles, together with
+the existing screenshot and accessibility snapshot. It supports HTML, SVG and
+XML document roots without requiring an invented element ID or dummy assertion:
+
+```json
+{"steps":[],"assertions":[],"inspection":true}
+```
+
+Empty assertions are allowed only for this explicit mode. Such a row remains
+`inconclusive`: it supplies raw observations for caller assessment, never an
+accessibility verdict. Normal bounded steps/assertions may also request inspection;
+their behavioral comparisons remain unchanged. No arbitrary scripts or OS keys
+are added. The deployment adapter must support the optional field before dispatch.
+
+`documentInspection` is hash-bound inside the row's report. It records at most
+1,000 light-DOM elements and 64 selected attributes per element, omits DOM text,
+form values, script bodies, link/media URLs and arbitrary data attributes. Its
+serialized value is checked against a 4 MiB bound before adding it to the report.
+Attribute/style truncation, open-shadow-root observations and the light-DOM-only
+scope remain explicit gaps. Child-frame elements are counted, but their documents
+are not traversed; this is not a complete reachable-state inventory.
+Use the screenshot/AX artifacts for content and the separate real-AT tools for
+speech. Do not turn raw inspection, setup success or a native completion into a
+case PASS or erase unvisited categories.
+
 Every requested row is retained as a conclusive observation or a precise gap.
 `not-run` rows do not inflate attempted coverage. The report binds request,
 runner/support hashes, target, viewport, actual tool versions and evidence bytes.

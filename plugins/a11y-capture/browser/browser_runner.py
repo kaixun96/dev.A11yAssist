@@ -63,7 +63,12 @@ def validate_request(value):
         raise ValueError("Browser request needs 1-30 rows")
     ids = set()
     for row in rows:
-        if not isinstance(row, dict) or set(row) != {"id", "steps", "assertions"}:
+        fields = {"id", "steps", "assertions"}
+        if isinstance(row, dict) and "inspection" in row:
+            fields.add("inspection")
+            if row["inspection"] is not True:
+                raise ValueError("Document inspection must be explicitly true")
+        if not isinstance(row, dict) or set(row) != fields:
             raise ValueError("Unexpected browser row fields")
         if not isinstance(row["id"], str) or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}", row["id"]) or row["id"] in ids:
             raise ValueError("Invalid or duplicate browser row ID")
@@ -85,7 +90,8 @@ def validate_request(value):
                     raise ValueError("Fill input is too large")
             else:
                 raise ValueError("Unsupported browser action; no scripts or shell commands")
-        if not isinstance(row["assertions"], list) or not 1 <= len(row["assertions"]) <= 20:
+        minimum_assertions = 0 if row.get("inspection") else 1
+        if not isinstance(row["assertions"], list) or not minimum_assertions <= len(row["assertions"]) <= 20:
             raise ValueError("Every row requires bounded assertions")
         for assertion in row["assertions"]:
             if not isinstance(assertion, dict):
@@ -166,6 +172,71 @@ def capture_health(page, request, clean):
     value["verified"] = (not closed and value["url"] == request["target"] and
                          value["visible"] and value["documentFocused"] and value["singlePage"] and
                          value["viewport"] == request["viewport"] and clean)
+    return value
+
+
+def inspect_document(page):
+    value = page.evaluate("""() => {
+      const elements = document.getElementsByTagName('*');
+      const selected = Array.from({length: Math.min(elements.length, 1000)}, (_, i) => elements[i]);
+      const indexes = new Map(selected.map((element, index) => [element, index]));
+      const names = ['id', 'role', 'lang', 'xml:lang', 'dir', 'alt', 'title', 'type', 'autocomplete',
+        'tabindex', 'for', 'scope', 'headers', 'rowspan', 'colspan', 'disabled', 'hidden',
+        'required', 'multiple', 'open', 'controls', 'autoplay', 'muted', 'loop'];
+      const styleNames = ['display', 'visibility', 'opacity', 'color', 'background-color',
+        'font-size', 'font-weight', 'font-family', 'line-height', 'text-decoration-line',
+        'outline-style', 'outline-width', 'outline-color', 'overflow-x', 'overflow-y',
+        'position', 'clip', 'clip-path'];
+      return {schemaVersion: 1, scope: 'raw-document-inspection', url: location.href,
+        contentType: document.contentType,
+        documentLanguage: document.documentElement.getAttribute('lang') ||
+          document.documentElement.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang') || '',
+        viewport: {width: innerWidth, height: innerHeight}, deviceScale: devicePixelRatio,
+        totalElements: elements.length, truncated: elements.length > 1000,
+        traversal: 'light-dom-only', textAndInputValuesOmitted: true,
+        frameElements: document.querySelectorAll('iframe,frame').length, frameContentsIncluded: false,
+        nodes: selected.map((element, index) => {
+          const attributes = {}, truncatedAttributes = [];
+          const attributeNames = element.getAttributeNames().filter(name =>
+            names.includes(name) || name.startsWith('aria-'));
+          for (const name of attributeNames.slice(0, 64)) {
+            if (name.length > 128) { truncatedAttributes.push(name.slice(0, 128)); continue; }
+            const value = element.getAttribute(name);
+            attributes[name] = value.slice(0, 512);
+            if (value.length > 512) truncatedAttributes.push(name);
+          }
+          const computed = getComputedStyle(element), styles = {};
+          const truncatedStyles = [];
+          for (const name of styleNames) {
+            const value = computed.getPropertyValue(name);
+            styles[name] = value.slice(0, 128);
+            if (value.length > 128) truncatedStyles.push(name);
+          }
+          const box = element.getBoundingClientRect();
+          return {index, parent: indexes.get(element.parentElement) ?? null,
+            tag: element.localName, namespace: element.namespaceURI, attributes,
+            truncatedAttributes, attributeCount: attributeNames.length,
+            attributesTruncated: attributeNames.length > 64 || truncatedAttributes.length > 0,
+            styles, truncatedStyles,
+            bounds: {x: box.x, y: box.y, width: box.width, height: box.height},
+            tabIndex: typeof element.tabIndex === 'number' ? element.tabIndex : null,
+            focused: element === document.activeElement,
+            openShadowRootObserved: element.shadowRoot !== null};
+        })};
+    }""")
+    if (not isinstance(value, dict) or value.get("schemaVersion") != 1
+            or value.get("scope") != "raw-document-inspection"
+            or type(value.get("totalElements")) is not int or value["totalElements"] < 1
+            or not isinstance(value.get("nodes"), list)
+            or len(value["nodes"]) != min(value["totalElements"], 1000)
+            or type(value.get("truncated")) is not bool
+            or value["truncated"] != (value["totalElements"] > 1000)
+            or value.get("textAndInputValuesOmitted") is not True
+            or value.get("frameContentsIncluded") is not False
+            or type(value.get("frameElements")) is not int or value["frameElements"] < 0):
+        raise RuntimeError("Invalid bounded document inspection")
+    if len(json.dumps(value).encode("utf-8")) > 4 * 1024 * 1024:
+        raise RuntimeError("Document inspection exceeds the 4MiB artifact bound")
     return value
 
 
@@ -375,11 +446,22 @@ def run(request, output, policy):
                             page.set_default_timeout(min(5000, remaining_ms))
                             observations.append(observe(page, assertion, policy, remaining_ms))
                         row["observations"] = observations
+                        if definition.get("inspection"):
+                            if time.monotonic() >= deadline:
+                                raise TimeoutError("Original document inspection budget exhausted")
+                            row["documentInspection"] = inspect_document(page)
+                            row["inspectionSteps"] = definition["steps"]
+                            if time.monotonic() >= deadline:
+                                raise TimeoutError("Document inspection exceeded the original budget")
                         if any(item.get("scanner", {}).get("incomplete") for item in observations):
                             raise RuntimeError("axe-core returned incomplete checks; preserve results for independent review")
-                        row.update(status="observed-no-issue" if all(item["met"] for item in observations) else "finding",
-                                   observations=observations, steps=definition["steps"], timestamp=stamp(), url=page.url)
-                        row.pop("reason", None)
+                        row.update(observations=observations, steps=definition["steps"], timestamp=stamp(), url=page.url)
+                        if not observations:
+                            row.update(status="inconclusive",
+                                       reason="Raw document inspection only; caller accessibility assessment is required")
+                        else:
+                            row["status"] = "observed-no-issue" if all(item["met"] for item in observations) else "finding"
+                            row.pop("reason", None)
                     except (PlaywrightError, RuntimeError, TimeoutError) as error:
                         row.update(status="blocked", reason=str(error))
                     try:
@@ -393,7 +475,8 @@ def run(request, output, policy):
                             screenshot = directory / (row["id"] + ".png")
                             page.screenshot(path=str(screenshot))
                             tree = directory / (row["id"] + ".aria.txt")
-                            tree.write_text(page.locator("body").aria_snapshot(), encoding="utf-8")
+                            tree.write_text(page.locator(":root" if definition.get("inspection") else "body").aria_snapshot(),
+                                            encoding="utf-8")
                             row["evidence"] = [{"path": file.name, "sha256": sha256(file)} for file in (screenshot, tree)]
                     finally:
                         row["capturePostcheck"] = capture_health(

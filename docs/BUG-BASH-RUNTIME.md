@@ -2,7 +2,7 @@
 
 **English** | [简体中文](BUG-BASH-RUNTIME.zh-CN.md)
 
-Package v0.20 / execution contract v0.11. Source implementation is separate from
+Package v0.22 / execution contract v0.11. Source implementation is separate from
 deployment and live qualification. This release never resumes an old task.
 
 The optional package-local CLI turns an accepted coverage plan into a durable
@@ -46,6 +46,12 @@ For the shared bounded page runner, use a `browser-scenarios` profile and the
 [typed browser contract](BROWSER.md). It supports approved anonymous/client-side
 HTTPS pages and explicit policy-v2 persistent/network/scanner/size capabilities,
 not just the fixed contact fixture. Source/AT gaps remain separate.
+
+Explicit `inspection: true` browser parameters can collect bounded document
+attributes, styles, rectangles and root AX/screenshot evidence for HTML/SVG/XML
+without invented target IDs. Empty assertions are allowed only in this mode and
+yield an inconclusive, raw-inspection result, not an accessibility PASS. Compatible
+deployment adapters and original ownership are still required; see [BROWSER.md](BROWSER.md).
 
 ## Create a plan
 

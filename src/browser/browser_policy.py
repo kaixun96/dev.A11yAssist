@@ -21,7 +21,7 @@ def https_url(value, origin=False):
 def validate(policy):
     common = {"schemaVersion", "allowedTargets", "assetHosts"}
     version = policy.get("schemaVersion") if isinstance(policy, dict) else None
-    if type(version) is not int or version not in {1, 2, 3, 4, 5}:
+    if type(version) is not int or version not in {1, 2, 3, 4, 5, 6}:
         raise ValueError("Invalid protected browser policy version")
     fields = common if version == 1 else common | {"connection", "requests", "scanner"}
     if version >= 4:
@@ -60,9 +60,15 @@ def validate(policy):
         if type(connection["timeoutSeconds"]) is not int or not 1 <= connection["timeoutSeconds"] <= 120:
             raise ValueError("Authentication wait must be 1-120 seconds within the original run budget")
         ready = connection["ready"]
-        if (not isinstance(ready, dict) or set(ready) != {"css"} or
-                not isinstance(ready["css"], str) or not re.fullmatch(r"#[A-Za-z][A-Za-z0-9_-]{0,100}", ready["css"])):
-            raise ValueError("Authentication readiness must be one exact protected element ID")
+        if version >= 6 and isinstance(ready, dict) and set(ready) == {"jsonResponseKeys"}:
+            keys = ready["jsonResponseKeys"]
+            if (not isinstance(keys, list) or not 1 <= len(keys) <= 20 or
+                    any(not isinstance(key, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,100}", key)
+                        for key in keys) or len(set(keys)) != len(keys)):
+                raise ValueError("JSON readiness requires explicit unique top-level response keys")
+        elif (not isinstance(ready, dict) or set(ready) != {"css"} or
+              not isinstance(ready["css"], str) or not re.fullmatch(r"#[A-Za-z][A-Za-z0-9_-]{0,100}", ready["css"])):
+            raise ValueError("Authentication readiness must be one exact protected element ID or v6 JSON response keys")
     if not isinstance(policy["requests"], list) or len(policy["requests"]) > 100:
         raise ValueError("Invalid transaction route budget")
     signatures = {}
@@ -345,6 +351,36 @@ def open_context(playwright, request, policy):
             browser.close()
 
 
+def json_document_ready(page, keys):
+    content_type = page.evaluate("document.contentType").lower()
+    if content_type != "application/json" and not (
+            content_type.startswith("application/") and content_type.endswith("+json")):
+        return False
+    body = page.locator("body > pre")
+    if body.count() != 1 or not body.is_visible():
+        return False
+    text = body.evaluate("(element) => element.textContent.length <= 65536 ? element.textContent : null")
+    if not isinstance(text, str) or len(text.encode("utf-8")) > 65536:
+        return False
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("Duplicate JSON response key")
+            result[key] = value
+        return result
+
+    def reject_constant(value):
+        raise ValueError("Nonstandard JSON constant")
+
+    try:
+        data = json.loads(text, object_pairs_hook=unique_object, parse_constant=reject_constant)
+    except (ValueError, RecursionError):
+        return False
+    return isinstance(data, dict) and all(key in data for key in keys)
+
+
 def wait_authenticated(page, request, policy, deadline, monotonic):
     connection = policy.get("connection", {})
     if connection.get("mode") != "persistent":
@@ -352,8 +388,13 @@ def wait_authenticated(page, request, policy, deadline, monotonic):
     until = min(deadline, monotonic() + connection["timeoutSeconds"])
     while monotonic() < until:
         if page.url == request["target"]:
-            ready = page.locator(connection["ready"]["css"])
-            if ready.count() == 1 and ready.is_visible():
+            declaration = connection["ready"]
+            if "jsonResponseKeys" in declaration:
+                ready = json_document_ready(page, declaration["jsonResponseKeys"])
+            else:
+                marker = page.locator(declaration["css"])
+                ready = marker.count() == 1 and marker.is_visible()
+            if ready and monotonic() < until and page.url == request["target"]:
                 return
         page.wait_for_timeout(min(250, max(1, (until - monotonic()) * 1000)))
     raise RuntimeError("Visible authentication did not reach the approved target/readiness marker; "

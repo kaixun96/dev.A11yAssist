@@ -122,6 +122,24 @@ block subsequent rows within the original budget. All ordinary authorized
 non-GET/HEAD requests still require the original effect/reset reconciliation.
 This is neither a blanket POST exception nor an accessibility verdict.
 
+## Authenticated JSON document readiness (policy v6)
+
+For an independently authorized GET diagnostic whose document is JSON rather than
+an application page, policy v6 may declare persistent connection readiness as
+`"ready": {"jsonResponseKeys": ["items"]}`. This is operator policy, never a row
+override or automatic inference. Use a separately scoped policy with only the
+intended diagnostic target URLs; do not replace application-page readiness.
+
+Readiness requires the exact target URL, JSON document MIME type, one visible
+browser-rendered `body > pre`, a valid JSON object no larger than 65,536 UTF-8
+bytes, and all declared unique top-level keys. Duplicate JSON keys, nonstandard
+constants, arrays, error shapes without those keys, HTML login pages, redirects
+and expired original deadlines cannot satisfy it. Versions 1-5 retain exact-ID
+HTML readiness. No requests, credentials, scopes, POST exceptions or server
+effects are authorized or reconciled by this shape check. Existing response,
+capture, effect and cleanup gates still apply. Diagnostic state retrieval is not
+product accessibility coverage.
+
 ## Qualified JSON reads (policy v5)
 
 Some independently established read-only APIs require a JSON POST body. Policy v5

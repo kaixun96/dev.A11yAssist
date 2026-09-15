@@ -182,6 +182,7 @@ def validate_request(value):
         ids.add(row["id"])
         if not isinstance(row["steps"], list) or not 0 <= len(row["steps"]) <= 30:
             raise ValueError("Invalid step budget")
+        spacing_seen = False
         for step in row["steps"]:
             if not isinstance(step, dict):
                 raise ValueError("Step must be an object")
@@ -198,6 +199,10 @@ def validate_request(value):
             elif action == "observe" and set(step) == {"action", "milliseconds"}:
                 if type(step["milliseconds"]) is not int or not 1 <= step["milliseconds"] <= 30000:
                     raise ValueError("Observation dwell must be 1-30000 milliseconds")
+            elif action == "text-spacing" and set(step) == {"action"}:
+                if spacing_seen:
+                    raise ValueError("Text-spacing preset may be applied only once per row")
+                spacing_seen = True
             else:
                 raise ValueError("Unsupported browser action; no scripts or shell commands")
         minimum_assertions = 0 if row.get("inspection") else 1
@@ -295,8 +300,9 @@ def inspect_document(page):
         'required', 'multiple', 'open', 'controls', 'autoplay', 'muted', 'loop'];
       const styleNames = ['display', 'visibility', 'opacity', 'color', 'background-color',
         'font-size', 'font-weight', 'font-family', 'line-height', 'text-decoration-line',
+        'letter-spacing', 'word-spacing', 'margin-block-end',
         'outline-style', 'outline-width', 'outline-color', 'overflow-x', 'overflow-y',
-        'position', 'clip', 'clip-path', 'forced-color-adjust', 'letter-spacing', 'word-spacing'];
+        'position', 'clip', 'clip-path', 'forced-color-adjust'];
       return {schemaVersion: 1, scope: 'raw-document-inspection', url: location.href,
         contentType: document.contentType,
         documentLanguage: document.documentElement.getAttribute('lang') ||
@@ -597,6 +603,7 @@ def run(request, output, policy):
                     row.update(status="inconclusive", attempted=True, reason="Execution started; reconcile interruption before retry")
                     save(state_path, report)
                     errors = []
+                    spacing_style = None
                     on_error = lambda error: errors.append(error)
                     failure_start = critical_failures[0]
                     transaction_start = len(report["transactions"])
@@ -629,6 +636,18 @@ def run(request, output, policy):
                                 raise TimeoutError("Browser scenario budget exhausted")
                             if step["action"] == "press":
                                 page.keyboard.press(step["key"])
+                            elif step["action"] == "text-spacing":
+                                if "textSpacing" in row:
+                                    raise RuntimeError("Text-spacing preset may be applied only once per row")
+                                row["textSpacing"] = measurements.text_spacing_record()
+                                save(state_path, report)
+                                remaining_ms = int((deadline - time.monotonic()) * 1000)
+                                if remaining_ms <= 0:
+                                    raise TimeoutError("Text-spacing installation budget exhausted")
+                                page.set_default_timeout(min(5000, remaining_ms))
+                                spacing_style = measurements.apply_text_spacing(page)
+                                row["textSpacing"]["state"] = "installed"
+                                save(state_path, report)
                             elif step["action"] == "observe":
                                 if step["milliseconds"] > int((deadline - time.monotonic()) * 1000):
                                     raise TimeoutError("Observation dwell exceeds the remaining original budget")
@@ -665,6 +684,8 @@ def run(request, output, policy):
                             raise RuntimeError("Unexpected page script error or browser dialog")
                         if len(context.pages) != 1:
                             raise RuntimeError("Unexpected popup changed the scenario context")
+                        if spacing_style is not None and not measurements.text_spacing_present(spacing_style):
+                            raise RuntimeError("Owned text-spacing stylesheet changed or disappeared")
                         row["documentFocused"] = page.evaluate("document.hasFocus()")
                         if any(item["kind"] == "focused" for item in definition["assertions"]) and not row["documentFocused"]:
                             raise RuntimeError("Document focus is not established for a focus assertion")
@@ -696,13 +717,17 @@ def run(request, output, policy):
                         row.update(status="blocked", reason=str(error))
                         row["scenarioFailure"] = str(error)
                     try:
+                        spacing_ready = True
+                        if "textSpacing" in row:
+                            spacing_ready = spacing_style is not None and measurements.text_spacing_present(spacing_style)
+                            row["textSpacing"]["beforeCaptureVerified"] = spacing_ready
                         if row.get("capturePreflight", {}).get("verified"):
                             row["capturePreflight"] = capture_health(
-                                page, row_request, not errors and not dialogs and critical_failures[0] == failure_start)
+                                page, row_request, not errors and not dialogs and critical_failures[0] == failure_start and spacing_ready)
                             save(state_path, report)
                             if not row["capturePreflight"]["verified"]:
                                 row.update(status="blocked", reason="Environment changed before capture; scenario evidence not accepted")
-                                row["scenarioFailure"] = row["reason"]
+                                row.setdefault("scenarioFailure", row["reason"])
                         if row.get("capturePreflight", {}).get("verified"):
                             screenshot = directory / (row["id"] + ".png")
                             page.screenshot(path=str(screenshot))
@@ -760,8 +785,12 @@ def run(request, output, policy):
                         row["pageErrorLocations"] = [error_locations(error) for error in errors[:20]]
                         row["unexpectedDialogs"] = dialogs[:20]
                         row["criticalRequestFailures"] = critical_failures[0] - failure_start
+                        spacing_ready = True
+                        if "textSpacing" in row:
+                            spacing_ready = spacing_style is not None and measurements.text_spacing_present(spacing_style)
+                            row["textSpacing"]["afterCaptureVerified"] = spacing_ready
                         row["capturePostcheck"] = capture_health(
-                            page, row_request, not errors and not dialogs and critical_failures[0] == failure_start)
+                            page, row_request, not errors and not dialogs and critical_failures[0] == failure_start and spacing_ready)
                         if not row["capturePostcheck"]["verified"]:
                             row.update(status="inconclusive", reason="Capture postcheck found an unexpected page/environment state")
                             row["evidencePurpose"] = "environment-diagnostic"
@@ -770,8 +799,18 @@ def run(request, output, policy):
                             row.update(status="inconclusive",
                                        reason="Server request effects are unresolved; independent server-state/reset verification required before another row")
                             row["evidencePurpose"] = "environment-diagnostic"
-                        save(state_path, report)
-                        page.remove_listener("pageerror", on_error)
+                        try:
+                            if spacing_style is not None:
+                                measurements.restore_text_spacing(spacing_style)
+                                row["textSpacing"]["cleanupState"] = "removed"
+                            elif "textSpacing" in row:
+                                raise RuntimeError("Text-spacing installation was unconfirmed; close the owned context before further scenarios")
+                        except (PlaywrightError, RuntimeError) as error:
+                            row.update(status="inconclusive", reason=f"Text-spacing cleanup did not complete normally: {error}")
+                            raise
+                        finally:
+                            save(state_path, report)
+                            page.remove_listener("pageerror", on_error)
                 report["blockedRequests"] = blocked_requests
                 report["blockedRequestCount"] = blocked_request_count[0]
                 report["blockedRequestsTruncated"] = blocked_request_count[0] > len(blocked_requests)
@@ -798,6 +837,10 @@ def run(request, output, policy):
                 })
         raise
     finally:
+        if report["ownedBrowserClosed"]:
+            for row in report["rows"]:
+                if row.get("textSpacing", {}).get("cleanupState") == "pending":
+                    row["textSpacing"]["cleanupState"] = "discarded-with-owned-context"
         if report.get("exceptionDiagnostics", {}).get("state") == "collecting" and report["ownedBrowserClosed"]:
             report["exceptionDiagnostics"]["state"] = "closed"
         report["finishedAt"] = stamp()

@@ -112,6 +112,28 @@ start/end timing, and never extends the original request budget. A dwell larger
 than the remaining budget fails before waiting. It does not itself start AT,
 grant concurrent control or supply a speech/behavior verdict.
 
+`{"action":"text-spacing"}` installs one fixed
+[WCAG 2.2 SC 1.4.12](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html)
+test stylesheet: line height 1.5, paragraph spacing 2em, letter spacing 0.12em
+and word spacing 0.16em. No CSS, script, selector or preset parameters are
+accepted, and a row may apply it only once. It affects the main HTML document's
+light DOM; it does not claim iframe or shadow-root coverage or 200% text resize.
+
+The normal stylesheet API respects page CSP. The runner never copies a nonce,
+changes headers or enables a CSP bypass. This independent spacing procedure
+does not make a rejected scanner script executable. A rejected/unconfirmed
+installation remains a gap and closes the owned context before more scenarios.
+
+The stylesheet stays active through the screenshot, accessibility snapshot and
+capture postcheck, then the module removes only its own element. `textSpacing`
+records the fixed values, stylesheet hash, presence before/after capture and
+cleanup. A removal failure fails the operation; disposal with the owned context
+is recorded separately and cannot produce a conclusive spacing verdict.
+Document inspection also records computed `letter-spacing`, `word-spacing` and
+`margin-block-end`. Callers must check actual target measurements, content,
+controls and matched screenshots: stylesheet presence alone does not prove that
+every target's styles changed or that the page conforms.
+
 Assertions are `focused`, `visible`, `count`, `text`, `target-size`,
 `axe-violations` and a small allow-list of accessibility attributes.
 Expected values are typed booleans, bounded counts/text

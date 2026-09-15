@@ -369,6 +369,21 @@ serialized value is checked against a 4 MiB bound before adding it to the report
 Attribute/style truncation, open-shadow-root observations and the light-DOM-only
 scope remain explicit gaps. Child-frame elements are counted, but their documents
 are not traversed; this is not a complete reachable-state inventory.
+
+Computed styles include `line-height`, `letter-spacing` and `word-spacing`.
+Each node may also provide `inlineTextSpacing`, with fixed entries for those
+three properties. `hasValue` records whether the element's inline
+`CSSStyleDeclaration.getPropertyValue()` is nonempty; `important` records its
+`getPropertyPriority()` flag. Raw inline values, custom-property references and
+the full `style` attribute are not copied. A `null` observation means that the
+element's inline-style API is unavailable, not that no declaration exists.
+Older records may omit this field.
+
+These are read-only facts, not a text-spacing test or an inference about the
+winning cascade origin. Callers must still establish visible text-node targets,
+resolve applicable cascade/shorthand/transition conditions and interpret values
+such as `normal` or `calc(...)`; missing or truncated data is not zero or PASS.
+
 Use the screenshot/AX artifacts for content and the separate real-AT tools for
 speech. Do not turn raw inspection, setup success or a native completion into a
 case PASS or erase unvisited categories.

@@ -296,7 +296,7 @@ def inspect_document(page):
       const styleNames = ['display', 'visibility', 'opacity', 'color', 'background-color',
         'font-size', 'font-weight', 'font-family', 'line-height', 'text-decoration-line',
         'outline-style', 'outline-width', 'outline-color', 'overflow-x', 'overflow-y',
-        'position', 'clip', 'clip-path', 'forced-color-adjust'];
+        'position', 'clip', 'clip-path', 'forced-color-adjust', 'letter-spacing', 'word-spacing'];
       return {schemaVersion: 1, scope: 'raw-document-inspection', url: location.href,
         contentType: document.contentType,
         documentLanguage: document.documentElement.getAttribute('lang') ||
@@ -328,12 +328,26 @@ def inspect_document(page):
             styles[name] = value.slice(0, 128);
             if (value.length > 128) truncatedStyles.push(name);
           }
+          let inlineTextSpacing = null;
+          const inline = element.style;
+          if (inline && typeof inline.getPropertyValue === 'function' &&
+              typeof inline.getPropertyPriority === 'function') {
+            inlineTextSpacing = {};
+            for (const name of ['line-height', 'letter-spacing', 'word-spacing']) {
+              const value = inline.getPropertyValue(name), priority = inline.getPropertyPriority(name);
+              if (typeof value !== 'string' || !['', 'important'].includes(priority) ||
+                  (value === '' && priority !== '')) {
+                throw new Error('Invalid inline text-spacing declaration');
+              }
+              inlineTextSpacing[name] = {hasValue: value !== '', important: priority === 'important'};
+            }
+          }
           const box = element.getBoundingClientRect();
           return {index, parent: indexes.get(element.parentElement) ?? null,
             tag: element.localName, namespace: element.namespaceURI, attributes,
             truncatedAttributes, attributeCount: attributeNames.length,
             attributesTruncated: attributeNames.length > 64 || truncatedAttributes.length > 0,
-            styles, truncatedStyles,
+            styles, truncatedStyles, inlineTextSpacing,
             bounds: {x: box.x, y: box.y, width: box.width, height: box.height},
             tabIndex: typeof element.tabIndex === 'number' ? element.tabIndex : null,
             focused: element === document.activeElement,

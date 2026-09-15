@@ -105,3 +105,29 @@ test('PowerShell AT driver parses without importing UI, launching AT or accessin
       { encoding: 'utf8', timeout: 15000, windowsHide: true });
     assert.equal(result.status, 0, result.stderr);
   });
+
+test('read-only process identity queries the caller session without policy, UI or AT',
+  { skip: process.platform !== 'win32' }, () => {
+    const path = fileURLToPath(new URL('../src/native/windows-at.ps1', import.meta.url));
+    const result = spawnSync('powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-File', path, '-InspectProcessId', String(process.pid)],
+      { encoding: 'utf8', timeout: 15000, windowsHide: true });
+    assert.equal(result.status, 0, result.stderr);
+    const identity = JSON.parse(result.stdout.trim());
+    assert.equal(identity.scope, 'read-only-process-identity');
+    assert.equal(identity.pid, process.pid);
+    assert.equal(identity.imagePath.toLowerCase(), process.execPath.toLowerCase());
+    assert.ok(Number.isInteger(identity.sessionId));
+    assert.match(identity.startedAt, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{7}Z$/);
+    assert.equal(identity.realAssistiveTechnologyVerified, false);
+    const missing = spawnSync('powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-File', path, '-InspectProcessId', '2147483647'],
+      { encoding: 'utf8', timeout: 15000, windowsHide: true });
+    assert.notEqual(missing.status, 0);
+    assert.equal(missing.stdout.trim(), '');
+    const mixed = spawnSync('powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-File', path, '-InspectProcessId', String(process.pid),
+        '-PolicyPath', 'not-a-policy', '-RequestPath', 'not-a-request', '-OutputDirectory', 'not-created'],
+      { encoding: 'utf8', timeout: 15000, windowsHide: true });
+    assert.notEqual(mixed.status, 0);
+  });

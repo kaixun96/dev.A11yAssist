@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.26.1",
+  "version": "0.27.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -18,13 +18,13 @@
   ],
   "knowledge": {
     "manifest": "src/knowledge/manifest.json",
-    "sha256": "ab3068aec277feab06a0adc7d449c6be23f5593d6392cb403b42db16b25cab5c"
+    "sha256": "50d6179cfd137bd23c8c67b363eefaddde255eefde8c5eb72b6ca8e7ca3b6ce3"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "83489491bd44d416dd418a3ca14cb78378a0b9fcde414ccf950ff70a747ae5d8",
+      "sha256": "b8addf615c3454032a6620588cd436edb75952df358b663b24db5391b2cefb11",
       "plugins": [
         "a11y-intake",
         "a11y-setup",
@@ -89,7 +89,7 @@
     "src/native/pr-description.mjs": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf",
     "src/native/provenance.json": "eb9bfb249f1620d36ca1ea401e51ce312b1e5555bfb8953695f85ded4816dd2d",
     "src/native/windows-at.policy.example.json": "63eeb18489eeaa2daa1b495bc3842243c941bb000a1c84e92b639e37054414a9",
-    "src/native/windows-at.ps1": "c63e64d821d4e60942a04b34ef3e76183087bcb35df4d5a8af5fa128b76d36ba",
+    "src/native/windows-at.ps1": "7680c96f18eb01e679ea0dd5b152acbb4715d236d93c8c414b037e266eb414fb",
     "src/native/windows-host.ps1": "ded63f5d0b1663ae11d05776808a46a484497adf8ffd4d7d501cb1e2d53eb9ae"
   }
 }

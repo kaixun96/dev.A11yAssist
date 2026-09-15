@@ -125,6 +125,11 @@ including any flags that could create or update state. A POST, an API name or a
 JSON boolean alone never proves read-only behavior. The policy stores the digest
 and byte count, not request contents. No wildcard body, field projection,
 normalization, unknown query or automatic permission discovery is supported.
+Several independently qualified bodies can share one endpoint in v5 only when
+every overlapping rule is read-only and their exact body digests differ. The
+actual matching body selects its own response qualification. Duplicate digests,
+ordinary mutation fallbacks and changed/unlisted bodies remain rejected,
+including during authentication renewal. Versions 1-4 still reject overlaps.
 
 Before transmission the actual bytes, length, JSON object format and
 `application/json` content type must match. Method-override and transfer-encoding

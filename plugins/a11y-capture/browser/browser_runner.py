@@ -296,12 +296,18 @@ def inspect_document(page):
       const styleNames = ['display', 'visibility', 'opacity', 'color', 'background-color',
         'font-size', 'font-weight', 'font-family', 'line-height', 'text-decoration-line',
         'outline-style', 'outline-width', 'outline-color', 'overflow-x', 'overflow-y',
-        'position', 'clip', 'clip-path'];
+        'position', 'clip', 'clip-path', 'forced-color-adjust'];
       return {schemaVersion: 1, scope: 'raw-document-inspection', url: location.href,
         contentType: document.contentType,
         documentLanguage: document.documentElement.getAttribute('lang') ||
           document.documentElement.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang') || '',
         viewport: {width: innerWidth, height: innerHeight}, deviceScale: devicePixelRatio,
+        media: {
+          forcedColorsActive: matchMedia('(forced-colors: active)').matches,
+          prefersContrastMore: matchMedia('(prefers-contrast: more)').matches,
+          prefersReducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+          prefersDarkScheme: matchMedia('(prefers-color-scheme: dark)').matches
+        },
         totalElements: elements.length, truncated: elements.length > 1000,
         traversal: 'light-dom-only', textAndInputValuesOmitted: true,
         frameElements: document.querySelectorAll('iframe,frame').length, frameContentsIncluded: false,

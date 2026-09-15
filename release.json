@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.28.1",
+  "version": "0.29.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -18,13 +18,13 @@
   ],
   "knowledge": {
     "manifest": "src/knowledge/manifest.json",
-    "sha256": "9bdf7be44b15851cb73b7bc40af59a21692ccc8df71382125cfdc61bb8faf838"
+    "sha256": "2d90cfb13567f5f1d5421e49d17ea235fe20248d786456e28c51db066585fbfb"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "58148edf8b716e0d01fb92c62caa5656e7c89a9832941f0ca18e5941a68fe43b",
+      "sha256": "22753ff524591754beeca579047b1fcd7d6bd5049e3a541ae6fbd9a338cc4749",
       "plugins": [
         "a11y-intake",
         "a11y-setup",
@@ -52,7 +52,7 @@
     }
   ],
   "hashes": {
-    "src/runtime/browser-contract.mjs": "84347fee517ffc22d3f37157cec415e679bf3fa35f3aec4ba742722940ee8331",
+    "src/runtime/browser-contract.mjs": "7c7c6717b35d1392fce2c7ed380b53a5081cd1350b0b5c718522fa5ff6ef083c",
     "src/runtime/bug-bash-cli.mjs": "601766442be1bf40f1e7c45603a674f509e43fc670d8be8c515c187a39d819bd",
     "src/runtime/bug-bash.mjs": "b1057862a53b376d9eb0c1cc29d0097a1ecc7f83badfd0872df033b04841c4f3",
     "src/runtime/builtin-ado.mjs": "2373e51d61072a4b8184ee87611dab4b533456c9fcad63c81371d26bbba493aa",

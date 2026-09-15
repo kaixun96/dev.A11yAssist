@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import sys
 import time
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 
 ROOT = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("bugbash_browser_support", ROOT / "browser_support.py")
@@ -23,6 +23,22 @@ measurements = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(measurements)
 KEYS = {"Tab", "Shift+Tab", "Enter", "Space", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"}
 ATTRIBUTES = {"aria-invalid", "aria-describedby", "aria-expanded", "aria-selected", "aria-checked", "aria-modal", "tabindex", "id"}
+
+
+def query_shape(query):
+    """Expose bounded parameter names, never values, for exact policy qualification."""
+    omitted = {"queryKeys": [], "queryKeysComplete": False, "duplicateQueryKeys": None}
+    if len(query) > 8192:
+        return omitted
+    try:
+        pairs = parse_qsl(query, keep_blank_values=True, max_num_fields=40, errors="strict")
+    except (ValueError, UnicodeDecodeError):
+        return omitted
+    keys = [key for key, _ in pairs]
+    if any(not re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$.-]{0,63}", key) for key in keys):
+        return omitted
+    return {"queryKeys": sorted(set(keys)), "queryKeysComplete": True,
+            "duplicateQueryKeys": len(keys) != len(set(keys))}
 
 
 def locator_spec(value):
@@ -344,6 +360,7 @@ def run(request, output, policy):
                                                      "type": route.request.resource_type,
                                                      "method": route.request.method,
                                                      "hasQuery": bool(parsed.query),
+                                                     **query_shape(parsed.query),
                                                      "bodyBytes": len(route.request.post_data_buffer or b""),
                                                      "expectedTelemetryDenial": telemetry is not None})
                         route.abort()

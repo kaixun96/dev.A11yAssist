@@ -137,6 +137,11 @@ benchmark results. Ordinary mutation/effect/reset rules are unchanged.
 Preflight and postcheck diagnostics retain page errors, dialog observations and
 critical request failure counts even when capture is forbidden. Failed response
 diagnostics omit query values. Infrastructure gaps are not product findings.
+Denied-request diagnostics additionally record bounded query parameter names and
+whether names repeat. Values, headers and request bodies are never recorded.
+Oversized, malformed or unsupported names produce `queryKeysComplete: false`,
+not permission to guess a wider rule. An observed name is only a qualification
+input; it does not automatically authorize the endpoint or its parameter values.
 
 ## Outputs and completion
 

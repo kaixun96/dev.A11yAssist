@@ -164,6 +164,22 @@ This is neither a blanket POST exception nor an accessibility verdict.
 
 ## Effective visual-mode observations
 
+Policy v8 may explicitly declare an operator-owned `media` object with any
+nonempty subset of `forcedColors` (`system`, `active`, `none`), `colorScheme`
+(`system`, `light`, `dark`), `reducedMotion` (`system`, `reduce`, `no-preference`)
+and `contrast` (`system`, `more`, `no-preference`). No arbitrary CSS/scripts or
+scenario-level override is accepted. Omitted configuration preserves existing
+behavior; versions 1-7 reject the new declaration.
+
+These page-scoped preferences are applied through Playwright before navigation
+and recorded as `requestedMedia`. `system` uses Playwright's explicit `"null"`
+reset value rather than Python `None`, which omits the parameter. Closing the
+owned context removes these page overrides; the driver does not change Windows
+settings. Qualify any live mode change under the caller's existing ownership
+and authorization. Requested preferences are not proof of effective rendering:
+always inspect the actual media results and matched screenshots. Emulated forced
+colors and actual Windows High Contrast integration must remain distinguishable.
+
 Explicit document inspection records the actual browser media-query results for
 forced colors, increased contrast, reduced motion and dark scheme, plus computed
 `forced-color-adjust` on inspected elements. These are read-only measurements:

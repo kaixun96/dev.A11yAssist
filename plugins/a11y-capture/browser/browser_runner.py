@@ -481,6 +481,9 @@ def run(request, output, policy):
                 if len(context.pages) > 1:
                     raise RuntimeError("Existing profile opened multiple pages; do not alter an ambiguous session")
                 page = context.pages[0] if context.pages else context.new_page()
+                if "media" in policy:
+                    policy_module.configure_media(page, policy)
+                    report["requestedMedia"] = dict(policy["media"])
                 page.bring_to_front()
                 page.set_default_timeout(5000)
                 page.set_default_navigation_timeout(15000)

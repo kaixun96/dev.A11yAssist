@@ -38,15 +38,28 @@ def https_url(value, origin=False):
 def validate(policy):
     common = {"schemaVersion", "allowedTargets", "assetHosts"}
     version = policy.get("schemaVersion") if isinstance(policy, dict) else None
-    if type(version) is not int or version not in {1, 2, 3, 4, 5, 6, 7}:
+    if type(version) is not int or version not in {1, 2, 3, 4, 5, 6, 7, 8}:
         raise ValueError("Invalid protected browser policy version")
     fields = common if version == 1 else common | {"connection", "requests", "scanner"}
+    if version >= 8 and "media" in policy:
+        fields.add("media")
     if version >= 4:
         fields.add("telemetryBlocks")
     if version >= 5 and "bodyDiagnostics" in policy:
         fields.add("bodyDiagnostics")
     if set(policy) != fields:
         raise ValueError("Unexpected protected browser policy fields")
+    if "media" in policy:
+        choices = {
+            "forcedColors": {"system", "active", "none"},
+            "colorScheme": {"system", "light", "dark"},
+            "reducedMotion": {"system", "reduce", "no-preference"},
+            "contrast": {"system", "more", "no-preference"},
+        }
+        media = policy["media"]
+        if (not isinstance(media, dict) or not media or not set(media).issubset(choices) or
+                any(not isinstance(value, str) or value not in choices[key] for key, value in media.items())):
+            raise ValueError("Media preferences require explicit protected enumerated values")
     if (not isinstance(policy["allowedTargets"], list) or len(policy["allowedTargets"]) > 100 or
             not isinstance(policy["assetHosts"], list) or len(policy["assetHosts"]) > 30):
         raise ValueError("Invalid protected target/asset budget")
@@ -491,6 +504,16 @@ def json_document_ready(page, keys):
     except (ValueError, RecursionError):
         return False
     return isinstance(data, dict) and all(key in data for key in keys)
+
+
+def configure_media(page, policy):
+    media = policy.get("media")
+    if media is None:
+        return
+    names = {"forcedColors": "forced_colors", "colorScheme": "color_scheme",
+             "reducedMotion": "reduced_motion", "contrast": "contrast"}
+    page.emulate_media(**{names[key]: "null" if value == "system" else value
+                          for key, value in media.items()})
 
 
 def wait_authenticated(page, request, policy, deadline, monotonic):

@@ -272,6 +272,8 @@ class Page:
         return types.SimpleNamespace(status=200)
     def is_closed(self): return False
     def evaluate(self, script): return {"visible":True,"focused":True}
+    @property
+    def frames(self): return [self]
     def screenshot(self, path=None, **kwargs):
         value = b"UNIT DIAGNOSTIC; not accepted evidence"
         if path is not None: Path(path).write_bytes(value)
@@ -438,6 +440,22 @@ class CredentialPage(Page):
         raise AssertionError("Credential page must not be inspected")
     def screenshot(self, **kwargs): raise AssertionError("Credential page must not be captured")
 page = CredentialPage(); context = Context(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(request, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+assert report["rows"][0]["status"] == "inconclusive"
+assert "Credential-entry" in report["rows"][0]["diagnosticCaptureError"]
+assert "evidence" not in report["rows"][0]
+class CredentialFramePage(Page):
+    @property
+    def frames(self):
+        return [self, types.SimpleNamespace(locator=lambda selector:types.SimpleNamespace(count=lambda:1))]
+    def screenshot(self, **kwargs): raise AssertionError("Credential frame must not be captured")
+page = CredentialFramePage(); context = Context(page); browser = Browser()
 with tempfile.TemporaryDirectory() as output, \\
      patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
      patch.object(m.sys, "platform", "win32"), \\

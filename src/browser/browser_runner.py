@@ -260,6 +260,14 @@ def confirm_read_only_response(transaction, response):
                        responseContentType=content_type, confirmedAt=stamp())
 
 
+def credential_inputs_present(page):
+    frames = page.frames
+    if len(frames) > 16:
+        raise RuntimeError("Failure diagnostic credential guard exceeds the frame bound")
+    return any(frame.locator('input[type="password"], input[autocomplete="one-time-code"]').count()
+               for frame in frames)
+
+
 def run(request, output, policy):
     validate_request(request)
     validate_policy(policy)
@@ -504,7 +512,7 @@ def run(request, output, policy):
                                     raise TimeoutError("Original budget or page unavailable for failure diagnostics")
                                 if authenticating[0] or page.url != request["target"]:
                                     raise RuntimeError("Failure diagnostics are restricted to the original target")
-                                if page.locator('input[type="password"], input[autocomplete="one-time-code"]').count():
+                                if credential_inputs_present(page):
                                     raise RuntimeError("Credential-entry pages are excluded from failure diagnostics")
                                 screenshot = directory / (row["id"] + ".png")
                                 image_bytes = page.screenshot(timeout=min(5000, remaining_ms))
@@ -516,7 +524,7 @@ def run(request, output, policy):
                                 if time.monotonic() >= deadline:
                                     raise TimeoutError("Failure diagnostics exceeded the original budget")
                                 if (page.url != request["target"] or
-                                        page.locator('input[type="password"], input[autocomplete="one-time-code"]').count()):
+                                        credential_inputs_present(page)):
                                     raise RuntimeError("Page changed into an unqualified diagnostic state")
                                 if len(image_bytes) + len(tree_text.encode("utf-8")) > 4 * 1024 * 1024:
                                     raise RuntimeError("Failure diagnostics exceed the 4MiB artifact bound")

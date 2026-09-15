@@ -98,6 +98,16 @@ test('document inspection is explicit and does not authorize empty ordinary asse
   const report = { request, rows: [{ id: 'inspect', attempted: true, status: 'inconclusive',
     reason: 'Raw inspection requires caller assessment', inspectionSteps: [], documentInspection }] };
   verifyBrowserObservations(report, request);
+  const consumed = structuredClone(report);
+  consumed.request.target += '?setup=1';
+  consumed.request.rows[0].expectedUrl = request.target;
+  verifyBrowserObservations(consumed, consumed.request);
+  const wrongFinal = structuredClone(consumed);
+  wrongFinal.rows[0].documentInspection.url = consumed.request.target;
+  assert.throws(() => verifyBrowserObservations(wrongFinal, wrongFinal.request));
+  const undeclared = structuredClone(consumed);
+  delete undeclared.request.rows[0].expectedUrl;
+  assert.throws(() => verifyBrowserObservations(undeclared, undeclared.request));
   for (const change of [
     row => { row.status = 'observed-no-issue'; },
     row => { row.documentInspection.totalElements = 0; },
@@ -234,6 +244,12 @@ test('shared browser assessment rejects forged comparisons and stale or abnormal
     steps: [], observations: [{ assertion, actual: true, met: true }],
     capturePreflight: health, capturePostcheck: health }] };
   verifyBrowserObservations(report, request);
+  const consumed = structuredClone(report);
+  consumed.request.target += '?setup=1';
+  consumed.request.rows[0].expectedUrl = request.target;
+  verifyBrowserObservations(consumed, consumed.request);
+  consumed.rows[0].capturePostcheck.url = consumed.request.target;
+  assert.throws(() => verifyBrowserObservations(consumed, consumed.request));
   for (const change of [
     row => { row.observations[0].actual = false; },
     row => { row.observations[0].assertion.target.css = '#wrong'; },
@@ -321,6 +337,40 @@ assert {item["path"] for item in report["rows"][0]["evidence"]} == {
     request["rows"][0]["id"] + ".png", request["rows"][0]["id"] + ".aria.txt"}
 assert report["rows"][0]["pageErrors"] == ["unit page-script error"]
 assert "no trigger" in report["rows"][0]["scenarioFailure"]
+class ConsumedQueryPage(Page):
+    def goto(self, url, **kwargs):
+        self.visited = url
+        self.url = url.split("?",1)[0]
+        return types.SimpleNamespace(status=200)
+    def locator(self, selector):
+        return types.SimpleNamespace(count=lambda:1,aria_snapshot=lambda **kwargs:"UNIT TREE")
+consumed = copy.deepcopy(request)
+consumed["target"] += "?setup=1"
+consumed["rows"][0]["expectedUrl"] = request["target"]
+page = ConsumedQueryPage(); context = Context(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(consumed, output, {"schemaVersion":1,"allowedTargets":[consumed["target"],request["target"]],"assetHosts":[]})
+assert page.visited == consumed["target"]
+assert report["request"] == consumed
+assert report["rows"][0]["status"] == "observed-no-issue"
+assert report["rows"][0]["capturePostcheck"]["url"] == request["target"]
+assert report["ownedBrowserClosed"]
+for final in (None,request["target"]+"/other","https://other.example/demo",consumed["target"]):
+    changed = copy.deepcopy(consumed); changed["rows"][0]["expectedUrl"] = final
+    try: m.validate_request(changed)
+    except ValueError: pass
+    else: raise AssertionError("Undeclared cross-route/query transformation accepted")
+with tempfile.TemporaryDirectory() as output, \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}):
+    try: m.run(consumed, output, {"schemaVersion":1,"allowedTargets":[consumed["target"]],"assetHosts":[]})
+    except ValueError: pass
+    else: raise AssertionError("Unapproved final target accepted")
 class Request:
     method = "POST"
     resource_type = "fetch"

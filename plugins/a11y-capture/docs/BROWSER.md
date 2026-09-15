@@ -41,6 +41,15 @@ budget. A momentarily absent asynchronous control is not rejected by an immediat
 count probe. Ambiguous targets still fail strictness checks, and password inputs
 remain forbidden.
 
+If a source-qualified initialization query is consumed by the page, a row may
+explicitly declare `expectedUrl`: the initial target with its entire query removed,
+on the same exact HTTPS origin/path. Both URLs must already be in the protected
+target allow-list. Navigation still uses the original target; authentication
+readiness, observations, inspection and capture gates require the declared final
+URL. The request/evidence preserve both. This is not automatic URL normalization,
+cross-route redirection permission or an exemption for script/network failures.
+Without this field the original exact-URL requirement is unchanged.
+
 `{"action":"observe","milliseconds":1000}` provides an explicit observation
 dwell from 1 to 30,000 milliseconds for animation, asynchronous UI or a separately
 authorized observation capability. It sends no input or scripts, records actual

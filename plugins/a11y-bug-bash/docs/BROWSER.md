@@ -162,6 +162,19 @@ block subsequent rows within the original budget. All ordinary authorized
 non-GET/HEAD requests still require the original effect/reset reconciliation.
 This is neither a blanket POST exception nor an accessibility verdict.
 
+## Effective visual-mode observations
+
+Explicit document inspection records the actual browser media-query results for
+forced colors, increased contrast, reduced motion and dark scheme, plus computed
+`forced-color-adjust` on inspected elements. These are read-only measurements:
+no OS theme, browser setting or emulation mode is changed.
+
+An enabled Windows High Contrast setting does not prove that the browser is
+rendering forced colors; compare the actual OS and browser observations. A
+media-query result alone also does not prove contrast, visible focus or complete
+High Contrast coverage. Older inspection artifacts without media observations
+remain valid legacy records with that explicit evidence gap.
+
 ## Authenticated JSON document readiness (policy v6)
 
 For an independently authorized GET diagnostic whose document is JSON rather than

@@ -5,6 +5,34 @@ import { fileURLToPath } from 'node:url';
 import { Script } from 'node:vm';
 import { verifyBrowserObservations, validateBrowserParameters, browserRequest } from '../src/runtime/browser-contract.mjs';
 
+test('document inspection reads effective media without changing OS or browser settings', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const python = 'import ast,json,sys; tree=ast.parse(open(sys.argv[1],encoding="utf-8").read()); f=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=="inspect_document"); print(json.dumps(f.body[0].value.args[0].value))';
+  const result = spawnSync('python', ['-I', '-B', '-c', python, path], { encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+  const expression = JSON.parse(result.stdout);
+  const element = { localName: 'html', namespaceURI: 'http://www.w3.org/1999/xhtml',
+    parentElement: null, tabIndex: -1, shadowRoot: null, getAttribute: () => null,
+    getAttributeNS: () => null, getAttributeNames: () => [],
+    getBoundingClientRect: () => ({ x: 0, y: 0, width: 1280, height: 720 }) };
+  for (const enabled of [false, true]) {
+    const queries = [];
+    const value = new Script(`(${expression})()`).runInNewContext({
+      document: { contentType: 'text/html', documentElement: element, activeElement: element,
+        getElementsByTagName: () => [element], querySelectorAll: () => [] },
+      location: { href: 'https://example.org/feature' }, innerWidth: 1280, innerHeight: 720,
+      devicePixelRatio: 1, getComputedStyle: () => ({ getPropertyValue: () => 'auto' }),
+      matchMedia: query => { queries.push(query); return { matches: enabled }; }
+    });
+    assert.equal(queries.length, 4);
+    assert.deepEqual(JSON.parse(JSON.stringify(value.media)), {
+      forcedColorsActive: enabled, prefersContrastMore: enabled,
+      prefersReducedMotion: enabled, prefersDarkScheme: enabled
+    });
+    assert.equal(value.nodes[0].styles['forced-color-adjust'], 'auto');
+  }
+});
+
 test('exception-origin diagnostics retain undefined locations without values, queries or pausing', () => {
   const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
   const script = `

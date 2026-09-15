@@ -92,6 +92,10 @@ export function verifyBrowserObservations(report, expectedRequest) {
     if (Object.hasOwn(row, 'documentInspection')) demand(expected.inspection === true, 'Document inspection was not requested');
     if (expected.inspection && row.documentInspection) {
       const value = row.documentInspection;
+      if (Object.hasOwn(value, 'media')) {
+        exact(value.media, ['forcedColorsActive', 'prefersContrastMore', 'prefersReducedMotion', 'prefersDarkScheme']);
+        demand(Object.values(value.media).every(item => typeof item === 'boolean'), 'Invalid browser media observations');
+      }
       demand(row.attempted && discoveryHash(row.inspectionSteps) === discoveryHash(expected.steps) &&
         value.schemaVersion === 1 && value.scope === 'raw-document-inspection' &&
         value.url === expectedUrl &&

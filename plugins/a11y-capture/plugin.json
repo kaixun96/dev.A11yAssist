@@ -1,6 +1,6 @@
 {
   "name": "a11y-capture",
-  "version": "0.28.1",
+  "version": "0.29.0",
   "description": "Real Windows assistive-technology evidence and scoped recovery of owned capture resources.",
   "author": {
     "name": "kaixun96"

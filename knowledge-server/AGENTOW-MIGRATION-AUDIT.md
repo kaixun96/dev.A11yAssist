@@ -8,7 +8,7 @@ Design: [English](TECH-DESIGN.md) | [简体中文](TECH-DESIGN.zh-CN.md)
 
 **Migration of the audited reusable accessibility rules is complete in the authored Common, Fluent and SharePoint packages.** B01–B16 below map source clauses to implemented guidance, concrete API/ownership contracts, exceptions and verification examples. N01–N03 are registered entries, not proposals.
 
-Coverage update: 2026-09-15; source inventory audited 2026-09-14. Source: [kaixun96/dev.AgentOW at 7896845e51d75b0b9d632a2fd61876bc2f556ea5](https://github.com/kaixun96/dev.AgentOW/tree/7896845e51d75b0b9d632a2fd61876bc2f556ea5). Target: current authored packages, each version `0.1.2`, with exact coordinated dependencies. The rule migration was delivered in `0.1.1`; `0.1.2` adds discovery metadata without changing that coverage. The local links identify the implemented bodies; generated references independently identify the snapshot a consumer reads.
+Coverage as of 2026-09-15; source inventory audited 2026-09-14. Source: [kaixun96/dev.AgentOW at 7896845e51d75b0b9d632a2fd61876bc2f556ea5](https://github.com/kaixun96/dev.AgentOW/tree/7896845e51d75b0b9d632a2fd61876bc2f556ea5). Target: authored packages at `0.1.1`, exact coordinated dependencies and service `0.1.0`. The local links identify the implemented bodies; generated references and hashes independently identify the snapshot a consumer reads.
 
 | Evidence set | Count | What it establishes |
 | --- | ---: | --- |
@@ -124,19 +124,16 @@ Use overviews to select a contract and Common procedures to structure reasoning.
 
 ## 6. Maintenance and validation record
 
-Validation on 2026-09-15: **97 KB tests and 79 marketplace tests passed**, with
-both generated checks passing. The content build contains 35 entries and retains
-four immutable artifacts (two original snapshots plus two new 0.1.1 snapshots).
-MCP regressions search and read the migrated rules through the public local tools;
-no existing plugin, runtime implementation or MAS adapter was changed.
+Validation baseline on 2026-09-15: **104 KB tests and 79 marketplace
+tests passed**, with both generated checks passing. The current snapshot contains
+35 entries, including seven curated tagged entries; earlier immutable snapshots are retained.
+MCP regressions cover discovery, search and full reads of the migrated rules.
 
-For subsequent contributions, update the owning body and descriptor together: source clause → target ID → scoped rule/exception → positive/negative example. Reuse existing IDs when scope is unchanged; add navigation and relations for new independently citable content. Keep Common product-independent, Fluent version-specific and SharePoint host-specific. Coordinate exact versions and publish through the [design's release process](TECH-DESIGN.md#9-versioning-generation-and-publication).
-
-This update compares current authored bodies, package READMEs and descriptors with the established pinned-source audit. Both language editions retain B01–B16, registered N01–N03, the exact 35 target IDs and the unchanged 53-path / 41-body appendix.
-
-Validation from the repository root: rerun section 2's snapshot command for pinned-source preservation/drift; use `npm --prefix knowledge-server run build`, `npm --prefix knowledge-server test` and `npm --prefix knowledge-server run check` for KB generation/publication, schema/content/documentation regressions and generated consistency. Use `npm run build`, `npm test` and `npm run check` for marketplace generation, regressions and generated consistency. Record outcomes from completed runs; these checks do not establish live AT behavior or official source approval.
-
-**Outcome: audited reusable-rule migration complete in authored content; independent source qualification, publication validation and the future MAS adapter remain separate follow-up work.**
+For content maintenance, see the [extension guide](TECH-DESIGN.md#32-extend-the-migrated-rules);
+for versions, compatibility, generation and publication, see the
+[release policy](TECH-DESIGN.md#9-versioning-generation-and-publication).
+Section 2 documents pinned-source preservation checks. Local checks do not establish live AT behavior
+or official source approval.
 
 ## Appendix A. Complete broad-match candidate register
 

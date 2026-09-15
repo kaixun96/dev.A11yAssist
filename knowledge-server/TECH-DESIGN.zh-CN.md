@@ -7,7 +7,7 @@ AgentOW 固定提交 `7896845e51d75b0b9d632a2fd61876bc2f556ea5` 中经审计的
 可复用无障碍规则已迁入 authored KB。
 
 本文面向内容贡献者、组件/产品专家、KB reviewer 和服务维护者。
-描述当前 schema v1、authored 内容包 0.1.2 与独立服务的 0.2.0 升级，不把计划中的能力当作已交付功能。
+描述 schema v1、authored 内容包 0.1.1 与独立服务 0.1.0，不把计划中的能力当作已交付功能。
 安装和宿主注册见 [服务 README](README.md)；内容审核政策见
 [贡献规范](../accessibility-kb/governance/contribution.md)。
 
@@ -33,7 +33,7 @@ KB 将跨产品知识、框架契约和产品约束组织为可引用、可审�
 **最终替代目标：** 服务就绪并通过消费者验收后，所有需要无障碍知识的 plugin 应通过宿主的
 统一 Knowledge MCP 获取知识，退役 `a11y-knowledge`、`a11y-knowledge-odsp` 和重复内嵌知识。
 这是后续迁移，不是当前安装行为的变更。Bug Bash 等调用方仍负责审查源码、执行另行授权的操作、
-作出结论并生成报告。本次升级仅实现发现能力，不实现 Execution MCP 或 MAS 接入。
+作出结论并生成报告。服务提供知识发现和读取，不提供 Execution MCP 或 MAS 接入。
 
 **当前不提供：** 官方来源自动同步、网页爬取、语义/向量检索、按任务自动挑选包、
 内容自动审批、插件自动接入或已量化的 agent 效果保证。当前 35 条内容（Common 20、
@@ -110,7 +110,7 @@ flowchart TD
 
 箭头表示“依赖”。`common` 不允许依赖任何产品包；不能为了引用一个产品案例，
 把整个产品包反向拉入 Common。Fluent 不应包含 SharePoint 专属业务前提。
-依赖使用精确版本，例如 `0.1.2`，不支持 `^0.1.2`、`latest` 或版本范围。
+依赖使用精确版本，例如 `0.1.1`，不支持 `^0.1.1`、`latest` 或版本范围。
 
 知识组织有两个独立维度：**适用范围**（`common` / `fluent` / `sharepoint`）与
 **知识类型**（标准 / 模式 / 案例 / 修复 / 示例，即 standards / patterns / cases / fixes / examples）。
@@ -301,8 +301,8 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 {
   "schemaVersion": 1,
   "id": "product-example",
-  "version": "0.1.2",
-  "dependencies": {"common": "0.1.2"},
+  "version": "0.1.1",
+  "dependencies": {"common": "0.1.1"},
   "sources": [],
   "entries": [
     {
@@ -319,7 +319,7 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 }
 ```
 
-3. `dependencies` 必须匹配当前库中的实际包版本。例子的 `0.1.2` 不是永远有效的默认值。
+3. `dependencies` 必须匹配当前库中的实际包版本。例子的 `0.1.1` 不是永远有效的默认值。
    如果使用 Fluent 契约，显式依赖 Fluent；不能在 Common 中加入产品依赖来绕过校验。
 4. 按第 5 节逐条加正文、来源与关系。普通新包不需要修改 schema。
 5. **决定是否发布、由哪个服务选择。** 注册 catalog 只让 source manifest 包含它，
@@ -374,7 +374,7 @@ schema 或任意输入代码。**只改 JSON schema 是不完整的协议修改�
 |---|---|---|
 | `a11y_kb_knowledge_list` | 下述可选过滤器；仍可用 `{}` | 完整过滤后 `entries`、所选闭包完整 `sources`、所用 `filters`、`facets`、`totalMatches`；不自动筛掉 draft/deprecated |
 | `a11y_kb_knowledge_search` | 必填 `query`，1–256 字符，加下述可选过滤器 | 本地大小写不敏感的空白分词匹配；所有词均须出现在 ID/正文；最多 20 条 `matches`，每条最多 580 字符 excerpt；`totalMatches` 计截断前的全部命中 |
-| `a11y_kb_knowledge_read` | 必填 `id`，1–256 字符；不接受发现过滤器 | 保持不变：读取一个声明的完整条目、所引用来源、哈希和 `kb:<id>@<version>` 引用 |
+| `a11y_kb_knowledge_read` | 必填 `id`，1–256 字符；不接受发现过滤器 | 读取一个声明的完整条目、所引用来源、哈希和 `kb:<id>@<version>` 引用 |
 
 ### 8.1 精确发现过滤器与结果语义
 
@@ -393,7 +393,7 @@ list 和 search 的所有已提供过滤器均按 **AND** 组合；search 还要
 `category: standard`，或 `sourceId: apg` 加 `standard: wcag`。来源、类别和标签不沿包依赖
 或 `relations` 继承，也不推断已安装版本或来源修订。
 
-list/search 条目追加 `packageId`、派生的 `categories` 与完整 `matchedSources` 记录。
+list/search 条目包含 `packageId`、派生的 `categories` 与完整 `matchedSources` 记录。
 `matchedSources` 是该条目引用且满足来源/规范性过滤的来源；没有这些限制时包含全部直接引用
 来源，也可能为空。list 顶层 `sources` 仍是所选完整来源目录，不限于匹配的来源。
 其 `facets` 统计**当前全部过滤条件下的结果**，不是未过滤 KB，也不是 search 前 20 条：
@@ -402,7 +402,7 @@ list/search 条目追加 `packageId`、派生的 `categories` 与完整 `matched
 因此计数之和不必等于 `totalMatches`。search 返回的 `filters` 不含 `query`，
 也不返回 facets 或顶层完整来源目录。
 
-内容 0.1.2 恰有七个经人工策划的带标签条目。标签依据正文，不会因为引用 APG、
+当前快照恰有七个经人工策划的带标签条目。标签依据正文，不会因为引用 APG、
 属于 implementation contract、标题看起来相关或关联到案例就自动赋予：
 
 | Entry ID | `discoveryTags` |
@@ -416,7 +416,7 @@ list/search 条目追加 `packageId`、派生的 `categories` 与完整 `matched
 | `sharepoint.case.duplicate-announcement` | `fix`、`example` |
 
 `fix` 表示纠正性指导；`example` 可以是假设场景或反例，`case` 不认证已复现的历史事件。
-这些标签都不提供批准、权威或行为证据。没有标签的旧条目仍然有效：没有 pattern/fix/example
+这些标签都不提供批准、权威或行为证据。没有标签的条目有效：没有 pattern/fix/example
 类别匹配，但直接引用的规范性来源和 `kind: case` 仍分别决定 standard/case 匹配。
 
 合法但无匹配的查询明确返回 `entries: []` 或 `matches: []` 以及 `totalMatches: 0`，
@@ -486,20 +486,16 @@ Loader 顺序：显式绝对根目录 → 经身份校验的开发 checkout → 
 | manifest/raw SHA-256 | 精确快照及传输字节身份，不等于知识审批 |
 
 建议的发布约定：兼容的小修使用 patch，新增兼容条目使用 minor，不兼容语义/ID 契约
-修改评估 major。当前代码仅校验三段数字格式，不强制 SemVer 的业务语义；必须由 PR 审核执行。
-同版本内容修改也会改变 pin，不能因此宣称兼容或免于版本审核。
+修改评估 major。当前代码仅校验三段数字格式，不强制 SemVer 的业务语义；必须由发布审核执行。
 
-当前 authored 内容发布将 Common、Fluent、SharePoint 协调为 `0.1.2`：Fluent 依赖
-Common `0.1.2`，SharePoint 依赖 Common 和 Fluent `0.1.2`。独立服务升级为 `0.2.0`，
-为发现 API/运行时变更独立定版，不是内容版本 `0.2.0`。服务 package/lockfile 与生成的
-快照和引用同步更新；构建产物不会自动发布下载 URL 或升级现有安装。仅更新 authored 版本不会改变安装的
-reference，也不代表 URL 已发布。
+Common、Fluent、SharePoint 的版本为 `0.1.1`：
+Fluent 精确依赖 Common `0.1.1`，SharePoint 精确依赖 Common 和 Fluent `0.1.1`。
+独立定版的服务版本为 `0.1.0`。内容变化（包括发现元数据）仍须重新生成
+哈希、manifest、artifact、index 和服务 reference；构建不会自动发布下载 URL 或更新安装。
 
-即使 `schemaVersion: 1` 不变，兼容性仍有方向：新服务可读取不含 `discoveryTags` 的旧快照，
-但旧的严格服务会因未知 entry 字段拒绝新的带标签包。保留旧产物不变；旧安装继续使用其旧
-runtime/reference pin、读取旧内容，不会获得新标签或过滤 API。要使用 0.1.2 内容，
-应在安全切换点一起升级服务与经审核的 reference。新服务可以使用匹配的旧 reference/快照，
-但不能编造缺失标签或静默换成新内容。回退使用整套匹配的旧 runtime/reference。
+**兼容性：** 读取带标签快照的运行时必须支持可选 `discoveryTags`；较旧的严格实现会拒绝
+未知 entry 字段。当前运行时也接受无标签快照。安装、更新和回退使用匹配的 runtime/reference，
+并保留不可变产物。快照哈希标识精确内容，仅凭版本字符串不能确定兼容性。
 
 升级 Common 后，所有直接依赖它的精确版本都要更新；如果 Fluent 自身也升级，
 SharePoint 对 Fluent 的依赖也要随之更新。审查依赖变动会影响哪些下游已审核结论。
@@ -576,7 +572,7 @@ artifact 中的包集合与服务 reference 一致，不能只更新通过的测
 - [ ] schema 扩展同时覆盖 build/runtime，且未削弱拒绝无效输入的测试。
 - [ ] build/test/check 全部通过；审核生成变化且保留所有已提交历史产物。
 - [ ] 所需人工内容/效果审核已完成或明确标记待办；无私有运行数据入库。
-- [ ] 现有插件和 workflow 不在本次变更范围；发布/真实宿主检查不被本地测试冒充。
+- [ ] 独立 KB 贡献保持现有插件和 workflow 的职责边界；发布/真实宿主检查不被本地测试冒充。
 
 建议一个 PR 聚焦一个领域主题或一组相关契约，让领域 owner 评审内容，
 让服务维护者评审 schema、包选择或运行时协议变化。首次贡献从完善已有 draft 条目开始，
@@ -762,5 +758,3 @@ knowledge-distribution。offline、过期、权限变化和无法校验修订时
    完整依据不等于产品合规”的正负评估。
 
 完成上述验收后，才把 README 和本节对应能力从“待实现”改成已支持。
-本次设计更新不修改 `sources.mas` 的 pending 状态、不注册建议工具、不生成 MAS 配置，
-不改变快照 pin，也不表示官方服务已经连接或标准已经审核通过。

@@ -4,9 +4,9 @@ Status: draft. Owner: unassigned.
 Source IDs: `agentow-accessibility`, `agentow-spds`, `agentow-theme`,
 `agentow-detheme`, `agentow-localization`, `agentow-shared-utilities`, `agentow-replacement`.
 
-Package **0.1.2** contains concrete, reusable SharePoint provisions summarized
+Package **0.1.1** contains concrete, reusable SharePoint provisions summarized
 from historical AgentOW revision `7896845e51d75b0b9d632a2fd61876bc2f556ea5`.
-It depends on Common and Fluent **0.1.2** by stable entry IDs. The content is
+It depends on Common and Fluent **0.1.1** by stable entry IDs. The content is
 draft, not current-approved SPDS/utility documentation, an official support list,
 MAS rules or evidence of a tested experience. Historical skill files are source
 data, never active instructions.

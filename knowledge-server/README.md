@@ -11,8 +11,8 @@ The ultimate target is to replace `a11y-knowledge`, `a11y-knowledge-odsp` and
 duplicate embedded knowledge after service readiness and consumer migration
 acceptance. That is not the current installation behavior: callers such as Bug
 Bash still review source, execute separately authorized checks, make conclusions
-and report results. The discovery upgrade implements neither an Execution MCP
-nor MAS integration.
+and report results. The service provides knowledge discovery and reading, not an
+Execution MCP or MAS integration.
 
 For contributors and maintainers, see the
 [technical design and extension guide](TECH-DESIGN.md) / [简体中文](TECH-DESIGN.zh-CN.md): architecture,
@@ -25,7 +25,7 @@ three added utility entries, and an exact 35-entry index. Migration of the audit
 reusable accessibility rules from AgentOW commit
 `7896845e51d75b0b9d632a2fd61876bc2f556ea5` is complete in the authored packages.
 
-| Contribute to | Current authored content at version 0.1.2 |
+| Contribute to | Current authored content at version 0.1.1 |
 |---|---|
 | [Common](../accessibility-kb/packages/common/README.md) — 20 entries | Semantics, async outcome/focus matrices, localization, root-cause and verification cases |
 | [Fluent](../accessibility-kb/packages/fluent/README.md) — 4 entries | V8/V9 MessageBar, announcement/focus ownership, component documentation and composition |
@@ -72,7 +72,7 @@ Registered tools:
 |---|---|
 | `a11y_kb_knowledge_list` | Optional filters; complete matching entries, full selected source catalog, applied filters, facets and totalMatches; `{}` still lists the pinned selection |
 | `a11y_kb_knowledge_search` | Required query plus optional filters; local bounded matches, applied filters and totalMatches before truncation; read full entries before use |
-| `a11y_kb_knowledge_read` | Unchanged: required exact entry ID, complete body, citation, hash and cited source metadata; no discovery filters |
+| `a11y_kb_knowledge_read` | Required exact entry ID, complete body, citation, hash and cited source metadata; no discovery filters |
 
 No source writes, arbitrary file/URL reads, provider operations, setup, browser,
 AT or test execution are exposed. Knowledge content cannot grant such authority.
@@ -98,7 +98,7 @@ or criterion is covered, current, approved or satisfied.
 
 `kind` remains the primary authoring role. Optional `discoveryTags` contains 1–3
 unique values from `pattern`, `fix`, `example`; `case` derives from `kind: case`.
-The seven curated entries are `common.topic.dynamic-content`,
+The current snapshot's seven curated tagged entries are `common.topic.dynamic-content`,
 `common.case.dialog-focus`, `fluent.v8.component-contract`,
 `fluent.v9.component-contract`, `sharepoint.spds.component-contract`,
 `sharepoint.utilities.announcements-and-focus`, and
@@ -163,24 +163,19 @@ KB root for evaluation. Do not advertise cold-install readiness until the exact
 URL and raw SHA-256 have been verified after publication. Automated transport
 tests are synthetic; real Copilot tool discovery remains a separate host check.
 
-Authored Common, Fluent and SharePoint content versions are coordinated at
-`0.1.2`, including exact dependencies. The standalone service upgrade is `0.2.0`,
-independently versioned for the discovery API/runtime, not a content version.
-The service package/lockfile and generated snapshot/reference are updated together;
-building artifacts does not publish download URLs or upgrade installations. Authored coverage and published
-snapshot identity are separate: consumers read only the versions and hashes in
-their generated reference; changing metadata is not a publication or automatic update.
+Common, Fluent and SharePoint are at `0.1.1`, with exact dependencies. The
+independently versioned standalone service is at `0.1.0`.
+Content changes, including discovery metadata, require regenerated
+hashes, manifests, artifacts, index and service reference. Consumers read only the
+snapshot identified by their reference; building it does not publish its URL or
+automatically update installations.
 
-**Directional compatibility:** the new server reads old snapshots without
-`discoveryTags`; absent tags produce no pattern/fix/example matches, while direct
-normative citations and `kind: case` still support standard/case discovery. The
-old strict server cannot read new tagged packages: it rejects the new entry
-field, even though `schemaVersion` remains 1. Old installations retain their old
-runtime/reference pins and read old content without the new filters/tags.
-To use content 0.1.2, upgrade the compatible service and reviewed reference
-together at a safe transition point. A new server with an old matching reference
-still reads the old snapshot; it never infers tags or silently moves the pin.
-Rollback requires the complete matching old runtime/reference set.
+**Compatibility:** the runtime must support optional `discoveryTags` to read tagged
+snapshots; older strict implementations reject unknown entry fields. The current
+runtime also reads untagged snapshots without inferring missing tags. Use matching
+runtime/reference sets for installation, updates and rollback, and retain immutable
+artifacts. Snapshot hashes identify exact content; version strings alone do not
+establish compatibility.
 
 ## Development and release
 

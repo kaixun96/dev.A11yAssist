@@ -48,10 +48,11 @@ applicable source provisions and their authority/review metadata, not either
 discovery axis. Tags do not promote draft status or turn hypothetical examples
 into official rules, real bugs, observed results or approved corrections.
 
-Tag additions, removals and corrections are content changes requiring a package
-version bump (a patch bump for metadata-only curation) and exact dependency
-updates in affected dependent packages, with their own version bumps. Publish a
-new snapshot; never rewrite retained manifests or distribution artifacts.
+Tag additions, removals and corrections are content changes. Regenerate snapshot
+hashes, manifests, artifacts and references when content changes. For reviewed
+releases, coordinate package versions and exact dependencies; metadata-only
+curation normally warrants a patch release. Never rewrite retained manifests or
+distribution artifacts.
 Historical snapshots may omit `discoveryTags` and remain valid, but such entries
 have no curated-tag matches. Do not backfill by guessing from kind, title or
 source citations. Their `kind: case` discovery remains available.

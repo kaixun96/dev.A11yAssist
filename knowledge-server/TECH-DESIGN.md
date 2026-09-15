@@ -7,7 +7,7 @@ The audited reusable accessibility rules from AgentOW commit
 `7896845e51d75b0b9d632a2fd61876bc2f556ea5` are migrated into the authored KB.
 
 This document is for content contributors, component/product experts, KB reviewers, and service maintainers.
-It describes schema v1, authored content packages 0.1.2 and the standalone service's 0.2.0 upgrade,
+It describes schema v1, authored content packages 0.1.1 and standalone service 0.1.0,
 without presenting planned capabilities as delivered features. For installation and host registration, see the
 [service README](README.md); for content review policy, see the
 [contribution guidelines](../accessibility-kb/governance/contribution.md).
@@ -38,7 +38,7 @@ automatically executable workflow.
 knowledge should use the host's unified Knowledge MCP, retiring `a11y-knowledge`, `a11y-knowledge-odsp` and
 duplicate embedded knowledge. This is a future migration, not a change to current installations. Callers such as
 Bug Bash still review source, perform separately authorized execution, make conclusions and report results.
-This upgrade implements discovery only; it does not implement an Execution MCP or MAS integration.
+The service provides knowledge discovery and reading, not an Execution MCP or MAS integration.
 
 **Not currently provided:** automatic synchronization of official sources, web crawling, semantic/vector retrieval,
 automatic task-based package selection, automatic content approval, automatic plugin integration, or quantified
@@ -117,7 +117,7 @@ flowchart TD
 
 Arrows mean “depends on.” `common` must not depend on any product package; do not pull an entire product
 package back into Common just to cite a product case. Fluent should not contain SharePoint-specific business
-assumptions. Dependencies use exact versions such as `0.1.2`; `^0.1.2`, `latest`, and version ranges are unsupported.
+assumptions. Dependencies use exact versions such as `0.1.1`; `^0.1.1`, `latest`, and version ranges are unsupported.
 
 There are two independent organization axes: **scope** (`common` / `fluent` / `sharepoint`) and
 **knowledge type** (standards / patterns / cases / fixes / examples). Types are not additional packages or
@@ -317,8 +317,8 @@ a package for every topic. Consider the example package `product-example`, which
 {
   "schemaVersion": 1,
   "id": "product-example",
-  "version": "0.1.2",
-  "dependencies": {"common": "0.1.2"},
+  "version": "0.1.1",
+  "dependencies": {"common": "0.1.1"},
   "sources": [],
   "entries": [
     {
@@ -335,7 +335,7 @@ a package for every topic. Consider the example package `product-example`, which
 }
 ```
 
-3. `dependencies` must match the actual package versions in the current KB. The example's `0.1.2` is not a
+3. `dependencies` must match the actual package versions in the current KB. The example's `0.1.1` is not a
    permanently valid default. If using Fluent contracts, depend on Fluent explicitly; do not add a product dependency
    to Common to bypass validation.
 4. Add bodies, sources, and relationships entry by entry as described in section 5. An ordinary new package does not require a schema change.
@@ -396,7 +396,7 @@ directly to live sources.
 |---|---|---|
 | `a11y_kb_knowledge_list` | Optional filters below; `{}` still works | Complete filtered `entries`, full selected-closure `sources`, applied `filters`, `facets`, `totalMatches`; does not automatically filter out draft/deprecated entries |
 | `a11y_kb_knowledge_search` | Required `query`, 1–256 characters, plus optional filters below | Local case-insensitive whitespace-token matching; all terms must appear in the ID/body; at most 20 `matches`, each with an excerpt of at most 580 characters; `totalMatches` counts all hits before truncation |
-| `a11y_kb_knowledge_read` | Required `id`, 1–256 characters; no discovery filters | Unchanged: reads one complete declared entry, its cited sources, hashes, and a `kb:<id>@<version>` citation |
+| `a11y_kb_knowledge_read` | Required `id`, 1–256 characters; no discovery filters | Reads one complete declared entry, its cited sources, hashes, and a `kb:<id>@<version>` citation |
 
 ### 8.1 Exact Discovery Filters and Result Semantics
 
@@ -415,7 +415,7 @@ directly cited source record**. For example, an entry citing both WCAG and APG d
 `sourceId: apg` together with `category: standard`, or with `standard: wcag`. There is no source/category/label
 inheritance through package dependencies or `relations`, and no inference of installed versions or source revisions.
 
-List/search entries add `packageId`, derived `categories` and full `matchedSources` records. `matchedSources`
+List/search entries include `packageId`, derived `categories` and full `matchedSources` records. `matchedSources`
 contains the entry's cited sources satisfying the source/normative filters; with none of those restrictions it contains
 all directly cited sources, possibly empty. List's top-level `sources` remains the full selected source catalog,
 not just matched sources. Its `facets` count entries in the **current fully filtered result**, not the unfiltered KB
@@ -424,7 +424,7 @@ or a top-20 search page: categories (including zero counts), packages, exact app
 `matchedSources`. Categories and labels can overlap, so their counts need not sum to `totalMatches`.
 Search returns applied `filters` without `query`, and no facets or full top-level source catalog.
 
-There are exactly seven curated tagged entries in content 0.1.2; tags are based on their bodies, not automatically
+There are exactly seven curated tagged entries in the current snapshot; tags are based on their bodies, not automatically
 assigned because an entry cites APG, is an implementation contract, has a suggestive title or relates to a case:
 
 | Entry ID | `discoveryTags` |
@@ -439,7 +439,7 @@ assigned because an entry cites APG, is an implementation contract, has a sugges
 
 `fix` denotes corrective guidance; `example` can be hypothetical or a counterexample, and `case` does not certify
 a reproduced historical incident. None of these labels supplies approval, authority or behavioral evidence.
-Old entries without tags remain valid: they have no pattern/fix/example category matches, while directly cited
+Entries without tags are valid: they have no pattern/fix/example category matches, while directly cited
 normative sources and `kind: case` still determine standard/case matches.
 
 A valid query with no match returns explicit `entries: []` or `matches: []` and `totalMatches: 0`, not a
@@ -514,21 +514,17 @@ not simply disabling validation.
 
 Suggested release convention: use patch for small compatible corrections, minor for new compatible entries, and
 consider major for incompatible semantic/ID contract changes. Current code checks only a three-part numeric
-format, not the business semantics of SemVer; PR review must enforce those. Changing content at the same version
-also changes its pin and does not establish compatibility or waive version review.
+format, not the business semantics of SemVer; release review must enforce those.
 
-The current authored content release coordinates Common, Fluent and SharePoint at `0.1.2`: Fluent depends on
-Common `0.1.2`, and SharePoint depends on both Common and Fluent `0.1.2`. The standalone service upgrade is
-`0.2.0`, independently versioned for the discovery API/runtime change; it is not content version `0.2.0`.
-The service package/lockfile and generated snapshot/reference are updated together. Building those artifacts
-does not publish their download URL or upgrade existing installations; deployment remains a separate release step.
+Common, Fluent and SharePoint are at `0.1.1`: Fluent depends on Common `0.1.1`, and SharePoint depends on
+both Common and Fluent `0.1.1`. The independently versioned standalone service is at `0.1.0`.
+Content changes, including discovery metadata, still require regenerated hashes, manifests, artifacts, index
+and service reference. Building them does not publish download URLs or update installations.
 
-Compatibility is directional even with `schemaVersion: 1`: the new server accepts old snapshots without
-`discoveryTags`, but the old strict server rejects new tagged packages as unknown entry fields. Preserve old
-artifacts unchanged; older installations keep their old runtime/reference pins and read the old content, without
-the new tags or filter API. Upgrade the service and reviewed reference together at a safe transition point to use
-0.1.2 content. A newer server can use an old matching reference/snapshot, but cannot invent missing tags or
-silently substitute newer content. Roll back using the complete matching old runtime/reference set.
+**Compatibility:** the runtime must support optional `discoveryTags` to read tagged snapshots; older strict
+implementations reject unknown entry fields. The current runtime also accepts untagged snapshots.
+Use matching runtime/reference sets for installation, updates and rollback, and retain immutable artifacts.
+Snapshot hashes identify exact content; version strings alone do not establish compatibility.
 
 After upgrading Common, update every exact version dependency that directly references it; if Fluent itself also
 upgrades, update SharePoint's Fluent dependency too. Review which downstream approved conclusions are affected
@@ -612,7 +608,7 @@ regression risks; if something was not run, say so rather than fabricating resul
 - [ ] Schema extensions cover both build/runtime without weakening tests that reject invalid input.
 - [ ] Build/test/check all pass; generated changes are reviewed and all committed historical artifacts are retained.
 - [ ] Required human content/effectiveness reviews are completed or explicitly marked pending; no private run data is committed.
-- [ ] Existing plugins and workflows are outside this change's scope; local tests do not masquerade as publication or real-host checks.
+- [ ] Standalone KB contributions preserve existing plugin and workflow boundaries; local tests do not masquerade as publication or real-host checks.
 
 Prefer one PR focused on a domain topic or a group of related contracts, with domain owners reviewing content
 and service maintainers reviewing schema, package selection, or runtime protocol changes. For a first contribution,
@@ -821,6 +817,4 @@ separate source identities; never write live responses directly into files assoc
    and “a complete basis does not equal product compliance.”
 
 Only after this acceptance is complete should the corresponding capabilities in the README and this section
-change from “planned” to supported. This design update does not change the pending status of `sources.mas`,
-register proposed tools, generate MAS configuration, or change snapshot pins. It does not imply that the official
-service is connected or that standards have been reviewed and approved.
+change from “planned” to supported.

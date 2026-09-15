@@ -5,6 +5,63 @@ import { fileURLToPath } from 'node:url';
 import { Script } from 'node:vm';
 import { verifyBrowserObservations, validateBrowserParameters, browserRequest } from '../src/runtime/browser-contract.mjs';
 
+test('v7 SSO loads only the pinned local Microsoft extension and retains browser/network guards', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_policy.py', import.meta.url));
+  const script = `
+import base64,copy,hashlib,importlib.util,json,pathlib,sys,tempfile
+from types import SimpleNamespace as NS
+from unittest.mock import patch
+spec=importlib.util.spec_from_file_location("policy",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+def tree_hash(root):
+    return hashlib.sha256("".join(p.relative_to(root).as_posix()+chr(9)+hashlib.sha256(p.read_bytes()).hexdigest()+chr(10)
+        for p in sorted(root.rglob("*")) if p.is_file()).encode()).hexdigest()
+with tempfile.TemporaryDirectory() as folder:
+    root=pathlib.Path(folder);profile=root/"profile";profile.mkdir();extension=root/"extension";extension.mkdir()
+    key=b"synthetic-public-key-not-a-real-extension"
+    identity="".join(chr(ord("a")+int(c,16)) for c in hashlib.sha256(key).hexdigest()[:32])
+    manifest={"key":base64.b64encode(key).decode(),"version":"1.0.0"}
+    (extension/"manifest.json").write_text(json.dumps(manifest))
+    (extension/"main.js").write_text("// synthetic fixture; never executed")
+    pin={"directory":str(extension),"treeSha256":tree_hash(extension)}
+    policy={"schemaVersion":7,"allowedTargets":["https://example.org/page"],"assetHosts":[],"requests":[],
+            "scanner":None,"telemetryBlocks":[],
+            "connection":{"mode":"persistent","userDataDirectory":str(profile),"authenticationOrigins":[],
+                          "timeoutSeconds":30,"ready":{"css":"#main"},"windowsAccountsExtension":pin}}
+    m.validate(policy)
+    calls=[]
+    def launch(*args,**kwargs):
+        calls.append((args,kwargs));return NS(browser=NS())
+    playwright=NS(chromium=NS(launch_persistent_context=launch))
+    provenance={}
+    with patch.object(m,"WINDOWS_ACCOUNTS_EXTENSION_ID",identity):
+        m.open_context(playwright,{"viewport":{"width":1280,"height":720}},policy,provenance)
+        assert len(calls)==1 and calls[0][1]["headless"] is False
+        assert calls[0][1]["service_workers"]=="block"
+        assert calls[0][1]["ignore_default_args"]==["--disable-extensions"]
+        assert calls[0][1]["args"]==["--disable-extensions-except="+str(extension.resolve()),"--load-extension="+str(extension.resolve())]
+        assert provenance["windowsAccountsExtension"]["verifiedBeforeLaunch"] is True
+        (extension/"main.js").write_text("// changed")
+        try:m.open_context(playwright,{"viewport":{}},policy)
+        except ValueError:pass
+        else:raise AssertionError("Changed extension launched")
+        assert len(calls)==1
+    assert m.WINDOWS_ACCOUNTS_EXTENSION_ID=="ppnbnpeolgkicgegkbkbjmhlideopiji"
+    try:m.verify_windows_accounts_extension(pin)
+    except ValueError:pass
+    else:raise AssertionError("Foreign extension identity accepted")
+    for change in (lambda v:v.update(schemaVersion=6),
+                   lambda v:v["connection"]["windowsAccountsExtension"].update(directory="relative"),
+                   lambda v:v["connection"]["windowsAccountsExtension"].update(directory=str(extension)+",other"),
+                   lambda v:v["connection"]["windowsAccountsExtension"].update(treeSha256="bad")):
+        bad=copy.deepcopy(policy);change(bad)
+        try:m.validate(bad)
+        except ValueError:pass
+        else:raise AssertionError("Unqualified extension configuration accepted")
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test('observation dwell is explicit and bounded, not a script or an automatic AT claim', () => {
   const value = { steps: [{ action: 'observe', milliseconds: 1000 }], assertions: [], inspection: true };
   validateBrowserParameters(value);

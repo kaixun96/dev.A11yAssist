@@ -101,6 +101,26 @@ interpreter/import mode as setup. `--validate-only` checks request shape without
 importing Playwright or opening a browser. Live execution requires an owned
 Windows evaluator; Codespaces/non-Windows execution rejects before UI effects.
 
+## Pinned Microsoft device SSO (policy v7)
+
+A protected persistent connection may opt into `windowsAccountsExtension` with
+an existing local `directory` and its complete `treeSha256`. The operator first
+qualifies the already installed Microsoft Single Sign On extension and pins an
+administrator-controlled copy. The runner does not download or install it.
+
+Before launching Chromium it verifies the manifest's public-key-derived
+`ppnbnpeolgkicgegkbkbjmhlideopiji` identity and the entire bounded file tree.
+The tree digest is SHA-256 over ordinal-sorted UTF-8
+`relative/path<TAB>lowercase-file-sha256<LF>` records. Symbolic links, path escapes,
+remote directories, comma-separated paths, excessive trees and pin changes fail
+closed. The verified extension identity/version/hash is retained in the report.
+
+Only that pinned extension is loaded, using the existing headed Chromium profile
+and Microsoft's normal BrowserCore integration. No cookie copying, credential
+extraction, silent headless fallback, consent bypass or request-policy relaxation
+is introduced. Password/MFA and unexpected application grants remain separate
+gates. Without this explicit v7 configuration extension behavior is unchanged.
+
 ## Qualified empty-body bootstrap POSTs
 
 Policy v3 retains the v1/v2 defaults and adds an explicit, operator-qualified

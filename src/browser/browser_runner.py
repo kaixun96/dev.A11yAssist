@@ -346,7 +346,9 @@ def run(request, output, policy):
         report["playwrightVersion"] = importlib.metadata.version("playwright")
         with sync_playwright() as playwright:
             try:
-                browser, context = policy_module.open_context(playwright, request, policy)
+                connection_provenance = {}
+                browser, context = policy_module.open_context(playwright, request, policy, connection_provenance)
+                report.update(connection_provenance)
                 report["browserVersion"] = browser.version if browser else "unavailable"
                 if browser is None:
                     raise RuntimeError("Actual browser identity is unavailable")

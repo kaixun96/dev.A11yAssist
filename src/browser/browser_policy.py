@@ -1,9 +1,12 @@
 """Operator-owned browser connection/network policy; never supplied by scenario rows."""
 from pathlib import Path
+import base64
 import hashlib
 import json
 import re
 from urllib.parse import parse_qsl, urlsplit
+
+WINDOWS_ACCOUNTS_EXTENSION_ID = "ppnbnpeolgkicgegkbkbjmhlideopiji"
 
 
 def https_url(value, origin=False):
@@ -21,7 +24,7 @@ def https_url(value, origin=False):
 def validate(policy):
     common = {"schemaVersion", "allowedTargets", "assetHosts"}
     version = policy.get("schemaVersion") if isinstance(policy, dict) else None
-    if type(version) is not int or version not in {1, 2, 3, 4, 5, 6}:
+    if type(version) is not int or version not in {1, 2, 3, 4, 5, 6, 7}:
         raise ValueError("Invalid protected browser policy version")
     fields = common if version == 1 else common | {"connection", "requests", "scanner"}
     if version >= 4:
@@ -47,8 +50,20 @@ def validate(policy):
         if set(connection) != {"mode"}:
             raise ValueError("Ephemeral browser does not use an authenticated profile")
     else:
-        if set(connection) != {"mode", "userDataDirectory", "authenticationOrigins", "timeoutSeconds", "ready"}:
+        connection_fields = {"mode", "userDataDirectory", "authenticationOrigins", "timeoutSeconds", "ready"}
+        if version >= 7 and "windowsAccountsExtension" in connection:
+            connection_fields.add("windowsAccountsExtension")
+        if set(connection) != connection_fields:
             raise ValueError("Incomplete persistent browser connection")
+        if "windowsAccountsExtension" in connection:
+            extension = connection["windowsAccountsExtension"]
+            if (not isinstance(extension, dict) or set(extension) != {"directory", "treeSha256"} or
+                    not isinstance(extension["directory"], str) or len(extension["directory"]) > 1024 or
+                    not Path(extension["directory"]).is_absolute() or
+                    extension["directory"].startswith(("\\\\", "//")) or
+                    any(char in extension["directory"] for char in (",", "\x00", "\r", "\n")) or
+                    not isinstance(extension["treeSha256"], str) or not re.fullmatch(r"[a-f0-9]{64}", extension["treeSha256"])):
+                raise ValueError("Microsoft SSO requires a pinned existing local extension directory")
         profile = connection["userDataDirectory"]
         if not isinstance(profile, str) or not Path(profile).is_absolute():
             raise ValueError("Persistent profile must be an operator-owned absolute directory")
@@ -333,7 +348,42 @@ def authentication_request(policy, request):
         value.rstrip("/") for value in policy.get("connection", {}).get("authenticationOrigins", [])}
 
 
-def open_context(playwright, request, policy):
+def verify_windows_accounts_extension(extension):
+    root = Path(extension["directory"])
+    if root.is_symlink():
+        raise ValueError("Microsoft SSO directory cannot be a symbolic link")
+    root = root.resolve(strict=True)
+    manifest_path = root / "manifest.json"
+    if manifest_path.is_symlink() or manifest_path.stat().st_size > 1024 * 1024:
+        raise ValueError("Invalid bounded Microsoft SSO manifest")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("key"), str) or len(manifest["key"]) > 8192:
+        raise ValueError("Microsoft SSO manifest has no bounded public key")
+    public_key = base64.b64decode(manifest["key"], validate=True)
+    identity = "".join(chr(ord("a") + int(char, 16)) for char in hashlib.sha256(public_key).hexdigest()[:32])
+    if not public_key or identity != WINDOWS_ACCOUNTS_EXTENSION_ID:
+        raise ValueError("Pinned extension is not the approved Microsoft SSO identity")
+    records = []
+    total_bytes = 0
+    for count, file in enumerate(root.rglob("*")):
+        if count >= 512 or file.is_symlink() or not file.resolve().is_relative_to(root):
+            raise ValueError("Microsoft SSO tree is unbounded or leaves the pinned directory")
+        if not file.is_file():
+            continue
+        with file.open("rb") as stream:
+            data = stream.read(32 * 1024 * 1024 - total_bytes + 1)
+        total_bytes += len(data)
+        if total_bytes > 32 * 1024 * 1024:
+            raise ValueError("Microsoft SSO tree exceeds the byte bound")
+        records.append((file.relative_to(root).as_posix(), hashlib.sha256(data).hexdigest()))
+    tree = "".join(f"{name}\t{digest}\n" for name, digest in sorted(records))
+    if hashlib.sha256(tree.encode("utf-8")).hexdigest() != extension["treeSha256"]:
+        raise ValueError("Microsoft SSO installed tree differs from its operator pin")
+    return {"id": identity, "version": str(manifest.get("version", ""))[:64],
+            "treeSha256": extension["treeSha256"], "verifiedBeforeLaunch": True}
+
+
+def open_context(playwright, request, policy, provenance=None):
     options = dict(viewport=request["viewport"], device_scale_factor=1,
                    locale="en-US", reduced_motion="reduce", service_workers="block",
                    accept_downloads=False)
@@ -342,8 +392,17 @@ def open_context(playwright, request, policy):
         profile = Path(connection["userDataDirectory"]).resolve(strict=True)
         if not profile.is_dir():
             raise ValueError("The existing owned Chromium profile directory is required")
+        extension = connection.get("windowsAccountsExtension")
+        extension_proof = None
+        if extension is not None:
+            extension_proof = verify_windows_accounts_extension(extension)
+            directory = str(Path(extension["directory"]).resolve(strict=True))
+            options.update(ignore_default_args=["--disable-extensions"],
+                           args=[f"--disable-extensions-except={directory}", f"--load-extension={directory}"])
         # Do not fall back to system Edge, another profile, or a headless retry.
         context = playwright.chromium.launch_persistent_context(str(profile), headless=False, **options)
+        if provenance is not None and extension_proof is not None:
+            provenance["windowsAccountsExtension"] = extension_proof
         return context.browser, context
     browser = playwright.chromium.launch(headless=False)
     context = None

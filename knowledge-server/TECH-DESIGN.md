@@ -1,43 +1,54 @@
-# Accessibility Knowledge Base：技术设计与协作扩展指南
+# Accessibility Knowledge Base: Technical Design and Collaborative Extension Guide
 
-本文面向内容贡献者、组件/产品专家、KB reviewer 和服务维护者。
-描述当前 schema v1、独立服务 0.1.0 的实现与扩展约束，不把计划中的能力当作已交付功能。
-安装和宿主注册见 [服务 README](README.md)；内容审核政策见
-[贡献规范](../accessibility-kb/governance/contribution.md)。
+English | [简体中文](TECH-DESIGN.zh-CN.md)
 
-**目标架构补充：一个 KB 入口同时提供本地知识与 MAS 权威规则能力。**
-第 1–10 节描述已实现的本地快照服务；第 11 节定义同事后续要实现的 MAS 接入。
-本次只更新设计，没有增加 MAS 连接、工具、配置解析或运行时闸门。
+Source coverage: [AgentOW migration audit](AGENTOW-MIGRATION-AUDIT.md).
+Preserved archives are not equivalent to completed migration into the new KB.
 
-## 1. 目标与边界
+This document is for content contributors, component/product experts, KB reviewers, and service maintainers.
+It describes the implementation and extension constraints of the current schema v1 and standalone service 0.1.0,
+without presenting planned capabilities as delivered features. For installation and host registration, see the
+[service README](README.md); for content review policy, see the
+[contribution guidelines](../accessibility-kb/governance/contribution.md).
 
-KB 将跨产品知识、框架契约和产品约束组织为可引用、可审核、可按依赖闭包分发的内容。
-目标不是把所有资料放进一个长文档，而是让协作者能够回答：
+**Target architecture addendum: one KB endpoint provides both local knowledge and authoritative MAS rules.**
+Sections 1–10 describe the implemented local snapshot service; section 11 defines MAS integration for colleagues
+to implement later. This change updates the design only: it adds no MAS connection, tools, configuration parsing,
+or runtime gates.
 
-- 当前任务应读哪一层、哪个版本、哪条知识？
-- 一项结论来自规范、组件契约、产品支持声明，还是未经审核的方法建议？
-- 缺少哪些上下文或来源，哪些验证仍需要真实环境？
-- 改动一条知识后，哪些包、引用和评估需要一起更新？
+## 1. Goals and Boundaries
 
-**当前边界：**这是独立 KB + 只读 stdio MCP，不注册或改写任何现有插件。
-已有插件的知识、skills、配置、运行日志、浏览器和工作流保持各自原有行为。
-本服务不读 A11y workflow 配置，不拥有执行 provider，也不执行修复、测试、浏览器或 AT。
-`procedure` 是推理和计划指导，不是可自动执行的 workflow。
+The KB organizes cross-product knowledge, framework contracts, and product constraints into content that can be
+cited, reviewed, and distributed by dependency closure. The goal is not to put all material in one long document,
+but to enable collaborators to answer:
 
-**当前不提供：**官方来源自动同步、网页爬取、语义/向量检索、按任务自动挑选包、
-内容自动审批、插件自动接入或已量化的 agent 效果保证。32 条初始内容均为 draft；
-Common 20、Fluent 4、SharePoint 8 是当前种子集合，不是长期数量上限或完整性承诺。
+- Which layer, version, and knowledge entry should be read for the current task?
+- Does a conclusion come from a specification, component contract, product support statement, or unreviewed methodological advice?
+- What context or sources are missing, and which verification still requires a real environment?
+- When one knowledge entry changes, which packages, references, and evaluations need to be updated together?
 
-**后续目标：**MAS MCP 客户端/适配器随独立 KB 服务提供，宿主只注册一个 KB MCP；
-不用让每个宿主分别编排 KB 和 MAS。MAS 连接由 KB 服务内部管理，凭据仍由运行环境
-安全提供。它属于只读权威来源访问，不是修复/发布 provider，不改变现有插件 workflow。
-当前未实现，不能将“登记了 sources.mas”当作“已经连接 MAS”。
+**Current boundary:** this is a standalone KB + read-only stdio MCP. It does not register or rewrite any existing
+plugin. Existing plugins retain their original knowledge, skills, configuration, run logs, browsers, and workflows.
+This service does not read A11y workflow configuration, own execution providers, or perform fixes, tests, browser
+operations, or assistive technology (AT) operations. A `procedure` guides reasoning and planning; it is not an
+automatically executable workflow.
 
-## 2. 整体结构与数据流
+**Not currently provided:** automatic synchronization of official sources, web crawling, semantic/vector retrieval,
+automatic task-based package selection, automatic content approval, automatic plugin integration, or quantified
+guarantees of agent effectiveness. All 32 initial entries are draft; Common 20, Fluent 4, and SharePoint 8 form
+the current seed set, not a long-term count limit or a completeness commitment.
+
+**Future goal:** ship the MAS MCP client/adapter with the standalone KB service so that hosts register only one
+KB MCP, rather than each host orchestrating KB and MAS separately. The KB service manages MAS connections
+internally; the runtime environment still supplies credentials securely. This is read-only access to an authoritative
+source, not a fix/publish provider, and does not change existing plugin workflows. It is not implemented today:
+registering `sources.mas` must not be treated as having connected to MAS.
+
+## 2. Overall Structure and Data Flow
 
 ```mermaid
 flowchart LR
-  Expert[贡献者与领域审核者] --> Author[accessibility-kb authored files]
+  Expert[Contributors and domain reviewers] --> Author[accessibility-kb authored files]
   Author --> Validate[loadKnowledgeBase: schema / links / sources / dependency checks]
   Validate --> Export[exportKnowledgeBase: selected dependency closure]
   Export --> Manifest[Source manifest]
@@ -54,39 +65,39 @@ flowchart LR
   Host -. separate authorization .-> Workflow[Existing execution workflows]
 ```
 
-三个不同的结构不能混淆：
+Do not confuse these three distinct structures:
 
-1. **包依赖图**：决定导出哪些包，要求版本精确匹配且无环。
-2. **条目关系图**：`relations` 指向要一起理解的知识 ID；不会自动递归读取或执行。
-3. **来源记录**：`sourceIds` 指向本包来源元数据；来源 URL 不会被服务抓取。
+1. **Package dependency graph:** determines which packages are exported; versions must match exactly and the graph must be acyclic.
+2. **Entry relationship graph:** `relations` points to knowledge IDs to understand together; it does not automatically read recursively or execute anything.
+3. **Source records:** `sourceIds` points to source metadata within the same package; the service does not fetch source URLs.
 
-### 2.1 目录与维护责任
+### 2.1 Locations and Maintenance Responsibilities
 
-| 位置 | 用途 | 谁修改 / 是否生成 |
+| Location | Purpose | Who edits it / whether generated |
 |---|---|---|
-| [KB catalog](../accessibility-kb/catalog.json) | 注册所有内容包及其描述符位置 | 新增包时修改 |
-| [Common 描述符](../accessibility-kb/packages/common/package.json) | 通用知识的版本、来源、条目清单 | 通用内容贡献者 |
-| [Fluent 描述符](../accessibility-kb/packages/fluent/package.json) | Fluent 版本契约、依赖和条目 | 框架专家 |
-| [SharePoint 描述符](../accessibility-kb/packages/sharepoint/package.json) | SPDS、工具、宿主与支持约束 | 产品专家 |
-| [包 schema](../accessibility-kb/schemas/package.schema.json) / [支持矩阵 schema](../accessibility-kb/schemas/support-matrix.schema.json) | authoring 数据形状 | 协议维护者；不是普通内容修改 |
-| [贡献规范](../accessibility-kb/governance/contribution.md) / [效果评估 rubric](../accessibility-kb/evaluations/README.md) | 审核规则和知识效果的评价标准 | 内容治理与评估负责人 |
-| [KB 源清单](../accessibility-kb/manifest.json) | 整个 authored KB 的内容哈希 | 构建生成，不手改 |
-| [内容校验/导出](tools/knowledge-base.mjs) | Ajv schema、文件清单、关系、来源及闭包校验 | 构建维护者 |
-| [引用工具](tools/knowledge-reference.mjs) | 创建 pin；维护者解析本地引用 | 构建维护者；不随最小运行时分发 |
-| [独立构建器](tools/build.mjs) | 选择分发包，生成产物并保留历史 | 发布维护者 |
-| [服务引用](references/knowledge.json) | 服务当前选择的版本、manifest pin、URL 和 raw pin | 构建生成，不手改 |
-| [分发索引](../knowledge-distribution/index.json) | 所有保留产物的 manifest pin → raw SHA-256 | 构建生成；保留历史 |
-| [运行时 loader](src/runtime/knowledge.mjs) | 位置解析、下载、缓存、语义与完整性校验 | 运行时维护者 |
-| [MCP handler](src/runtime/knowledge-mcp.mjs) / [stdio 入口](cli.mjs) | 三个只读工具及传输 | 运行时维护者 |
-| [独立 CI](../.github/workflows/knowledge.yml) | KB 与现有 marketplace 分别校验 | 服务维护者 |
-| 本文 | 设计、扩展步骤与职责边界 | 维护者；不进入知识快照 |
+| [KB catalog](../accessibility-kb/catalog.json) | Register all content packages and their descriptor locations | Update when adding a package |
+| [Common descriptor](../accessibility-kb/packages/common/package.json) | Versions, sources, and entry inventory for common knowledge | Common content contributors |
+| [Fluent descriptor](../accessibility-kb/packages/fluent/package.json) | Fluent version contracts, dependencies, and entries | Framework experts |
+| [SharePoint descriptor](../accessibility-kb/packages/sharepoint/package.json) | SPDS, utilities, host, and support constraints | Product experts |
+| [Package schema](../accessibility-kb/schemas/package.schema.json) / [support matrix schema](../accessibility-kb/schemas/support-matrix.schema.json) | Authoring data shape | Protocol maintainers; not an ordinary content change |
+| [Contribution guidelines](../accessibility-kb/governance/contribution.md) / [effectiveness evaluation rubric](../accessibility-kb/evaluations/README.md) | Review rules and criteria for evaluating knowledge effectiveness | Content governance and evaluation owners |
+| [KB source manifest](../accessibility-kb/manifest.json) | Content hashes for the entire authored KB | Build-generated; do not edit manually |
+| [Content validation/export](tools/knowledge-base.mjs) | Ajv schema, file inventory, relationship, source, and closure validation | Build maintainers |
+| [Reference tools](tools/knowledge-reference.mjs) | Create pins; resolve local references for maintainers | Build maintainers; not distributed with the minimal runtime |
+| [Standalone builder](tools/build.mjs) | Select distribution packages, generate artifacts, and retain history | Release maintainers |
+| [Service reference](references/knowledge.json) | Currently selected versions, manifest pin, URL, and raw pin for the service | Build-generated; do not edit manually |
+| [Distribution index](../knowledge-distribution/index.json) | Manifest pin → raw SHA-256 for all retained artifacts | Build-generated; retain history |
+| [Runtime loader](src/runtime/knowledge.mjs) | Location resolution, downloading, caching, semantic and integrity validation | Runtime maintainers |
+| [MCP handler](src/runtime/knowledge-mcp.mjs) / [stdio entry point](cli.mjs) | Three read-only tools and transport | Runtime maintainers |
+| [Standalone CI](../.github/workflows/knowledge.yml) | Validate the KB separately from the existing marketplace | Service maintainers |
+| This document | Design, extension steps, and responsibility boundaries | Maintainers; not included in knowledge snapshots |
 
-**不要把独立 KB 与现有插件知识混写。**本设计的内容写入独立的
-[accessibility-kb](../accessibility-kb/README.md)，不修改
-[现有插件知识](../src/knowledge/README.md) 或生成的插件副本。
-独立构建器也不调用 [marketplace 构建器](../tools/build.mjs)。
+**Do not mix standalone KB content with existing plugin knowledge.** Content for this design belongs in the
+standalone [accessibility-kb](../accessibility-kb/README.md), without changing
+[existing plugin knowledge](../src/knowledge/README.md) or generated plugin copies.
+The standalone builder does not invoke the [marketplace builder](../tools/build.mjs).
 
-## 3. 知识分层：增加什么，放到哪里
+## 3. Knowledge Layers: What to Add and Where
 
 ```mermaid
 flowchart TD
@@ -95,108 +106,115 @@ flowchart TD
   Fluent --> Common
 ```
 
-箭头表示“依赖”。`common` 不允许依赖任何产品包；不能为了引用一个产品案例，
-把整个产品包反向拉入 Common。Fluent 不应包含 SharePoint 专属业务前提。
-依赖使用精确版本，例如 `0.1.0`，不支持 `^0.1.0`、`latest` 或版本范围。
+Arrows mean “depends on.” `common` must not depend on any product package; do not pull an entire product
+package back into Common just to cite a product case. Fluent should not contain SharePoint-specific business
+assumptions. Dependencies use exact versions such as `0.1.0`; `^0.1.0`, `latest`, and version ranges are unsupported.
 
-### 3.1 内容放置速查表
+### 3.1 Content Placement Quick Reference
 
-以下目录是内容组织约定，不是必须一次建全的模板；具体文件要在描述符中声明。
+The following directories are content organization conventions, not a template that must be created in full at once;
+individual files must be declared in the descriptor.
 
-| 想补充的内容 | 放置位置 / 现有起点 | `kind` | 应写清楚 |
+| Content to add | Location / existing starting point | `kind` | What to make explicit |
 |---|---|---|---|
-| 通用语义、键盘、焦点、表单、动态内容、视觉原则 | Common `topics/`，如 [keyboard-focus](../accessibility-kb/packages/common/topics/keyboard-focus.md) | `topic` | 适用范围、边界与常见误用 |
-| MAS/WCAG 等依据的适用性与权威差异 | Common `requirements/`，从 [authority-and-applicability](../accessibility-kb/packages/common/requirements/authority-and-applicability.md) 扩展 | `requirement-guidance` | 精确条款、版本、规范/解释区别、未接通的来源 |
-| 根因定位和应该修改哪一层 | Common `analysis/`，如 [root-cause](../accessibility-kb/packages/common/analysis/root-cause.md) | `analysis` | 现象到责任层的推理，而非见到症状就加补丁 |
-| 跨组件实现职责 | Common `implementation/`，如 [component-contract](../accessibility-kb/packages/common/implementation/component-contract.md) | `implementation-contract` | 组件已有能力、调用方责任、异步/错误分支 |
-| 静态、动态、设计、测试验证方法 | Common `verification/` | `verification` | 能证明什么、不能证明什么、需要何种证据 |
-| Find/Fix/Prevent/Review/Add-tests 的知识使用步骤 | Common `procedures/` | `procedure` | 阅读顺序、决策与验证计划；不授予执行权限 |
-| 可复用正反案例 | 所属包的 `cases/` | `case` | 场景、反例、正确层次、验证及不适用情况；脱敏 |
-| Fluent V8 与 V9 API/行为差异 | Fluent `v8/`、`v9/`、`selection/` | `implementation-contract` | 实际版本及文档条款；不同 major 不互相猜测 |
-| SPDS 组件和 SharePoint 工具/宿主约束 | SharePoint `spds/`、`utilities/`、`verification/` | 契约用 `implementation-contract`；验证用 `verification` | 通用组件与产品包装层的边界 |
-| 产品支持声明、版本和例外依据 | SharePoint `profiles/`，如 [support-policy](../accessibility-kb/packages/sharepoint/profiles/support-policy.md) | `product-profile` | 支持声明、适用性、实际验证和例外分别记录 |
-| 知识是否让 agent 判断得更好 | [evaluations rubric](../accessibility-kb/evaluations/README.md) | 不是产品知识条目 | 正负样本、误报/漏报、证据校准、错误修复层 |
+| General semantics, keyboard, focus, forms, dynamic content, and visual principles | Common `topics/`, such as [keyboard-focus](../accessibility-kb/packages/common/topics/keyboard-focus.md) | `topic` | Scope, boundaries, and common misuse |
+| Applicability and differences in authority of sources such as MAS/WCAG | Common `requirements/`, extending [authority-and-applicability](../accessibility-kb/packages/common/requirements/authority-and-applicability.md) | `requirement-guidance` | Exact clauses, versions, normative vs. explanatory material, and sources not yet connected |
+| Root-cause identification and which layer should change | Common `analysis/`, such as [root-cause](../accessibility-kb/packages/common/analysis/root-cause.md) | `analysis` | Reasoning from symptoms to the responsible layer, rather than patching each symptom |
+| Implementation responsibilities across components | Common `implementation/`, such as [component-contract](../accessibility-kb/packages/common/implementation/component-contract.md) | `implementation-contract` | Existing component capabilities, caller responsibilities, and async/error branches |
+| Static, dynamic, design, and test verification methods | Common `verification/` | `verification` | What can and cannot be proved, and what evidence is required |
+| Knowledge-use steps for Find/Fix/Prevent/Review/Add-tests | Common `procedures/` | `procedure` | Reading order, decisions, and verification plans; no grant of execution authority |
+| Reusable positive and negative cases | The owning package's `cases/` | `case` | Scenario, counterexample, correct layer, verification, and inapplicable cases; sanitized |
+| Fluent V8 vs. V9 API/behavior differences | Fluent `v8/`, `v9/`, `selection/` | `implementation-contract` | Actual versions and documentation clauses; do not infer across major versions |
+| SPDS components and SharePoint utility/host constraints | SharePoint `spds/`, `utilities/`, `verification/` | `implementation-contract` for contracts; `verification` for verification | Boundary between general components and product wrappers |
+| Product support statements, versions, and grounds for exceptions | SharePoint `profiles/`, such as [support-policy](../accessibility-kb/packages/sharepoint/profiles/support-policy.md) | `product-profile` | Record support statements, applicability, actual verification, and exceptions separately |
+| Whether knowledge improves agent judgment | [Evaluations rubric](../accessibility-kb/evaluations/README.md) | Not a product knowledge entry | Positive/negative samples, false positives/negatives, evidence calibration, and fixes at the wrong layer |
 
-同一个问题可能拆成多层：Common 写“关闭对话框时如何选择焦点返回目标”，
-Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主/包装工具覆盖了哪些职责”。
-通过 `relations` 关联，不复制三份通用规则。来源相互冲突时记录上下文缺口，
-由有权限的领域 reviewer 决定适用条款；不能由服务自动假定某来源覆盖另一来源。
+One issue may span several layers: Common describes “how to choose a focus return target when closing a dialog,”
+Fluent describes “what contract a specific Dialog version provides,” and SharePoint describes “which responsibilities
+the host/wrapper utilities cover.” Connect them through `relations` instead of copying the general rule three times.
+When sources conflict, record context gaps and have an authorized domain reviewer determine the applicable clauses;
+the service must not automatically assume that one source overrides another.
 
-### 3.2 当前最值得完善的缺口
+### 3.2 Highest-Priority Gaps to Address
 
-| 工作项 | 主要落点 | 完成条件 |
+| Work item | Primary location | Completion criteria |
 |---|---|---|
-| 确认公司要求的授权获取接口、版本和缓存许可 | Common `sources.mas` 与 requirements 条目 | 有可审核条款与授权，不用占位文本冒充 MAS |
-| 审核 HTML/ARIA/WCAG/APG 的实际条款 | Common 来源和对应 topic/contract | 逐条 claim 对应到适用版本；APG 示例不等于强制唯一实现 |
-| 补 Fluent V8/V9 真实组件契约及负例 | Fluent 来源、`v8/`、`v9/`、`selection/` | 确认 API/版本/责任边界，而非按另一版本类推 |
-| 补 SPDS、公告/焦点工具和宿主行为 | SharePoint 来源、`spds/`、`utilities/` | 授权文档和审核版本齐备；不猜 API 签名 |
-| 接通正式产品支持清单 | SharePoint `profiles/` | 每个产品版本、规则及例外有正式依据 |
-| 分配 owner/reviewer 并做知识效果评估 | 每条 `owner`/`review` 与 evaluations rubric | 能追踪审核和代表性正负案例，不只让 schema 通过 |
+| Confirm the authorized access interface, versions, and caching permissions for company requirements | Common `sources.mas` and requirements entries | Reviewable clauses and authorization; no placeholder text presented as MAS |
+| Review actual HTML/ARIA/WCAG/APG clauses | Common sources and corresponding topics/contracts | Map each claim to its applicable version; APG examples are not the sole mandatory implementation |
+| Add actual Fluent V8/V9 component contracts and negative examples | Fluent sources, `v8/`, `v9/`, `selection/` | Confirm APIs, versions, and responsibility boundaries instead of extrapolating from another version |
+| Add SPDS, announcement/focus utilities, and host behavior | SharePoint sources, `spds/`, `utilities/` | Authorized documentation and reviewed versions available; no guessed API signatures |
+| Connect the official product support inventory | SharePoint `profiles/` | Official basis for each product version, rule, and exception |
+| Assign owners/reviewers and evaluate knowledge effectiveness | Each entry's `owner`/`review` and the evaluations rubric | Traceable review and representative positive/negative cases, not merely passing the schema |
 
-这是协作 backlog，不是已取得这些资料的声明。原始私有资料、运行证据、账户与环境
-信息保留在授权外部系统；库内只放允许分发的摘要与可授权访问的依据引用。
+This is a collaborative backlog, not a claim that these materials have already been obtained. Original private
+materials, run evidence, account details, and environment information remain in authorized external systems;
+the repository contains only distributable summaries and references to supporting material accessible with authorization.
 
-## 4. 数据模型与引用契约
+## 4. Data Model and Reference Contract
 
-### 4.1 Package、entry 和 source
+### 4.1 Package, Entry, and Source
 
-| 对象 | 字段与语义 |
+| Object | Fields and semantics |
 |---|---|
-| package | `schemaVersion`、`id`、`version`、`dependencies`、`sources`、`entries`；不允许随意加未知字段 |
-| entry 身份 | `id` 全 KB 唯一且以本包 ID 开头；`path` 相对本包目录。ID 与文件位置分离 |
-| entry 分类 | `kind` 必须使用 schema 枚举；目录名不是检索或授权机制 |
-| entry 上下文 | `appliesTo` 是非空字符串数组，记录版本/产品/平台；当前服务不自动按它过滤 |
-| entry 来源 | `sourceIds` 只能引用本包 `sources` 中的 ID。跨包阅读关联用 `relations`，不能直接借用别包来源 ID |
-| entry 关联 | `relations`、`deprecatedBy` 的目标必须存在于本包或它的依赖闭包内 |
-| entry 生命周期 | `status` 为 `draft` / `approved` / `deprecated`；审批信息写在描述符，不靠正文一个“已审核”标签 |
-| source | `id` 在包内唯一；`authority`、`status`、`locator`、`revision`、`note` 区分来源性质与就绪程度 |
+| package | `schemaVersion`, `id`, `version`, `dependencies`, `sources`, `entries`; arbitrary unknown fields are not allowed |
+| entry identity | `id` is unique across the KB and starts with its package ID; `path` is relative to the package directory. Identity is separate from file location |
+| entry classification | `kind` must use the schema enum; directory names are not a retrieval or authorization mechanism |
+| entry context | `appliesTo` is a nonempty string array recording versions/products/platforms; the current service does not automatically filter by it |
+| entry sources | `sourceIds` may reference only IDs in this package's `sources`. Use `relations` for cross-package reading associations; do not borrow another package's source IDs directly |
+| entry relationships | Targets of `relations` and `deprecatedBy` must exist in the package or its dependency closure |
+| entry lifecycle | `status` is `draft` / `approved` / `deprecated`; approval information belongs in the descriptor, not merely a “reviewed” label in the body |
+| source | `id` is unique within the package; `authority`, `status`, `locator`, `revision`, and `note` distinguish source type and readiness |
 
-合法 ID 如 `common.topic.keyboard-focus`。包名和 ID 段以小写字母开头，后续只允许
-小写字母、数字、连字符；条目必须包含点分隔的命名空间。
-`source.authority` 的六类为 `company-requirements`、`normative-standard`、
-`informative-guidance`、`component-contract`、`product-support`、`historical-reference`。
+A valid ID is `common.topic.keyboard-focus`. Package names and ID segments start with a lowercase letter,
+followed only by lowercase letters, digits, or hyphens; entries must include a dot-separated namespace.
+The six `source.authority` categories are `company-requirements`, `normative-standard`,
+`informative-guidance`, `component-contract`, `product-support`, and `historical-reference`.
 
-### 4.2 生命周期不是自动工作流
+### 4.2 Lifecycle Is Not an Automated Workflow
 
-- 来源未接通：`connection-pending`，`locator`/`revision` 可以为 `null`，说明缺什么。
-- 有候选资料但未审核：`review-pending`；有 URL 并不意味着支持当前结论。
-- 审核来源：`reviewed` 必须有非空 `locator` 和 `revision`；校验器检查形状，实际条款由 reviewer 核实。
-- 历史资料：`historical`，不能直接支撑 approved 条目。
-- 条目从 draft 升 approved：实际 owner、非 `unassigned` reviewer、审核日期、证据引用；
-  至少一个相关来源且全部为 reviewed。纯方法草稿可以暂时没有 source，但不能因此审批通过。
-- 来源或框架发生实质变化：**人工**把受影响条目退回 draft、重新审核；没有自动失效分析。
-- 废弃条目：保留旧 ID，`status: deprecated` 并提供有效 `deprecatedBy`。
-  当前政策不支持无替代目标的 deprecation；不要悄悄把同一 ID 改成另一含义。
+- Source not connected: `connection-pending`; `locator`/`revision` may be `null`; explain what is missing.
+- Candidate material available but not reviewed: `review-pending`; a URL does not mean it supports the current conclusion.
+- Reviewed source: `reviewed` requires nonempty `locator` and `revision`; the validator checks shape, while a reviewer verifies the actual clauses.
+- Historical material: `historical`; it cannot directly support approved entries.
+- Promoting an entry from draft to approved requires an actual owner, a reviewer other than `unassigned`, a review date,
+  and evidence references; at least one relevant source is required, and all sources must be reviewed. A purely
+  methodological draft may temporarily have no source, but that does not make it eligible for approval.
+- Substantive source or framework changes: **manually** return affected entries to draft and review them again;
+  there is no automatic invalidation analysis.
+- Deprecating an entry: retain its old ID, set `status: deprecated`, and provide a valid `deprecatedBy`.
+  Current policy does not support deprecation without a replacement target; do not silently give the same ID a different meaning.
 
-服务始终返回 `contentApprovalVerified: false`、`independentBehaviorVerified: false`。
-即使条目 metadata 是 approved，这两个字段也不会变成 true：服务没有执行人工审核或行为验证。
+The service always returns `contentApprovalVerified: false` and `independentBehaviorVerified: false`.
+Even when entry metadata says approved, neither field becomes true: the service has not performed human review
+or behavioral verification.
 
-### 4.3 文件和链接规则
+### 4.3 File and Link Rules
 
-- 每个正文必须在 `entries` 声明；包目录里的 README 也必须是一个 entry。
-  不要直接丢进未登记的笔记、图片、脚本或 fixture；严格文件清单会拒绝它们。
-- 正文当前支持 Markdown；JSON 仅支持 `kind: product-profile` + `dataSchema: support-matrix`。
-  任意新的 JSON 类型、图片或二进制附件都需要协议设计，不是新增一个文件即可。
-- 本包内部可用相对 Markdown 链接指向完整文件；当前拒绝本地 `#heading` 锚点、
-  跨包相对链接、越界路径及不支持的 URI。跨包关系用稳定 ID。
-- 全局共享文件集合是固定的：KB 根 README、catalog、两个 schema、贡献规范和评估 rubric。
-  每个导出都带这些文件，因此它们不能包含依赖某个未选中产品包的必需链接。
-- 新增全局 KB 文件需要同时更新 authoring 的 `commonFiles` 和 runtime 的 `COMMON_FILES`，
-  并补闭包测试；普通设计说明应像本文一样放在服务目录，不扩大分发内容。
-- Windows 路径的大小写碰撞、设备名、符号链接、文件/目录冲突会被运行时拒绝。
-  内容路径用简单的相对 `/` 路径；authoring 校验通过不等于完整运行时校验已通过。
+- Every content body must be declared in `entries`; even a README in a package directory must be an entry.
+  Do not drop in unregistered notes, images, scripts, or fixtures; the strict file inventory rejects them.
+- Content bodies currently support Markdown; JSON is supported only for `kind: product-profile` + `dataSchema: support-matrix`.
+  Any new JSON type, image, or binary attachment requires protocol design, not just adding a file.
+- Relative Markdown links within a package may point to whole files; local `#heading` anchors, cross-package
+  relative links, out-of-bounds paths, and unsupported URIs are currently rejected. Use stable IDs for cross-package relationships.
+- The global shared file set is fixed: the KB root README, catalog, two schemas, contribution guidelines, and
+  evaluation rubric. Every export includes them, so they must not contain required links that depend on an unselected product package.
+- Adding a global KB file requires updating both authoring `commonFiles` and runtime `COMMON_FILES`, plus
+  closure tests. Ordinary design documents should live in the service directory, like this document, without expanding distribution content.
+- The runtime rejects Windows path case collisions, device names, symbolic links, and file/directory conflicts.
+  Use simple relative `/` paths for content; passing authoring validation does not mean full runtime validation has passed.
 
-## 5. 操作手册：新增一条知识
+## 5. Playbook: Add a Knowledge Entry
 
-以下例子是**草稿元数据示范**，不是新增了经审核的规则。
-假设要补充跨产品的“异步完成后焦点处理”主题：
+The following examples demonstrate **draft metadata**; they do not add reviewed rules.
+Suppose you want to add a cross-product topic on “focus handling after asynchronous completion”:
 
-1. 先检查现有 [keyboard-focus](../accessibility-kb/packages/common/topics/keyboard-focus.md)
-   和 [dynamic-content](../accessibility-kb/packages/common/topics/dynamic-content.md)。
-   相同语义优先完善原条目；可独立引用的新主题才新增 ID。
-2. 新建 Common 包内的 `topics/async-focus.md`，按下方正文模板写出范围与缺口。
-3. 在 [Common package descriptor](../accessibility-kb/packages/common/package.json) 的 `entries`
-   中加入如下对象。示例引用已有候选来源 `wcag` / `apg`；仍需逐条核实正文依据。
+1. First check the existing [keyboard-focus](../accessibility-kb/packages/common/topics/keyboard-focus.md)
+  and [dynamic-content](../accessibility-kb/packages/common/topics/dynamic-content.md) entries.
+  Prefer improving an existing entry with the same semantics; add an ID only for a new, independently citable topic.
+2. Create `topics/async-focus.md` in the Common package and describe its scope and gaps using the body template below.
+3. Add the following object to `entries` in the
+  [Common package descriptor](../accessibility-kb/packages/common/package.json). The example references existing
+  candidate sources `wcag` / `apg`; the basis for each claim in the body still needs verification.
 
 ```json
 {
@@ -211,8 +229,9 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 }
 ```
 
-4. 如需补新来源，在**同一个包**的 `sources` 加记录。尚未接通的候选来源可以如下表示，
-   不能把它标成 reviewed，也不要给不相关条目挂上它来制造“有依据”的印象。
+4. If a new source is needed, add a record to `sources` in **the same package**. A candidate source that is not
+  yet connected can be represented as follows. Do not mark it reviewed or attach it to unrelated entries to create
+  the impression that they have a supporting basis.
 
 ```json
 {
@@ -221,53 +240,54 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
   "status": "connection-pending",
   "locator": null,
   "revision": null,
-  "note": "待确认授权来源、适用版本与精确条款；当前不提供已审核的契约内容。"
+  "note": "Authorized source, applicable version, and exact clauses remain to be confirmed; no reviewed contract content is currently provided."
 }
 ```
 
-5. 更新本包 overview 的阅读导航；如果另一个条目必须一起读，再增加它的 `relations`。
-   关系不自动双向，也不会替调用方读取正文。
-6. 按第 9 节处理版本、生成与评估。检查新增条目通过 `list/read` 可见，而 Common-only
-   导出仍不依赖任何产品包。计数断言需要随有依据的内容变化更新，不要直接删掉边界测试。
+5. Update the reading navigation in the package overview; if another entry must be read together with this one,
+   add its `relations` as well. Relationships are not automatically bidirectional and do not read content for the caller.
+6. Follow section 9 for versioning, generation, and evaluation. Check that the new entry is visible through `list/read`
+   and that Common-only exports still have no product package dependencies. Update count assertions to reflect
+   justified content changes; do not simply delete boundary tests.
 
-### 推荐的正文骨架
+### Recommended Body Outline
 
 ```markdown
-# 标题
+# Title
 
-## 适用范围与不适用情况
-产品/框架/版本/平台，以及必须先取得的上下文。
+## Scope and Inapplicable Cases
+Products/frameworks/versions/platforms, and context that must be obtained first.
 
-## 来源与当前状态
-具体来源 ID、条款/版本、规范或示例的性质；未审核内容明确写为 draft。
+## Sources and Current Status
+Specific source IDs, clauses/versions, and whether material is normative or illustrative; explicitly label unreviewed content as draft.
 
-## 需要维持的语义或用户结果
-描述为什么需要它，而非只列某个属性或固定实现。
+## Semantics or User Outcomes to Preserve
+Explain why this is needed, rather than listing only an attribute or a fixed implementation.
 
-## 判断与实现责任
-组件已做什么，调用方负责什么；异步、错误、取消和恢复分支。
+## Reasoning and Implementation Responsibilities
+What the component already does and what the caller owns; async, error, cancellation, and recovery branches.
 
-## 正例、反例与常见误修
-用最小、脱敏的示例说明；不要假定示例对所有组件版本都成立。
+## Positive Examples, Counterexamples, and Common Incorrect Fixes
+Use minimal, sanitized examples; do not assume an example applies to every component version.
 
-## 验证与证据边界
-源码能判断什么，哪些必须实际运行；无法验证时如何标记 gap。
+## Verification and Evidence Boundaries
+What source code can establish, what requires actual execution, and how to mark a gap when verification is unavailable.
 
-## 相关知识与待完善项
-列稳定 ID、未解决的来源/版本/owner 问题。
+## Related Knowledge and Open Items
+List stable IDs and unresolved source/version/owner questions.
 ```
 
-该骨架是写作建议，当前不校验这些标题。真实执行步骤、tenant、UPN、DevBox roster、
-认证信息和用户运行证据不能作为知识正文入库。
+This outline is authoring advice; these headings are not currently validated. Actual execution steps, tenant details,
+UPNs, DevBox rosters, authentication information, and user run evidence must not be committed as knowledge content.
 
-## 6. 操作手册：新增一个产品或框架包
+## 6. Playbook: Add a Product or Framework Package
 
-只有内容具有独立适用域/维护责任时才新增包，不要为每一个主题建包。
-以尚不存在的示例包 `product-example` 为例：
+Add a package only when the content has its own applicability domain or maintenance responsibility; do not create
+a package for every topic. Consider the example package `product-example`, which does not yet exist:
 
-1. 在 [catalog](../accessibility-kb/catalog.json) 的 `packages` 添加
-   `{"id":"product-example","path":"packages/product-example/package.json"}`。
-2. 创建对应包描述符和 README 正文。以下是能表达一个最小 draft 包的描述符：
+1. Add `{"id":"product-example","path":"packages/product-example/package.json"}` to `packages` in the
+   [catalog](../accessibility-kb/catalog.json).
+2. Create the corresponding package descriptor and README content. The following descriptor represents a minimal draft package:
 
 ```json
 {
@@ -291,95 +311,107 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 }
 ```
 
-3. `dependencies` 必须匹配当前库中的实际包版本。例子的 `0.1.0` 不是永远有效的默认值。
-   如果使用 Fluent 契约，显式依赖 Fluent；不能在 Common 中加入产品依赖来绕过校验。
-4. 按第 5 节逐条加正文、来源与关系。普通新包不需要修改 schema。
-5. **决定是否发布、由哪个服务选择。**注册 catalog 只让 source manifest 包含它，
-   不代表现有服务就会读取它。
+3. `dependencies` must match the actual package versions in the current KB. The example's `0.1.0` is not a
+   permanently valid default. If using Fluent contracts, depend on Fluent explicitly; do not add a product dependency
+   to Common to bypass validation.
+4. Add bodies, sources, and relationships entry by entry as described in section 5. An ordinary new package does not require a schema change.
+5. **Decide whether to publish it and which service selects it.** Catalog registration only includes it in the source
+   manifest; it does not mean the existing service will read it.
 
-当前 [构建器](tools/build.mjs) 的发布选择固定为 `[['common'], ['sharepoint']]`，
-服务引用固定由 `createKnowledgeReference(kb, ['sharepoint'])` 生成：
+The current [builder](tools/build.mjs) has fixed publication selections of `[['common'], ['sharepoint']]`,
+and the service reference is always generated by `createKnowledgeReference(kb, ['sharepoint'])`:
 
-| 希望的结果 | 必须修改什么 |
+| Desired result | Required changes |
 |---|---|
-| 只收录供后续完善，不让当前服务使用 | 加 catalog/描述符/正文；source manifest 变化，现有服务选择不变 |
-| 单独分发新产品闭包 | 构建器增加新选择；补该闭包的导出、pin 和隔离测试。当前服务不因此自动切换 |
-| 同一个服务同时读新包 | 生成服务引用时显式选中它，并生成**同样选择的联合 artifact**；只生成单包 artifact 不够 |
-| 作为已有产品包必需依赖 | 更新真实依赖与版本；已有选择会递归包含它。不能为了分发而伪造语义依赖 |
+| Include content for future improvement without exposing it to the current service | Add catalog registration, descriptor, and bodies; the source manifest changes, but the existing service selection does not |
+| Distribute the new product closure separately | Add a builder selection; add export, pin, and isolation tests for that closure. This does not automatically switch the current service |
+| Let the same service also read the new package | Select it explicitly when generating the service reference and generate a **combined artifact with the same selection**; single-package artifacts alone are insufficient |
+| Make it a required dependency of an existing product package | Update genuine dependencies and versions; existing selections include it recursively. Do not fabricate a semantic dependency solely for distribution |
 
-不要把 SharePoint 变成所有产品的聚合包。多个独立包集合、选择配置化或多个服务
-配置是后续单独设计的工作；目前没有 CLI 参数让用户任意切换这些集合。
+Do not turn SharePoint into an aggregator for every product. Multiple independent package sets, configurable
+selection, or multiple service configurations require separate future design; there is currently no CLI argument
+for users to switch freely among these sets.
 
-## 7. 操作手册：支持矩阵和 schema 扩展
+## 7. Playbook: Support Matrices and Schema Extensions
 
-现有例子是 [SharePoint support matrix](../accessibility-kb/packages/sharepoint/profiles/support-matrix.json)。
-它区分产品支持声明、规则适用性和实际验证，不把“不支持”写成自动豁免。
+The existing example is the [SharePoint support matrix](../accessibility-kb/packages/sharepoint/profiles/support-matrix.json).
+It distinguishes product support statements, rule applicability, and actual verification; “unsupported” is not an automatic exemption.
 
-- 没有官方来源时保持 `status: awaiting-official-source`，`products: []`。
-  不填推测出来的产品、支持结果或例外清单。
-- 有来源后，矩阵改为 `sourced`，分配 owner 并填产品版本。每个产品的 source 必须是
-  本包已 reviewed 的 `product-support` 来源，locator/revision 必须逐字匹配来源记录。
-- 每条 rule 填 `requirementId`、`applicability`、`supportStatus`、`verificationStatus`、
-  `basis`、`verificationEvidence`、`exception`；verified 必须有证据引用。
-- `requirementId` 是官方规则标识，不要求它是 KB entry ID。条款真实性、豁免是否授权及
-  日期是否仍有效需要人工核实；schema 合法不意味着证据或豁免被服务独立验证。
-- 已有记录应更新来源/版本并重新审核，不把旧验证结果无条件沿用到新版本。
+- Without an official source, retain `status: awaiting-official-source` and `products: []`.
+  Do not populate guessed products, support outcomes, or exception lists.
+- Once a source is available, change the matrix to `sourced`, assign an owner, and populate product versions.
+  Each product's source must be a reviewed `product-support` source in the same package, with locator/revision
+  matching the source record verbatim.
+- Populate each rule's `requirementId`, `applicability`, `supportStatus`, `verificationStatus`, `basis`,
+  `verificationEvidence`, and `exception`; verified requires an evidence reference.
+- `requirementId` is an official rule identifier, not necessarily a KB entry ID. Clause authenticity, exemption
+  authorization, and whether dates remain valid require human verification; schema validity does not mean
+  the service independently verified the evidence or exemption.
+- Update sources/versions for existing records and review them again; do not carry old verification outcomes
+  unconditionally into new versions.
 
-如果要新增 `kind`、`dataSchema` 或结构化格式，需要同时修改：
+Adding a `kind`, `dataSchema`, or structured format requires coordinated changes to:
 
-1. [JSON schema](../accessibility-kb/schemas/package.schema.json) 和所需新 schema；
-2. [authoring validator](tools/knowledge-base.mjs) 的形状/语义/文件校验；
-3. [运行时 validator](src/runtime/knowledge.mjs) 中对应字段、枚举、语义和共享文件集合；
-4. schema/版本策略、导出内容和兼容性说明；
-5. authoring 与 runtime 的正反测试，包括“重新计算哈希也不能绕过语义限制”的情况。
+1. The [JSON schema](../accessibility-kb/schemas/package.schema.json) and any required new schema;
+2. Shape, semantic, and file validation in the [authoring validator](tools/knowledge-base.mjs);
+3. Corresponding fields, enums, semantics, and the shared file set in the [runtime validator](src/runtime/knowledge.mjs);
+4. Schema/version policy, exported content, and compatibility documentation;
+5. Positive and negative authoring/runtime tests, including cases where recomputing hashes must not bypass semantic restrictions.
 
-Ajv 只用于开发构建。安装后的运行时用内置 Node 模块独立验证，不会自动执行新的
-schema 或任意输入代码。**只改 JSON schema 是不完整的协议修改。**
+Ajv is used only for development builds. The installed runtime validates independently using built-in Node modules;
+it does not automatically execute new schemas or arbitrary input code. **Changing only the JSON schema is an incomplete protocol change.**
 
-## 8. 消费层：检索、校验与安全边界
+## 8. Consumer Layer: Retrieval, Validation, and Security Boundaries
 
-本节的查询不上传、固定下载地址和缓存保证适用于**当前本地快照工具**。
-未来显式 MAS 查询会向已配置的 MAS 服务发送必要查询字段；其边界见第 11 节，
-不能把本地快照的隐私承诺或完整性 pin 直接套用到实时来源。
+This section's guarantees about queries not being uploaded, fixed download locations, and caching apply to the
+**current local snapshot tools**. Future explicit MAS queries will send necessary query fields to the configured
+MAS service; see section 11 for those boundaries. Do not apply local snapshot privacy promises or integrity pins
+directly to live sources.
 
-| 工具 | 入参 | 当前行为 |
+| Tool | Input | Current behavior |
 |---|---|---|
-| `a11y_kb_knowledge_list` | `{}` | 返回所选闭包的条目及来源元数据；不自动筛掉 draft/deprecated |
-| `a11y_kb_knowledge_search` | `query`，1–256 字符 | 本地大小写不敏感分词匹配；所有词均须出现在 ID/正文；最多 20 条、每条最多 580 字符 excerpt |
-| `a11y_kb_knowledge_read` | `id`，1–256 字符 | 读取一个声明的完整条目、来源、哈希和 `kb:<id>@<version>` 引用 |
+| `a11y_kb_knowledge_list` | `{}` | Returns entries and source metadata for the selected closure; does not automatically filter out draft/deprecated entries |
+| `a11y_kb_knowledge_search` | `query`, 1–256 characters | Local case-insensitive token matching; all terms must appear in the ID/body; at most 20 results, each with an excerpt of at most 580 characters |
+| `a11y_kb_knowledge_read` | `id`, 1–256 characters | Reads one complete declared entry, sources, hashes, and a `kb:<id>@<version>` citation |
 
-搜索不是语义检索，也没有相关性学习或依据等级排序；调用方应先确定适用范围，
-再读完整正文、关联 ID 和来源状态。来源元数据、source URL 和关系不是执行指令。
+Search is not semantic retrieval and has no relevance learning or ranking by authority level. Callers should first
+establish scope, then read the complete body, related IDs, and source status. Source metadata, source URLs, and
+relationships are not execution instructions.
 
-Loader 顺序：显式绝对根目录 → 经身份校验的开发 checkout → 每用户共享缓存 →
-固定的 HTTPS artifact。无效显式配置、已存在但损坏的缓存或不匹配的本地 pin 都报错，
-不降级成另一个版本，不猜测成功。每次调用重新校验内容，不支持修改源文件后绕过 pin 热更新。
+Loader order: explicit absolute root → identity-validated development checkout → shared per-user cache →
+fixed HTTPS artifact. Invalid explicit configuration, an existing but corrupt cache, or a mismatched local pin
+produces an error; the loader does not fall back to another version or guess success. Content is revalidated on
+every call; editing source files does not enable hot reload that bypasses the pin.
 
-只下载选中的**完整包闭包**，查询不会发送到下载端。HTTPS 单次上限 15 秒/8 MiB，
-文件数上限 1000；禁止任意 URL、重定向、凭据和路径逃逸。stdio 单帧上限 1 MiB。
-内容增长时先监控产物大小和调用输出规模；超出限制需要设计分包/分发协议，不能简单关闭校验。
+Only the selected **complete package closure** is downloaded; queries are not sent to the download endpoint.
+Each HTTPS download is limited to 15 seconds/8 MiB, with at most 1000 files; arbitrary URLs, redirects,
+credentials, and path escapes are prohibited. Each stdio frame is limited to 1 MiB. As content grows, first monitor
+artifact size and tool output size; exceeding limits requires package partitioning/distribution protocol design,
+not simply disabling validation.
 
-## 9. 版本、生成与发布
+## 9. Versioning, Generation, and Publication
 
-### 9.1 四种版本/身份
+### 9.1 Four Kinds of Version/Identity
 
-| 标识 | 含义 |
+| Identifier | Meaning |
 |---|---|
-| `schemaVersion` | 数据协议版本；改变解析契约时评估升级 |
-| 每包 `version` | 内容包版本；由维护者为审核发布显式更新，构建不会自动递增 |
-| 服务 package `version` | MCP/loader 实现版本，不等于知识包版本 |
-| manifest/raw SHA-256 | 精确快照及传输字节身份，不等于知识审批 |
+| `schemaVersion` | Data protocol version; assess an upgrade when changing the parsing contract |
+| Each package's `version` | Content package version; maintainers explicitly update it for reviewed releases, and builds do not auto-increment it |
+| Service package `version` | MCP/loader implementation version, not the knowledge package version |
+| manifest/raw SHA-256 | Exact snapshot and transport-byte identity, not knowledge approval |
 
-建议的发布约定：兼容的小修使用 patch，新增兼容条目使用 minor，不兼容语义/ID 契约
-修改评估 major。当前代码仅校验三段数字格式，不强制 SemVer 的业务语义；必须由 PR 审核执行。
-同版本内容修改也会改变 pin，不能因此宣称兼容或免于版本审核。
+Suggested release convention: use patch for small compatible corrections, minor for new compatible entries, and
+consider major for incompatible semantic/ID contract changes. Current code checks only a three-part numeric
+format, not the business semantics of SemVer; PR review must enforce those. Changing content at the same version
+also changes its pin and does not establish compatibility or waive version review.
 
-升级 Common 后，所有直接依赖它的精确版本都要更新；如果 Fluent 自身也升级，
-SharePoint 对 Fluent 的依赖也要随之更新。审查依赖变动会影响哪些下游已审核结论。
+After upgrading Common, update every exact version dependency that directly references it; if Fluent itself also
+upgrades, update SharePoint's Fluent dependency too. Review which downstream approved conclusions are affected
+by dependency changes.
 
-### 9.2 构建流程
+### 9.2 Build Process
 
-在仓库根目录依次执行：
+Run the following in order from the repository root:
 
 ```powershell
 npm ci --prefix knowledge-server
@@ -390,249 +422,279 @@ npm test
 npm run check
 ```
 
-第一套命令构建/校验独立 KB；最后两条验证未破坏现有 marketplace。
-根目录 `npm run build` 不是 KB builder。外部工作流或 AT 不属于这些本地命令的验证范围。
+The first set of commands builds/validates the standalone KB; the last two check that the existing marketplace
+has not been broken. Root-level `npm run build` is not the KB builder. External workflows and AT are outside
+the verification scope of these local commands.
 
-独立 build 会：校验 authored 文件 → 计算依赖闭包 → 生成规范化 manifest →
-序列化 `{schemaVersion, manifest, files}` artifact → 生成引用。
-每个文件有内容 SHA-256；选择后的 manifest 有 `manifestSha256`；完整 artifact
-另有 raw SHA-256。全量 source manifest 与某个选中闭包的 manifest **不一定相同**。
+The standalone build validates authored files → computes dependency closures → generates a canonical manifest →
+serializes a `{schemaVersion, manifest, files}` artifact → generates references. Each file has a content SHA-256;
+the selected manifest has a `manifestSha256`; the full artifact has a separate raw SHA-256. The full source
+manifest and the manifest of a selected closure are **not necessarily identical**.
 
-生成变更包括源 manifest、服务 reference、新的内容寻址 JSON 和分发 index。
-不手写哈希、不覆盖老 artifact、不删除旧版本以“清理构建”。全局共享 README、
-schema 或治理文档也参与内容哈希，因此它们的修改可能改变所有选择的 pin。
+Generated changes include the source manifest, service reference, new content-addressed JSON, and distribution
+index. Do not handwrite hashes, overwrite old artifacts, or delete old versions to “clean the build.” Globally shared
+README, schema, and governance documents also contribute to content hashes, so changing them may change
+the pins of every selection.
 
-构建先验证所有保留历史，使用 no-replace 文件发布，再更新索引，最后更新消费引用；
-一次只跑一个 authoring build。完整当前 artifact 已写入而索引未写入时可以恢复；
-未知文件、缺失/损坏历史仍会明确阻断，不能据此承诺任何中断都可自动修复。
+The build first validates all retained history, publishes files with no-replace semantics, updates the index, and
+finally updates consumer references; run only one authoring build at a time. Recovery is possible when the complete
+current artifact has been written but the index has not; unknown files and missing/corrupt history still explicitly
+block progress. This is not a promise that every interruption can be repaired automatically.
 
-### 9.3 发布闸门
+### 9.3 Publication Gates
 
-1. 内容 reviewer 确认来源、版本、权限、适用性和私有资料边界。
-2. 本地校验及 CI 通过；审核新增内容、依赖变化、生成 pin 和旧 artifact 保留。
-3. 通过 PR 合并/发布，不能直接向 main 推送，也不合并与 KB 无关的清理。
-4. 实际访问 reference 指定的 HTTPS URL，核验 raw SHA-256 后再声称冷安装可用。
-   URL 指向 main 上的内容寻址文件；“本地构建成功”不代表 URL 已发布。
-5. 在明确授权的宿主验证 MCP 注册、工具发现、完整读取，以及 cold/warm cache。
-   离线未命中应失败，命中有效缓存可用；自动测试的模拟 transport 不代替真实宿主验收。
-6. 消费方在安全切换点更新服务/reference。旧引用继续读旧 artifact；若回退，
-   使用整套已审核的旧 reference/运行时，不编辑哈希或删除缓存来伪造兼容。
+1. A content reviewer confirms sources, versions, permissions, applicability, and private-material boundaries.
+2. Local validation and CI pass; review new content, dependency changes, generated pins, and retention of old artifacts.
+3. Merge/publish through a PR, not by pushing directly to main; do not bundle cleanup unrelated to the KB.
+4. Actually access the reference's HTTPS URL and verify its raw SHA-256 before claiming cold installation works.
+  The URL points to a content-addressed file on main; “local build succeeded” does not mean the URL is published.
+5. In an explicitly authorized host, verify MCP registration, tool discovery, full reads, and cold/warm caching.
+  An offline cache miss must fail; a valid cache hit can work. Simulated transports in automated tests do not replace real host acceptance.
+6. Consumers update the service/reference at a safe transition point. Old references continue reading old artifacts;
+  for rollback, use the complete reviewed old reference/runtime set. Do not edit hashes or delete caches to fabricate compatibility.
 
-## 10. 测试与协作验收
+## 10. Testing and Collaborative Acceptance
 
-下表是修改时应复用和补充测试的位置，不表示当前已穷尽所有字段组合。
-扩展支持矩阵、生命周期或包选择时，要新增对应运行时反例，并显式验证
-artifact 中的包集合与服务 reference 一致，不能只更新通过的测试数量。
+The table below identifies tests to reuse and extend when making changes; it does not claim exhaustive coverage
+of all field combinations. When extending support matrices, lifecycles, or package selection, add corresponding
+negative runtime cases and explicitly verify that the artifact's package set matches the service reference;
+do not merely update the number of passing tests.
 
-| 改动 | 应补/检查的测试 |
+| Change | Tests to add/check |
 |---|---|
-| 新条目/来源/关系 | [knowledge-base tests](tests/knowledge-base.test.mjs)：描述符、未声明文件、来源与审批、链接和闭包 |
-| 新包或选择 | [reference tests](tests/knowledge-reference.test.mjs)：选中/未选中内容、版本、显式根及 pin |
-| schema、完整性、路径或缓存 | [runtime tests](tests/knowledge-runtime.test.mjs)：损坏、越界、symlink、错误 URL、语义违规及并发 |
-| 工具输入/输出 | [MCP tests](tests/knowledge-mcp.test.mjs)：隔离安装、精确 ID、完整正文、来源与拒绝执行 |
-| 分发/发布 | [standalone tests](tests/standalone.test.mjs)：旧引用冷启动、产物保留、中断恢复和现有文件不变 |
-| 知识是否改善判断 | [效果评估 rubric](../accessibility-kb/evaluations/README.md)：单独授权的真实评估，不能用 unit test 代替 |
+| New entries/sources/relationships | [Knowledge-base tests](tests/knowledge-base.test.mjs): descriptors, undeclared files, sources and approval, links, and closures |
+| New packages or selections | [Reference tests](tests/knowledge-reference.test.mjs): selected/unselected content, versions, explicit roots, and pins |
+| Schema, integrity, paths, or caching | [Runtime tests](tests/knowledge-runtime.test.mjs): corruption, out-of-bounds paths, symlinks, incorrect URLs, semantic violations, and concurrency |
+| Tool inputs/outputs | [MCP tests](tests/knowledge-mcp.test.mjs): isolated installation, exact IDs, full bodies, sources, and refusal to execute |
+| Distribution/publication | [Standalone tests](tests/standalone.test.mjs): old-reference cold starts, artifact retention, interruption recovery, and unchanged existing files |
+| Whether knowledge improves judgment | [Effectiveness evaluation rubric](../accessibility-kb/evaluations/README.md): separately authorized real evaluations, not replaceable by unit tests |
 
-初始测试包含 32/20 条目的断言和固定示例 ID。增加内容时，更新合理的计数和预期集合，
-同时保留 Common 不泄漏产品知识、未选中包不可读、缺来源不产生 approved 等负面断言。
-评估至少包含一个真实风险样例、一个干净反例、一个缺上下文场景，以及一个版本/产品不适用场景。
-记录误报/漏报、修复层次、证据校准和回归风险；未运行要写未运行，不能补造结果。
+Initial tests include assertions for 32/20 entries and fixed example IDs. When adding content, update justified
+counts and expected sets while retaining negative assertions: Common must not leak product knowledge,
+unselected packages must not be readable, and missing sources must not yield approved entries. Evaluations must
+include at least one genuine-risk sample, one clean counterexample, one missing-context scenario, and one
+version/product-inapplicable scenario. Record false positives/negatives, fix layers, evidence calibration, and
+regression risks; if something was not run, say so rather than fabricating results.
 
-### 提交前清单
+### Pre-submission Checklist
 
-- [ ] 内容属于正确包；通用知识没有引入产品依赖，也没有重复另一包正文。
-- [ ] 每个文件、稳定 ID、sourceId 和 relation 已登记且有效。
-- [ ] 正文解释范围、责任、正反例和验证缺口；source URL 不被当作已审核证据。
-- [ ] owner/reviewer、版本和来源状态真实；draft 没有通过文字包装变成官方要求。
-- [ ] 新包的分发选择和服务引用已明确，不把“catalog 注册成功”当作“服务可读”。
-- [ ] schema 扩展同时覆盖 build/runtime，且未削弱拒绝无效输入的测试。
-- [ ] build/test/check 全部通过；审核生成变化且保留所有已提交历史产物。
-- [ ] 所需人工内容/效果审核已完成或明确标记待办；无私有运行数据入库。
-- [ ] 现有插件和 workflow 不在本次变更范围；发布/真实宿主检查不被本地测试冒充。
+- [ ] Content belongs to the correct package; common knowledge introduces no product dependency and does not duplicate another package's body.
+- [ ] Every file, stable ID, sourceId, and relation is registered and valid.
+- [ ] Bodies explain scope, responsibilities, positive/negative examples, and verification gaps; source URLs are not treated as reviewed evidence.
+- [ ] Owners/reviewers, versions, and source statuses are truthful; draft content has not been worded to appear as an official requirement.
+- [ ] Distribution selection and service references for new packages are explicit; “catalog registration succeeded” is not treated as “the service can read it.”
+- [ ] Schema extensions cover both build/runtime without weakening tests that reject invalid input.
+- [ ] Build/test/check all pass; generated changes are reviewed and all committed historical artifacts are retained.
+- [ ] Required human content/effectiveness reviews are completed or explicitly marked pending; no private run data is committed.
+- [ ] Existing plugins and workflows are outside this change's scope; local tests do not masquerade as publication or real-host checks.
 
-建议一个 PR 聚焦一个领域主题或一组相关契约，让领域 owner 评审内容，
-让服务维护者评审 schema、包选择或运行时协议变化。首次贡献从完善已有 draft 条目开始，
-比同时改包结构、检索协议和知识正文更容易验证。
+Prefer one PR focused on a domain topic or a group of related contracts, with domain owners reviewing content
+and service maintainers reviewing schema, package selection, or runtime protocol changes. For a first contribution,
+improving an existing draft entry is easier to validate than simultaneously changing package structure, retrieval
+protocol, and knowledge bodies.
 
-## 11. 待实现：一个 KB 入口包含 MAS 规则能力
+## 11. Planned: One KB Endpoint with MAS Rule Capabilities
 
-### 11.1 已确定的方向与尚待确认的接口
+### 11.1 Agreed Direction and Interfaces Still to Confirm
 
-**确定的目标：**调用者只连接 KB MCP，既能查本地知识，又能通过 KB 内部 MAS
-适配器查询权威规则。MAS 是适用审查范围内必须采用的规则依据；本地方法、案例、
-WCAG 猜测映射和组件支持声明不能替代缺失的 MAS 条款。
+**Agreed goal:** callers connect only to KB MCP, using it both to query local knowledge and to query authoritative
+rules through the KB's internal MAS adapter. MAS is the required rule basis within applicable review scope;
+local methods, cases, guessed WCAG mappings, and component support statements cannot replace missing MAS clauses.
 
-| 项目 | 当前实现 | 目标实现 |
+| Area | Current implementation | Target implementation |
 |---|---|---|
-| 对外入口 | 一个本地知识 MCP | 同一个 KB MCP，追加明确的 MAS 只读接口 |
-| MAS 来源 | Common 包中的 pending 元数据 | 服务内置 MAS MCP client/adapter，来源 metadata 与真实返回分开管理 |
-| 连接配置 | 没有 MAS 配置解析 | 随服务提供非敏感模板；部署时指定可信连接，默认不启用 live 来源 |
-| 认证 | 本地快照不需要 MAS 身份 | KB 作为 MAS 客户端完成官方认证；运行环境安全供给凭据 |
-| 标准依据 | 本地 draft 使用指导 | 适用范围要求 MAS 规则 ID、实际版本及引用；缺失则依据不完整 |
-| 完成检查 | 没有 MAS 检查能力 | 可提供“标准依据完整性”检查，但不把它当作产品合规结论或 PR 闸门 |
+| External endpoint | One local knowledge MCP | The same KB MCP, with explicit additional read-only MAS interfaces |
+| MAS source | Pending metadata in the Common package | Built-in MAS MCP client/adapter; manage source metadata separately from actual responses |
+| Connection configuration | No MAS configuration parsing | Ship nonsensitive templates with the service; specify trusted connections at deployment, with no live source enabled by default |
+| Authentication | Local snapshots need no MAS identity | KB authenticates as a MAS client through the official mechanism; the runtime environment supplies credentials securely |
+| Standards basis | Local draft usage guidance | Applicable scope requires MAS rule IDs, actual versions, and citations; missing items mean an incomplete basis |
+| Completion checks | No MAS checking capability | May provide a “standards-basis completeness” check, but not a product compliance verdict or PR gate |
 
-**实现前必须与 MAS 服务 owner 确认：**服务身份/端点、支持的 transport、认证与
-授权 scopes、工具名及 input/output schema、规则唯一标识、版本/修订机制、分页和
-限流、错误语义、内容缓存/再分发权限。本文不编造 MAS 地址、工具签名或官方规则 ID。
-接口提案应以真实协议验证结果定稿，不把下文建议名直接当成已注册工具。
+**Before implementation, confirm with the MAS service owner:** service identity/endpoint, supported transports,
+authentication and authorization scopes, tool names and input/output schemas, unique rule identifiers,
+version/revision mechanisms, pagination and rate limits, error semantics, and content caching/redistribution
+permissions. This document does not invent MAS addresses, tool signatures, or official rule IDs. Finalize interface
+proposals against verified real protocol behavior; the suggested names below are not registered tools.
 
-**名称澄清：**本文“MAS MCP”指提供 MAS 规则的上游能力，不是已确认的服务产品名。
-当前 `sources.mas.note` 提及候选“CLEA MCP interface”；CLEA 是否为实际承载服务、
-是否覆盖本需求，仍需 owner 确认。不要默认 MAS 与 CLEA 是两个服务或互相等同。
-确认后在来源说明、部署配置、adapter 映射和验收记录中统一实际服务身份；
-规则体系标识 MAS 与提供它的服务身份应分别记录。
+**Naming clarification:** “MAS MCP” here means the upstream capability that supplies MAS rules, not a confirmed
+service product name. The current `sources.mas.note` mentions a candidate “CLEA MCP interface”; whether CLEA
+is the actual hosting service and covers this requirement still needs owner confirmation. Do not assume MAS and
+CLEA are either two separate services or equivalent names. Once confirmed, use the actual service identity
+consistently in source notes, deployment configuration, adapter mappings, and acceptance records; record the
+MAS rule-system identity separately from the identity of the service providing it.
 
-### 11.2 组件关系与请求路径
+### 11.2 Component Relationships and Request Path
 
 ```mermaid
 flowchart LR
-  Host[审查宿主: 只注册 KB MCP] --> Entry[统一 KB MCP 入口]
-  Entry --> Local[现有本地知识 loader]
-  Entry --> Rules[规则查询与依据完整性服务]
+  Host[Review host: registers only KB MCP] --> Entry[Unified KB MCP endpoint]
+  Entry --> Local[Existing local knowledge loader]
+  Entry --> Rules[Rule queries and basis completeness service]
   Rules --> Adapter[MAS MCP client / adapter]
-  Config[部署连接配置与安全凭据] --> Adapter
-  Adapter --> MAS[官方 MAS MCP]
-  MAS --> Bound[响应校验与规则版本绑定]
+  Config[Deployment connection configuration and secure credentials] --> Adapter
+  Adapter --> MAS[Official MAS MCP]
+  MAS --> Bound[Response validation and rule version binding]
   Bound --> Rules
-  Local --> Snapshot[本地 pin 与共享快照缓存]
-  Rules -. 只有许可明确时 .-> Private[独立受控 MAS 缓存]
+  Local --> Snapshot[Local pins and shared snapshot cache]
+  Rules -. only with explicit permission .-> Private[Separate controlled MAS cache]
 ```
 
-- **入口层**保留三个现有本地工具的语义，额外暴露带来源标识的 MAS 操作。
-  “一个入口”不是把两类内容塞进同一个无法区分来源的 search 返回。
-- **MAS adapter**负责 MCP 初始化、能力/schema 核对、只读工具白名单、会话生命周期、
-  分页、超时、取消、限流及官方错误归一化。优先使用兼容的官方 MCP SDK，
-  依真实 transport 和认证契约选型，不复制临时 shell 代理逻辑。
-- **规则服务**负责最小查询上下文、响应校验、版本绑定和依据完整性判断；
-  不能根据短摘要生成“官方条款”。不实现通用“任意上游工具调用”代理。
-- **本地 loader**仍只处理固定知识快照，不给它增加任意远程 URL 读取功能。
-  MAS 正文不写进本地 snapshot 的缓存或发布 artifact。
-- **调用者**读取完整相关规则、解释适用性并进行获授权的实际验证。
-  MAS 返回内容是来源数据，不是允许执行命令、上传仓库或覆盖系统指令的授权。
+- **Endpoint layer:** preserves the semantics of the three existing local tools and exposes additional MAS
+  operations with source identity. “One endpoint” does not mean mixing both content types into search results
+  whose sources cannot be distinguished.
+- **MAS adapter:** owns MCP initialization, capability/schema checks, a read-only tool allowlist, session lifecycle,
+  pagination, timeouts, cancellation, rate limiting, and normalization of official errors. Prefer a compatible official
+  MCP SDK selected against the actual transport and authentication contract; do not copy temporary shell-proxy logic.
+- **Rules service:** owns minimal query context, response validation, version binding, and basis completeness
+  assessment. It must not generate “official clauses” from short summaries or implement a generic proxy for arbitrary upstream tool calls.
+- **Local loader:** continues to handle only pinned knowledge snapshots; do not add arbitrary remote URL reads.
+  MAS bodies must not enter local snapshot caches or published artifacts.
+- **Caller:** reads the complete relevant rules, interprets applicability, and performs authorized real verification.
+  MAS responses are source data, not authorization to execute commands, upload repositories, or override system instructions.
 
-MAS 未配置时，服务仍能初始化并使用本地工具；MAS 查询返回明确的未配置错误。
-这既保持本地功能可用，也防止把本地 fallback 伪装为已取得 MAS 依据。
+When MAS is not configured, the service must still initialize and support local tools; MAS queries return an explicit
+not-configured error. This keeps local functionality available without disguising local fallback as an acquired MAS basis.
 
-### 11.3 同事实施时修改哪些文件
+### 11.3 Files for Colleagues to Change During Implementation
 
-以下新增路径是**建议布局，尚不存在，也不是当前可用接口**。实现 PR 可以调整名称，
-但应保持职责分离，并同步本设计。所有执行改动限于独立知识服务；不修改现有插件包。
+The new paths below are a **proposed layout: they do not yet exist and are not currently available interfaces**.
+An implementation PR may adjust names, but should retain separation of responsibilities and update this design.
+All executable changes stay within the standalone knowledge service; existing plugin packages are not modified.
 
-| 位置 | 后续实施内容 |
+| Location | Future implementation work |
 |---|---|
-| [权威与适用性](../accessibility-kb/packages/common/requirements/authority-and-applicability.md) | 明确 MAS 的强制适用范围、版本选择、条款引用、缺失与冲突处理；不能把所有任务无条件套入未知范围 |
-| [Common 描述符](../accessibility-kb/packages/common/package.json) | 更新 `sources.mas` 与新指南 entry/relations。`reviewed` 只在来源审核后设置，不代表部署连通或用户已获授权 |
-| 建议新增 Common 包内 `requirements/mas-rules.md` | 记录规则查询前提、引用格式、审查使用步骤及边界，并登记为 entry；不保存 token 或私有连接 |
-| [Find](../accessibility-kb/packages/common/procedures/find.md)、[设计审查](../accessibility-kb/packages/common/procedures/review-design.md) 等相关 procedure | 引用 MAS 使用要求；适用任务不能绕过缺失依据就声称标准审查完成 |
-| 建议新增 `knowledge-server/config/mas.example.json` | 非敏感配置模板：启用开关、可信 endpoint/transport、认证引用、明确的超时/分页/缓存策略；真实值需经 owner 确认 |
-| 建议新增 `knowledge-server/src/mas/config.mjs` | 加载并严格验证部署配置；拒绝未知/不安全设置，不从模型工具参数接收连接或凭据 |
-| 建议新增 `knowledge-server/src/mas/client.mjs` | 与 MAS MCP 通信的专用 client，能力握手、只读工具映射、身份及会话生命周期 |
-| 建议新增 `knowledge-server/src/mas/rules.mjs` | 归一化 rule/search 响应，版本绑定、适用上下文、来源错误与依据完整性检查 |
-| [MCP handler](src/runtime/knowledge-mcp.mjs) / [入口](cli.mjs) | 注入 MAS 服务，追加工具和错误边界；不替换原有工具名或静态行为 |
-| [package](package.json) / [lockfile](package-lock.json) | 若 MCP SDK/认证需要 runtime 依赖，显式声明、锁定并更新安装说明；不能继续宣称 MAS 运行时零依赖 |
-| 建议新增 `knowledge-server/tests/mas-config.test.mjs`、`mas-client.test.mjs`、`mas-rules.test.mjs` | 配置、协议、版本与错误的正反测试，合成输入不得冒充 live qualification |
-| [MCP tests](tests/knowledge-mcp.test.mjs) / [standalone tests](tests/standalone.test.mjs) | 一个宿主入口、本地工具兼容、最小安装和 MAS 不可用时的隔离行为 |
-| [贡献规范](../accessibility-kb/governance/contribution.md)、[评估 rubric](../accessibility-kb/evaluations/README.md)、[README](README.md) 与本文 | 审批/保密政策、误用反例、真实注册方法、运行时依赖和已验证能力 |
+| [Authority and applicability](../accessibility-kb/packages/common/requirements/authority-and-applicability.md) | Define the scope in which MAS is mandatory, version selection, clause citations, and missing/conflicting basis handling; do not unconditionally place every task within an unknown scope |
+| [Common descriptor](../accessibility-kb/packages/common/package.json) | Update `sources.mas` and new guidance entries/relations. Set `reviewed` only after source review; it does not mean a deployment is connected or a user is authorized |
+| Proposed Common addition `requirements/mas-rules.md` | Record rule-query prerequisites, citation format, review usage steps, and boundaries; register it as an entry, without tokens or private connections |
+| Relevant procedures such as [Find](../accessibility-kb/packages/common/procedures/find.md) and [design review](../accessibility-kb/packages/common/procedures/review-design.md) | Reference MAS usage requirements; applicable tasks cannot bypass missing basis and claim standards review is complete |
+| Proposed addition `knowledge-server/config/mas.example.json` | Nonsensitive configuration template: enable switch, trusted endpoint/transport, authentication references, and explicit timeout/pagination/cache policy; actual values require owner confirmation |
+| Proposed addition `knowledge-server/src/mas/config.mjs` | Load and strictly validate deployment configuration; reject unknown/unsafe settings and never accept connections or credentials from model tool arguments |
+| Proposed addition `knowledge-server/src/mas/client.mjs` | Dedicated MAS MCP client: capability handshake, read-only tool mapping, identity, and session lifecycle |
+| Proposed addition `knowledge-server/src/mas/rules.mjs` | Normalize rule/search responses; handle version binding, applicable context, source errors, and basis completeness checks |
+| [MCP handler](src/runtime/knowledge-mcp.mjs) / [entry point](cli.mjs) | Inject the MAS service and add tools/error boundaries; do not replace existing tool names or static behavior |
+| [Package](package.json) / [lockfile](package-lock.json) | If the MCP SDK/authentication requires runtime dependencies, declare and lock them explicitly and update installation instructions; do not continue claiming a zero-dependency MAS runtime |
+| Proposed additions `knowledge-server/tests/mas-config.test.mjs`, `mas-client.test.mjs`, `mas-rules.test.mjs` | Positive/negative tests for configuration, protocol, versions, and errors; synthetic inputs must not masquerade as live qualification |
+| [MCP tests](tests/knowledge-mcp.test.mjs) / [standalone tests](tests/standalone.test.mjs) | One host endpoint, local-tool compatibility, minimal installation, and isolation when MAS is unavailable |
+| [Contribution guidelines](../accessibility-kb/governance/contribution.md), [evaluation rubric](../accessibility-kb/evaluations/README.md), [README](README.md), and this document | Approval/confidentiality policy, misuse counterexamples, actual registration methods, runtime dependencies, and verified capabilities |
 
-连接设置不写入 entry/source 描述符或 [生成 reference](references/knowledge.json)。
-`sources.mas.locator` 是规则来源定位信息，不是通用 transport/auth 配置字段。
-如果规则响应需要新的结构化协议，另定义 schema 和对应校验；不要给内容 schema
-临时塞进 endpoint、token 等未知字段。内容变化仍按第 9 节生成新快照并保留旧 pin。
+Connection settings do not belong in entry/source descriptors or the [generated reference](references/knowledge.json).
+`sources.mas.locator` locates the rule source; it is not a general transport/auth configuration field. If rule responses
+require a new structured protocol, define a separate schema and its validation; do not insert ad hoc unknown fields
+such as endpoints or tokens into the content schema. Content changes still generate new snapshots and retain
+old pins as described in section 9.
 
-### 11.4 配置与认证：能力随包，身份不随包
+### 11.4 Configuration and Authentication: Ship Capabilities, Not Identities
 
-包内提供适配器、schema、配置模板和经允许分发的默认信息；**部署实值保存在仓库外**。
-建议未来通过一个明确的环境变量（如 `A11Y_ASSIST_MAS_CONFIG`，名称待实现定稿）
-指向绝对配置路径。该变量当前不被识别；不要现在设置它并期望 MAS 可用。
+The package provides the adapter, schemas, configuration templates, and default information permitted for
+distribution; **actual deployment values remain outside the repository**. A future explicit environment variable
+(for example, `A11Y_ASSIST_MAS_CONFIG`, with its name to be finalized during implementation) could point to an
+absolute configuration path. This variable is not recognized today; setting it now will not make MAS available.
 
-配置契约至少规定：显式 enabled、transport、可信目标、认证方式引用、请求 deadline、
-重试/分页上限、允许调用的只读能力与缓存政策。错误配置要在 MAS 使用前失败，
-不自动猜地址、跳过认证或改用另一个来源。配置是否整体 fail startup 需按错误类型
-定稿；未配置/禁用则不得阻断现有本地知识工具。
+At minimum, the configuration contract specifies an explicit enabled state, transport, trusted target, authentication
+method reference, request deadline, retry/pagination limits, allowed read-only capabilities, and caching policy.
+Invalid configuration must fail before MAS use, without guessing an address, skipping authentication, or switching
+sources. Whether a configuration error fails the entire startup remains to be finalized by error type; unconfigured
+or disabled MAS must not block the existing local knowledge tools.
 
-- Endpoint 由管理员/用户可信配置，不允许模型通过查询参数指定 URL 或任意执行命令。
-  若官方仅提供 stdio，则仅允许可信配置的可执行文件和固定参数；不能执行来自规则正文的命令。
-- 使用官方支持的认证方式，明确 audience/scopes；不能盲目转发宿主 token 给上游。
-  需要用户登录时通过宿主/官方授权流程完成，不能要求把 secret 输入模型对话。
-- 凭据由安全存储或运行环境提供，禁止写入模板、日志、artifact、错误正文或测试 fixture。
-  日志只记录允许的诊断元数据；上游错误消息必须清理后再返回。
-- 一次 MAS query 会向该服务发送必要领域字段，例如规则 ID、版本、产品/平台上下文或
-  最小查询文本。默认不发送源码、工作项、账户/机器清单或整段对话；自由文本必须有长度
-  和数据边界，并明确告知调用者它会发给上游。
-- 只启用官方只读查询能力，不暴露更新规则、管理租户、文件读取、provider 执行等功能。
+- Endpoints come from trusted administrator/user configuration; the model cannot specify URLs or arbitrary
+  execution commands through query arguments. If the official service supports only stdio, permit only trusted
+  configured executables and fixed arguments; never execute commands from rule bodies.
+- Use officially supported authentication with explicit audience/scopes; do not blindly forward host tokens upstream.
+  When user login is required, use the host/official authorization flow; never ask for secrets in model conversation.
+- Credentials come from secure storage or the runtime environment, never templates, logs, artifacts, error bodies,
+  or test fixtures. Logs contain only permitted diagnostic metadata; sanitize upstream errors before returning them.
+- A MAS query sends necessary domain fields to that service, such as rule ID, version, product/platform context,
+  or minimal query text. By default, do not send source code, work items, account/machine inventories, or whole
+  conversations. Free text needs length and data boundaries, and callers must be clearly told it will be sent upstream.
+- Enable only official read-only query capabilities; do not expose rule updates, tenant administration, file reads,
+  provider execution, or similar functionality.
 
-### 11.5 对外能力与规则返回（提案，尚未实现）
+### 11.5 External Capabilities and Rule Responses (Proposed, Not Implemented)
 
-建议在同一个 KB MCP 中追加以下能力，最终命名/参数需按真实 MAS 协议评审：
+The following additions are proposed within the same KB MCP. Final names/parameters require review against
+the actual MAS protocol:
 
-| 建议 KB 工具 | 目的 | 关键限制 |
+| Proposed KB tool | Purpose | Key restrictions |
 |---|---|---|
-| `a11y_kb_mas_status` | 返回未配置、禁用、待认证、不可用或已确认可查询等状态 | 区分“已配置”和“实际探测成功”；成功需注明验证范围/时间，不能只看配置就报 ready |
-| `a11y_kb_mas_search` | 按规则/产品上下文查候选 MAS 条款 | 返回候选及分页/完整性信息，不把 top-N 结果当成所有适用要求 |
-| `a11y_kb_mas_read` | 按精确规则 ID 与要求的版本读取完整依据 | 无该版本或返回摘要/截断时明确失败或不完整，不自动换成 latest |
-| `a11y_kb_mas_check_basis` | 检查调用方提交的依据集合是否具有所需来源/版本/上下文 | 仅检查依据完整性；不凭调用方自填 ID 宣称已读规则，不签发产品 PASS |
+| `a11y_kb_mas_status` | Report states such as unconfigured, disabled, awaiting authentication, unavailable, or confirmed queryable | Distinguish configured from actually probed successfully; success includes verification scope/time, not readiness inferred from configuration alone |
+| `a11y_kb_mas_search` | Find candidate MAS clauses by rule/product context | Return candidates and pagination/completeness information; top-N results are not all applicable requirements |
+| `a11y_kb_mas_read` | Read the complete basis by exact rule ID and requested version | Explicitly fail or report incompleteness if that version is unavailable or the response is summarized/truncated; do not automatically substitute latest |
+| `a11y_kb_mas_check_basis` | Check whether the caller's submitted basis set has the required sources/versions/context | Checks basis completeness only; caller-supplied IDs do not prove rules were read, and no product PASS is issued |
 
-建议统一响应 envelope 标明 `source: mas`、来自已配置服务的来源身份、规则 ID、
-实际标准版本/修订、官方 locator、检索时间、正文/摘要属性、内容完整性和适用上下文。
-哈希可以标识收到的字节，但不单独证明官方真实性或完整规则覆盖。
-官方未返回的信息标为未知，不由 adapter 推测；必需字段缺失时依据检查不得通过。
+A proposed common response envelope identifies `source: mas`, source identity from the configured service, rule ID,
+actual standard version/revision, official locator, retrieval time, full-body/summary classification, content completeness,
+and applicable context. A hash can identify received bytes but does not by itself prove official authenticity or
+complete rule coverage. Mark information not returned by the official service as unknown, rather than inferring it
+in the adapter; missing required fields must prevent the basis check from passing.
 
-一次审查固定其规则版本及已取得的依据引用。上游只有浮动 latest 或无法提供可追溯修订时，
-返回版本依据不足，不能静默混合多个修订。引用的保存/缓存权限需先确认；若不允许保存正文，
-只保存许可范围内的 ID、版本和引用并在使用时重新校验，不能把重查结果当作原结果。
-身份相关的查询结果不能跨用户/租户复用。
+Pin the rule version and acquired basis references for a review. If the upstream offers only a floating latest or cannot
+provide a traceable revision, report insufficient version basis rather than silently mixing revisions. Confirm reference
+retention/caching permissions first; if storing bodies is not permitted, retain only permitted IDs, versions, and
+references and revalidate at use time. Do not treat a new query result as the original result. Identity-dependent
+query results must not be reused across users/tenants.
 
-### 11.6 “必须遵循 MAS”的政策与可执行边界
+### 11.6 “Must Follow MAS”: Policy and Enforcement Boundaries
 
-**政策在知识层，依据检查在服务层，审查执行和发布门禁仍由消费方负责。**
-本设计不会悄悄改动现有 workflow gate。
+**Policy belongs in the knowledge layer, basis checks in the service layer; consumers still own review execution
+and publication gates.** This design does not silently change existing workflow gates.
 
-对已确认适用 MAS 的任务：调用者先取得范围/标准版本，查阅候选并读取完整相关规则，
-记录规则 ID、版本、适用性及例外依据，再形成审查结论。无法确认适用范围时请求上下文，
-不能把“未知”当“不适用”。例外必须有正式授权依据，不因组件不支持就自动豁免。
+For tasks confirmed to be subject to MAS, callers first obtain scope/standard version, inspect candidates and read
+the complete relevant rules, record rule IDs, versions, applicability, and grounds for exceptions, and only then form
+review conclusions. Request context when scope cannot be confirmed; “unknown” is not “inapplicable.” Exceptions
+need formally authorized grounds; lack of component support does not automatically grant an exemption.
 
-依据检查应返回明确的 `complete` / `incomplete` 及缺口原因（最终 enum 待协议评审）。
-`complete` 只表示**指定范围和提交依据集合**满足检查，不证明搜索覆盖所有 MAS 规则，
-不证明产品实现符合规则，也不允许自动关闭 Bug/发布 PR。若要强制禁止下游结束审查，
-消费方必须显式调用并执行该检查；仅新增一个工具无法保证调用者必定使用它。
+Basis checks should return explicit `complete` / `incomplete` results and gap reasons (final enum pending protocol
+review). `complete` means only that the **specified scope and submitted basis set** satisfy the check. It does not
+prove that search covered all MAS rules or that a product implementation complies, and does not authorize automatic
+Bug closure or PR publication. To enforce a block on downstream review completion, the consumer must explicitly
+invoke and enforce the check; merely adding a tool cannot guarantee callers will use it.
 
-| 情况 | 必须表现的结果 |
+| Situation | Required outcome |
 |---|---|
-| 未配置/禁用/认证不足 | MAS 不可用或需认证；本地知识可用但不能代替 MAS |
-| 超时、限流、上游错误 | 有界失败/重试，返回可区分错误；不能返回成功形状的空规则集 |
-| 搜索无结果 | 明确仅为该查询无匹配，不证明任务无适用规则 |
-| 分页未取完、结果截断 | 标记不完整，不能声称所有标准已覆盖 |
-| 指定规则或版本不存在 | 精确失败，不用近似规则、WCAG 映射或 latest 顶替 |
-| 来源冲突/修订变化/范围未知 | 保留冲突和缺口，请求确认；不自动裁定或混合依据 |
-| 依据完整但未执行真实验证 | 只返回标准依据就绪；运行行为仍未验证，不输出合规 PASS |
+| Unconfigured/disabled/insufficient authentication | MAS is unavailable or authentication is required; local knowledge remains usable but cannot replace MAS |
+| Timeout, rate limit, upstream error | Bounded failure/retries with distinguishable errors; never a success-shaped empty rule set |
+| No search results | Explicitly means no match for this query only, not proof that the task has no applicable rules |
+| Unfinished pagination or truncated results | Mark incomplete; do not claim all standards are covered |
+| Requested rule or version does not exist | Exact failure; no substitution with approximate rules, WCAG mappings, or latest |
+| Source conflict/revision change/unknown scope | Preserve conflicts and gaps and request confirmation; do not automatically adjudicate or mix the basis |
+| Complete basis but no real verification performed | Report only standards-basis readiness; runtime behavior remains unverified, with no compliance PASS |
 
-### 11.7 MAS 缓存与静态发布隔离
+### 11.7 Isolating MAS Caching from Static Publication
 
-首版建议**禁用持久 MAS 正文缓存**，只在明确授权的请求/会话范围处理数据。
-只有得到服务 owner 对存储、有效期、撤销、用户隔离及再分发的明确许可后，才实现缓存。
-缓存 key 必须考虑服务身份、授权上下文、规则 ID 和版本；内容和可访问性都须受控。
+For the first version, **disable persistent MAS body caching** and process data only within explicitly authorized
+request/session scope. Implement caching only after the service owner explicitly permits storage, validity periods,
+revocation, user isolation, and redistribution. Cache keys must account for service identity, authorization context,
+rule ID, and version; both content and access must be controlled.
 
-缓存放在仓库外独立受控位置，不写入本地公共快照缓存、Git、KB manifest 或
-knowledge-distribution。offline、过期、权限变化和无法校验修订时不能默默使用旧条款
-冒充当前 MAS。若官方允许离线固定版本，再单独定义有效期与调用方明确选择的策略。
-静态快照 pin 与实时 MAS 依据是两套来源身份，不能把实时返回直接写入旧 pin 对应文件。
+Place caches in a separate controlled location outside the repository, not in the local public snapshot cache, Git,
+KB manifest, or knowledge-distribution. Offline operation, expiry, permission changes, and unverifiable revisions
+must not silently reuse old clauses as current MAS. If the official service allows offline pinned versions, separately
+define validity periods and a policy explicitly selected by the caller. Static snapshot pins and live MAS basis use
+separate source identities; never write live responses directly into files associated with an old pin.
 
-### 11.8 分阶段交付与验收
+### 11.8 Phased Delivery and Acceptance
 
-1. **协议确认**：与 owner 完成 endpoint/transport/auth/schema/版本/权限清单，
-   获取获授权的接口示例。没有真实契约就保持实现 blocked，不用 mock 替代正式就绪状态。
-2. **适配器实现**：实现配置、安全认证、握手、白名单工具与响应验证；本地工具保持兼容。
-   单独审核新增 SDK/runtime 依赖及最小安装包，更新零依赖/安装说明。
-3. **规则语义**：实现版本绑定、完整规则读取、分页和标准依据检查；更新 Common 政策和指南。
-4. **自动测试**：用明确标记的合成 MAS server 覆盖成功、未知工具/schema、认证/超时/限流、
-   不完整分页、版本漂移、缺字段、错误脱敏、任意 URL/工具拒绝、跨身份缓存隔离。
-   在返回正文含指令诱导时，确保不执行命令、不转发 secret、不扩大授权。
-5. **单入口集成**：一个隔离宿主只注册 KB 即能使用 MAS 工具；未配置/离线时本地三工具
-   仍可用。确认 MAS 工具不是由宿主额外注册的第二个入口偷偷完成。
-6. **真实 qualification**：在明确授权环境，用真实 MAS 服务验证认证、规则原文/版本、
-   引用及失败模式；记录可审核结果。再做“缺 MAS 不虚报完成、错误版本不套用、
-   完整依据不等于产品合规”的正负评估。
+1. **Protocol confirmation:** complete the endpoint/transport/auth/schema/version/permission checklist with the
+   owner and obtain authorized interface examples. Keep implementation blocked without a real contract;
+   mocks cannot substitute for official readiness.
+2. **Adapter implementation:** implement configuration, secure authentication, handshake, allowlisted tools, and
+   response validation while maintaining local-tool compatibility. Separately review new SDK/runtime dependencies
+   and the minimal installation package; update zero-dependency claims and installation instructions.
+3. **Rule semantics:** implement version binding, complete rule reads, pagination, and standards-basis checks;
+   update Common policy and guidance.
+4. **Automated tests:** use a clearly labeled synthetic MAS server to cover success, unknown tools/schemas,
+   authentication/timeouts/rate limits, incomplete pagination, version drift, missing fields, error sanitization,
+   rejection of arbitrary URLs/tools, and cross-identity cache isolation. When returned bodies contain instruction
+   injection, verify that no commands execute, no secrets are forwarded, and authorization does not expand.
+5. **Single-endpoint integration:** an isolated host registers only KB and can use MAS tools; all three local tools
+   remain usable when MAS is unconfigured/offline. Confirm that MAS tools are not actually supplied through a
+   second endpoint registered separately by the host.
+6. **Real qualification:** in an explicitly authorized environment, use the real MAS service to verify authentication,
+   original rule text/versions, citations, and failure modes; record reviewable results. Then run positive/negative
+   evaluations demonstrating “missing MAS does not yield false completion,” “incorrect versions are not applied,”
+   and “a complete basis does not equal product compliance.”
 
-完成上述验收后，才把 README 和本节对应能力从“待实现”改成已支持。
-本次设计更新不修改 `sources.mas` 的 pending 状态、不注册建议工具、不生成 MAS 配置，
-不改变快照 pin，也不表示官方服务已经连接或标准已经审核通过。
+Only after this acceptance is complete should the corresponding capabilities in the README and this section
+change from “planned” to supported. This design update does not change the pending status of `sources.mas`,
+register proposed tools, generate MAS configuration, or change snapshot pins. It does not imply that the official
+service is connected or that standards have been reviewed and approved.

@@ -8,8 +8,13 @@ unchanged. A host administrator may register this service alongside them; it is
 not discovered automatically by installing a plugin.
 
 For contributors and maintainers, see the
-[technical design and extension guide (简体中文)](TECH-DESIGN.md): architecture,
+[technical design and extension guide](TECH-DESIGN.md) / [简体中文](TECH-DESIGN.zh-CN.md): architecture,
 content placement, entry/package examples, source review, schemas, tests and releases.
+
+The [AgentOW migration audit](AGENTOW-MIGRATION-AUDIT.md) /
+[迁移审查（简体中文）](AGENTOW-MIGRATION-AUDIT.zh-CN.md) maps the pinned upstream
+references to current entries and the remaining backlog. Historical preservation
+is verified; the new KB does **not** yet preserve all concrete accessibility contracts.
 
 **Planned, not implemented:** section 11 of that design specifies one KB MCP
 entrypoint for both local knowledge and authoritative MAS rules, with a MAS MCP

@@ -2,181 +2,100 @@
 
 English | [简体中文](TECH-DESIGN.zh-CN.md)
 
-This document is for content contributors, component/product experts, KB reviewers, and service maintainers.
-It describes schema v1, authored content packages 0.1.1 and standalone service 0.1.0,
-without presenting planned capabilities as delivered features. For installation and host registration, see the
-[service README](README.md); for content review policy, see the
-[contribution guidelines](../accessibility-kb/governance/contribution.md).
-
-**Target architecture addendum: one KB endpoint provides both local knowledge and authoritative MAS rules.**
-Sections 1–10 describe the implemented local snapshot service; section 11 defines MAS integration for colleagues
-to implement later. The MAS addendum is design-only: MAS connections, tools, configuration parsing and runtime
-gates are not implemented.
+This design serves content contributors, domain reviewers, and service maintainers. Sections 1–10 describe
+the implemented local snapshot service; section 11 defines planned MAS integration and extension requirements.
+MAS connections, tools, configuration parsing, and runtime gates are **not implemented**.
+See the [service README](README.md) for installation/host registration, [contribution guidelines](../accessibility-kb/governance/contribution.md)
+for review policy, and [implementation plan](TASKS.md) for delivery tasks. Version authority is in section 9.
 
 ## 1. Goals and Boundaries
 
-The KB is the single repository for new accessibility knowledge contributions. Common owns cross-product
-knowledge, Fluent owns framework contracts, and SharePoint owns product constraints; their content can be
-cited, reviewed, and distributed by dependency closure. The goal is not to put all material in one long document,
-but to enable collaborators to answer:
+The KB is the single maintained repository for new accessibility knowledge: citable, reviewable entries distributed
+by dependency closure. It identifies the applicable layer/version, authority and context gaps, verification needs,
+and the packages, references, and evaluations affected by a change.
 
-- Which layer, version, and knowledge entry should be read for the current task?
-- Does a conclusion come from a specification, component contract, product support statement, or unreviewed methodological advice?
-- What context or sources are missing, and which verification still requires a real environment?
-- When one knowledge entry changes, which packages, references, and evaluations need to be updated together?
+| Scope | Contract |
+|---|---|
+| Current service | Standalone KB + read-only stdio MCP; no existing plugin registration or rewrite. Existing knowledge, skills, configuration, run logs, browsers, and workflows remain unchanged. |
+| Execution ownership | Callers such as Bug Bash review source, perform separately authorized execution, conclude, and report. KB does not read A11y workflow configuration, own providers, fix, test, or operate browsers/AT; a `procedure` guides reasoning, not execution. |
+| Consumer migration target | After readiness and consumer acceptance, all knowledge consumers use the host's unified Knowledge MCP; retire `a11y-knowledge`, `a11y-knowledge-odsp`, and duplicate embedded knowledge. Current installations are not migrated. |
+| MAS target | One host-registered KB endpoint with an internal read-only MAS adapter, not an Execution MCP or fix/publish provider; design and secure deployment boundaries are in section 11. |
+| Not provided | Automatic official-source synchronization, crawling, semantic/vector retrieval, task-based package selection, content approval, plugin integration, or quantified agent-effectiveness guarantees. |
 
-**Current boundary:** this is a standalone KB + read-only stdio MCP. It does not register or rewrite any existing
-plugin. Existing plugins retain their original knowledge, skills, configuration, run logs, browsers, and workflows.
-This service does not read A11y workflow configuration, own execution providers, or perform fixes, tests, browser
-operations, or assistive technology (AT) operations. A `procedure` guides reasoning and planning; it is not an
-automatically executable workflow.
-
-**Ultimate replacement target:** after service readiness and consumer acceptance, all plugins needing accessibility
-knowledge should use the host's unified Knowledge MCP, retiring `a11y-knowledge`, `a11y-knowledge-odsp` and
-duplicate embedded knowledge. This is a future migration, not a change to current installations. Callers such as
-Bug Bash still review source, perform separately authorized execution, make conclusions and report results.
-The service provides knowledge discovery and reading, not an Execution MCP or MAS integration.
-
-**Not currently provided:** automatic synchronization of official sources, web crawling, semantic/vector retrieval,
-automatic task-based package selection, automatic content approval, automatic plugin integration, or quantified
-guarantees of agent effectiveness. The current 35 entries (Common 20, Fluent 4, SharePoint 11) include concrete
-accessibility rules, API ownership, exceptions and positive/negative examples. They remain draft: source
-provenance is not official approval or current installed-version qualification.
-
-**Future goal:** ship the MAS MCP client/adapter with the standalone KB service so that hosts register only one
-KB MCP, rather than each host orchestrating KB and MAS separately. The KB service manages MAS connections
-internally; the runtime environment still supplies credentials securely. This is read-only access to an authoritative
-source, not a fix/publish provider, and does not change existing plugin workflows. It is not implemented today:
-registering `sources.mas` must not be treated as having connected to MAS.
+The current 35 entries (Common 20, Fluent 4, SharePoint 11) contain rules, API responsibilities, exceptions, and
+positive/negative examples, all still draft. Provenance is not approval or installed-version qualification (section 4.2).
 
 ## 2. Overall Structure and Data Flow
 
 ```mermaid
 flowchart LR
-  Expert[Contributors and domain reviewers] --> Author[accessibility-kb authored files]
+  Author[Contributors / reviewers: authored KB]
   Author --> Validate[loadKnowledgeBase: schema / links / sources / dependency checks]
   Validate --> Export[exportKnowledgeBase: selected dependency closure]
-  Export --> Manifest[Source manifest]
-  Export --> Artifact[Immutable distribution artifacts]
-  Artifact --> Index[Retained publication index]
-  Export --> Ref[Server pinned reference]
-  Ref --> Loader[Runtime snapshot loader]
-  Local[Explicit root or validated checkout] --> Loader
-  Cache[Shared per-user cache] --> Loader
-  Artifact --> HTTPS[Reviewed publication on main]
-  HTTPS --> Loader
-  Loader --> MCP[List / search / read]
-  MCP --> Host[Explicitly configured host]
+  Export --> Release[Manifest / artifacts / retained index / service pin: section 9]
+  Release --> Loader[Local root / checkout / cache / fixed HTTPS: section 8]
+  Loader --> Host[Read-only MCP: explicitly configured host]
   Host -. separate authorization .-> Workflow[Existing execution workflows]
 ```
 
-Do not confuse these three distinct structures:
-
-1. **Package dependency graph:** determines which packages are exported; versions must match exactly and the graph must be acyclic.
-2. **Entry relationship graph:** `relations` points to knowledge IDs to understand together; it does not automatically read recursively or execute anything.
-3. **Active source records:** `sourceIds` points only to active source metadata within the same package; the service does not fetch source URLs.
-
-Active catalogs retain the existing official-source records and pending connection/review targets;
-registration is not approval. Many draft entries have `sourceIds: []`, meaning no active source is cited.
-The KB packages own current content, source bindings and review status; historical attribution
-does not provide a supporting source or require a separate source-to-entry map.
+The acyclic **package graph** selects exact-version exports; **entry relations** and **active sources** bind reading
+associations and evidence metadata, respectively (section 4).
 
 ### 2.1 Locations and Maintenance Responsibilities
 
 | Location | Purpose | Who edits it / whether generated |
 |---|---|---|
 | [KB catalog](../accessibility-kb/catalog.json) | Register all content packages and their descriptor locations | Update when adding a package |
-| [Common descriptor](../accessibility-kb/packages/common/package.json) | Versions, sources, and entry inventory for common knowledge | Common content contributors |
-| [Fluent descriptor](../accessibility-kb/packages/fluent/package.json) | Fluent version contracts, dependencies, and entries | Framework experts |
-| [SharePoint descriptor](../accessibility-kb/packages/sharepoint/package.json) | SPDS, utilities, host, and support constraints | Product experts |
+| [Common](../accessibility-kb/packages/common/package.json), [Fluent](../accessibility-kb/packages/fluent/package.json), [SharePoint](../accessibility-kb/packages/sharepoint/package.json) descriptors | Versions, dependencies, sources, and entry inventories | Respective content/domain owners; placement in section 3 |
 | [Package schema](../accessibility-kb/schemas/package.schema.json) / [support matrix schema](../accessibility-kb/schemas/support-matrix.schema.json) | Authoring data shape | Protocol maintainers; not an ordinary content change |
-| [Contribution guidelines](../accessibility-kb/governance/contribution.md) / [effectiveness evaluation rubric](../accessibility-kb/evaluations/README.md) | Review rules and criteria for evaluating knowledge effectiveness | Content governance and evaluation owners |
-| [KB source manifest](../accessibility-kb/manifest.json) | Content hashes for the entire authored KB | Build-generated; do not edit manually |
+| Contribution guidelines / evaluation rubric (intro and section 10) | Review policy / knowledge-effectiveness criteria | Governance / evaluation owners |
 | [Content validation/export](tools/knowledge-base.mjs) | Ajv schema, file inventory, relationship, source, and closure validation | Build maintainers |
 | [Reference tools](tools/knowledge-reference.mjs) | Create pins; resolve local references for maintainers | Build maintainers; not distributed with the minimal runtime |
-| [Standalone builder](tools/build.mjs) | Select distribution packages, generate artifacts, and retain history | Release maintainers |
-| [Service reference](references/knowledge.json) | Currently selected versions, manifest pin, URL, and raw pin for the service | Build-generated; do not edit manually |
-| [Distribution index](../knowledge-distribution/index.json) | Manifest pin → raw SHA-256 for all retained artifacts | Build-generated; retain history |
+| [Standalone builder](tools/build.mjs) | Generate [source manifest](../accessibility-kb/manifest.json), [service reference](references/knowledge.json), artifacts, and [retained index](../knowledge-distribution/index.json) | Release maintainers; generated outputs and publication rules in section 9 |
 | [Runtime loader](src/runtime/knowledge.mjs) | Location resolution, downloading, caching, semantic and integrity validation | Runtime maintainers |
 | [MCP handler](src/runtime/knowledge-mcp.mjs) / [stdio entry point](cli.mjs) | Three read-only tools and transport | Runtime maintainers |
-| [Standalone CI](../.github/workflows/knowledge.yml) | Validate the KB separately from the existing marketplace | Service maintainers |
-| This document | Design, extension steps, and responsibility boundaries | Maintainers; not included in knowledge snapshots |
+| [Standalone CI](../.github/workflows/knowledge.yml) / this design | Separate KB validation / extension contract | Service maintainers; design stays outside snapshots |
 
-**Do not mix standalone KB content with existing plugin knowledge.** Content for this design belongs in the
-standalone [accessibility-kb](../accessibility-kb/README.md), without changing
-[existing plugin knowledge](../src/knowledge/README.md) or generated plugin copies.
-The standalone builder does not invoke the [marketplace builder](../tools/build.mjs).
+Author content in [accessibility-kb](../accessibility-kb/README.md), not [existing plugin knowledge](../src/knowledge/README.md)
+or generated plugin copies. The standalone builder does not invoke the [marketplace builder](../tools/build.mjs).
 
 ## 3. Knowledge Layers: What to Add and Where
 
-```mermaid
-flowchart TD
-  SharePoint[sharepoint: SPDS / host / utilities / support] --> Fluent[fluent: version-specific contracts]
-  SharePoint --> Common[common: cross-product reasoning and requirements]
-  Fluent --> Common
-```
-
-Arrows mean “depends on.” `common` must not depend on any product package; do not pull an entire product
-package back into Common just to cite a product case. Fluent should not contain SharePoint-specific business
-assumptions. Dependencies use exact versions such as `0.1.1`; `^0.1.1`, `latest`, and version ranges are unsupported.
-
-There are two independent organization axes: **scope** (`common` / `fluent` / `sharepoint`) and
-**knowledge type** (standards / patterns / cases / fixes / examples). Types are not additional packages or
-directories required by the protocol. WCAG and WAI-ARIA normative requirements belong in Common;
-Fluent and SharePoint describe scoped implementation and product responsibilities. APG is informative guidance,
-distinct from those normative requirements, even when an entry cites both.
-
-The discovery API uses singular categories `standard`, `pattern`, `case`, `fix`, `example`, not new `kind` values.
-`kind` remains the entry's primary authoring role; optional curated `discoveryTags` supply only
-`pattern` / `fix` / `example`. A `case` category derives from `kind: case`; a `standard` category derives from
-a directly cited source whose authority is `normative-standard`. Neither a source citation nor a category asserts
-complete coverage of a norm or criterion, approval, compliance, or a proven real historical fix.
+Dependency direction: SharePoint → Fluent + Common; Fluent → Common. Common never depends on products,
+even for a product case; Fluent excludes SharePoint business assumptions. Exact versions/selections are in section 9.
+**Scope** (`common` / `fluent` / `sharepoint`) and **knowledge type** (standards / patterns / cases / fixes / examples)
+are independent axes, not extra packages or required directories. WCAG/WAI-ARIA normative requirements belong
+in Common; APG is distinct informative guidance. Scoped implementation/product responsibilities belong in Fluent/SharePoint.
+Authoring `kind` and discovery categories are separate contracts (sections 4.1 and 8.1).
 
 ### 3.1 Content Placement Quick Reference
 
-The following directories are content organization conventions, not a template that must be created in full at once;
-individual files must be declared in the descriptor.
+Directories are conventions, not a required full template; register individual files under section 4 and use section 5's body outline.
 
-| Content to add | Location / existing starting point | `kind` | What to make explicit |
-|---|---|---|---|
-| General semantics, keyboard, focus, forms, dynamic content, and visual principles | Common `topics/`, such as [keyboard-focus](../accessibility-kb/packages/common/topics/keyboard-focus.md) | `topic` | Scope, boundaries, and common misuse |
-| Applicability and differences in authority of sources such as MAS/WCAG | Common `requirements/`, extending [authority-and-applicability](../accessibility-kb/packages/common/requirements/authority-and-applicability.md) | `requirement-guidance` | Exact clauses, versions, normative vs. explanatory material, and sources not yet connected |
-| Root-cause identification and which layer should change | Common `analysis/`, such as [root-cause](../accessibility-kb/packages/common/analysis/root-cause.md) | `analysis` | Reasoning from symptoms to the responsible layer, rather than patching each symptom |
-| Implementation responsibilities across components | Common `implementation/`, such as [component-contract](../accessibility-kb/packages/common/implementation/component-contract.md) | `implementation-contract` | Existing component capabilities, caller responsibilities, and async/error branches |
-| Static, dynamic, design, and test verification methods | Common `verification/` | `verification` | What can and cannot be proved, and what evidence is required |
-| Knowledge-use steps for Find/Fix/Prevent/Review/Add-tests | Common `procedures/` | `procedure` | Reading order, decisions, and verification plans; no grant of execution authority |
-| Reusable positive and negative cases | The owning package's `cases/` | `case` | Scenario, counterexample, correct layer, verification, and inapplicable cases; sanitized |
-| Fluent V8 vs. V9 API/behavior differences | Fluent `v8/`, `v9/`, `selection/` | `implementation-contract` | Actual versions and documentation clauses; do not infer across major versions |
-| SPDS components and SharePoint utility/host constraints | SharePoint `spds/`, `utilities/`, `verification/` | `implementation-contract` for contracts; `verification` for verification | Boundary between general components and product wrappers |
-| Product support statements, versions, and grounds for exceptions | SharePoint `profiles/`, such as [support-policy](../accessibility-kb/packages/sharepoint/profiles/support-policy.md) | `product-profile` | Record support statements, applicability, actual verification, and exceptions separately |
-| Whether knowledge improves agent judgment | [Evaluations rubric](../accessibility-kb/evaluations/README.md) | Not a product knowledge entry | Positive/negative samples, false positives/negatives, evidence calibration, and fixes at the wrong layer |
+| Content / owning location | `kind` | Distinct responsibility |
+|---|---|---|
+| [Common topics](../accessibility-kb/packages/common/topics) | `topic` | Semantics, keyboard/focus, forms, dynamic content, visual principles |
+| [Common requirements](../accessibility-kb/packages/common/requirements) | `requirement-guidance` | MAS/WCAG authority and applicability, normative vs. explanatory clauses |
+| [Common analysis](../accessibility-kb/packages/common/analysis) | `analysis` | Root cause → responsible layer, not symptom patches |
+| [Common implementation](../accessibility-kb/packages/common/implementation) | `implementation-contract` | Component/caller duties, including async/error branches |
+| [Common verification](../accessibility-kb/packages/common/verification) | `verification` | Static, dynamic, design, and test methods with evidence limits |
+| [Common procedures](../accessibility-kb/packages/common/procedures) | `procedure` | Find/Fix/Prevent/Review/Add-tests reading order, decisions, verification plans |
+| Owning package's cases | `case` | Sanitized positive/negative scenarios, correct fix layer, applicability and verification |
+| [Fluent](../accessibility-kb/packages/fluent/README.md): V8/V9/selection | `implementation-contract` | Version-backed API/behavior contracts; no cross-major inference |
+| [SharePoint](../accessibility-kb/packages/sharepoint/README.md): SPDS/utilities/verification | `implementation-contract` / `verification` | General components vs. product wrappers, utilities, and host constraints |
+| [SharePoint profiles](../accessibility-kb/packages/sharepoint/profiles) | `product-profile` | Separate support, applicability, actual verification, and exceptions (section 7) |
+| Effectiveness evaluations (section 10) | Not a knowledge entry | Agent judgment and wrong-layer fixes, not product guidance |
 
-One issue may span several layers: Common describes “how to choose a focus return target when closing a dialog,”
-Fluent describes “what contract a specific Dialog version provides,” and SharePoint describes “which responsibilities
-the host/wrapper utilities cover.” Connect them through `relations` instead of copying the general rule three times.
-When sources conflict, record context gaps and have an authorized domain reviewer determine the applicable clauses;
-the service must not automatically assume that one source overrides another.
+For dialog focus, put target-selection principles in Common, version-specific Dialog contracts in Fluent, and
+host/wrapper duties in SharePoint; connect them with `relations` instead of duplicating the rule.
 
 ### 3.2 Expand Existing Knowledge
 
-Start from the existing body rather than creating a parallel checklist. Each package overview provides the
-reading route; its descriptor binds stable entry IDs, sources and maintenance ownership.
-
-| Area / starting point | Implemented coverage to preserve | Useful next contribution |
-|---|---|---|
-| [Common overview](../accessibility-kb/packages/common/README.md) | Rendered semantics; complete async visible/programmatic/focus outcomes; disappearing-control focus; localized messages; scoped scan and replacement cases | Add a missing interaction or counterexample at its owning topic, then relate verification and procedures |
-| [Fluent selection](../accessibility-kb/packages/fluent/selection/components-and-utilities.md), [V8](../accessibility-kb/packages/fluent/v8/component-contract.md), [V9](../accessibility-kb/packages/fluent/v9/component-contract.md) | Component-to-document map; V8 `delayedRender`/`Announced`; V9 intent/`AriaLiveAnnouncer`/`useAnnounce`; restoration and shim boundaries | Verify the installed version's export, provider and override behavior; retain one announcement/focus owner |
-| [SharePoint overview](../accessibility-kb/packages/sharepoint/README.md) | Table/DataGrid and stable/LazyComponents fit; SPDS composition; shared alerts and focus; neutral providers and replacement checks | Extend a concrete host scenario, preserving product scope and caller obligations |
-| [RTE](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md), [drag/reorder](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md), [formatting](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) | Checker capabilities, move-state protocol, complete count/ReactNode resources and RTL exceptions | Add version-backed signatures or edge cases where the pinned source supplies only names/behavior; do not guess missing API details |
-| Common requirements and SharePoint profiles | Source/applicability policy and separate support/verification dimensions | Acquire official clauses/support statements, assign reviewers and record review evidence; MAS implementation remains section 11 |
-
-For a contribution, explain the scoped rule, exceptions and positive/negative verification cases in the owning
-body, citing applicable source clauses and versions. Bind current sources in the package descriptor only where
-their provisions support the claim; do not substitute pending connection targets for missing citations.
-Obtain independent source review for qualification without inventing approval. Content maintenance does not
-require a historical repository checkout or a separate source-to-entry map.
-Private materials, credentials and run evidence stay in authorized external systems. Follow sections 4–7 for
-registration and section 9 for coordinated versions and publication.
+Start from the owning overview/body, including [Common](../accessibility-kb/packages/common/README.md), rather than
+duplicating its inventory. Add missing interactions, exceptions, or positive/negative cases there; create IDs only for
+independently citable material. Preserve component/host duties and one announcement/focus owner; verify installed
+exports, providers, overrides, and version-backed signatures instead of guessing undocumented APIs.
+Registration/review follows sections 4–7; release follows section 9. Source acquisition for MAS remains section 11.
 
 ## 4. Data Model and Reference Contract
 
@@ -188,7 +107,7 @@ registration and section 9 for coordinated versions and publication.
 | entry identity | `id` is unique across the KB and starts with its package ID; `path` is relative to the package directory. Identity is separate from file location |
 | entry classification | `kind` must use the existing schema enum; optional `discoveryTags` contains 1–3 unique values from `pattern`, `fix`, `example`. Directory names do not assign categories or authority |
 | entry context | `appliesTo` is a nonempty string array recording versions/products/platforms; list/search can filter by an exact label, without automatic applicability or version inference |
-| entry sources | `sourceIds` may reference only IDs in this package's active `sources`. Use `relations` for cross-package reading associations; do not borrow another package's source IDs directly |
+| entry sources | `sourceIds` references only this package's active `sources`; `[]` means no active citation. Bind only sources whose clauses support the claim, not pending targets as substitutes. Cross-package reading uses `relations`, never borrowed source IDs |
 | entry relationships | Targets of `relations` and `deprecatedBy` must exist in the package or its dependency closure |
 | entry lifecycle | `status` is `draft` / `approved` / `deprecated`; approval information belongs in the descriptor, not merely a “reviewed” label in the body |
 | source | `id` is unique within the package; `authority`, `status`, `locator`, `revision`, and `note` distinguish source type and readiness |
@@ -198,51 +117,43 @@ followed only by lowercase letters, digits, or hyphens; entries must include a d
 The six `source.authority` categories are `company-requirements`, `normative-standard`,
 `informative-guidance`, `component-contract`, `product-support`, and `historical-reference`.
 
+Packages own current content, source bindings, and review status. Historical attribution is not supporting evidence;
+maintenance requires neither a historical checkout nor a separate source-to-entry map. Source URLs are metadata,
+not fetched content; `relations` is neither automatically bidirectional nor recursive reading or execution.
+
 ### 4.2 Lifecycle Is Not an Automated Workflow
 
-- Source not connected: `connection-pending`; `locator`/`revision` may be `null`; explain what is missing.
-- Candidate material available but not reviewed: `review-pending`; a URL does not mean it supports the current conclusion.
-- Reviewed source: `reviewed` requires nonempty `locator` and `revision`; the validator checks shape, while a reviewer verifies the actual clauses.
-- Historical material: the schema permits `historical-reference` / `historical`; historical material cannot directly support approved entries.
-- Promoting an entry from draft to approved requires an actual owner, a reviewer other than `unassigned`, a review date,
-  and evidence references; at least one relevant source is required, and all sources must be reviewed. A purely
-  methodological draft may temporarily have no source, but that does not make it eligible for approval.
-- Substantive source or framework changes: **manually** return affected entries to draft and review them again;
-  there is no automatic invalidation analysis.
-- Deprecating an entry: retain its old ID, set `status: deprecated`, and provide a valid `deprecatedBy`.
-  Current policy does not support deprecation without a replacement target; do not silently give the same ID a different meaning.
+| State/change | Requirement |
+|---|---|
+| `connection-pending` | Explain missing connection; `locator`/`revision` may be `null`. Registration is not connectivity, authorization, or approval. |
+| `review-pending` | Candidate material exists; a URL alone does not establish support for a conclusion. |
+| `reviewed` source | Nonempty `locator` and `revision`; validation checks shape, reviewers verify clauses. |
+| Historical source | `historical-reference` / `historical` is allowed, but cannot directly support approved entries. |
+| Entry → `approved` | Actual owner, reviewer other than `unassigned`, review date, evidence references, and at least one relevant source, all reviewed. A source-free methodological draft is not approvable. |
+| Substantive source/framework change | Manually return affected entries to draft and re-review; no automatic invalidation analysis. |
+| Entry → `deprecated` | Retain the old ID and supply valid `deprecatedBy`; no replacement-free deprecation or silent reassignment of meaning. |
 
-The service always returns `contentApprovalVerified: false` and `independentBehaviorVerified: false`.
-Even when entry metadata says approved, neither field becomes true: the service has not performed human review
-or behavioral verification.
+Authorized domain reviewers resolve conflicting clauses with context gaps recorded; the service does not assign
+automatic precedence. It always returns `contentApprovalVerified: false` and `independentBehaviorVerified: false`,
+even for approved metadata: it performs neither human review nor behavioral verification.
 
 ### 4.3 File and Link Rules
 
-- Every content body must be declared in `entries`; even a README in a package directory must be an entry.
-  Do not drop in unregistered notes, images, scripts, or fixtures; the strict file inventory rejects them.
-- Content bodies currently support Markdown; JSON is supported only for `kind: product-profile` + `dataSchema: support-matrix`.
-  Any new JSON type, image, or binary attachment requires protocol design, not just adding a file.
-- Relative Markdown links within a package may point to whole files; local `#heading` anchors, cross-package
-  relative links, out-of-bounds paths, and unsupported URIs are currently rejected. Use stable IDs for cross-package relationships.
-- The global shared file set is fixed: the KB root README, catalog, two schemas, contribution guidelines, and
-  evaluation rubric. Every export includes them, so they must not contain required links that depend on an unselected product package.
-- Adding a global KB file requires updating both authoring `commonFiles` and runtime `COMMON_FILES`, plus
-  closure tests. Ordinary design documents should live in the service directory, like this document, without expanding distribution content.
-- The runtime rejects Windows path case collisions, device names, symbolic links, and file/directory conflicts.
-  Use simple relative `/` paths for content; passing authoring validation does not mean full runtime validation has passed.
+- Declare every body, including package READMEs, in `entries`; strict inventory rejects unregistered notes, images, scripts, or fixtures.
+- Bodies support Markdown, or JSON only for `kind: product-profile` + `dataSchema: support-matrix`. New JSON types/images/binaries require protocol design (section 7).
+- In-package relative Markdown links may target whole files, not local `#heading` anchors, cross-package relative links, out-of-bounds paths, or unsupported URIs. Use stable IDs across packages.
+- The fixed global shared set is the KB root README, catalog, two schemas, contribution guidelines, and evaluation rubric. Every export includes it; required links must not depend on unselected products.
+- New global files require authoring `commonFiles`, runtime `COMMON_FILES`, and closure-test updates. Keep ordinary design documents in the service directory, outside snapshots.
+- Runtime rejects Windows case collisions, device names, symlinks, and file/directory conflicts. Use simple relative `/` paths; authoring validation does not replace runtime validation.
+- Private materials, actual execution steps, tenants, UPNs, DevBox rosters, credentials, and user run evidence stay in authorized external systems, not knowledge bodies.
 
 ## 5. Playbook: Add a Knowledge Entry
 
-The following examples demonstrate **draft metadata**; they do not add reviewed rules.
-Suppose you want to add a cross-product topic on “focus handling after asynchronous completion”:
+Example: a cross-product “focus after asynchronous completion” topic, using **draft metadata** under section 4.
 
-1. First check the existing [keyboard-focus](../accessibility-kb/packages/common/topics/keyboard-focus.md)
-  and [dynamic-content](../accessibility-kb/packages/common/topics/dynamic-content.md) entries.
-  Prefer improving an existing entry with the same semantics; add an ID only for a new, independently citable topic.
-2. Create `topics/async-focus.md` in the Common package and describe its scope and gaps using the body template below.
-3. Add the following object to `entries` in the
-  [Common package descriptor](../accessibility-kb/packages/common/package.json). The example references existing
-  candidate sources `wcag` / `apg`; the basis for each claim in the body still needs verification.
+1. Check [keyboard-focus](../accessibility-kb/packages/common/topics/keyboard-focus.md) and [dynamic-content](../accessibility-kb/packages/common/topics/dynamic-content.md) for overlap (section 3.2).
+2. Create the Common body at the example path, using the outline below.
+3. Add this object to the [Common descriptor](../accessibility-kb/packages/common/package.json). `wcag` / `apg` are existing candidate sources; verify each supporting clause.
 
 ```json
 {
@@ -257,9 +168,7 @@ Suppose you want to add a cross-product topic on “focus handling after asynchr
 }
 ```
 
-4. If a new source is needed, add a record to `sources` in **the same package**. A candidate source that is not
-  yet connected can be represented as follows. Do not mark it reviewed or attach it to unrelated entries to create
-  the impression that they have a supporting basis.
+4. If needed, add a candidate to the same package's `sources`; apply the binding and lifecycle rules in section 4:
 
 ```json
 {
@@ -272,41 +181,22 @@ Suppose you want to add a cross-product topic on “focus handling after asynchr
 }
 ```
 
-5. Update the reading navigation in the package overview; if another entry must be read together with this one,
-   add its `relations` as well. Relationships are not automatically bidirectional and do not read content for the caller.
-6. Follow section 9 for versioning, generation, and evaluation. Check that the new entry is visible through `list/read`
-   and that Common-only exports still have no product package dependencies. Update count assertions to reflect
-   justified content changes; do not simply delete boundary tests.
+5. Update overview navigation and any required reading `relations` on the relevant entries.
+6. Follow section 9 for generation/release and section 10 for evaluation; verify `list/read` visibility and Common-only isolation, updating justified counts without deleting boundary tests.
 
 ### Recommended Body Outline
 
-```markdown
-# Title
+Use a descriptive title and the following content structure; headings are guidance, not validated schema.
 
-## Scope and Inapplicable Cases
-Products/frameworks/versions/platforms, and context that must be obtained first.
-
-## Sources and Current Status
-Specific source IDs, clauses/versions, and whether material is normative or illustrative; explicitly label unreviewed content as draft.
-
-## Semantics or User Outcomes to Preserve
-Explain why this is needed, rather than listing only an attribute or a fixed implementation.
-
-## Reasoning and Implementation Responsibilities
-What the component already does and what the caller owns; async, error, cancellation, and recovery branches.
-
-## Positive Examples, Counterexamples, and Common Incorrect Fixes
-Use minimal, sanitized examples; do not assume an example applies to every component version.
-
-## Verification and Evidence Boundaries
-What source code can establish, what requires actual execution, and how to mark a gap when verification is unavailable.
-
-## Related Knowledge and Open Items
-List stable IDs and unresolved source/version/owner questions.
-```
-
-This outline is authoring advice; these headings are not currently validated. Actual execution steps, tenant details,
-UPNs, DevBox rosters, authentication information, and user run evidence must not be committed as knowledge content.
+| Body area | Required explanation |
+|---|---|
+| Scope and inapplicable cases | Products/frameworks/versions/platforms and missing prerequisite context |
+| Sources and status | Source IDs, clauses/versions, normative vs. illustrative material, explicit draft labels |
+| Semantics/user outcomes | Why the outcome matters, not just an attribute or fixed implementation |
+| Reasoning and responsibilities | Component vs. caller duties; async, error, cancellation, and recovery branches |
+| Positive/negative examples and incorrect fixes | Minimal, sanitized examples with version applicability limits |
+| Verification/evidence | What source proves, what needs execution, and gaps when verification is unavailable |
+| Related knowledge/open items | Stable IDs and unresolved source/version/owner questions |
 
 ## 6. Playbook: Add a Product or Framework Package
 
@@ -339,62 +229,32 @@ a package for every topic. Consider the example package `product-example`, which
 }
 ```
 
-3. `dependencies` must match the actual package versions in the current KB. The example's `0.1.1` is not a
-   permanently valid default. If using Fluent contracts, depend on Fluent explicitly; do not add a product dependency
-   to Common to bypass validation.
-4. Add bodies, sources, and relationships entry by entry as described in section 5. An ordinary new package does not require a schema change.
-5. **Decide whether to publish it and which service selects it.** Catalog registration only includes it in the source
-   manifest; it does not mean the existing service will read it.
-
-The current [builder](tools/build.mjs) has fixed publication selections of `[['common'], ['sharepoint']]`,
-and the service reference is always generated by `createKnowledgeReference(kb, ['sharepoint'])`:
-
-| Desired result | Required changes |
-|---|---|
-| Include content for future improvement without exposing it to the current service | Add catalog registration, descriptor, and bodies; the source manifest changes, but the existing service selection does not |
-| Distribute the new product closure separately | Add a builder selection; add export, pin, and isolation tests for that closure. This does not automatically switch the current service |
-| Let the same service also read the new package | Select it explicitly when generating the service reference and generate a **combined artifact with the same selection**; single-package artifacts alone are insufficient |
-| Make it a required dependency of an existing product package | Update genuine dependencies and versions; existing selections include it recursively. Do not fabricate a semantic dependency solely for distribution |
-
-Do not turn SharePoint into an aggregator for every product. Multiple independent package sets, configurable
-selection, or multiple service configurations require separate future design; there is currently no CLI argument
-for users to switch freely among these sets.
+3. Match actual dependency versions (section 9); the example version is not a permanent default. Explicitly depend on Fluent if using its contracts, without reversing Common's dependency boundary.
+4. Add bodies, sources, and relationships as in section 5; an ordinary package needs no schema change.
+5. Choose publication and service selection using section 9.2. Catalog registration changes the source manifest, not automatically the service's readable package set.
 
 ## 7. Playbook: Support Matrices and Schema Extensions
 
 The existing example is the [SharePoint support matrix](../accessibility-kb/packages/sharepoint/profiles/support-matrix.json).
 It distinguishes product support statements, rule applicability, and actual verification; “unsupported” is not an automatic exemption.
 
-- Without an official source, retain `status: awaiting-official-source` and `products: []`.
-  Do not populate guessed products, support outcomes, or exception lists.
-- Once a source is available, change the matrix to `sourced`, assign an owner, and populate product versions.
-  Each product's source must be a reviewed `product-support` source in the same package, with locator/revision
-  matching the source record verbatim.
-- Populate each rule's `requirementId`, `applicability`, `supportStatus`, `verificationStatus`, `basis`,
-  `verificationEvidence`, and `exception`; verified requires an evidence reference.
-- `requirementId` is an official rule identifier, not necessarily a KB entry ID. Clause authenticity, exemption
-  authorization, and whether dates remain valid require human verification; schema validity does not mean
-  the service independently verified the evidence or exemption.
-- Update sources/versions for existing records and review them again; do not carry old verification outcomes
-  unconditionally into new versions.
+- Without an official source: `status: awaiting-official-source`, `products: []`; no guessed products, support outcomes, or exceptions.
+- With a source: set `sourced`, assign an owner, and populate product versions. Each product cites a same-package reviewed `product-support` source, matching locator/revision verbatim.
+- Each rule supplies `requirementId`, `applicability`, `supportStatus`, `verificationStatus`, `basis`, `verificationEvidence`, and `exception`; verified requires evidence.
+- `requirementId` identifies an official rule, not necessarily a KB entry. Humans verify clause authenticity, authorized exemptions, and date validity; schema validity is not independent evidence verification.
+- Update sources/versions and re-review existing records; do not automatically carry verification into new versions.
 
-Adding a `kind`, `dataSchema`, or structured format requires coordinated changes to:
-
-1. The [JSON schema](../accessibility-kb/schemas/package.schema.json) and any required new schema;
-2. Shape, semantic, and file validation in the [authoring validator](tools/knowledge-base.mjs);
-3. Corresponding fields, enums, semantics, and the shared file set in the [runtime validator](src/runtime/knowledge.mjs);
-4. Schema/version policy, exported content, and compatibility documentation;
-5. Positive and negative authoring/runtime tests, including cases where recomputing hashes must not bypass semantic restrictions.
-
-Ajv is used only for development builds. The installed runtime validates independently using built-in Node modules;
-it does not automatically execute new schemas or arbitrary input code. **Changing only the JSON schema is an incomplete protocol change.**
+A new `kind`, `dataSchema`, or format requires coordinated [JSON schema](../accessibility-kb/schemas/package.schema.json)
+and any new schema, [authoring](tools/knowledge-base.mjs) shape/semantic/file validation, and [runtime](src/runtime/knowledge.mjs)
+fields/enums/semantics/shared-file validation; also update version policy, exports, compatibility docs, and positive/negative
+tests that reject semantic violations even after hashes are recomputed.
+Ajv is development-only; installed runtime validation uses built-in Node modules and executes neither new schemas
+nor arbitrary input code. **A schema-only edit is an incomplete protocol change.**
 
 ## 8. Consumer Layer: Retrieval, Validation, and Security Boundaries
 
-This section's guarantees about queries not being uploaded, fixed download locations, and caching apply to the
-**current local snapshot tools**. Future explicit MAS queries will send necessary query fields to the configured
-MAS service; see section 11 for those boundaries. Do not apply local snapshot privacy promises or integrity pins
-directly to live sources.
+Privacy, fixed downloads, and integrity pins here apply only to **local snapshots**; live MAS query/data boundaries
+are specified separately in sections 11.4 and 11.7.
 
 | Tool | Input | Current behavior |
 |---|---|---|
@@ -404,6 +264,8 @@ directly to live sources.
 
 ### 8.1 Exact Discovery Filters and Result Semantics
 
+Categories do not add `kind` values: `standard` derives from directly cited `normative-standard` sources,
+`case` from `kind: case`, and `pattern` / `fix` / `example` only from curated `discoveryTags`.
 All supplied filters compose with **AND**, for both list and search; search additionally requires every query term.
 
 | Filter | Matching contract |
@@ -419,46 +281,36 @@ directly cited source record**. For example, an entry citing both WCAG and APG d
 `sourceId: apg` together with `category: standard`, or with `standard: wcag`. There is no source/category/label
 inheritance through package dependencies or `relations`, and no inference of installed versions or source revisions.
 
-List/search entries include `packageId`, derived `categories` and full `matchedSources` records. `matchedSources`
-contains the entry's cited sources satisfying the source/normative filters; with none of those restrictions it contains
-all directly cited sources, possibly empty. List's top-level `sources` remains the full selected source catalog,
-not just matched sources. Its `facets` count entries in the **current fully filtered result**, not the unfiltered KB
-or a top-20 search page: categories (including zero counts), packages, exact applicability labels and cited sources
-(package-qualified full records with counts). Source facets count all citations on matching entries, not only
-`matchedSources`. Categories and labels can overlap, so their counts need not sum to `totalMatches`.
-Search returns applied `filters` without `query`, and no facets or full top-level source catalog.
+| Result field | Semantics |
+|---|---|
+| List/search entries | Include `packageId`, derived `categories`, and full `matchedSources`: directly cited records satisfying source/normative filters, or all citations (possibly empty) without those restrictions. |
+| List `sources` | Full selected source catalog, not just matched sources. |
+| List `facets` | Counts over the **entire fully filtered result**, not the unfiltered KB or top-20 search page: categories including zeros, packages, exact applicability labels, and package-qualified full cited-source records/counts. Source facets count all citations on matching entries, not only `matchedSources`; overlapping categories/labels need not sum to `totalMatches`. |
+| Search metadata | Applied `filters` excludes `query`; no facets or full top-level source catalog. |
 
-There are exactly seven curated tagged entries in the current snapshot; tags are based on their bodies, not automatically
-assigned because an entry cites APG, is an implementation contract, has a suggestive title or relates to a case:
+Seven entries have body-curated tags; APG citations, contract kind, suggestive titles, or case relations do not assign tags:
 
 | Entry ID | `discoveryTags` |
 |---|---|
 | `common.topic.dynamic-content` | `pattern`, `example` |
-| `common.case.dialog-focus` | `pattern`, `fix`, `example` |
-| `fluent.v8.component-contract` | `pattern`, `fix`, `example` |
-| `fluent.v9.component-contract` | `pattern`, `fix`, `example` |
-| `sharepoint.spds.component-contract` | `pattern`, `fix`, `example` |
+| `common.case.dialog-focus`, `fluent.v8.component-contract`, `fluent.v9.component-contract`, `sharepoint.spds.component-contract` | `pattern`, `fix`, `example` |
 | `sharepoint.utilities.announcements-and-focus` | `pattern`, `example` |
 | `sharepoint.case.duplicate-announcement` | `fix`, `example` |
 
 `fix` denotes corrective guidance; `example` can be hypothetical or a counterexample, and `case` does not certify
-a reproduced historical incident. None of these labels supplies approval, authority or behavioral evidence.
+a reproduced historical incident. Labels confer no authority; neither categories nor citations prove full norm/criterion coverage, approval, compliance, or behavioral evidence.
 Entries without tags are valid: they have no pattern/fix/example category matches, while directly cited
 normative sources and `kind: case` still determine standard/case matches.
 
-A valid query with no match returns explicit `entries: []` or `matches: []` and `totalMatches: 0`, not a
-conformance verdict or evidence that no requirement applies. Invalid arguments return MCP tool `isError: true`:
-unknown keys, missing required query/ID, arrays/null instead of an argument object, wrong types, blank or over-256
-strings, malformed Unicode, invalid category values or malformed identifiers. `standard`, `sourceId`, `packageId`
-must start with a lowercase ASCII letter and contain only lowercase ASCII letters, digits or hyphens;
-syntactically valid unknown IDs/labels yield no matches, not aliases or fallback.
-An unknown read ID is an error. All successful tools retain `contentApprovalVerified: false` and
-`independentBehaviorVerified: false`; list/search require full reads via `fullEntryReadRequired: true`.
+| Outcome | Contract |
+|---|---|
+| Valid query, no match | `entries: []` / `matches: []`, `totalMatches: 0`; no conformance or inapplicability verdict. Syntactically valid unknown IDs/labels yield no match, not aliases/fallback. |
+| Invalid arguments | MCP `isError: true` for unknown keys, missing query/ID, arrays/null rather than objects, wrong types, blank/over-256 strings, malformed Unicode, categories, or identifiers. `standard`, `sourceId`, `packageId` match lowercase ASCII letter followed by lowercase ASCII letters/digits/hyphens. Unknown read IDs also error. |
+| Successful tools | Section 4.2 verification flags; list/search additionally require `fullEntryReadRequired: true`. |
 
 ### 8.2 Usable Local Tool Examples
 
-Send each JSON object as a separate MCP request after initialization, using a compatible service and matching
-pinned snapshot. Their IDs are from the current KB.
+After initialization, send these current-KB requests separately using a compatible service and matching snapshot.
 
 Discover Common entries directly citing WCAG as a normative source, with an exact web label:
 
@@ -490,20 +342,15 @@ This valid request deliberately returns no entries: the same source cannot be bo
 {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"a11y_kb_knowledge_list","arguments":{"category":"standard","sourceId":"apg","packageId":"common"}}}
 ```
 
-Search is not semantic retrieval and has no relevance learning or ranking by authority level. Callers should first
-establish scope, then read the complete body, related IDs, and source status. Source metadata, source URLs, and
-relationships are not execution instructions.
+Search has no relevance learning/authority ranking. Establish scope and read full bodies, related IDs, and source status;
+section 1 governs execution. Snapshot loading and limits are independent of discovery:
 
-Loader order: explicit absolute root → identity-validated development checkout → shared per-user cache →
-fixed HTTPS artifact. Invalid explicit configuration, an existing but corrupt cache, or a mismatched local pin
-produces an error; the loader does not fall back to another version or guess success. Content is revalidated on
-every call; editing source files does not enable hot reload that bypasses the pin.
-
-Only the selected **complete package closure** is downloaded; queries are not sent to the download endpoint.
-Each HTTPS download is limited to 15 seconds/8 MiB, with at most 1000 files; arbitrary URLs, redirects,
-credentials, and path escapes are prohibited. Each stdio frame is limited to 1 MiB. As content grows, first monitor
-artifact size and tool output size; exceeding limits requires package partitioning/distribution protocol design,
-not simply disabling validation.
+| Loader boundary | Contract |
+|---|---|
+| Resolution order | Explicit absolute root → identity-validated development checkout → shared per-user cache → fixed HTTPS artifact. |
+| Invalid state | Explicit configuration errors, existing corrupt cache, or mismatched local pin fail without version fallback or guessed success. Revalidate every call; source edits cannot hot-reload past a pin. |
+| Transfer | Selected **complete closure** only; queries never reach the download endpoint. Maximum 15 seconds/8 MiB/1000 files; no arbitrary URLs, redirects, credentials, or path escapes. |
+| Transport/growth | Stdio frame: 1 MiB. Monitor artifact/output size; exceeding limits needs partitioning/distribution design, not disabled validation. |
 
 ## 9. Versioning, Generation, and Publication
 
@@ -516,26 +363,33 @@ not simply disabling validation.
 | Service package `version` | MCP/loader implementation version, not the knowledge package version |
 | manifest/raw SHA-256 | Exact snapshot and transport-byte identity, not knowledge approval |
 
-Suggested release convention: use patch for small compatible corrections, minor for new compatible entries, and
-consider major for incompatible semantic/ID contract changes. Current code checks only a three-part numeric
-format, not the business semantics of SemVer; release review must enforce those.
+Release convention: patch for compatible corrections, minor for compatible additions, consider major for incompatible
+semantic/ID changes. Code checks three-part numeric format only; reviewers enforce SemVer meaning.
 
-Common, Fluent and SharePoint are at `0.1.1`: Fluent depends on Common `0.1.1`, and SharePoint depends on
-both Common and Fluent `0.1.1`. The independently versioned standalone service is at `0.1.0`.
-Content changes, including discovery metadata, still require regenerated hashes, manifests, artifacts, index
-and service reference. Building them does not publish download URLs or update installations.
+Current baseline: schema v1; Common, Fluent, and SharePoint `0.1.1`; standalone service `0.1.0`.
+Fluent depends on Common `0.1.1`; SharePoint depends on both Common and Fluent `0.1.1`.
+Dependencies match exactly; `^0.1.1`, `latest`, and ranges are unsupported. All content/discovery-metadata changes
+require section 9.2's generated outputs; building does not publish URLs or update installations.
 
-**Compatibility:** the runtime must support optional `discoveryTags` to read tagged snapshots; older strict
-implementations reject unknown entry fields. The current runtime also accepts untagged snapshots.
-Use matching runtime/reference sets for installation, updates and rollback, and retain immutable artifacts.
-Snapshot hashes identify exact content; version strings alone do not establish compatibility.
-
-After upgrading Common, update every exact version dependency that directly references it; if Fluent itself also
-upgrades, update SharePoint's Fluent dependency too. Review which downstream approved conclusions are affected
-by dependency changes.
+**Compatibility:** tagged snapshots require `discoveryTags` support; older strict runtimes reject unknown fields,
+while this runtime also accepts untagged snapshots. Versions alone do not prove compatibility: use exact hashes
+and matching runtime/reference sets for install/update/rollback, retaining immutable artifacts (section 9.3).
+Common upgrades require all direct exact dependencies to change; Fluent upgrades also require SharePoint's Fluent
+dependency update. Review affected downstream approvals under section 4.2.
 
 ### 9.2 Build Process
 
+The [builder](tools/build.mjs) publishes fixed selections `[['common'], ['sharepoint']]`; the service reference uses
+`createKnowledgeReference(kb, ['sharepoint'])`.
+
+| Selection change | Required action |
+|---|---|
+| Author only | Catalog + descriptor + bodies update the source manifest, not the service selection. |
+| Publish a separate product closure | Add a builder selection and export/pin/isolation tests; this does not switch the service. |
+| Read additional packages in the same service | Explicitly select them in its reference and generate a **combined artifact with the same selection**; separate single-package artifacts are insufficient. |
+| Add a real product dependency | Update genuine dependencies/versions; existing selections include it recursively. Never fabricate dependencies for distribution or make SharePoint an all-product aggregator. |
+
+Configurable/multiple independent selections or service configurations need future design; no current CLI switch selects them.
 Run the following in order from the repository root:
 
 ```powershell
@@ -551,39 +405,29 @@ The first set of commands builds/validates the standalone KB; the last two check
 has not been broken. Root-level `npm run build` is not the KB builder. External workflows and AT are outside
 the verification scope of these local commands.
 
-The standalone build validates authored files → computes dependency closures → generates a canonical manifest →
-serializes a `{schemaVersion, manifest, files}` artifact → generates references. Each file has a content SHA-256;
-the selected manifest has a `manifestSha256`; the full artifact has a separate raw SHA-256. The full source
-manifest and the manifest of a selected closure are **not necessarily identical**.
+Build: validate authored files → compute closures → canonical manifest → `{schemaVersion, manifest, files}` artifact →
+references. Per-file SHA-256, selected `manifestSha256`, and raw artifact SHA-256 are distinct; full-source and closure manifests need not match.
+Generated outputs: whole-KB source hashes; service reference (selected versions, manifest pin, URL, raw pin);
+content-addressed JSON; index mapping manifest pin → raw SHA-256. Shared README/schema/governance edits can change every selection's pin.
 
-Generated changes include the source manifest, service reference, new content-addressed JSON, and distribution
-index. Do not handwrite hashes, overwrite old artifacts, or delete old versions to “clean the build.” Globally shared
-README, schema, and governance documents also contribute to content hashes, so changing them may change
-the pins of every selection.
-
-The build first validates all retained history, publishes files with no-replace semantics, updates the index, and
-finally updates consumer references; run only one authoring build at a time. Recovery is possible when the complete
-current artifact has been written but the index has not; unknown files and missing/corrupt history still explicitly
-block progress. This is not a promise that every interruption can be repaired automatically.
+Never handwrite hashes, overwrite artifacts, or delete retained versions. Run one authoring build at a time:
+validate all retained history → no-replace artifact publication → index → consumer references. A complete current
+artifact written before its index is recoverable; unknown files or missing/corrupt history block progress.
+This does not promise automatic recovery from every interruption.
 
 ### 9.3 Publication Gates
 
-1. A content reviewer confirms sources, versions, permissions, applicability, and private-material boundaries.
-2. Local validation and CI pass; review new content, dependency changes, generated pins, and retention of old artifacts.
-3. Merge/publish through a PR, not by pushing directly to main; do not bundle cleanup unrelated to the KB.
-4. Actually access the reference's HTTPS URL and verify its raw SHA-256 before claiming cold installation works.
-  The URL points to a content-addressed file on main; “local build succeeded” does not mean the URL is published.
-5. In an explicitly authorized host, verify MCP registration, tool discovery, full reads, and cold/warm caching.
-  An offline cache miss must fail; a valid cache hit can work. Simulated transports in automated tests do not replace real host acceptance.
-6. Consumers update the service/reference at a safe transition point. Old references continue reading old artifacts;
-  for rollback, use the complete reviewed old reference/runtime set. Do not edit hashes or delete caches to fabricate compatibility.
+1. Review sources, versions, permissions, applicability, and private-material boundaries (section 4).
+2. Pass local validation/CI; review content, dependencies, pins, and retained artifacts.
+3. Publish through a focused PR, not direct main pushes or unrelated cleanup.
+4. Verify the reference's actual content-addressed HTTPS URL on main and raw SHA-256 before claiming cold installation; a local build is not publication.
+5. In an authorized real host, verify registration, discovery, full reads, cold/warm caches, offline miss failure and valid-hit operation; simulated transport is not acceptance.
+6. Update at safe transition points. Old references keep reading old artifacts; rollback uses a complete reviewed old runtime/reference set, never edited hashes or deleted caches to fabricate compatibility.
 
 ## 10. Testing and Collaborative Acceptance
 
-The table below identifies tests to reuse and extend when making changes; it does not claim exhaustive coverage
-of all field combinations. When extending support matrices, lifecycles, or package selection, add corresponding
-negative runtime cases and explicitly verify that the artifact's package set matches the service reference;
-do not merely update the number of passing tests.
+Reuse and extend these categories; they are not exhaustive field-combination coverage. Matrix/lifecycle/selection
+changes need runtime negatives and exact artifact/reference package-set checks, not just revised pass counts.
 
 | Change | Tests to add/check |
 |---|---|
@@ -592,62 +436,39 @@ do not merely update the number of passing tests.
 | Schema, integrity, paths, or caching | [Runtime tests](tests/knowledge-runtime.test.mjs): corruption, out-of-bounds paths, symlinks, incorrect URLs, semantic violations, and concurrency |
 | Tool inputs/outputs | [MCP tests](tests/knowledge-mcp.test.mjs): isolated installation, exact IDs, full bodies, sources, and refusal to execute |
 | Distribution/publication | [Standalone tests](tests/standalone.test.mjs): old-reference cold starts, artifact retention, interruption recovery, and unchanged existing files |
+| Documentation | [Documentation tests](tests/documentation.test.mjs): bilingual numbering, links/anchors, authoring schemas, executable local examples, and planned-only MAS tool names |
 | Whether knowledge improves judgment | [Effectiveness evaluation rubric](../accessibility-kb/evaluations/README.md): separately authorized real evaluations, not replaceable by unit tests |
 
-The current expected entry sets are 35 for the full closure and 20 for Common alone (Fluent adds 4;
-SharePoint adds 11). Check exact IDs as well as counts. When adding content, update justified
-counts and expected sets while retaining negative assertions: Common must not leak product knowledge,
-unselected packages must not be readable, and missing sources must not yield approved entries. Evaluations must
-include at least one genuine-risk sample, one clean counterexample, one missing-context scenario, and one
-version/product-inapplicable scenario. Record false positives/negatives, fix layers, evidence calibration, and
-regression risks; if something was not run, say so rather than fabricating results.
+Check exact IDs and section 1's counts (full closure 35, Common-only 20); retain Common product-isolation,
+unselected-package rejection, and missing-source approval negatives. Evaluations need at least one genuine risk,
+clean counterexample, missing-context scenario, and version/product-inapplicable scenario; record false positives/negatives,
+fix layers, evidence calibration, regression risks, and anything not run.
 
 ### Pre-submission Checklist
 
-- [ ] Content belongs to the correct package; common knowledge introduces no product dependency and does not duplicate another package's body.
-- [ ] Every file, stable ID, sourceId, and relation is registered and valid.
-- [ ] Bodies explain scope, responsibilities, positive/negative examples, and verification gaps; source URLs are not treated as reviewed evidence.
-- [ ] Owners/reviewers, versions, and source statuses are truthful; draft content has not been worded to appear as an official requirement.
-- [ ] Distribution selection and service references for new packages are explicit; “catalog registration succeeded” is not treated as “the service can read it.”
-- [ ] Schema extensions cover both build/runtime without weakening tests that reject invalid input.
-- [ ] Build/test/check all pass; generated changes are reviewed and all committed historical artifacts are retained.
-- [ ] Required human content/effectiveness reviews are completed or explicitly marked pending; no private run data is committed.
-- [ ] Standalone KB contributions preserve existing plugin and workflow boundaries; local tests do not masquerade as publication or real-host checks.
+- [ ] Sections 1–3: correct ownership/layer, no duplicate bodies or plugin/workflow changes.
+- [ ] Sections 4–5: registered files/IDs/sources/relations; truthful lifecycle, scoped bodies, examples, gaps, and no private data.
+- [ ] Sections 6–9: explicit selections, matched artifacts/references, dual-validator schema changes, passing build/test/check, reviewed pins, and retained history.
+- [ ] Sections 9.3–10: content/effectiveness reviews completed or explicitly pending; publication and authorized real-host checks distinguished from local tests.
 
-Prefer one PR focused on a domain topic or a group of related contracts, with domain owners reviewing content
-and service maintainers reviewing schema, package selection, or runtime protocol changes. For a first contribution,
-improving an existing draft entry is easier to validate than simultaneously changing package structure, retrieval
-protocol, and knowledge bodies.
+Keep PRs focused on a domain or related contracts. Domain owners review content; service maintainers review
+schema, selection, and runtime protocol. Improving an existing draft is the smallest first contribution.
 
 ## 11. Planned: One KB Endpoint with MAS Rule Capabilities
 
 ### 11.1 Agreed Direction and Interfaces Still to Confirm
 
-**Agreed goal:** callers connect only to KB MCP, using it both to query local knowledge and to query authoritative
-rules through the KB's internal MAS adapter. MAS is the required rule basis within applicable review scope;
-local methods, cases, guessed WCAG mappings, and component support statements cannot replace missing MAS clauses.
+The section 1 target separates pending Common source metadata from live responses. Local snapshots need no MAS
+identity; live tools/basis checks require the confirmed contract below, not merely `sources.mas` registration.
 
-| Area | Current implementation | Target implementation |
-|---|---|---|
-| External endpoint | One local knowledge MCP | The same KB MCP, with explicit additional read-only MAS interfaces |
-| MAS source | Pending metadata in the Common package | Built-in MAS MCP client/adapter; manage source metadata separately from actual responses |
-| Connection configuration | No MAS configuration parsing | Ship nonsensitive templates with the service; specify trusted connections at deployment, with no live source enabled by default |
-| Authentication | Local snapshots need no MAS identity | KB authenticates as a MAS client through the official mechanism; the runtime environment supplies credentials securely |
-| Standards basis | Local draft usage guidance | Applicable scope requires MAS rule IDs, actual versions, and citations; missing items mean an incomplete basis |
-| Completion checks | No MAS checking capability | May provide a “standards-basis completeness” check, but not a product compliance verdict or PR gate |
+**Implementation prerequisite:** confirm service identity/endpoint, transports, authentication/authorization scopes,
+tool names and input/output schemas, unique rule IDs, versions/revisions, pagination/rate limits, errors, and
+caching/redistribution permissions with the MAS service owner. Do not invent addresses, signatures, or official IDs.
 
-**Before implementation, confirm with the MAS service owner:** service identity/endpoint, supported transports,
-authentication and authorization scopes, tool names and input/output schemas, unique rule identifiers,
-version/revision mechanisms, pagination and rate limits, error semantics, and content caching/redistribution
-permissions. This document does not invent MAS addresses, tool signatures, or official rule IDs. Finalize interface
-proposals against verified real protocol behavior; the suggested names below are not registered tools.
-
-**Naming clarification:** “MAS MCP” here means the upstream capability that supplies MAS rules, not a confirmed
-service product name. The current `sources.mas.note` mentions a candidate “CLEA MCP interface”; whether CLEA
-is the actual hosting service and covers this requirement still needs owner confirmation. Do not assume MAS and
-CLEA are either two separate services or equivalent names. Once confirmed, use the actual service identity
-consistently in source notes, deployment configuration, adapter mappings, and acceptance records; record the
-MAS rule-system identity separately from the identity of the service providing it.
+“MAS MCP” names the upstream MAS-rule capability, not a confirmed service product. `sources.mas.note` mentions
+a candidate “CLEA MCP interface”; owner confirmation must establish whether CLEA hosts the required capability.
+Do not assume two services or equivalent names. Record MAS rule-system identity separately from provider identity;
+use the confirmed provider consistently in source notes, deployment configuration, adapter mappings, and acceptance records.
 
 ### 11.2 Component Relationships and Request Path
 
@@ -665,160 +486,104 @@ flowchart LR
   Rules -. only with explicit permission .-> Private[Separate controlled MAS cache]
 ```
 
-- **Endpoint layer:** preserves the semantics of the three existing local tools and exposes additional MAS
-  operations with source identity. “One endpoint” does not mean mixing both content types into search results
-  whose sources cannot be distinguished.
-- **MAS adapter:** owns MCP initialization, capability/schema checks, a read-only tool allowlist, session lifecycle,
-  pagination, timeouts, cancellation, rate limiting, and normalization of official errors. Prefer a compatible official
-  MCP SDK selected against the actual transport and authentication contract; do not copy temporary shell-proxy logic.
-- **Rules service:** owns minimal query context, response validation, version binding, and basis completeness
-  assessment. It must not generate “official clauses” from short summaries or implement a generic proxy for arbitrary upstream tool calls.
-- **Local loader:** continues to handle only pinned knowledge snapshots; do not add arbitrary remote URL reads.
-  MAS bodies must not enter local snapshot caches or published artifacts.
-- **Caller:** reads the complete relevant rules, interprets applicability, and performs authorized real verification.
-  MAS responses are source data, not authorization to execute commands, upload repositories, or override system instructions.
+| Component | Responsibility |
+|---|---|
+| Endpoint | Preserve all three local tool semantics; expose distinct MAS operations with identifiable sources, not indistinguishable merged search results. |
+| MAS adapter | MCP initialization, capability/schema checks, read-only allowlist, sessions, pagination, timeouts, cancellation, rate limits, and normalized official errors. Prefer an official SDK compatible with confirmed transport/auth, not temporary shell-proxy logic. |
+| Rules service | Minimal context, response validation, version binding, basis completeness; no synthesized “official clauses” from summaries or generic arbitrary-tool proxy. |
+| Local loader | Pinned snapshots only, with no arbitrary remote URL reads; MAS data isolation is defined in section 11.7. |
+| Caller | Section 11.6 review/verification duties; responses are data, never command/repository-upload authorization or system-instruction overrides. |
 
-When MAS is not configured, the service must still initialize and support local tools; MAS queries return an explicit
-not-configured error. This keeps local functionality available without disguising local fallback as an acquired MAS basis.
+### 11.3 Adding Files and Extending Functionality
 
-### 11.3 Files for Colleagues to Change During Implementation
-
-The new paths below are a **proposed layout: they do not yet exist and are not currently available interfaces**.
-An implementation PR may adjust names, but should retain separation of responsibilities and update this design.
-All executable changes stay within the standalone knowledge service; existing plugin packages are not modified.
+New paths below are a **proposed layout, not existing files or available interfaces**. Implementation may adjust
+names while retaining responsibilities and updating this design. Executable changes stay within the standalone service, not plugins.
 
 | Location | Future implementation work |
 |---|---|
-| [Authority and applicability](../accessibility-kb/packages/common/requirements/authority-and-applicability.md) | Define the scope in which MAS is mandatory, version selection, clause citations, and missing/conflicting basis handling; do not unconditionally place every task within an unknown scope |
-| [Common descriptor](../accessibility-kb/packages/common/package.json) | Update `sources.mas` and new guidance entries/relations. Set `reviewed` only after source review; it does not mean a deployment is connected or a user is authorized |
-| Proposed Common addition `requirements/mas-rules.md` | Record rule-query prerequisites, citation format, review usage steps, and boundaries; register it as an entry, without tokens or private connections |
-| Relevant procedures such as [Find](../accessibility-kb/packages/common/procedures/find.md) and [design review](../accessibility-kb/packages/common/procedures/review-design.md) | Reference MAS usage requirements; applicable tasks cannot bypass missing basis and claim standards review is complete |
-| Proposed addition `knowledge-server/config/mas.example.json` | Nonsensitive configuration template: enable switch, trusted endpoint/transport, authentication references, and explicit timeout/pagination/cache policy; actual values require owner confirmation |
-| Proposed addition `knowledge-server/src/mas/config.mjs` | Load and strictly validate deployment configuration; reject unknown/unsafe settings and never accept connections or credentials from model tool arguments |
-| Proposed addition `knowledge-server/src/mas/client.mjs` | Dedicated MAS MCP client: capability handshake, read-only tool mapping, identity, and session lifecycle |
-| Proposed addition `knowledge-server/src/mas/rules.mjs` | Normalize rule/search responses; handle version binding, applicable context, source errors, and basis completeness checks |
-| [MCP handler](src/runtime/knowledge-mcp.mjs) / [entry point](cli.mjs) | Inject the MAS service and add tools/error boundaries; do not replace existing tool names or static behavior |
-| [Package](package.json) / [lockfile](package-lock.json) | If the MCP SDK/authentication requires runtime dependencies, declare and lock them explicitly and update installation instructions; do not continue claiming a zero-dependency MAS runtime |
-| Proposed additions `knowledge-server/tests/mas-config.test.mjs`, `mas-client.test.mjs`, `mas-rules.test.mjs` | Positive/negative tests for configuration, protocol, versions, and errors; synthetic inputs must not masquerade as live qualification |
-| [MCP tests](tests/knowledge-mcp.test.mjs) / [standalone tests](tests/standalone.test.mjs) | One host endpoint, local-tool compatibility, minimal installation, and isolation when MAS is unavailable |
-| [Contribution guidelines](../accessibility-kb/governance/contribution.md), [evaluation rubric](../accessibility-kb/evaluations/README.md), [README](README.md), and this document | Approval/confidentiality policy, misuse counterexamples, actual registration methods, runtime dependencies, and verified capabilities |
+| [Authority/applicability](../accessibility-kb/packages/common/requirements/authority-and-applicability.md); proposed Common addition requirements/mas-rules.md | Document section 11.6 policy, query prerequisites, version/citation format, and review usage; register the new entry. |
+| Common descriptor (section 2.1); [Find](../accessibility-kb/packages/common/procedures/find.md) / [design review](../accessibility-kb/packages/common/procedures/review-design.md) | Bind sources/guidance/relations under section 4; procedures reference MAS policy. |
+| Proposed knowledge-server/config/mas.example.json and knowledge-server/src/mas/config.mjs | Ship nonsensitive template and strict loader for section 11.4; reject unknown/unsafe settings. |
+| Proposed knowledge-server/src/mas/client.mjs and knowledge-server/src/mas/rules.mjs | Implement the adapter/rules split in section 11.2 and response semantics in section 11.5. |
+| MCP handler / entry point (section 2.1) | Inject MAS with section 11.2's tool/error boundaries. |
+| [Package](package.json) / [lockfile](package-lock.json) | Declare/lock any SDK/auth runtime dependencies; review minimal installation and update installation/zero-dependency claims. |
+| Proposed knowledge-server/tests/mas-config.test.mjs, mas-client.test.mjs, mas-rules.test.mjs; [MCP](tests/knowledge-mcp.test.mjs) / [standalone tests](tests/standalone.test.mjs) | Cover section 11.8 protocol, local compatibility, single endpoint, isolated minimal installation, and unavailable MAS. |
+| Governance/evaluations (section 2.1), service README, and this design | Approval/confidentiality, misuse cases, registration, dependencies, and qualified capability status. |
 
-Connection settings do not belong in entry/source descriptors or the [generated reference](references/knowledge.json).
-`sources.mas.locator` locates the rule source; it is not a general transport/auth configuration field. If rule responses
-require a new structured protocol, define a separate schema and its validation; do not insert ad hoc unknown fields
-such as endpoints or tokens into the content schema. Content changes still generate new snapshots and retain
-old pins as described in section 9.
+Connection settings belong neither in descriptors nor the [generated reference](references/knowledge.json).
+`sources.mas.locator` locates rules, not transport/auth settings. New structured rule responses need a separate
+schema/validation, not ad hoc endpoint/token fields in content. Content publication remains section 9.
 
 ### 11.4 Configuration and Authentication: Ship Capabilities, Not Identities
 
-The package provides the adapter, schemas, configuration templates, and default information permitted for
-distribution; **actual deployment values remain outside the repository**. A future explicit environment variable
-(for example, `A11Y_ASSIST_MAS_CONFIG`, with its name to be finalized during implementation) could point to an
-absolute configuration path. This variable is not recognized today; setting it now will not make MAS available.
+Ship adapter/schemas/templates/permitted defaults with **live sources disabled** and deployment values outside the
+repository. Proposed `A11Y_ASSIST_MAS_CONFIG` would name an absolute config path; it is provisional and unrecognized today.
 
-At minimum, the configuration contract specifies an explicit enabled state, transport, trusted target, authentication
-method reference, request deadline, retry/pagination limits, allowed read-only capabilities, and caching policy.
-Invalid configuration must fail before MAS use, without guessing an address, skipping authentication, or switching
-sources. Whether a configuration error fails the entire startup remains to be finalized by error type; unconfigured
-or disabled MAS must not block the existing local knowledge tools.
+The contract must specify enabled state, transport, trusted target, auth-method reference, deadline, retry/pagination
+limits, read-only allowlist, and cache policy. Invalid settings fail before MAS use: no guessed address, skipped auth,
+or source substitution. Startup-wide failure policy remains to be finalized by error type; unconfigured/disabled MAS
+must allow initialization and local tools, with explicit unavailable/not-configured MAS errors.
 
-- Endpoints come from trusted administrator/user configuration; the model cannot specify URLs or arbitrary
-  execution commands through query arguments. If the official service supports only stdio, permit only trusted
-  configured executables and fixed arguments; never execute commands from rule bodies.
-- Use officially supported authentication with explicit audience/scopes; do not blindly forward host tokens upstream.
-  When user login is required, use the host/official authorization flow; never ask for secrets in model conversation.
-- Credentials come from secure storage or the runtime environment, never templates, logs, artifacts, error bodies,
-  or test fixtures. Logs contain only permitted diagnostic metadata; sanitize upstream errors before returning them.
-- A MAS query sends necessary domain fields to that service, such as rule ID, version, product/platform context,
-  or minimal query text. By default, do not send source code, work items, account/machine inventories, or whole
-  conversations. Free text needs length and data boundaries, and callers must be clearly told it will be sent upstream.
-- Enable only official read-only query capabilities; do not expose rule updates, tenant administration, file reads,
-  provider execution, or similar functionality.
+- **Trusted target:** fixed administrator/user-configured endpoint, never model-supplied URLs/commands/credentials. For official stdio-only services, use trusted executables and fixed arguments, never rule-body commands.
+- **Authentication:** official flow with explicit audience/scopes; no blind host-token forwarding. User login uses host/official authorization, never secrets in model conversation.
+- **Secrets/diagnostics:** secure storage or runtime environment only; no credentials in templates, logs, artifacts, errors, or fixtures. Log permitted diagnostic metadata and sanitize upstream errors.
+- **Query data:** disclose upstream transmission of necessary rule IDs, versions, product/platform context, or minimal text. Bound free-text length/data; default excludes source code, work items, account/machine inventories, and whole conversations.
+- **Capabilities:** official read-only queries only; no rule updates, tenant administration, file reads, or provider execution.
 
 ### 11.5 External Capabilities and Rule Responses (Proposed, Not Implemented)
 
-The following additions are proposed within the same KB MCP. Final names/parameters require review against
-the actual MAS protocol:
+These tools are **proposed, not registered**; finalize names/parameters against the confirmed upstream protocol:
 
 | Proposed KB tool | Purpose | Key restrictions |
 |---|---|---|
-| `a11y_kb_mas_status` | Report states such as unconfigured, disabled, awaiting authentication, unavailable, or confirmed queryable | Distinguish configured from actually probed successfully; success includes verification scope/time, not readiness inferred from configuration alone |
-| `a11y_kb_mas_search` | Find candidate MAS clauses by rule/product context | Return candidates and pagination/completeness information; top-N results are not all applicable requirements |
-| `a11y_kb_mas_read` | Read the complete basis by exact rule ID and requested version | Explicitly fail or report incompleteness if that version is unavailable or the response is summarized/truncated; do not automatically substitute latest |
-| `a11y_kb_mas_check_basis` | Check whether the caller's submitted basis set has the required sources/versions/context | Checks basis completeness only; caller-supplied IDs do not prove rules were read, and no product PASS is issued |
+| `a11y_kb_mas_status` | Unconfigured, disabled, auth-required, unavailable, or confirmed queryable | Configuration is not a successful probe; success identifies verification scope/time. Local availability follows section 11.4. |
+| `a11y_kb_mas_search` | Rule/product-context candidates with pagination/completeness | No match means this query only, not no applicable rules; top-N/unfinished pagination cannot imply full coverage. |
+| `a11y_kb_mas_read` | Complete rule by exact ID/requested version | Missing rule/version fails; summaries/truncation are incomplete. Never substitute approximate rules, WCAG mappings, or latest. |
+| `a11y_kb_mas_check_basis` | Submitted sources/versions/context completeness | Missing required fields fail; caller-supplied IDs do not prove reading. Scope/completion limits are in section 11.6. |
 
-A proposed common response envelope identifies `source: mas`, source identity from the configured service, rule ID,
-actual standard version/revision, official locator, retrieval time, full-body/summary classification, content completeness,
-and applicable context. A hash can identify received bytes but does not by itself prove official authenticity or
-complete rule coverage. Mark information not returned by the official service as unknown, rather than inferring it
-in the adapter; missing required fields must prevent the basis check from passing.
+The response envelope must identify `source: mas`, configured-service identity, rule ID, actual standard version/revision,
+official locator, retrieval time, body/summary classification, completeness, and applicable context. Hashes identify bytes,
+not official authenticity or full rule coverage. Unreturned information is unknown, never inferred by the adapter.
 
-Pin the rule version and acquired basis references for a review. If the upstream offers only a floating latest or cannot
-provide a traceable revision, report insufficient version basis rather than silently mixing revisions. Confirm reference
-retention/caching permissions first; if storing bodies is not permitted, retain only permitted IDs, versions, and
-references and revalidate at use time. Do not treat a new query result as the original result. Identity-dependent
-query results must not be reused across users/tenants.
+Bind each review to its rule version and acquired references. Floating latest or untraceable revisions mean insufficient
+version basis, not silent revision mixing. A re-query is not the original result; retention/revalidation rules are in section 11.7.
 
 ### 11.6 “Must Follow MAS”: Policy and Enforcement Boundaries
 
-**Policy belongs in the knowledge layer, basis checks in the service layer; consumers still own review execution
-and publication gates.** This design does not silently change existing workflow gates.
+**Knowledge owns policy, the service checks basis completeness, and consumers own execution/publication gates.**
+For confirmed MAS scope, obtain scope/version → inspect candidates/read full rules → record IDs, versions,
+applicability, and authorized exception grounds → conclude. Unknown scope needs context, not “inapplicable.”
+Local methods/cases, guessed WCAG mappings, or component support cannot replace MAS clauses or grant exemptions.
 
-For tasks confirmed to be subject to MAS, callers first obtain scope/standard version, inspect candidates and read
-the complete relevant rules, record rule IDs, versions, applicability, and grounds for exceptions, and only then form
-review conclusions. Request context when scope cannot be confirmed; “unknown” is not “inapplicable.” Exceptions
-need formally authorized grounds; lack of component support does not automatically grant an exemption.
-
-Basis checks should return explicit `complete` / `incomplete` results and gap reasons (final enum pending protocol
-review). `complete` means only that the **specified scope and submitted basis set** satisfy the check. It does not
-prove that search covered all MAS rules or that a product implementation complies, and does not authorize automatic
-Bug closure or PR publication. To enforce a block on downstream review completion, the consumer must explicitly
-invoke and enforce the check; merely adding a tool cannot guarantee callers will use it.
+Return `complete` / `incomplete` and gaps (enum pending review), scoped to the **specified scope and submitted basis set**,
+not exhaustive discovery, product compliance, Bug closure, or PR publication. Consumers must invoke/enforce any
+completion block; adding a tool neither guarantees use nor changes workflow gates. Tool-specific failures are in section 11.5.
 
 | Situation | Required outcome |
 |---|---|
-| Unconfigured/disabled/insufficient authentication | MAS is unavailable or authentication is required; local knowledge remains usable but cannot replace MAS |
 | Timeout, rate limit, upstream error | Bounded failure/retries with distinguishable errors; never a success-shaped empty rule set |
-| No search results | Explicitly means no match for this query only, not proof that the task has no applicable rules |
-| Unfinished pagination or truncated results | Mark incomplete; do not claim all standards are covered |
-| Requested rule or version does not exist | Exact failure; no substitution with approximate rules, WCAG mappings, or latest |
 | Source conflict/revision change/unknown scope | Preserve conflicts and gaps and request confirmation; do not automatically adjudicate or mix the basis |
 | Complete basis but no real verification performed | Report only standards-basis readiness; runtime behavior remains unverified, with no compliance PASS |
 
 ### 11.7 Isolating MAS Caching from Static Publication
 
-For the first version, **disable persistent MAS body caching** and process data only within explicitly authorized
-request/session scope. Implement caching only after the service owner explicitly permits storage, validity periods,
-revocation, user isolation, and redistribution. Cache keys must account for service identity, authorization context,
-rule ID, and version; both content and access must be controlled.
+Initially **disable persistent MAS body caching**; process data only in authorized request/session scope. Owner
+permission must precede storage, validity-period, revocation, user-isolation, and redistribution policies. Without body
+storage permission, retain only permitted IDs/versions/references and revalidate at use time. Never reuse identity-dependent
+results across users/tenants; cache keys bind service identity, authorization context, rule ID, and version, with controlled content/access.
 
-Place caches in a separate controlled location outside the repository, not in the local public snapshot cache, Git,
-KB manifest, or knowledge-distribution. Offline operation, expiry, permission changes, and unverifiable revisions
-must not silently reuse old clauses as current MAS. If the official service allows offline pinned versions, separately
-define validity periods and a policy explicitly selected by the caller. Static snapshot pins and live MAS basis use
-separate source identities; never write live responses directly into files associated with an old pin.
+Use a separate controlled location outside the repository, public snapshot cache, Git, KB manifest, and distribution
+artifacts. Offline/expired/permission-changed/unverifiable data cannot silently stand in for current clauses.
+Officially permitted offline pins need separately defined validity periods and explicit caller policy selection.
+Live MAS and static snapshots have distinct source identities; never write live responses into old-pinned files.
 
 ### 11.8 Phased Delivery and Acceptance
 
-1. **Protocol confirmation:** complete the endpoint/transport/auth/schema/version/permission checklist with the
-   owner and obtain authorized interface examples. Keep implementation blocked without a real contract;
-   mocks cannot substitute for official readiness.
-2. **Adapter implementation:** implement configuration, secure authentication, handshake, allowlisted tools, and
-   response validation while maintaining local-tool compatibility. Separately review new SDK/runtime dependencies
-   and the minimal installation package; update zero-dependency claims and installation instructions.
-3. **Rule semantics:** implement version binding, complete rule reads, pagination, and standards-basis checks;
-   update Common policy and guidance.
-4. **Automated tests:** use a clearly labeled synthetic MAS server to cover success, unknown tools/schemas,
-   authentication/timeouts/rate limits, incomplete pagination, version drift, missing fields, error sanitization,
-   rejection of arbitrary URLs/tools, and cross-identity cache isolation. When returned bodies contain instruction
-   injection, verify that no commands execute, no secrets are forwarded, and authorization does not expand.
-5. **Single-endpoint integration:** an isolated host registers only KB and can use MAS tools; all three local tools
-   remain usable when MAS is unconfigured/offline. Confirm that MAS tools are not actually supplied through a
-   second endpoint registered separately by the host.
-6. **Real qualification:** in an explicitly authorized environment, use the real MAS service to verify authentication,
-   original rule text/versions, citations, and failure modes; record reviewable results. Then run positive/negative
-   evaluations demonstrating “missing MAS does not yield false completion,” “incorrect versions are not applied,”
-   and “a complete basis does not equal product compliance.”
+1. **Confirm protocol:** complete section 11.1 with the owner and authorized examples; implementation stays blocked without a real contract, not unblocked by mocks.
+2. **Implement adapter:** sections 11.2–11.4 configuration/auth/handshake/allowlist/validation and section 11.3 dependency/minimal-package review; retain local compatibility.
+3. **Implement rule semantics:** sections 11.5–11.7 version binding, full reads, pagination, basis checks, Common policy, and data isolation.
+4. **Synthetic tests:** clearly labeled server covers success, unknown tools/schemas, auth/timeouts/rate limits, unfinished pagination, version drift, missing fields, sanitized errors, arbitrary URL/tool rejection, and cross-identity cache isolation. Injected instructions in bodies must execute no commands, forward no secrets, and expand no authorization.
+5. **Single-endpoint integration:** isolated host registers only KB, uses MAS, and retains all three local tools when MAS is unconfigured/offline; no hidden second host-registered endpoint.
+6. **Real qualification:** explicitly authorized real MAS validates auth, original text/versions, citations, and failures with reviewable results. Positive/negative evaluations must show missing MAS never yields false completion, wrong versions are not applied, and complete basis is not product compliance.
 
-Only after this acceptance is complete should the corresponding capabilities in the README and this section
-change from “planned” to supported.
+Only completed acceptance permits the README and design to label the corresponding capability supported rather than planned.

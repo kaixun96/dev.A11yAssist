@@ -178,6 +178,16 @@ Each row uses a Python callback compatible with Playwright's event metadata and
 removes that same listener afterward. Observed page-script errors still prevent
 a conclusive row; callback compatibility must not disable error detection.
 
+Failed preflight never triggers scenario actions or accepts a behavioral verdict.
+While the original budget remains, the runner may retain an original-target
+screenshot and document-root accessibility snapshot as `environment-diagnostic`
+evidence. Authentication redirects and password/one-time-code input pages are
+excluded, including a final state check before writing the bounded 4 MiB bundle.
+These artifacts do not change failed preflight/postcheck flags or the
+row's blocked/inconclusive status. The original failure and any diagnostic-capture
+error are retained separately. Blocked-request diagnostics include method, body
+byte count and whether a query exists, but not query values, headers or body contents.
+
 The provider must preserve native correlation and reconcile unknown outcomes.
 Success includes observed owned-browser/process cleanup, not process presence or
 a claimed receipt. A configured discovery connection can retain one evaluator

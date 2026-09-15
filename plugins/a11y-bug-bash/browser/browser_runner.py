@@ -260,6 +260,14 @@ def confirm_read_only_response(transaction, response):
                        responseContentType=content_type, confirmedAt=stamp())
 
 
+def credential_inputs_present(page):
+    frames = page.frames
+    if len(frames) > 16:
+        raise RuntimeError("Failure diagnostic credential guard exceeds the frame bound")
+    return any(frame.locator('input[type="password"], input[autocomplete="one-time-code"]').count()
+               for frame in frames)
+
+
 def run(request, output, policy):
     validate_request(request)
     validate_policy(policy)
@@ -335,6 +343,8 @@ def run(request, output, policy):
                             blocked_requests.append({"url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
                                                      "type": route.request.resource_type,
                                                      "method": route.request.method,
+                                                     "hasQuery": bool(parsed.query),
+                                                     "bodyBytes": len(route.request.post_data_buffer or b""),
                                                      "expectedTelemetryDenial": telemetry is not None})
                         route.abort()
 
@@ -426,7 +436,7 @@ def run(request, output, policy):
                         row["scenarioPreflight"] = row["capturePreflight"]
                         save(state_path, report)
                         if not row["capturePreflight"]["verified"]:
-                            raise RuntimeError("Scenario-scoped capture preflight failed; no trigger or capture")
+                            raise RuntimeError("Scenario-scoped capture preflight failed; no trigger or accepted capture")
                         for step in definition["steps"]:
                             if time.monotonic() >= deadline:
                                 raise TimeoutError("Browser scenario budget exhausted")
@@ -483,20 +493,53 @@ def run(request, output, policy):
                             row.pop("reason", None)
                     except (PlaywrightError, RuntimeError, TimeoutError) as error:
                         row.update(status="blocked", reason=str(error))
+                        row["scenarioFailure"] = str(error)
                     try:
                         if row.get("capturePreflight", {}).get("verified"):
                             row["capturePreflight"] = capture_health(
                                 page, request, not errors and not dialogs and critical_failures[0] == failure_start)
                             save(state_path, report)
                             if not row["capturePreflight"]["verified"]:
-                                row.update(status="blocked", reason="Environment changed before capture; capture not attempted")
-                                continue
+                                row.update(status="blocked", reason="Environment changed before capture; scenario evidence not accepted")
+                                row["scenarioFailure"] = row["reason"]
+                        if row.get("capturePreflight", {}).get("verified"):
                             screenshot = directory / (row["id"] + ".png")
                             page.screenshot(path=str(screenshot))
                             tree = directory / (row["id"] + ".aria.txt")
                             tree.write_text(page.locator(":root" if definition.get("inspection") else "body").aria_snapshot(),
                                             encoding="utf-8")
                             row["evidence"] = [{"path": file.name, "sha256": sha256(file)} for file in (screenshot, tree)]
+                            row["evidencePurpose"] = "scenario-observation"
+                        else:
+                            row["evidencePurpose"] = "environment-diagnostic"
+                            try:
+                                remaining_ms = int((deadline - time.monotonic()) * 1000)
+                                if remaining_ms <= 0 or page.is_closed():
+                                    raise TimeoutError("Original budget or page unavailable for failure diagnostics")
+                                if authenticating[0] or page.url != request["target"]:
+                                    raise RuntimeError("Failure diagnostics are restricted to the original target")
+                                if credential_inputs_present(page):
+                                    raise RuntimeError("Credential-entry pages are excluded from failure diagnostics")
+                                screenshot = directory / (row["id"] + ".png")
+                                image_bytes = page.screenshot(timeout=min(5000, remaining_ms))
+                                remaining_ms = int((deadline - time.monotonic()) * 1000)
+                                if remaining_ms <= 0:
+                                    raise TimeoutError("Original diagnostic capture budget exhausted")
+                                tree = directory / (row["id"] + ".aria.txt")
+                                tree_text = page.locator(":root").aria_snapshot(timeout=min(5000, remaining_ms))
+                                if time.monotonic() >= deadline:
+                                    raise TimeoutError("Failure diagnostics exceeded the original budget")
+                                if (page.url != request["target"] or
+                                        credential_inputs_present(page)):
+                                    raise RuntimeError("Page changed into an unqualified diagnostic state")
+                                if len(image_bytes) + len(tree_text.encode("utf-8")) > 4 * 1024 * 1024:
+                                    raise RuntimeError("Failure diagnostics exceed the 4MiB artifact bound")
+                                screenshot.write_bytes(image_bytes)
+                                tree.write_text(tree_text, encoding="utf-8")
+                                row["evidence"] = [{"path": file.name, "sha256": sha256(file)}
+                                                   for file in (screenshot, tree)]
+                            except (PlaywrightError, OSError, RuntimeError, TimeoutError) as error:
+                                row["diagnosticCaptureError"] = str(error)
                     finally:
                         row["pageErrors"] = [str(error) for error in errors[:20]]
                         row["unexpectedDialogs"] = dialogs[:20]
@@ -505,10 +548,12 @@ def run(request, output, policy):
                             page, request, not errors and not dialogs and critical_failures[0] == failure_start)
                         if not row["capturePostcheck"]["verified"]:
                             row.update(status="inconclusive", reason="Capture postcheck found an unexpected page/environment state")
+                            row["evidencePurpose"] = "environment-diagnostic"
                         if unresolved_transactions(report, transaction_start):
                             report["unresolvedTransaction"] = True
                             row.update(status="inconclusive",
                                        reason="Server request effects are unresolved; independent server-state/reset verification required before another row")
+                            row["evidencePurpose"] = "environment-diagnostic"
                         save(state_path, report)
                         page.remove_listener("pageerror", on_error)
                 report["blockedRequests"] = blocked_requests

@@ -272,6 +272,16 @@ class Page:
         return types.SimpleNamespace(status=200)
     def is_closed(self): return False
     def evaluate(self, script): return {"visible":True,"focused":True}
+    @property
+    def frames(self): return [self]
+    def screenshot(self, path=None, **kwargs):
+        value = b"UNIT DIAGNOSTIC; not accepted evidence"
+        if path is not None: Path(path).write_bytes(value)
+        return value
+    def locator(self, selector):
+        if selector.startswith('input[type="password"]'): return types.SimpleNamespace(count=lambda:0)
+        assert selector == ":root", "Failed preflight must not inspect scenario assertion targets"
+        return types.SimpleNamespace(aria_snapshot=lambda **kwargs: "UNIT DIAGNOSTIC TREE")
 class Context:
     closed = False
     def __init__(self, page): self.pages = [page]; page.context = self
@@ -294,6 +304,12 @@ assert context.closed and not browser.is_connected()
 assert report["rows"][0]["status"] == "inconclusive"
 assert not report["rows"][0]["capturePreflight"]["noUnexpectedPageState"]
 assert not report["rows"][0]["capturePostcheck"]["verified"]
+assert report["rows"][0]["evidencePurpose"] == "environment-diagnostic"
+assert len(report["rows"][0]["evidence"]) == 2
+assert {item["path"] for item in report["rows"][0]["evidence"]} == {
+    request["rows"][0]["id"] + ".png", request["rows"][0]["id"] + ".aria.txt"}
+assert report["rows"][0]["pageErrors"] == ["unit page-script error"]
+assert "no trigger" in report["rows"][0]["scenarioFailure"]
 class Request:
     method = "POST"
     resource_type = "fetch"
@@ -302,7 +318,7 @@ class Request:
     def __init__(self, url): self.url = url
 class Target:
     def count(self): return 1
-    def aria_snapshot(self): return "UNIT TREE; not page evidence"
+    def aria_snapshot(self, **kwargs): return "UNIT TREE; not page evidence"
 class BootstrapPage(Page):
     def __init__(self, mode): super().__init__(); self.mode = mode
     def goto(self, url, **kwargs):
@@ -329,7 +345,13 @@ class BootstrapPage(Page):
             self.listeners["response"](types.SimpleNamespace(status=503,url="https://example.org/required?secret=redact",
                 request=types.SimpleNamespace(resource_type="fetch")))
         return types.SimpleNamespace(status=200)
-    def locator(self, selector): return Target()
+    def locator(self, selector):
+        if selector.startswith('input[type="password"]'): return types.SimpleNamespace(count=lambda:0)
+        return Target()
+    def screenshot(self, path=None, **kwargs):
+        value = b"UNIT IMAGE; not page evidence"
+        if path is not None: Path(path).write_bytes(value)
+        return value
     def get_by_role(self, role, **kwargs):
         page = self
         class ActionTarget:
@@ -340,7 +362,6 @@ class BootstrapPage(Page):
             def get_attribute(self, name): return "password" if page.mode == "password" else "text"
             def fill(self, value): page.actionPerformed = True
         return ActionTarget()
-    def screenshot(self, path): Path(path).write_bytes(b"UNIT IMAGE; not page evidence")
     def wait_for_timeout(self, milliseconds): time.sleep(milliseconds / 1000)
 class BootstrapContext(Context):
     def route(self, pattern, handler): self.router = handler
@@ -396,6 +417,116 @@ for mode in ("good","bad-response","unknown","pending","request-failed",
         assert transaction["state"] != "read-only-confirmed"
         assert report["rows"][0]["status"] == "inconclusive"
         assert report["unresolvedTransaction"]
+        assert report["rows"][0]["evidencePurpose"] == "environment-diagnostic"
+class DeniedPage(Page):
+    def goto(self, url, **kwargs):
+        incoming = Request("https://example.org/blocked?token=private-query")
+        incoming.post_data_buffer = b"private-request-body"
+        self.context.router(types.SimpleNamespace(request=incoming,
+            continue_=lambda: (_ for _ in ()).throw(AssertionError("Denied request was sent")),
+            abort=lambda: None))
+        return types.SimpleNamespace(status=200)
+page = DeniedPage(); context = BootstrapContext(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(request, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+assert report["rows"][0]["status"] == "inconclusive"
+assert report["rows"][0]["evidencePurpose"] == "environment-diagnostic"
+assert report["blockedRequests"] == [{"url":"https://example.org/blocked","type":"fetch",
+    "method":"POST","hasQuery":True,"bodyBytes":len(b"private-request-body"),
+    "expectedTelemetryDenial":False}]
+assert "private-query" not in json.dumps(report) and "private-request-body" not in json.dumps(report)
+class DiagnosticFailurePage(Page):
+    def screenshot(self, **kwargs): raise api.Error("unit diagnostic capture failed")
+page = DiagnosticFailurePage(); context = Context(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(request, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+assert report["rows"][0]["status"] == "inconclusive"
+assert report["rows"][0]["diagnosticCaptureError"] == "unit diagnostic capture failed"
+assert "no trigger" in report["rows"][0]["scenarioFailure"]
+assert report["ownedBrowserClosed"] and page.removed
+class CredentialPage(Page):
+    def locator(self, selector):
+        if selector.startswith('input[type="password"]'): return types.SimpleNamespace(count=lambda:1)
+        raise AssertionError("Credential page must not be inspected")
+    def screenshot(self, **kwargs): raise AssertionError("Credential page must not be captured")
+page = CredentialPage(); context = Context(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(request, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+assert report["rows"][0]["status"] == "inconclusive"
+assert "Credential-entry" in report["rows"][0]["diagnosticCaptureError"]
+assert "evidence" not in report["rows"][0]
+class CredentialFramePage(Page):
+    @property
+    def frames(self):
+        return [self, types.SimpleNamespace(locator=lambda selector:types.SimpleNamespace(count=lambda:1))]
+    def screenshot(self, **kwargs): raise AssertionError("Credential frame must not be captured")
+page = CredentialFramePage(); context = Context(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(request, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+assert report["rows"][0]["status"] == "inconclusive"
+assert "Credential-entry" in report["rows"][0]["diagnosticCaptureError"]
+assert "evidence" not in report["rows"][0]
+class RedirectDuringDiagnostic(Page):
+    def screenshot(self, **kwargs):
+        self.url = "https://example.org/login"
+        return b"UNIT DIAGNOSTIC"
+class OversizedDiagnostic(Page):
+    def screenshot(self, **kwargs): return b"x" * (4 * 1024 * 1024 + 1)
+for page_class, expected_error in ((RedirectDuringDiagnostic,"unqualified"),(OversizedDiagnostic,"4MiB")):
+    page = page_class(); context = Context(page); browser = Browser()
+    with tempfile.TemporaryDirectory() as output, \\
+         patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+         patch.object(m.sys, "platform", "win32"), \\
+         patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+         patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+         patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+        report = m.run(request, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+        assert not list(Path(output).rglob("*.png")) and not list(Path(output).rglob("*.aria.txt"))
+    assert report["rows"][0]["status"] == "inconclusive"
+    assert expected_error in report["rows"][0]["diagnosticCaptureError"]
+    assert "evidence" not in report["rows"][0] and report["ownedBrowserClosed"]
+class ChangingHealthPage(BootstrapPage):
+    def __init__(self): super().__init__("good"); self.health_calls = 0
+    def evaluate(self, script):
+        if script == "document.hasFocus()": return True
+        self.health_calls += 1
+        return {"visible":True,"focused":self.health_calls == 1}
+page = ChangingHealthPage(); context = BootstrapContext(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(request, output, {"schemaVersion":3,"allowedTargets":[request["target"]],"assetHosts":[],
+        "connection":{"mode":"ephemeral"},"requests":[{
+            "url":"https://example.org/bootstrap","methods":["POST"],"resourceTypes":["fetch"],
+            "readOnly":{"bodySha256":hashlib.sha256(b"").hexdigest(),"responseKeys":["navigation"]}
+        }],"scanner":None})
+assert report["rows"][0]["status"] == "inconclusive"
+assert report["rows"][0]["evidencePurpose"] == "environment-diagnostic"
+assert "Environment changed" in report["rows"][0]["scenarioFailure"]
+assert len(report["rows"][0]["evidence"]) == 2
 print("Mocked event mapping only; no browser or AT execution")
 `;
   const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });

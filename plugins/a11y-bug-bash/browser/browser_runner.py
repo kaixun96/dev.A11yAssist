@@ -461,11 +461,22 @@ def run(request, output, policy):
                             critical_failures[0] += 1
                             route.abort()
                             return
+                        transport_trace = {}
                         try:
-                            forwarded = policy_module.forward_without_redirects(route, min(15000, remaining_ms))
-                        except PlaywrightError:
+                            forwarded = policy_module.forward_without_redirects(
+                                route, min(15000, remaining_ms), trace=transport_trace)
+                        except PlaywrightError as error:
                             critical_failures[0] += 1
                             report["authorizedTransportFailureCount"] = report.get("authorizedTransportFailureCount", 0) + 1
+                            failures = report.setdefault("authorizedTransportFailures", [])
+                            if len(failures) < 100:
+                                failures.append({**transport_trace,
+                                                 "url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+                                                 "method": route.request.method,
+                                                 "type": route.request.resource_type,
+                                                 "timestamp": stamp(),
+                                                 "failureKind": policy_module.transport_failure_kind(error)})
+                            report["authorizedTransportFailuresTruncated"] = report["authorizedTransportFailureCount"] > len(failures)
                             route.abort()
                             save(state_path, report)
                             return

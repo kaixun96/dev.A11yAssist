@@ -4,6 +4,7 @@ import base64
 import hashlib
 import json
 import re
+import sys
 from urllib.parse import parse_qsl, urljoin, urlsplit
 
 WINDOWS_ACCOUNTS_EXTENSION_ID = "ppnbnpeolgkicgegkbkbjmhlideopiji"
@@ -488,10 +489,31 @@ def enable_guarded_network(context, page):
     return session
 
 
-def forward_without_redirects(route, timeout_ms):
+def transport_failure_kind(error):
+    text = str(error)[:8192].lower()
+    for kind, markers in (
+        ("timeout", ("timeout", "timed out")),
+        ("invalid-header", ("invalid header", "invalid character in header", "invalid http token")),
+        ("http-parser", ("parse error", "hpe_")),
+        ("connection-reset", ("econnreset", "socket hang up", "connection reset")),
+        ("dns", ("enotfound", "eai_again", "getaddrinfo")),
+        ("tls", ("certificate", "err_cert", "ssl", "tls")),
+        ("context-closed", ("context has been disposed", "browser has been closed", "target closed")),
+        ("interception-lifetime", ("interceptionid", "interception id")),
+        ("redirect", ("redirect",)),
+    ):
+        if any(marker in text for marker in markers):
+            return kind
+    return "other-transport-error"
+
+
+def forward_without_redirects(route, timeout_ms, trace=None):
     # Browser redirect hops are not guaranteed to re-enter Playwright routing.
+    trace = {} if trace is None else trace
+    trace["stage"] = "fetch"
     response = route.fetch(max_redirects=0, timeout=timeout_ms)
     try:
+        trace.update(stage="response", originStatus=response.status)
         if 300 <= response.status < 400 and response.status != 304:
             result = {"state": "redirect-rejected", "status": response.status}
             location = response.headers.get("location")
@@ -499,11 +521,15 @@ def forward_without_redirects(route, timeout_ms):
                 parsed = urlsplit(urljoin(route.request.url, location))
                 if parsed.scheme == "https" and parsed.hostname and not parsed.username and not parsed.password:
                     result["destination"] = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+            trace["stage"] = "abort-redirect"
             route.abort()
             return result
+        trace["stage"] = "fulfill"
         route.fulfill(response=response)
         return {"state": "forwarded", "status": response.status}
     finally:
+        if sys.exc_info()[0] is None:
+            trace["stage"] = "dispose"
         response.dispose()
 
 

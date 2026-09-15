@@ -5,6 +5,44 @@ import { fileURLToPath } from 'node:url';
 import { Script } from 'node:vm';
 import { verifyBrowserObservations, validateBrowserParameters, browserRequest } from '../src/runtime/browser-contract.mjs';
 
+test('text spacing is one fixed action, not caller CSS, a preset parameter or a duplicate override', () => {
+  const parameters = { steps: [{ action: 'text-spacing' }], assertions: [], inspection: true };
+  assert.doesNotThrow(() => validateBrowserParameters(parameters));
+  for (const step of [
+    { action: 'text-spacing', css: '* { display:none }' },
+    { action: 'text-spacing', preset: 'custom' },
+    { action: 'text-spacing', script: 'arbitrary()' },
+    { action: 'text-spacing', target: { css: '#main' } }
+  ]) assert.throws(() => validateBrowserParameters({ ...parameters, steps: [step] }));
+  assert.throws(() => validateBrowserParameters({ ...parameters, steps: [...parameters.steps, ...parameters.steps] }));
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const script = `
+import copy,importlib.util,sys
+spec=importlib.util.spec_from_file_location("runner",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+request={"schemaVersion":1,"taskId":"spacing-unit","target":"https://example.org/page","budgetSeconds":30,
+         "viewport":{"width":1280,"height":720},"rows":[{"id":"spacing","steps":[{"action":"text-spacing"}],"assertions":[],"inspection":True}]}
+m.validate_request(request)
+for field in ("css","preset","script","target"):
+    bad=copy.deepcopy(request);bad["rows"][0]["steps"][0][field]="not-authorized"
+    try:m.validate_request(bad)
+    except ValueError:pass
+    else:raise AssertionError("Caller spacing configuration accepted")
+bad=copy.deepcopy(request);bad["rows"][0]["steps"]*=2
+try:m.validate_request(bad)
+except ValueError:pass
+else:raise AssertionError("Duplicate spacing override accepted")
+metadata=m.measurements.text_spacing_record()
+assert metadata["values"]=={"lineHeight":1.5,"paragraphSpacingEm":2,"letterSpacingEm":0.12,"wordSpacingEm":0.16}
+css=m.measurements.TEXT_SPACING_CSS
+for declaration in ("line-height: 1.5 !important","letter-spacing: 0.12em !important",
+                    "word-spacing: 0.16em !important","margin-block-end: 2em !important"):
+    assert declaration in css
+assert "url(" not in css and "@import" not in css
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test('document inspection reads effective media without changing OS or browser settings', () => {
   const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
   const python = 'import ast,json,sys; tree=ast.parse(open(sys.argv[1],encoding="utf-8").read()); f=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=="inspect_document"); print(json.dumps(f.body[0].value.args[0].value))';
@@ -355,7 +393,11 @@ class Browser:
 class Page:
     url = "about:blank"
     viewport_size = request["viewport"]
-    def __init__(self): self.listeners = {}; self.root_snapshots = 0; self.expiry_clock = None
+    def __init__(self):
+        self.listeners = {}; self.root_snapshots = 0; self.expiry_clock = None
+        self.frames = [self]
+        self.content_type = "image/svg+xml"; self.style = None; self.style_at_capture = []
+        self.reject_style = False; self.disappear_style = False; self.fail_removal = False
     def on(self, event, handler):
         setattr(handler, "_pw_impl_instance_", object()); self.listeners[event] = handler
     def remove_listener(self, event, handler):
@@ -378,13 +420,38 @@ class Page:
                     "textAndInputValuesOmitted":True,"frameContentsIncluded":False,
                     "frameElements":0,"nodes":[{"index":0}]}
         if script == "document.hasFocus()": return True
+        if script == "document.contentType": return self.content_type
         return {"visible":True,"focused":True}
-    def screenshot(self, path): Path(path).write_bytes(b"synthetic-unit-image")
+    def add_style_tag(self, *, content):
+        assert content == m.measurements.TEXT_SPACING_CSS
+        if self.reject_style: raise api.Error("synthetic CSP stylesheet rejection")
+        self.style = Style(self.disappear_style, self.fail_removal)
+        return self.style
+    def screenshot(self, path=None, **kwargs):
+        if self.style is not None: self.style_at_capture.append(self.style.connected)
+        data = b"synthetic-unit-image"
+        if path is not None: Path(path).write_bytes(data)
+        return data
     def locator(self, selector):
+        if selector == 'input[type="password"], input[autocomplete="one-time-code"]':
+            return types.SimpleNamespace(count=lambda: 0)
         if selector == "#main": return types.SimpleNamespace(count=lambda: 1)
         assert selector == ":root", "Inspection must not require an HTML body or invented ID"
         self.root_snapshots += 1
-        return types.SimpleNamespace(aria_snapshot=lambda: "synthetic-unit-tree")
+        return types.SimpleNamespace(aria_snapshot=lambda **kwargs: "synthetic-unit-tree")
+class Style:
+    def __init__(self, disappear, fail_removal):
+        self.connected = not disappear; self.fail_removal = fail_removal; self.disposed = False
+    def evaluate(self, expression, css=None):
+        if css is not None:
+            assert css == m.measurements.TEXT_SPACING_CSS
+            assert "element.sheet.disabled" in expression and "!element.media" in expression
+            return self.connected
+        assert "element.remove()" in expression
+        if self.fail_removal: raise api.Error("synthetic owned-style removal failure")
+        self.connected = False
+        return True
+    def dispose(self): self.disposed = True
 class Context:
     closed = False
     def __init__(self, page): self.pages = [page]; page.context = self
@@ -428,6 +495,42 @@ with tempfile.TemporaryDirectory() as output, \\
 assert report["rows"][0]["status"] == "blocked"
 assert "budget exhausted" in report["rows"][0]["reason"]
 assert "documentInspection" not in report["rows"][0] and report["ownedBrowserClosed"]
+spacing = copy.deepcopy(request)
+spacing["target"] = "https://example.org/page"
+spacing["rows"] = [copy.deepcopy(request["rows"][1])]
+spacing["rows"][0]["steps"] = [{"action":"text-spacing"}]
+for condition in ("healthy", "csp", "disappeared", "cleanup-failed", "non-html"):
+    page = Page(); context = Context(page); browser = Browser()
+    page.content_type = "text/html" if condition != "non-html" else "application/json"
+    page.reject_style = condition == "csp"
+    page.disappear_style = condition == "disappeared"
+    page.fail_removal = condition == "cleanup-failed"
+    with tempfile.TemporaryDirectory() as output, \\
+         patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+         patch.object(m.sys, "platform", "win32"), \\
+         patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+         patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+         patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+        try:
+            result = m.run(spacing, output, {"schemaVersion":1,"allowedTargets":[spacing["target"]],"assetHosts":[]})
+        except (RuntimeError, api.Error):
+            assert condition in ("csp", "cleanup-failed", "non-html")
+            result = json.loads((Path(output)/"browser"/"report.json").read_text())
+        else:
+            assert condition in ("healthy", "disappeared")
+    actual = result["rows"][0]
+    assert result["ownedBrowserClosed"] and context.closed
+    if condition == "healthy":
+        assert actual["status"] == "observed-no-issue" and page.style_at_capture == [True]
+        assert actual["textSpacing"]["beforeCaptureVerified"] and actual["textSpacing"]["afterCaptureVerified"]
+        assert actual["textSpacing"]["cleanupState"] == "removed" and page.style.disposed and not page.style.connected
+    elif condition == "disappeared":
+        assert actual["status"] == "inconclusive" and actual["textSpacing"]["cleanupState"] == "removed"
+        assert not actual["textSpacing"]["beforeCaptureVerified"] and not actual["textSpacing"]["afterCaptureVerified"]
+    else:
+        assert result["state"] == "failed" and actual["status"] == "inconclusive"
+        assert actual["textSpacing"]["cleanupState"] == "discarded-with-owned-context"
+        if condition == "csp": assert "CSP" in actual["scenarioFailure"]
 print("Mocked inspection contract only; no browser or AT execution")
 `;
   const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
@@ -466,6 +569,30 @@ test('shared browser assessment rejects forged comparisons and stale or abnormal
     const changed = structuredClone(report);
     change(changed.rows[0]);
     assert.throws(() => verifyBrowserObservations(changed, request));
+  }
+  const spacing = structuredClone(report);
+  spacing.request.rows[0].steps = [{ action: 'text-spacing' }];
+  spacing.rows[0].steps = [{ action: 'text-spacing' }];
+  spacing.rows[0].textSpacing = {
+    preset: 'wcag22-1.4.12', scope: 'main-frame-light-dom',
+    values: { lineHeight: 1.5, paragraphSpacingEm: 2, letterSpacingEm: 0.12, wordSpacingEm: 0.16 },
+    stylesheetSha256: 'a'.repeat(64), state: 'installed', cleanupState: 'removed',
+    beforeCaptureVerified: true, afterCaptureVerified: true
+  };
+  verifyBrowserObservations(spacing, spacing.request);
+  for (const change of [
+    row => { delete row.textSpacing; },
+    row => { row.textSpacing = null; },
+    row => { row.textSpacing.values.lineHeight = 1; },
+    row => { row.textSpacing.stylesheetSha256 = ['a'.repeat(64)]; },
+    row => { row.textSpacing.css = 'caller CSS'; },
+    row => { row.textSpacing.beforeCaptureVerified = false; },
+    row => { row.textSpacing.afterCaptureVerified = false; },
+    row => { row.textSpacing.cleanupState = 'discarded-with-owned-context'; }
+  ]) {
+    const changed = structuredClone(spacing);
+    change(changed.rows[0]);
+    assert.throws(() => verifyBrowserObservations(changed, spacing.request));
   }
 });
 

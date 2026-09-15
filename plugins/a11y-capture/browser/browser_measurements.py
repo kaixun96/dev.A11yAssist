@@ -3,6 +3,46 @@ import hashlib
 import math
 from pathlib import Path
 
+TEXT_SPACING_VALUES = {
+    "lineHeight": 1.5, "paragraphSpacingEm": 2, "letterSpacingEm": 0.12, "wordSpacingEm": 0.16
+}
+TEXT_SPACING_CSS = (
+    "* { line-height: 1.5 !important; letter-spacing: 0.12em !important; "
+    "word-spacing: 0.16em !important; }\n"
+    "p { margin-block-end: 2em !important; }"
+)
+
+
+def text_spacing_record():
+    return {"preset": "wcag22-1.4.12", "scope": "main-frame-light-dom",
+            "values": dict(TEXT_SPACING_VALUES),
+            "stylesheetSha256": hashlib.sha256(TEXT_SPACING_CSS.encode("utf-8")).hexdigest(),
+            "state": "installing", "cleanupState": "pending"}
+
+
+def apply_text_spacing(page):
+    if page.evaluate("document.contentType") not in {"text/html", "application/xhtml+xml"}:
+        raise RuntimeError("Text-spacing preset requires an HTML document")
+    # Use the normal stylesheet API; CSP rejection must propagate without a nonce or bypass.
+    return page.add_style_tag(content=TEXT_SPACING_CSS)
+
+
+def text_spacing_present(style):
+    value = style.evaluate("""(element, css) => element.isConnected &&
+      element.textContent === css && !element.media && !element.disabled &&
+      !!element.sheet && !element.sheet.disabled && element.sheet.cssRules.length === 2""",
+                           TEXT_SPACING_CSS)
+    if type(value) is not bool:
+        raise RuntimeError("Invalid owned text-spacing stylesheet observation")
+    return value
+
+
+def restore_text_spacing(style):
+    removed = style.evaluate("element => { element.remove(); return !element.isConnected; }")
+    if removed is not True:
+        raise RuntimeError("Owned text-spacing stylesheet was not removed")
+    style.dispose()
+
 
 def load_scanner(policy):
     scanner = policy.get("scanner")

@@ -4,7 +4,7 @@
     "name": "kaixun96"
   },
   "metadata": {
-    "version": "0.30.1",
+    "version": "0.31.0",
     "description": "Choose independent accessibility knowledge, evidence and workflow plugins for Copilot CLI"
   },
   "plugins": [
@@ -12,7 +12,7 @@
       "name": "a11y-bug-bash",
       "description": "Feature-scoped accessibility bug bash: context-driven page checks, reused read-only knowledge review, and evidence-separated findings. Uses existing authorized host tools.",
       "source": "./plugins/a11y-bug-bash",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -21,7 +21,7 @@
       "name": "a11y-test-categories",
       "description": "All ten accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.",
       "source": "./plugins/a11y-test-categories",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -30,7 +30,7 @@
       "name": "a11y-setup",
       "source": "./plugins/a11y-setup",
       "description": "Resource-first Windows setup: establish authorized DevBox ownership before preparing selected accessibility tools.",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -39,7 +39,7 @@
       "name": "a11y-knowledge",
       "description": "Read-only accessibility knowledge for any project, including built-in SPDS, Fluent V8/V9 and SharePoint/ODSP guidance selected only when relevant. One installation; no execution setup.",
       "source": "./plugins/a11y-knowledge",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -48,7 +48,7 @@
       "name": "a11y-knowledge-odsp",
       "description": "Compatibility installation for existing ODSP knowledge users. New users install a11y-knowledge, which includes this read-only submodule and all references.",
       "source": "./plugins/a11y-knowledge-odsp",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -57,7 +57,7 @@
       "name": "a11y-intake",
       "source": "./plugins/a11y-intake",
       "description": "Claim-aware work-item intake, acceptance and canonical scenario preparation.",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -66,7 +66,7 @@
       "name": "a11y-file-bug",
       "source": "./plugins/a11y-file-bug",
       "description": "Create explicitly approved Bugs from validated reproduced findings, with detailed reproduction and verified evidence attachments.",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -75,7 +75,7 @@
       "name": "a11y-report",
       "source": "./plugins/a11y-report",
       "description": "Generate the aggregate discovery report: distinct issues, filed Bugs, coverage, evidence, gaps and cleanup.",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -84,7 +84,7 @@
       "name": "a11y-capture",
       "source": "./plugins/a11y-capture",
       "description": "Real Windows assistive-technology evidence and scoped recovery of owned capture resources.",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -93,7 +93,7 @@
       "name": "a11y-validate",
       "source": "./plugins/a11y-validate",
       "description": "Deterministic integrity gates plus independent accessibility evaluation.",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -102,7 +102,7 @@
       "name": "a11y-publish",
       "source": "./plugins/a11y-publish",
       "description": "Reviewer-safe Draft PR evidence and live publication validation.",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }
@@ -111,7 +111,7 @@
       "name": "a11y-workflow",
       "source": "./plugins/a11y-workflow",
       "description": "Optional complete evidence-first composition of shared capabilities with caller-selected source and review tools.",
-      "version": "0.30.1",
+      "version": "0.31.0",
       "author": {
         "name": "kaixun96"
       }

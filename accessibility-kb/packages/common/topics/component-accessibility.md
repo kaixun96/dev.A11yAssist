@@ -11,15 +11,13 @@ when the diff contains no explicit accessibility code. Decorative-only spacing,
 radii or shadows are outside this trigger only with evidence that they cannot
 affect clipping, reflow, targets, focus, readability or semantics.
 
-The migrated AgentOW review policy checks applicable WCAG 2.1 A/AA criteria and
+Check applicable WCAG 2.1 A/AA criteria and
 complete keyboard-only and screen-reader operation for affected UI. Record
 not-applicable only with a diff-based explanation establishing no rendered UI,
 interaction or assistive-output impact. Record runtime-dependent criteria as
 not verified until appropriate evidence exists; source inspection is not a
 conformance pass. A current product may require a newer or additional standard;
 use `common.requirements.authority-and-applicability` to resolve that scope.
-
-Basis: [review trigger and evidence policy](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L19).
 
 ## Native semantics before custom behavior
 
@@ -102,8 +100,8 @@ context needed. No repository-specific library is a prerequisite for this topic.
 
 ## Concrete rendered-contract checks
 
-The following are **draft, generalized historical guidance**, not newly approved
-standards mappings. Inspect the rendered semantic element and its descendants,
+These are **draft guidance**, not approved standards mappings.
+Inspect the rendered semantic element and its descendants,
 not only JSX props. These examples specify expected verification, not results.
 
 | Contract | Positive verification example | Negative example / risk to distinguish |
@@ -132,9 +130,6 @@ See [caller responsibilities](../implementation/component-contract.md),
 [form/content cases](forms-and-content.md) and [focus lifecycle](keyboard-focus.md)
 for their detailed checks rather than duplicating implementations here.
 
-Historical basis: [AgentOW accessibility reference, cross-cutting checks](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L59-L111)
-and [checklist, questions and examples](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L425-L627).
-
 ## Heading-level changes need the surrounding outline
 
 Before recommending or implementing a heading-level change, capture the complete
@@ -145,5 +140,5 @@ After the change, recapture the same scenario and compare that outline, not only
 the edited element. A component-only snapshot cannot establish page hierarchy.
 For example, a proposed H3 is justified by the actual H2 section parent, not by
 its font size; without that parent/sibling evidence, defer the level decision.
-This preserves the source's evidence decision without prescribing a repository
-artifact filename or a universal single-H1 rule.
+Require this outline evidence without prescribing a repository artifact filename
+or a universal single-H1 rule.

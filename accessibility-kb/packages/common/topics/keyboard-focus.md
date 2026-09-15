@@ -55,7 +55,7 @@ remain runtime not verified; do not run an interaction test from this skill.
 
 ## Dynamic focus acceptance matrix
 
-**Historical draft guidance.** Specify the before element, operation, surviving
+Specify the before element, operation, surviving
 destination and fallback for each reachable lifecycle. “Restore focus” alone is
 not a destination. Trace stable keys, conditional branches, virtualized rows,
 selection-derived toolbars, disabled nodes, cleanup effects and post-commit timing.
@@ -101,13 +101,10 @@ For drag/reorder, require an accessible way to begin, move, cancel and complete,
 with localized move-started/completed/cancelled/not-allowed feedback and a logical
 handle/fallback focus destination. Positive: cancellation restores the prior
 order and usable focus; negative: the pointer works but keyboard cancellation
-loses the handle. Exact keys follow the owning pattern; the historical product's
+loses the handle. Exact keys follow the owning pattern; a product-specific
 Enter/Space/arrows protocol is not a universal keyboard standard. Product APIs
 route through `sharepoint.selection.components-and-utilities`.
 
-Historical basis: [dynamic focus and owner boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L399),
-[drag/reorder](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L410-L413),
-and [async architecture boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/ux-architecture-and-bundle-boundaries.md#L20-L36).
-Examples generalize those clauses and are not verified incidents or current
-framework approval. See [dialog case](../cases/dialog-focus.md) and
+Examples are expected outcomes, not verified incidents or framework approval.
+See [dialog case](../cases/dialog-focus.md) and
 [collection outcomes](dynamic-content.md) for companion scenarios.

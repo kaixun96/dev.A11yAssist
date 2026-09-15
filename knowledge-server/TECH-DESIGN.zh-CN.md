@@ -2,10 +2,6 @@
 
 [English](TECH-DESIGN.md) | 简体中文
 
-来源覆盖情况见 [AgentOW 迁移审查](AGENTOW-MIGRATION-AUDIT.zh-CN.md)。
-AgentOW 固定提交 `7896845e51d75b0b9d632a2fd61876bc2f556ea5` 中经审计的
-可复用无障碍规则已迁入 authored KB。
-
 本文面向内容贡献者、组件/产品专家、KB reviewer 和服务维护者。
 描述 schema v1、authored 内容包 0.1.1 与独立服务 0.1.0，不把计划中的能力当作已交付功能。
 安装和宿主注册见 [服务 README](README.md)；内容审核政策见
@@ -17,7 +13,8 @@ MAS 补充部分仅为设计，MAS 连接、工具、配置解析和运行时闸
 
 ## 1. 目标与边界
 
-KB 将跨产品知识、框架契约和产品约束组织为可引用、可审核、可按依赖闭包分发的内容。
+KB 是新增无障碍知识的唯一维护仓库。Common 负责跨产品知识，Fluent 负责框架契约，
+SharePoint 负责产品约束；内容可引用、可审核、可按依赖闭包分发。
 目标不是把所有资料放进一个长文档，而是让协作者能够回答：
 
 - 当前任务应读哪一层、哪个版本、哪条知识？
@@ -37,9 +34,8 @@ KB 将跨产品知识、框架契约和产品约束组织为可引用、可审�
 
 **当前不提供：** 官方来源自动同步、网页爬取、语义/向量检索、按任务自动挑选包、
 内容自动审批、插件自动接入或已量化的 agent 效果保证。当前 35 条内容（Common 20、
-Fluent 4、SharePoint 11）包含具体迁移规则、API 责任、例外与正反例，状态仍为 draft：
-固定历史来源证明迁移依据，不等于官方批准或当前安装版本的资格验证。迁移范围是经审计的
-可复用规则，不是旧仓库的每个字、可执行程序或其引用的外部权威材料。
+Fluent 4、SharePoint 11）包含具体无障碍规则、API 责任、例外与正反例，状态仍为 draft：
+来源可追溯不等于官方批准或当前安装版本的资格验证。
 
 **后续目标：** MAS MCP 客户端/适配器随独立 KB 服务提供，宿主只注册一个 KB MCP；
 不用让每个宿主分别编排 KB 和 MAS。MAS 连接由 KB 服务内部管理，凭据仍由运行环境
@@ -71,7 +67,12 @@ flowchart LR
 
 1. **包依赖图**：决定导出哪些包，要求版本精确匹配且无环。
 2. **条目关系图**：`relations` 指向要一起理解的知识 ID；不会自动递归读取或执行。
-3. **来源记录**：`sourceIds` 指向本包来源元数据；来源 URL 不会被服务抓取。
+3. **活跃来源记录：** `sourceIds` 仅指向本包的活跃来源元数据；服务不会抓取来源 URL。
+
+活跃目录保留现有官方来源记录及待接入/待审核目标；登记不等于批准。
+许多草稿条目为 `sourceIds: []`，表示没有引用活跃来源。
+当前内容、来源绑定与审核状态由 KB 包负责维护；历史署名不构成支撑来源，
+也不要求另行维护来源到条目的映射。
 
 ### 2.1 目录与维护责任
 
@@ -147,21 +148,24 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 通过 `relations` 关联，不复制三份通用规则。来源相互冲突时记录上下文缺口，
 由有权限的领域 reviewer 决定适用条款；不能由服务自动假定某来源覆盖另一来源。
 
-### 3.2 扩展已迁移规则
+### 3.2 扩展现有知识
 
-从已有正文出发，不另建重复清单。审计将 B01–B16 映射到精确 ID；各包概览提供阅读路由，
-描述符绑定历史来源记录。
+从已有正文出发，不另建重复清单。各包概览提供阅读路由，
+描述符绑定稳定条目 ID、来源与维护责任。
 
 | 领域 / 起点 | 应保留的已实现覆盖 | 有用的下一步贡献 |
 |---|---|---|
 | [Common 概览](../accessibility-kb/packages/common/README.md) | 渲染语义；完整的异步可见/程序化/焦点结果；消失控件焦点；本地化消息；有范围的扫描与替换案例 | 在所属主题添加缺失交互或反例，再关联验证与流程 |
 | [Fluent 选型](../accessibility-kb/packages/fluent/selection/components-and-utilities.md)、[V8](../accessibility-kb/packages/fluent/v8/component-contract.md)、[V9](../accessibility-kb/packages/fluent/v9/component-contract.md) | 组件到文档映射；V8 `delayedRender`/`Announced`；V9 intent/`AriaLiveAnnouncer`/`useAnnounce`；恢复焦点与 shim 边界 | 核实安装版本的导出、provider 与覆盖行为；保留唯一播报/焦点责任方 |
 | [SharePoint 概览](../accessibility-kb/packages/sharepoint/README.md) | Table/DataGrid 与 stable/LazyComponents 选型；SPDS 组合；共享播报和焦点；中性主题 provider 与替换检查 | 扩展具体宿主场景，保留产品范围与调用方义务 |
-| [RTE](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md)、[拖动/重排](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md)、[格式化](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) | 已注册 N01–N03：检查器能力、移动状态协议、完整计数/ReactNode 资源及 RTL 例外 | 在固定来源仅给出名称/行为之处补有版本依据的签名或边界案例，不猜缺失 API 细节 |
+| [RTE](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md)、[拖动/重排](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md)、[格式化](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) | 检查器能力、移动状态协议、完整计数/ReactNode 资源及 RTL 例外 | 在固定来源仅给出名称/行为之处补有版本依据的签名或边界案例，不猜缺失 API 细节 |
 | Common requirements 与 SharePoint profiles | 来源/适用性政策，以及独立的支持/验证维度 | 获取官方条款/支持声明、分配 reviewer、记录审核证据；MAS 实施仍见第 11 节 |
 
-每项贡献记录“源条款 → 目标 ID → 有范围的规则/例外 → 正反验证案例”。保留历史来源以追溯，
-为资格验证另加独立审核的当前来源。私有资料、凭据与运行证据留在授权外部系统。
+每项贡献在所属正文中说明有范围的规则、例外与正反验证案例，并引用适用的源条款和版本。
+仅在当前来源的条款支持声明时，在包描述符中绑定该来源；不以待接入目标代替缺失引用。
+为资格验证取得独立来源审核，不编造批准状态。内容维护不需要检出历史仓库，
+也不需要另行维护来源到条目的映射。
+私有资料、凭据与运行证据留在授权外部系统。
 按第 4–7 节登记，按第 9 节协调版本与发布。
 
 ## 4. 数据模型与引用契约
@@ -174,7 +178,7 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 | entry 身份 | `id` 全 KB 唯一且以本包 ID 开头；`path` 相对本包目录。ID 与文件位置分离 |
 | entry 分类 | `kind` 必须使用现有 schema 枚举；可选 `discoveryTags` 包含 1–3 个唯一值，限 `pattern`、`fix`、`example`。目录名不赋予类别或权威性 |
 | entry 上下文 | `appliesTo` 是非空字符串数组，记录版本/产品/平台；list/search 可按精确标签过滤，不自动推断适用性或版本 |
-| entry 来源 | `sourceIds` 只能引用本包 `sources` 中的 ID。跨包阅读关联用 `relations`，不能直接借用别包来源 ID |
+| entry 来源 | `sourceIds` 只能引用本包活跃 `sources` 中的 ID。跨包阅读关联用 `relations`，不能直接借用别包来源 ID |
 | entry 关联 | `relations`、`deprecatedBy` 的目标必须存在于本包或它的依赖闭包内 |
 | entry 生命周期 | `status` 为 `draft` / `approved` / `deprecated`；审批信息写在描述符，不靠正文一个“已审核”标签 |
 | source | `id` 在包内唯一；`authority`、`status`、`locator`、`revision`、`note` 区分来源性质与就绪程度 |
@@ -189,7 +193,7 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 - 来源未接通：`connection-pending`，`locator`/`revision` 可以为 `null`，说明缺什么。
 - 有候选资料但未审核：`review-pending`；有 URL 并不意味着支持当前结论。
 - 审核来源：`reviewed` 必须有非空 `locator` 和 `revision`；校验器检查形状，实际条款由 reviewer 核实。
-- 历史资料：`historical`，不能直接支撑 approved 条目。
+- 历史资料：schema 允许 `historical-reference` / `historical`；历史资料不能直接支撑 approved 条目。
 - 条目从 draft 升 approved：实际 owner、非 `unassigned` reviewer、审核日期、证据引用；
   至少一个相关来源且全部为 reviewed。纯方法草稿可以暂时没有 source，但不能因此审批通过。
 - 来源或框架发生实质变化：**人工**把受影响条目退回 draft、重新审核；没有自动失效分析。
@@ -758,3 +762,7 @@ knowledge-distribution。offline、过期、权限变化和无法校验修订时
    完整依据不等于产品合规”的正负评估。
 
 完成上述验收后，才把 README 和本节对应能力从“待实现”改成已支持。
+
+**延伸阅读**
+
+- [历史来源说明](AGENTOW-MIGRATION-AUDIT.zh-CN.md) — 可选归档历史，不是服务或内容维护的依赖。

@@ -77,9 +77,8 @@ test('pending authority sources and product support gaps are not populated with 
   assert.equal(fluent.sources[0].revision, null);
   assert.match(fluent.sources[0].note, /V8 source location remains to be confirmed/);
   for (const entry of fluent.entries) {
-    assert(entry.sourceIds.length > 0);
-    assert(entry.sourceIds.every(id => fluent.sources.some(source => source.id === id && source.status === 'historical')));
-    assert.match(kb.files.get(`packages/fluent/${entry.path}`), /historical/i);
+    assert.deepEqual(entry.sourceIds, [], 'Unreviewed framework guidance must not claim official sources');
+    assert.match(kb.files.get(`packages/fluent/${entry.path}`), /draft/i);
   }
   const pending = kb.packages.get('sharepoint').sources.filter(source => source.status !== 'historical');
   assert.deepEqual(pending.map(source => source.id), ['sharepoint-support', 'spds-docs', 'sharepoint-utilities']);

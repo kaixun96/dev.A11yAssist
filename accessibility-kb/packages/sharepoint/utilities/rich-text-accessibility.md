@@ -1,21 +1,19 @@
 # SharePoint rich-text and authored-content checks
 
 Status: draft. Owner: unassigned.
-Source ID: `agentow-accessibility`.
+Active source status and entry bindings: [package metadata](../package.json).
 Entry ID: `sharepoint.utilities.rich-text-accessibility`.
 
-Scope: historical ODSP-Web guidance at AgentOW revision
-`7896845e51d75b0b9d632a2fd61876bc2f556ea5`; not current-approved editor API
-documentation. [Source: rich-text checks, lines 400–409](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L400-L409).
+Scope: ODSP-Web draft guidance, not current-approved editor API documentation.
 
 ## Existing validator and content boundary
 
 For RTE, authored HTML and page-content scanning, use the existing
-`@msinternal/sp-a11y-checker-util` rather than new local validators. The source
-names public entry points `checkA11yForRte` and `runH1A11yChecks` and these
-capabilities:
+`@msinternal/sp-a11y-checker-util` rather than new local validators. Its
+public entry points `checkA11yForRte` and `runH1A11yChecks` expose authored-content
+checks; package capabilities include:
 
-| Content concern | Historical package capability / useful fixture |
+| Content concern | Package capability / useful fixture |
 | --- | --- |
 | Heading structure | Heading order, H1 and heading-before-H1 validation; compare an authored outline with incorrectly ordered headings against the corrected content. |
 | Links | Empty-link checks; a link with no meaningful content versus meaningful linked text. |
@@ -24,7 +22,7 @@ capabilities:
 | Contrast | Text, image and overlay contrast checks; include the actual editor/page background and overlay state in the case. |
 
 These are checker capabilities, not full function signatures or proof that all
-capabilities run from each entry point. The pinned reference does **not** supply
+capabilities run from each entry point. This guidance does **not** supply
 arguments, option types, return shapes, timing, thresholds or per-function check
 allocation. No sample invocation is invented. `checkA11yForRte` identifies the
 RTE-facing API and `runH1A11yChecks` the H1-related API; use the installed public
@@ -47,14 +45,13 @@ contract for the actual call and failure handling.
   [localization and formatting](localization-and-formatting.md); a content scan
   is not a substitute for safe rendering.
 
-These are informative applications of the source capabilities, not observed
+These are informative applications of the checker capabilities, not observed
 test results or a claim that an alt-text checker assesses meaning perfectly.
 Use `common.verification.static` / `common.verification.dynamic` to distinguish
 source-supported coverage from rendered behavior and residual checks.
 
 ## Scan and ownership limits
 
-[Source: helper boundaries, lines 414–424](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L414-L424).
 The Pages Accessibility Assistant and canvas/RTE-local helpers remain within
 their owning area; do not turn them into general component APIs. The public
 checker above is specifically for editor/content validation, not a substitute

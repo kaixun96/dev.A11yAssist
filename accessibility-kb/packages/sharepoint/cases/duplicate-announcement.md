@@ -1,12 +1,10 @@
 # Hypothetical case: duplicate result announcement
 
 Status: draft. Owner: unassigned. Case type: hypothetical; no observed evidence.
-Source ID: `agentow-accessibility`.
+Active source status and entry bindings: [package metadata](../package.json).
 
-Historical basis: AgentOW revision `7896845e51d75b0b9d632a2fd61876bc2f556ea5`,
-[MessageBar and alert ownership, lines 112–219](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L112-L219)
-and [distinct collection results, lines 220–294](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L294).
-These are not current-approved component or utility contracts.
+Scope: ODSP-Web. This draft illustrates MessageBar/alert ownership and distinct
+collection results; it is not current-approved component or utility documentation.
 
 ## Symptom and context needed
 
@@ -35,9 +33,9 @@ Use `common.analysis.root-cause` and
 `common.implementation.component-contract` to locate the first duplicated
 responsibility, not merely the last place where text appears.
 
-## Concrete historical integration cases
+## Concrete integration cases
 
-| Hypothetical implementation | Source-supported correction, conditional on installed composition |
+| Hypothetical implementation | Draft correction, conditional on installed composition |
 | --- | --- |
 | SPDS-backed V9 `MessageBar` has its intent under an application `AriaLiveAnnouncer`, while `useScreenReaderAlert` publishes the same save error | Preserve the component-owned path; remove the duplicate caller event, not the MessageBar semantics. Use `fluent.v9.component-contract` for presets and prerequisites. |
 | V9 MessageBar has no required ancestor announcer; caller adds an alert wrapper | Repair the owning application provider prerequisite, after tracing the host root. A wrapper role or feature-local second announcer is not the documented replacement. |
@@ -63,7 +61,7 @@ contracts separate and consult [SPDS delegation](../spds/component-contract.md).
 If evidence confirms that the documented framework path fully owns this result,
 remove the redundant caller path at the integration boundary. If the host owns
 feedback instead, correct event delivery or lifecycle there while preserving the
-required message. The historical cases name candidate APIs, but do not establish
+required message. These cases name candidate APIs, but do not establish
 an actual source defect or prescribe changes to an uninspected installed host.
 Assess other callers, multiple instances, repeated saves, failures, cancellation,
 navigation and unmount/remount before generalizing the correction.

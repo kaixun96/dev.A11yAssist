@@ -1,11 +1,11 @@
 # Fluent accessibility contracts
 
 Status: draft. Owner: unassigned.
-Source ID: `agentow-accessibility` (historical-reference, historical).
+Active source status and entry bindings: [package metadata](package.json).
 
-Concrete guidance derived from the pinned historical review reference, not
-official MAS requirements or owner-approved Fluent documentation. The source
-distinguishes V8 from V9 but does not specify exact installed patch versions.
+Draft guidance, not official MAS requirements or owner-approved Fluent
+documentation. V8 and V9 have separate contracts; exact installed patch versions
+are not specified here.
 Record the resolved dependency, wrapper and composition before applying a rule;
 confirm changed or overridden behavior against that installed implementation.
 The separate `fluent-docs` record is a pending official-documentation connection,
@@ -33,10 +33,6 @@ not claim support for these entries.
 - Treat native V9, V8, and migration shims as different ownership boundaries.
   Similar component names do not make their providers, hooks or defaults portable.
 
-Basis: [component ownership and documentation routing](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L21-L58),
-[announcement ownership](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L112-L219),
-and [focus ownership](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L344-L399).
-
 ## Shared and host-specific knowledge
 
 Use `common.implementation.component-contract` and `common.analysis.root-cause`
@@ -55,5 +51,5 @@ For a SharePoint host, optional routes are
 here or required to consume Fluent with Common alone.
 
 Requirements authority remains in `common.requirements.authority-and-applicability`.
-Historical claims do not supply official MAS rules, current product support, or
+This draft does not supply official MAS rules, current product support, or
 permission to execute tests, operate a browser, or change a live environment.

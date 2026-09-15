@@ -8,9 +8,9 @@
     "fluent": "0.1.1",
     "sharepoint": "0.1.1"
   },
-  "manifestSha256": "ce0490f6b1c598e50524ddbb5d5f34075d315c91888e25a6c43733a8cfc88779",
+  "manifestSha256": "77d9de00e70d2435f4b45b1ee89fd5bd9ff0827e537e253352f66b4aa65c1591",
   "distribution": {
-    "url": "https://raw.githubusercontent.com/kaixun96/dev.A11yAssist/main/knowledge-distribution/ce0490f6b1c598e50524ddbb5d5f34075d315c91888e25a6c43733a8cfc88779.json",
-    "sha256": "48e6877cb796e3ebabd06009e4f6cb14dc7d7ad5843e189d3fa480f8a7ed0d51"
+    "url": "https://raw.githubusercontent.com/kaixun96/dev.A11yAssist/main/knowledge-distribution/77d9de00e70d2435f4b45b1ee89fd5bd9ff0827e537e253352f66b4aa65c1591.json",
+    "sha256": "ca082421766650fb77089c870a885b99dddae3a9310931ea4defd33a82015d77"
   }
 }

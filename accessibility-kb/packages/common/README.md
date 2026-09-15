@@ -10,6 +10,10 @@ All documents in this package are **draft guidance**, not normative approved pol
 standards cited by the topics retain their own authority and applicability;
 neither an example nor a checklist certifies conformance. See
 [authority and applicability](requirements/authority-and-applicability.md).
+The [package descriptor](package.json) records entry ownership, active source
+status and entry source bindings. Owners are unassigned; an empty `sourceIds`
+array means no active source is cited, not approval. Public-standard connections
+remain review-pending, and MAS content/authority is not supplied.
 
 Reading these documents permits only analysis, plans, and recommendations within
 the caller's permitted scope. Actual source edits, test execution, application
@@ -36,7 +40,7 @@ remain in force; this package is not an alternative end-to-end workflow.
   [design review](verification/design.md), and
   [test boundaries](verification/testing.md): keep different evidence distinct.
 - [Dialog focus case](cases/dialog-focus.md): an illustrative reasoning example,
-  not a verified historical incident.
+  not a verified incident.
 
 ## Read-only procedures
 
@@ -50,47 +54,22 @@ responsible layer, missing context, and evidence still needed. Unknown is not
 pass. Runtime observations must come from actual, separately authorized work,
 never from a source-only inference.
 
-## Historical clause migration in 0.1.1
+## Find guidance by interaction or change
 
-This revision adds usable, scoped clauses and positive/negative verification
-examples to the existing entries, preserving their general content and stable
-IDs. The examples are hypothetical expected outcomes, not observed results.
-All entries remain **draft**, owner unassigned. The
-[package descriptor](package.json) binds affected entries to pinned
-`historical-reference` sources with `status: historical`; those sources are not
-current normative approval. Public-standard connections remain review-pending;
-MAS content/authority is not supplied by this historical material.
+Use these entries for scoped rules and positive/negative verification examples.
+The examples are hypothetical expected outcomes, not observed results.
 
-| Audit item / scope | Canonical Common destinations and concrete coverage |
+| Interaction or change | Knowledge entries and concrete coverage |
 |---|---|
-| B02 rendered UI | [Component semantics](topics/component-accessibility.md): name/role/value/state, grouping, presentation/hidden descendants, headings/tables/relationships and custom-control contracts; [forms](topics/forms-and-content.md): labels, validation/error, content/alternatives; [visual checks](topics/visual-accessibility.md): styling, reflow, truncation, targets and scoped contrast; [design](verification/design.md) and [caller contract](implementation/component-contract.md): acceptance/ownership |
-| B06 async collections | [Dynamic content](topics/dynamic-content.md): initial/loading/results/empty/error/retry, append/end, sort/filter/search/group/page/replacement, explicit refresh updated/no-change/repeated results, selection and background completion, each with visible/programmatic/focus outcomes; [static](verification/static.md) and [dynamic verification](verification/dynamic.md): evidence distinctions |
-| B07 focus | [Keyboard/focus](topics/keyboard-focus.md): stable identity, disappearing action/toolbar/toast, final deselection, disabled/replaced target, post-commit fallback, restoration/animation/abrupt unmount and user movement during async work; [dialog cases](cases/dialog-focus.md) and [testing](verification/testing.md): exact-operation active-element assertions |
-| B11 scans and utility boundaries | [Static](verification/static.md), [dynamic](verification/dynamic.md), [testing](verification/testing.md): scan scope/rules/exclusions, justified disabling, editor versus application scope, source versus rendered/observed evidence; [component contract](implementation/component-contract.md): private helpers and one supported owner |
-| B14 localization/reuse | [Forms/content](topics/forms-and-content.md): full messages, translator context/placeholders, count/interval and locale-specific plural cases, element placeholders, safe rich text, fallbacks, locale lists/dates and scoped parity; [visual](topics/visual-accessibility.md): RTL pipeline exceptions; [dynamic content](topics/dynamic-content.md): complete localized outcomes |
-| B15 replacement | [Testing](verification/testing.md): version-bound header/body/footer, width/scroll, portal/provider, inner-control composition, focus, keyboard, all dismiss paths/animation and coexisting branch regressions; no migration execution |
-| B16 adjacent lessons | [Root cause](analysis/root-cause.md): inconsistent copies, false first paint, self-attested review, stale async work, lifecycle/cancellation/data and parity; [component contract](implementation/component-contract.md): reuse fit/semantic ownership/lazy boundaries; [testing](verification/testing.md): reconciliation/prop-presence and initialization/runtime identity risks |
-| Related Common subset of B08/B09/B10/B12 | [Focus](topics/keyboard-focus.md): one restoration owner and generalized drag begin/move/cancel/complete; [forms/content](topics/forms-and-content.md): editor checker limits; [component semantics](topics/component-accessibility.md): table versus grid and composition. Actual framework/product APIs stay elsewhere |
-
-### Pinned source reading register
-
-All nine bodies below were read in full from the read-only checkout at commit
-`7896845e51d75b0b9d632a2fd61876bc2f556ea5`. Archived skills and agent-directed prose
-were treated as historical data, never active instructions. The corresponding
-duplicate paths identified in the audit do not create additional rules.
-Individual entries cite the narrower provisions used for their summaries.
-
-| Historical source body (pinned link) | Entire range read | Disposition |
-|---|---|---|
-| [copilot/skills/ow-review/references/accessibility.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md) | 1–627 | Shared checks and outcomes retained; API/version details routed |
-| [copilot/skills/ow-review/references/localization-and-formatting.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md) | 1–210 | Cross-product messages/formatting/RTL retained; pipeline syntax not universalized |
-| [copilot/skills/ow-review/references/shared-utility-reuse.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md) | 1–198 | Accessibility contract-fit/divergence subset retained |
-| [copilot/skills/ow-ref-replace-component/SKILL.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-ref-replace-component/SKILL.md) | 1–52 | Behavioral inventory/comparison retained; commands and rollout policy excluded |
-| [copilot/docs/review-misses.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md) | 1–81 | M1/M2/M3/calibration sanitized into reusable counterexamples |
-| [copilot/skills/ow-review/references/common-review-issues.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/common-review-issues.md) | 1–366 | Accessibility-relevant state/async/lifecycle/data/testing/cleanup subset |
-| [copilot/skills/ow-review/references/ux-architecture-and-bundle-boundaries.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/ux-architecture-and-bundle-boundaries.md) | 1–60 | Semantic/state ownership and async focus/error boundary subset |
-| [copilot/skills/ow-review/references/graduation.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/graduation.md) | 1–762 | Reconciliation/identity/prop-presence regression cautions only |
-| [copilot/skills/ow-review/references/size-regression.md](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/size-regression.md) | 1–226 | Required initialization and runtime-identity regression cautions only |
+| Rendered UI | [Component semantics](topics/component-accessibility.md): name/role/value/state, grouping, presentation/hidden descendants, headings/tables/relationships and custom-control contracts; [forms](topics/forms-and-content.md): labels, validation/error, content/alternatives; [visual checks](topics/visual-accessibility.md): styling, reflow, truncation, targets and scoped contrast; [design](verification/design.md) and [caller contract](implementation/component-contract.md): acceptance/ownership |
+| Async collections | [Dynamic content](topics/dynamic-content.md): initial/loading/results/empty/error/retry, append/end, sort/filter/search/group/page/replacement, explicit refresh updated/no-change/repeated results, selection and background completion, each with visible/programmatic/focus outcomes; [static](verification/static.md) and [dynamic verification](verification/dynamic.md): evidence distinctions |
+| Focus | [Keyboard/focus](topics/keyboard-focus.md): stable identity, disappearing action/toolbar/toast, final deselection, disabled/replaced target, post-commit fallback, restoration/animation/abrupt unmount and user movement during async work; [dialog cases](cases/dialog-focus.md) and [testing](verification/testing.md): exact-operation active-element assertions |
+| Scans and utility boundaries | [Static](verification/static.md), [dynamic](verification/dynamic.md), [testing](verification/testing.md): scan scope/rules/exclusions, justified disabling, editor versus application scope, source versus rendered/observed evidence; [component contract](implementation/component-contract.md): private helpers and one supported owner |
+| Localization/reuse | [Forms/content](topics/forms-and-content.md): full messages, translator context/placeholders, count/interval and locale-specific plural cases, element placeholders, safe rich text, fallbacks, locale lists/dates and scoped parity; [visual](topics/visual-accessibility.md): RTL pipeline exceptions; [dynamic content](topics/dynamic-content.md): complete localized outcomes |
+| Component replacement | [Testing](verification/testing.md): version-bound header/body/footer, width/scroll, portal/provider, inner-control composition, focus, keyboard, all dismiss paths/animation and coexisting branch regressions; comparison guidance, not execution |
+| State, lifecycle and ownership | [Root cause](analysis/root-cause.md): inconsistent copies, false first paint, self-attested review, stale async work, lifecycle/cancellation/data and parity; [component contract](implementation/component-contract.md): reuse fit/semantic ownership/lazy boundaries; [testing](verification/testing.md): reconciliation/prop-presence and initialization/runtime identity risks |
+| Composite interactions and authored content | [Focus](topics/keyboard-focus.md): one restoration owner and generalized drag begin/move/cancel/complete; [forms/content](topics/forms-and-content.md): editor checker limits; [component semantics](topics/component-accessibility.md): table versus grid and composition. Framework/product entries own concrete APIs |
+| Supplied assistive-technology evidence | [Dynamic verification](verification/dynamic.md): matched Voice Access overlays, DOM/UIA attribution, screen-reader recording quality, step-linked evidence and scenario/baseline comparison |
 
 ### Scope and ownership
 
@@ -103,9 +82,9 @@ Individual entries cite the narrower provisions used for their summaries.
   `sharepoint.verification.themes-and-host`. Those packages own concrete APIs,
   provider/slot/shim prerequisites, SPDS imports, theme classification and product
   formatter, rich-text checker and drag/reorder protocols.
-- Historical severity labels remain scoped to the product review contract;
+- Severity labels remain scoped to the product review contract;
   heading-outline reasoning is in the component topic. Heading evidence filenames, review/report schemas,
-  graduation authority, rollout/release/build commands, host/lease/evidence
+  release authority, rollout/release/build commands, host/lease/evidence
   execution, private helpers and personal incident details are not universal KB
   requirements. General architecture, network/security/telemetry and performance
   policy is not duplicated unless it yields a specific accessibility lesson.
@@ -115,4 +94,4 @@ Individual entries cite the narrower provisions used for their summaries.
   keyboard protocol. Native/component-owned semantics and feedback count; do not
   duplicate them.
 - Contribution, source review and version publication follow the KB governance;
-  migration of historical rules does not change the original source's authority.
+  inclusion in this package does not change a source's authority.

@@ -48,7 +48,7 @@ Basis: [component semantics](../topics/component-accessibility.md),
 
 ## Prove reuse fits the accessible behavior
 
-**Historical draft extension.** Search by the needed capability, not only an
+Search by the needed capability, not only an
 API's name. Inspect the public export, implementation, supported version and
 representative callers. A shared utility or a visually similar replacement is
 not a fit if it changes the semantic role, keyboard model, urgency, repeat-event
@@ -68,8 +68,8 @@ For copied implementations, compare behavior/defaults/edge cases before making
 a reuse claim. Divergent announcements, focus fallback or localized resources
 are concrete behavior risks, not merely stylistic duplication. If the copies
 agree and shared ownership is unsuitable, duplication alone is not a defect.
-Do not claim there is no suitable visually-hidden utility based on a historical
-repository inventory; inspect the current owning surface and prefer a supported
+Do not claim there is no suitable visually-hidden utility based on an outdated
+inventory; inspect the current owning surface and prefer a supported
 pattern. Screen-reader-only controls require an actual interaction need.
 
 ## Maintain ownership through composition and lazy loading
@@ -95,9 +95,5 @@ Product API details are intentionally routed, not duplicated: optional IDs
 `sharepoint.utilities.announcements-and-focus`. Common has no dependency on those
 packages; their availability/version must be established before using them.
 
-Historical basis: [rendered and component ownership checks](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L59-L219),
-[focus and utility boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L344-L424),
-[reuse fit and comparison](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md#L9-L151),
-and [semantic/state and async boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/ux-architecture-and-bundle-boundaries.md#L5-L36).
-These generalizations retain useful contracts without imposing historical
-package preferences, review severities or operational commands.
+Package preferences, review severities and operational commands are not
+cross-product accessibility contracts.

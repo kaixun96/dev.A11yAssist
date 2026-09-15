@@ -2,10 +2,6 @@
 
 English | [简体中文](TECH-DESIGN.zh-CN.md)
 
-Source coverage: [AgentOW migration audit](AGENTOW-MIGRATION-AUDIT.md).
-The audited reusable accessibility rules from AgentOW commit
-`7896845e51d75b0b9d632a2fd61876bc2f556ea5` are migrated into the authored KB.
-
 This document is for content contributors, component/product experts, KB reviewers, and service maintainers.
 It describes schema v1, authored content packages 0.1.1 and standalone service 0.1.0,
 without presenting planned capabilities as delivered features. For installation and host registration, see the
@@ -19,7 +15,8 @@ gates are not implemented.
 
 ## 1. Goals and Boundaries
 
-The KB organizes cross-product knowledge, framework contracts, and product constraints into content that can be
+The KB is the single repository for new accessibility knowledge contributions. Common owns cross-product
+knowledge, Fluent owns framework contracts, and SharePoint owns product constraints; their content can be
 cited, reviewed, and distributed by dependency closure. The goal is not to put all material in one long document,
 but to enable collaborators to answer:
 
@@ -43,9 +40,8 @@ The service provides knowledge discovery and reading, not an Execution MCP or MA
 **Not currently provided:** automatic synchronization of official sources, web crawling, semantic/vector retrieval,
 automatic task-based package selection, automatic content approval, automatic plugin integration, or quantified
 guarantees of agent effectiveness. The current 35 entries (Common 20, Fluent 4, SharePoint 11) include concrete
-migrated rules, API ownership, exceptions and positive/negative examples. They remain draft: pinned historical
-provenance is not official approval or current installed-version qualification. Migration scope is the audited
-reusable rules, not every word, executable or external authority referenced by the old repository.
+accessibility rules, API ownership, exceptions and positive/negative examples. They remain draft: source
+provenance is not official approval or current installed-version qualification.
 
 **Future goal:** ship the MAS MCP client/adapter with the standalone KB service so that hosts register only one
 KB MCP, rather than each host orchestrating KB and MAS separately. The KB service manages MAS connections
@@ -78,7 +74,12 @@ Do not confuse these three distinct structures:
 
 1. **Package dependency graph:** determines which packages are exported; versions must match exactly and the graph must be acyclic.
 2. **Entry relationship graph:** `relations` points to knowledge IDs to understand together; it does not automatically read recursively or execute anything.
-3. **Source records:** `sourceIds` points to source metadata within the same package; the service does not fetch source URLs.
+3. **Active source records:** `sourceIds` points only to active source metadata within the same package; the service does not fetch source URLs.
+
+Active catalogs retain the existing official-source records and pending connection/review targets;
+registration is not approval. Many draft entries have `sourceIds: []`, meaning no active source is cited.
+The KB packages own current content, source bindings and review status; historical attribution
+does not provide a supporting source or require a separate source-to-entry map.
 
 ### 2.1 Locations and Maintenance Responsibilities
 
@@ -156,21 +157,24 @@ the host/wrapper utilities cover.” Connect them through `relations` instead of
 When sources conflict, record context gaps and have an authorized domain reviewer determine the applicable clauses;
 the service must not automatically assume that one source overrides another.
 
-### 3.2 Extend the Migrated Rules
+### 3.2 Expand Existing Knowledge
 
-Start from the existing body rather than creating a parallel checklist. The audit maps B01–B16 to exact IDs;
-each package overview provides the reading route and the descriptors bind historical source records.
+Start from the existing body rather than creating a parallel checklist. Each package overview provides the
+reading route; its descriptor binds stable entry IDs, sources and maintenance ownership.
 
 | Area / starting point | Implemented coverage to preserve | Useful next contribution |
 |---|---|---|
 | [Common overview](../accessibility-kb/packages/common/README.md) | Rendered semantics; complete async visible/programmatic/focus outcomes; disappearing-control focus; localized messages; scoped scan and replacement cases | Add a missing interaction or counterexample at its owning topic, then relate verification and procedures |
 | [Fluent selection](../accessibility-kb/packages/fluent/selection/components-and-utilities.md), [V8](../accessibility-kb/packages/fluent/v8/component-contract.md), [V9](../accessibility-kb/packages/fluent/v9/component-contract.md) | Component-to-document map; V8 `delayedRender`/`Announced`; V9 intent/`AriaLiveAnnouncer`/`useAnnounce`; restoration and shim boundaries | Verify the installed version's export, provider and override behavior; retain one announcement/focus owner |
 | [SharePoint overview](../accessibility-kb/packages/sharepoint/README.md) | Table/DataGrid and stable/LazyComponents fit; SPDS composition; shared alerts and focus; neutral providers and replacement checks | Extend a concrete host scenario, preserving product scope and caller obligations |
-| [RTE](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md), [drag/reorder](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md), [formatting](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) | Registered N01–N03: checker capabilities, move-state protocol, complete count/ReactNode resources and RTL exceptions | Add version-backed signatures or edge cases where the pinned source supplies only names/behavior; do not guess missing API details |
+| [RTE](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md), [drag/reorder](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md), [formatting](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) | Checker capabilities, move-state protocol, complete count/ReactNode resources and RTL exceptions | Add version-backed signatures or edge cases where the pinned source supplies only names/behavior; do not guess missing API details |
 | Common requirements and SharePoint profiles | Source/applicability policy and separate support/verification dimensions | Acquire official clauses/support statements, assign reviewers and record review evidence; MAS implementation remains section 11 |
 
-For a contribution, record source clause → target ID → scoped rule/exception → positive/negative verification
-case. Keep historical records for provenance and add independently reviewed current sources for qualification.
+For a contribution, explain the scoped rule, exceptions and positive/negative verification cases in the owning
+body, citing applicable source clauses and versions. Bind current sources in the package descriptor only where
+their provisions support the claim; do not substitute pending connection targets for missing citations.
+Obtain independent source review for qualification without inventing approval. Content maintenance does not
+require a historical repository checkout or a separate source-to-entry map.
 Private materials, credentials and run evidence stay in authorized external systems. Follow sections 4–7 for
 registration and section 9 for coordinated versions and publication.
 
@@ -184,7 +188,7 @@ registration and section 9 for coordinated versions and publication.
 | entry identity | `id` is unique across the KB and starts with its package ID; `path` is relative to the package directory. Identity is separate from file location |
 | entry classification | `kind` must use the existing schema enum; optional `discoveryTags` contains 1–3 unique values from `pattern`, `fix`, `example`. Directory names do not assign categories or authority |
 | entry context | `appliesTo` is a nonempty string array recording versions/products/platforms; list/search can filter by an exact label, without automatic applicability or version inference |
-| entry sources | `sourceIds` may reference only IDs in this package's `sources`. Use `relations` for cross-package reading associations; do not borrow another package's source IDs directly |
+| entry sources | `sourceIds` may reference only IDs in this package's active `sources`. Use `relations` for cross-package reading associations; do not borrow another package's source IDs directly |
 | entry relationships | Targets of `relations` and `deprecatedBy` must exist in the package or its dependency closure |
 | entry lifecycle | `status` is `draft` / `approved` / `deprecated`; approval information belongs in the descriptor, not merely a “reviewed” label in the body |
 | source | `id` is unique within the package; `authority`, `status`, `locator`, `revision`, and `note` distinguish source type and readiness |
@@ -199,7 +203,7 @@ The six `source.authority` categories are `company-requirements`, `normative-sta
 - Source not connected: `connection-pending`; `locator`/`revision` may be `null`; explain what is missing.
 - Candidate material available but not reviewed: `review-pending`; a URL does not mean it supports the current conclusion.
 - Reviewed source: `reviewed` requires nonempty `locator` and `revision`; the validator checks shape, while a reviewer verifies the actual clauses.
-- Historical material: `historical`; it cannot directly support approved entries.
+- Historical material: the schema permits `historical-reference` / `historical`; historical material cannot directly support approved entries.
 - Promoting an entry from draft to approved requires an actual owner, a reviewer other than `unassigned`, a review date,
   and evidence references; at least one relevant source is required, and all sources must be reviewed. A purely
   methodological draft may temporarily have no source, but that does not make it eligible for approval.
@@ -818,3 +822,7 @@ separate source identities; never write live responses directly into files assoc
 
 Only after this acceptance is complete should the corresponding capabilities in the README and this section
 change from “planned” to supported.
+
+**Further reading**
+
+- [Historical attribution](AGENTOW-MIGRATION-AUDIT.md) — optional archive history, not a service or content-maintenance dependency.

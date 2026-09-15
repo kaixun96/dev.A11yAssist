@@ -1,19 +1,15 @@
 # SharePoint localization and formatting contracts
 
 Status: draft. Owner: unassigned.
-Source IDs: `agentow-localization`, `agentow-shared-utilities`.
+Active source status and entry bindings: [package metadata](../package.json).
 Entry ID: `sharepoint.utilities.localization-and-formatting`.
 
-Scope: historical ODSP-Web guidance at AgentOW revision
-`7896845e51d75b0b9d632a2fd61876bc2f556ea5`; not current-approved localization
+Scope: ODSP-Web draft guidance, not current-approved localization
 pipeline or formatter API documentation. General content, result and visual
 principles belong to `common.topic.forms-and-content`,
 `common.topic.dynamic-content` and `common.topic.visual-accessibility`.
 
 ## Resources include non-visible accessibility text
-
-[Source: checklist, lines 1–19](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L1-L19)
-and [translation units/metadata, lines 23–56](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L23-L56).
 
 - Put visible text **and** tooltips, accessible names/descriptions, `aria-label`,
   screen-reader-only text, live messages and reachable fallbacks in `.resx`
@@ -26,8 +22,8 @@ and [translation units/metadata, lines 23–56](https://github.com/kaixun96/dev.
   plus an appended author is incomplete; “Created at {0} by {1}” permits a
   translator to reorder both date and author.
 - Whole-string approval locks and valid-character annotations must use the
-  pipeline's machine-readable metadata. The source illustrates `{Locked}` for a
-  whole-string approval marker, not for placeholder tokens. Uncertain approval
+  pipeline's machine-readable metadata. For example, `{Locked}` is a
+  whole-string approval marker, not a placeholder lock. Uncertain approval
   warrants an approval question; missing lock metadata alone is not proof of a
   defect. No approval or tracking identifier is invented here.
 - Prefer sentence casing except established terminology or inherited approved
@@ -36,14 +32,11 @@ and [translation units/metadata, lines 23–56](https://github.com/kaixun96/dev.
 
 ## Counts: sentence-level intervals, not word fragments
 
-[Source: count rules, lines 12–13](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L12-L13)
-and [count examples, lines 135–176](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L135-L176).
-
 For a **numeric count** in UI or an announcement, use split, sentence-level
 plural resources plus matching interval metadata and
 `StringHelper.formatWithLocalizedCountValue`. Include zero, one and plural;
-the source's English zero wording is plural. Do not apply English branching in
-code to every locale. This source-derived resource example keeps each sentence
+the English zero wording in this example is plural. Do not apply English branching in
+code to every locale. This resource example keeps each sentence
 whole rather than supplying a separately translated “site/sites” argument:
 
 ```xml
@@ -66,7 +59,7 @@ const selectionMessage = StringHelper.formatWithLocalizedCountValue(
 ```
 
 `StringHelper` and `strings` refer to the owning area's existing formatter and
-generated resource imports; the reference does not specify an exact import
+generated resource imports; this guidance does not specify an exact import
 route for this symbol. Use `selectionMessage` through the **one** event owner
 in [announcements and focus](announcements-and-focus.md), not an added duplicate
 live region. Check zero, one and plural in tests plus the applicable locale.
@@ -74,9 +67,6 @@ For `{0} deleted` where `{0}` is a skill name/entity label, do **not** demand
 count intervals merely because there is a placeholder.
 
 ## Complete lists, dates and ReactNode sentences
-
-[Source: separators and ReactNode formatting, lines 58–133](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L58-L133)
-and [formatter reuse, lines 178–186](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L178-L186).
 
 Use `Intl.ListFormat` with the user's locale rather than `names.join(', ')`.
 Keep the formatted list as one placeholder within a complete sentence:
@@ -95,8 +85,8 @@ const message = StringHelper.format(
 This preserves locale-specific conjunctions and punctuation. `userLocale` is
 the owning host's locale value, not an invented locale lookup API. Locale-aware
 dates/times similarly use the site/user locale and locale skeletons; do not copy
-fixed US order, separators, AM/PM or hour cycles from legacy UI. The source names
-no date-helper signature.
+fixed US order, separators, AM/PM or hour cycles from legacy UI. No date-helper
+signature is specified here.
 
 When a placeholder is a React element, use a ReactNode-aware formatter rather
 than appending JSX to a partially formatted string. For the complete resource
@@ -111,7 +101,7 @@ StringHelper.formatToArray(
 ```
 
 Plain `StringHelper.format(strings.createdAt, date)` plus a space and Link
-prevents complete-sentence reordering. For a resource “{0} - {1}”, the source's
+prevents complete-sentence reordering. For a resource “{0} - {1}”, a
 rich-text example is:
 
 ```tsx
@@ -129,9 +119,6 @@ interpolation are not equivalent reusable formatting contracts.
 
 ## Safe localized rich text, fallbacks and RTL
 
-[Source: rich text and fallbacks, lines 188–210](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L188-L210)
-and [RTL exception, line 18](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L18).
-
 - Approved resource markup goes through the owning safe rich-text parser mapped
   to allowlisted elements such as `strong`, not `dangerouslySetInnerHTML`.
 - Do not generate interactive links inside checkbox or radio labels. Disable
@@ -147,9 +134,6 @@ and [RTL exception, line 18](https://github.com/kaixun96/dev.AgentOW/blob/789684
 
 ## Utility fit and coverage boundaries
 
-[Source: shared capability fit, lines 27–69](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md#L27-L69)
-and [package map/formatting anti-patterns, lines 76–136](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md#L76-L136).
-
 Candidate areas include utilities-strings/resources, i18n-utilities and the
 owning shared UI packages. Compare input/output, locale behavior, errors,
 dependency/layering and representative callers, not just matching symbol names.
@@ -160,5 +144,5 @@ Positive/negative checks should cover reordered placeholders, ReactNode
 sentences, complete zero/one/plural messages, repeated result events, localized
 fallbacks, disallowed interactive label links, and RTL paths both inside and
 outside Fluent auto-flipping. These are test-design examples, not executed
-checks. Exact formatter exports, metadata not supplied in the source and the
+checks. Exact formatter exports, metadata not specified here and the
 safe parser's complete allowlist remain installed-contract questions.

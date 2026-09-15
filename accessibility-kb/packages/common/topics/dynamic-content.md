@@ -120,9 +120,5 @@ dependencies). For custom/native UI, first find a compatible existing status
 primitive; only if none fits, consider one appropriately polite semantic status
 region. A typing-specific helper is not automatically a result-status mechanism.
 
-Historical basis: [async collections](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L311),
-[selection and background focus transitions](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L343),
-[localization](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md),
-and [first-paint state miss](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md).
-The source's review severities are not universal defect rankings. Current
-applicability and actual announcements remain to be verified.
+Product review severities are not universal defect rankings. Verify
+applicability and actual announcements for the affected interaction.

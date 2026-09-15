@@ -1,22 +1,19 @@
 # Select Fluent components and utilities by interaction contract
 
 Status: draft. Owner: unassigned.
-Source IDs: `agentow-accessibility`, `agentow-component-selection`,
-`agentow-localization`, `agentow-component-replacement`
-(historical-reference, historical).
+Active source status and entry bindings: [package metadata](../package.json).
 
-These are concrete historical-derived selection and verification rules, not
+These are draft selection and verification rules, not
 official MAS requirements or a blanket SPDS-first policy for every product.
 Identify imports, exact installed versions, host wrappers and intended behavior.
 Use the [V8 contract](../v8/component-contract.md) or
-[V9 contract](../v9/component-contract.md) for the actual owner. The historical
-references do not specify exact installed patch versions; verify an API before
+[V9 contract](../v9/component-contract.md) for the actual owner. Exact installed
+patch versions are not specified here; verify an API before
 prescribing code for a different version or composition.
 
 ## Select the interaction, not the request's noun
 
-Basis: [component-fit and Table/DataGrid comparison](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/sharepoint-design-system-and-ux-components.md#L5-L23).
-The source's concrete comparison concerns ODSP-Web/SPDS on Fluent V9. Use its
+The concrete comparison below concerns ODSP-Web/SPDS on Fluent V9. Use this
 fit reasoning for Fluent candidates only after checking the installed Fluent
 component's capabilities; do not turn that host's export policy into a universal
 framework requirement.
@@ -35,7 +32,7 @@ framework requirement.
    stable/LazyComponents routes and fallback policy; other hosts have their own
    supported layers.
 
-| Required interaction | Candidate reasoning retained from the source | Don't |
+| Required interaction | Candidate reasoning | Don't |
 | --- | --- | --- |
 | Conventional tabular interaction with sort, row selection, stable row identity and grid keyboard/focus behavior | Evaluate DataGrid and its documented column definitions, controlled sort/selection state and selection cells | Hand-build header buttons, checkboxes, `role="grid"` and arrow navigation when the supported grid owns them |
 | Primarily presentational table, or substantial nonstandard rows/keyboard/selection/composition the grid cannot support | Evaluate Table; document the actual DataGrid capability gap and the extra interaction/ARIA responsibility if Table is made interactive | Choose a lower-level Table solely because the feature also has upload, paging, status or dialogs |
@@ -49,11 +46,10 @@ and `common.topic.visual-accessibility`, not a separate Fluent conformance rule.
 
 ## V9 component-to-document map
 
-The [pinned historical map](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L21-L58)
-routes V9 usage to the following documentation. These official-site URLs are
-discovery targets preserved from that map, not immutable reviewed evidence or
+Use the following documentation targets for V9 usage. These official-site URLs
+are discovery targets, not immutable reviewed evidence or
 V8 documentation. Resolve the installed version and record the actual reviewed
-revision. The historical source even uses the `usestorefocustarget` route below;
+revision. The `useRestoreFocusTarget` link uses the `usestorefocustarget` route below;
 if a route has moved, find the named export in that version instead of guessing.
 
 | Component or behavior | Documentation target |
@@ -84,9 +80,6 @@ assuming a styling override changes semantics. Wrapper/export details stay in
 
 ## Compound components are semantic APIs, not styled containers
 
-Basis: [supported composition and styling](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/sharepoint-design-system-and-ux-components.md#L24-L103)
-and [concrete Breadcrumb cases](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/sharepoint-design-system-and-ux-components.md#L104-L170).
-
 - Breadcrumb, Menu, TabList, Table and Dropdown have documented item types,
   slots and wrapper hierarchy. Do not insert raw `li`, `tr` or `option` merely
   because the current implementation renders a compatible parent.
@@ -98,7 +91,7 @@ and [concrete Breadcrumb cases](https://github.com/kaixun96/dev.AgentOW/blob/789
   Breadcrumb (and its Overflow wrapper, where used) separate from the sibling
   information control. Verify navigation items, list structure and keyboard access
   to the information control rather than approving the same visual layout.
-- For a breadcrumb overflow opener, the source's structure is
+- For a breadcrumb overflow opener, use the structure
   `BreadcrumbItem > Menu > MenuTrigger > Button`. **Don't** put BreadcrumbItem
   under MenuTrigger or substitute BreadcrumbButton solely because it is clickable.
   The opener performs an action; BreadcrumbButton represents a genuine breadcrumb
@@ -110,8 +103,8 @@ and [concrete Breadcrumb cases](https://github.com/kaixun96/dev.AgentOW/blob/789
   `className`/`style` and supported wrappers instead of imitating a control's
   internal styles. Prefer library icons rather than Unicode glyph substitutes;
   still verify decorative hiding and action names at the call site.
-- Generated/private `.fui-*` selectors are not stable contracts. The historical
-  source permits a narrowly scoped exception only when supported APIs fail,
+- Generated/private `.fui-*` selectors are not stable contracts. A narrowly
+  scoped exception only applies when supported APIs fail,
   the technical reason and version are documented, and upgrade revalidation is
   required. Designer approval alone or a broad private-selector override is not
   sufficient. Do not call every raw style value a WCAG violation without impact.
@@ -124,10 +117,6 @@ whether caller overrides or composition remove behavior those contracts need.
 
 ## Select a utility only for an unowned responsibility
 
-Basis: [announcement choices](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L179-L219),
-[async stack binding](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L258-L296)
-and [focus ownership](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L344-L424).
-
 | Existing owner | Select / preserve | Reject |
 | --- | --- | --- |
 | Native V9 MessageBar | Intent with the existing application-level AriaLiveAnnouncer | Manual `useAnnounce`, shared alert or wrapper live region for the same message |
@@ -136,7 +125,7 @@ and [focus ownership](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75
 | V9 component-owned focus | Component props/composition; restoration hooks only for a real unmet responsibility | Imperative focus or a competing page-level restore owner |
 | Migration-layer modal/panel | That layer's established dismiss/restore and shim APIs | Recommending shims to native V9 merely because the UI looks like a panel |
 | SharePoint shared announcement or page/canvas/cross-view focus | Optional `sharepoint.utilities.announcements-and-focus` route | Importing that product API as a universal Fluent requirement or duplicating its working mechanism |
-| Custom/unmanaged behavior outside those owners | Established accessible primitive; Common's native/custom contract where appropriate | Copying a private alert/visually-hidden implementation or assuming a historical absence of a shared helper is still current |
+| Custom/unmanaged behavior outside those owners | Established accessible primitive; Common's native/custom contract where appropriate | Copying a private alert/visually-hidden implementation or assuming no shared helper exists without checking the installed host |
 
 RTE scanners, product drag/reorder utilities and audit helpers remain in
 `sharepoint.selection.components-and-utilities`; they are not general Fluent
@@ -144,13 +133,12 @@ component APIs. Keep product implementations separate from shared principles.
 
 ## Localization and directional styling at the Fluent boundary
 
-Basis: [historical localization checklist, specifically line 18](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L5-L19).
-The reference says Fluent V8/V9 style APIs auto-flip directional properties in
+Fluent V8/V9 style APIs auto-flip directional properties in
 their CSS-in-JS path. **Do** verify the style actually passes through that path.
 **Don't** flag a physical-direction property there solely by its spelling, or
 assume ordinary CSS, Sass/Less, inline styling or a bypass has the same behavior.
 For a bypass, use the host's RTL-aware mixin/logical properties and verify RTL
-rendering. This is a historical scope condition, not proof that every style
+rendering. This is a styling-path scope condition, not proof that every style
 implementation/version flips identically.
 
 Localized names, descriptions, status/count text and fallbacks follow
@@ -162,8 +150,6 @@ names and narrow-width layouts when verifying the chosen styling path.
 
 ## Version replacement: verify behavior across the boundary
 
-Basis: [Panel/Drawer inventory](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-ref-replace-component/SKILL.md#L18-L25)
-and [matched-state verification](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-ref-replace-component/SKILL.md#L47-L52).
 This checklist retains knowledge about replacement risks, not flight/killswitch,
 dependency-update, release or live evidence-capture instructions.
 

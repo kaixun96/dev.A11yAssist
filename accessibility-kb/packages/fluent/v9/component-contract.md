@@ -1,18 +1,15 @@
 # Fluent V9 component, announcement and focus contracts
 
 Status: draft. Owner: unassigned.
-Source ID: `agentow-accessibility` (historical-reference, historical).
+Active source status and entry bindings: [package metadata](../package.json).
 
-Historical-derived guidance for a confirmed Fluent UI React V9 dependency, not
+Draft guidance for a confirmed Fluent UI React V9 dependency, not
 official MAS requirements or current owner approval. Record the resolved version,
 component imports, wrappers, provider ancestry and actual rendered composition.
-The historical source does not pin an installed V9 patch version. Use its concrete
+No installed V9 patch version is pinned here. Use the concrete
 rules below with version-matched documentation; do not transfer V8 defaults.
 
 ## Preserve the component's semantic composition
-
-Basis: [V9 ownership](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L21-L58)
-and [usage checklist and examples](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L425-L536).
 
 - Use documented slots, subcomponents and wrapper hierarchy. Do not add custom
   keyboard handling or ARIA around behavior that the component already supplies.
@@ -32,16 +29,13 @@ documented labeling structure is not enough: use `DialogTitle` with the localize
 title in that composition, then verify the dialog's computed name. This example
 establishes labeling, not a complete trigger or focus implementation.
 
-The source describes SPDS as a V9 styling redesign, not an independent
-accessibility implementation. For a confirmed V9-backed wrapper, inspect its
+SPDS provides a V9 styling redesign, not an independent accessibility
+implementation. For a confirmed V9-backed wrapper, inspect its
 export, exposed props and documented behavior overrides before applying this
 contract. A styling/composition difference alone is not a separate announcement
 mechanism. Product routes remain in `sharepoint.spds.component-contract`.
 
 ## MessageBar: intent plus one ancestor AriaLiveAnnouncer
-
-Basis: [V9 MessageBar prerequisites and composition](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L112-L156)
-and [no-duplication boundary](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L173-L181).
 
 1. Trace the application root first. Built-in MessageBar intent announcements
    require one `AriaLiveAnnouncer` high in the React tree, above every MessageBar
@@ -49,8 +43,8 @@ and [no-duplication boundary](https://github.com/kaixun96/dev.AgentOW/blob/78968
    feature or MessageBar level.
 2. Use the documented `intent` preset. Do not customize `politeness` unless an
    accessibility owner has confirmed that the preset is wrong for the specific
-   experience. This draft has no such approval. The historical source does not
-   enumerate intent-to-politeness values, so this entry does not invent them.
+  experience. This draft has no such approval. Intent-to-politeness values are
+  not enumerated here; verify them in the installed contract rather than guessing.
 3. Do not put `role="alert"`, `role="status"` or ad hoc `aria-live` on the bar,
    its parent, `MessageBarBody`, or a duplicate hidden element. These can bypass
    or duplicate the intended mechanism.
@@ -61,7 +55,7 @@ and [no-duplication boundary](https://github.com/kaixun96/dev.AgentOW/blob/78968
    documented animation contract. When retry belongs to the message, prefer its
    documented action slots/composition rather than an intervening group wrapper.
 
-Example root composition, adapted from the pinned source (`appTheme` and `App`
+Example root composition (`appTheme` and `App`
 are application-owned):
 
 ```tsx
@@ -98,12 +92,9 @@ come from the owning application; no product package route is prescribed here.
 
 ## General announcements and modes: only for an unowned event
 
-Basis: [provider-backed announcements](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L179-L219)
-and [async stack selection](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L296).
-
 For dynamic status, save/error results or information not naturally announced by
 focus or a component, use `useAnnounce()` in the subtree of the established
-`AriaLiveAnnouncer`. The source describes `announce` as memoized and
+`AriaLiveAnnouncer`. `announce` is memoized and
 provider-backed; use it directly rather than inventing a wrapper contract:
 
 ```tsx
@@ -124,7 +115,7 @@ a feature-local provider to make the test work.
   route are defined in `sharepoint.utilities.announcements-and-focus`, not Fluent
   modes or props. Do not transplant that protocol into `useAnnounce`.
 - Preserve appropriate urgency: use MessageBar presets for its messages and the
-  installed utility's documented mode for independent status. The source shows
+  installed utility's documented mode for independent status. The example shows
   `announce(message)` but does not specify its default politeness or a universal
   repetition option. Verify supported behavior instead of guessing either.
 - `useTypingAnnounce()` is only for its documented typing scenario; it is not a
@@ -144,8 +135,6 @@ subscription, focus jump, or English-only count construction should pass.
 
 ## Focus owner and restoration hooks
 
-Basis: [focus owner order, lifecycle and shim boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L399).
-
 1. **Component first.** Preserve documented Tabster behavior for Dialog, Popover,
    Menu, Drawer and composite/roving-focus widgets: focus entry, containment,
    navigation and trigger restoration. Use component props/composition first;
@@ -156,7 +145,7 @@ Basis: [focus owner order, lifecycle and shim boundaries](https://github.com/kai
    component does not supply, inspect installed exports and use the documented
    `useRestoreFocusTarget`/`useRestoreFocusSource` pairing. Attach source/target
    refs according to that version's contract, keeping the trigger mounted long
-   enough to restore. The historical source names the pair but supplies no hook
+  enough to restore. This guidance names the pair but supplies no hook
    signature/ref wiring example; do not infer one or add a second SharePoint
    restore owner for the same close lifecycle.
 3. **Local removal while a surface remains.** For a disappearing toolbar command,

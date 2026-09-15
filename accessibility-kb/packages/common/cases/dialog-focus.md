@@ -1,7 +1,7 @@
 # Illustrative case: focus after a dialog closes
 
 **Status: draft guidance; not normative approved policy.** This is a hypothetical
-reasoning example, not a historical verified incident, reproduced defect, test
+reasoning example, not a verified incident, reproduced defect, test
 result, or conformance finding. It authorizes no edits or runtime actions.
 
 ## Scenario and hypothesis
@@ -48,7 +48,7 @@ Basis: [keyboard and focus](../topics/keyboard-focus.md),
 
 ## Positive/negative scenario set
 
-These generalized historical examples supply concrete acceptance assertions,
+These examples supply concrete acceptance assertions,
 not results. Pick the destination from the actual interaction contract rather
 than treating the examples as universal focus order.
 
@@ -68,5 +68,4 @@ post-operation active element, not just the presence of the next row. Pair the
 dialog case with [selection and toast/action lifecycles](../topics/keyboard-focus.md)
 instead of applying modal containment/restoration to every transient surface.
 
-Historical draft basis: [dynamic focus lifecycle and restoration ownership](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L399).
 No current framework API, reviewer approval or observed success is asserted.

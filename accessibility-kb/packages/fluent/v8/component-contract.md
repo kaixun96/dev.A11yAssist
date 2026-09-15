@@ -1,22 +1,21 @@
 # Fluent V8 announcements and focus
 
 Status: draft. Owner: unassigned.
-Source ID: `agentow-accessibility` (historical-reference, historical).
+Active source status and entry bindings: [package metadata](../package.json).
 
-Historical-derived guidance for a confirmed Fluent UI React V8 surface, not an
+Draft guidance for a confirmed Fluent UI React V8 surface, not an
 official MAS rule or an assertion about every V8 release. Identify the installed
 `@fluentui/react` version, component, overrides, wrappers and rendered output.
-The pinned reference supplies no exact V8 patch version or replacement API for
-every override. Consult that version's implementation when these assumptions
+No exact V8 patch version or replacement API for every override is specified
+here. Consult that version's implementation when these assumptions
 differ; a V9 documentation page cannot resolve a V8 contract.
 
 ## MessageBar owns its announcement by default
 
-The [historical V8 contract](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L157-L178)
-describes these defaults:
+Use these defaults for the confirmed V8 composition:
 
 - With default `delayedRender` behavior, MessageBar inserts its content into an
-   internal live region after a short delay. The source does not specify a delay
+   internal live region after a short delay. This guidance does not specify a delay
    duration; do not encode a guessed timeout as an API guarantee.
 - Message types `error`, `blocked` and `severeWarning` also receive the component's
    alert role. Other types use its documented status behavior. This is the V8
@@ -35,8 +34,8 @@ Report a gap when the built-in announcement is disabled/broken and no documented
 V8 replacement supplies it. Neither `delayedRender={false}` alone nor the absence
 of `Announced` alone proves an announcement defect.
 
-Do not prescribe a universal replacement for these overrides: the historical
-source does not define one. Identify the actual disabled behavior and the
+Do not prescribe a universal replacement for these overrides: none is defined
+here. Identify the actual disabled behavior and the
 installed version's supported replacement; an unresolved contract is
 context-needed, not permission to copy V9 `AriaLiveAnnouncer` into a V8-only tree.
 
@@ -51,7 +50,6 @@ These are expected verification outcomes, not reports of executed AT tests.
 
 ## Async collection status: V8 mechanisms only
 
-Basis: [async feedback and stack selection](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L296).
 Apply the full transition matrix in `common.topic.dynamic-content`; use this V8
 binding rather than repeating that cross-product matrix:
 
@@ -74,8 +72,6 @@ For a host-owned shared announcement utility, route by stable ID to
 selected. Its reading modes and repetition protocol are not V8 component APIs.
 
 ## Focus: V8, native V9 and compatibility layers are different owners
-
-Basis: [dynamic transitions and ownership](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L399).
 
 - Preserve the V8 component's documented keyboard/focus model and established
    trigger restoration; do not replace `FocusZone` behavior with guessed V9 hooks.

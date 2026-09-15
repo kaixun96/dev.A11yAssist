@@ -102,6 +102,7 @@ test('standalone server cold-bootstraps all declared entries then reads Common a
     assert.deepEqual(Object.keys(listed.packages), ['common', 'fluent', 'sharepoint']);
     assert.equal(listed.contentApprovalVerified, false);
     assert.equal(listed.independentBehaviorVerified, false);
+    assert.doesNotMatch(JSON.stringify(listed), /agentow|7896845e51d75b0b9d632a2fd61876bc2f556ea5/i);
     assert(listed.sources.common.some(source => source.status === 'connection-pending'));
     const replies = run([call(name, 'search', { query: 'focus' }), call(name, 'read', { id: 'common.analysis.root-cause' }),
       call(name, 'read', { id: 'common.topic.foundations' }),
@@ -120,7 +121,7 @@ test('standalone server cold-bootstraps all declared entries then reads Common a
     const common = currentPackages.find(pkg => pkg.id === 'common');
     const analysis = common.entries.find(entry => entry.id === read.entry.id);
     assert.deepEqual(read.sources, common.sources.filter(source => analysis.sourceIds.includes(source.id)));
-    assert(read.sources.every(source => source.authority === 'historical-reference' && source.status === 'historical'));
+    assert.deepEqual(read.sources, []);
     const foundations = content(replies[2].result);
     assert.deepEqual(foundations.sources.map(source => source.id), ['wcag', 'apg']);
     assert(foundations.sources.every(source => foundations.entry.sourceIds.includes(source.id)));
@@ -142,10 +143,10 @@ test('standalone server cold-bootstraps all declared entries then reads Common a
     const distribution = await load(artifact);
     assert.equal(odsp.sha256, distribution.manifest.hashes[`packages/sharepoint/${entry.path}`]);
     assert.deepEqual(odsp.sources, packageDescriptor.sources.filter(source => entry.sourceIds.includes(source.id)));
-    assert.deepEqual(odsp.sources.map(source => source.id), ['agentow-accessibility']);
-    assert(odsp.sources.every(source => source.authority === 'historical-reference' && source.status === 'historical'));
+    assert.deepEqual(odsp.sources, []);
     assert.equal(odsp.contentApprovalVerified, false);
     assert.equal(odsp.independentBehaviorVerified, false);
+    assert.doesNotMatch(JSON.stringify([read, odsp, projectSearch]), /agentow|7896845e51d75b0b9d632a2fd61876bc2f556ea5/i);
   });
 });
 
@@ -226,7 +227,7 @@ test('discovery lists standards, curated patterns and cases on independent exact
   assert.deepEqual(v9.entries.map(entry => entry.id), ['fluent.v9.component-contract']);
   assert.deepEqual(v9.facets.packages, [{ value: 'fluent', count: 1 }]);
   assert.deepEqual(v9.facets.appliesTo, [{ value: 'fluent-v9', count: 1 }]);
-  assert(v9.entries[0].matchedSources.every(source => source.status === 'historical'));
+  assert.deepEqual(v9.entries[0].matchedSources, []);
   const apg = await list({ sourceId: 'apg' });
   assert(apg.entries.some(entry => entry.id === 'common.topic.foundations'));
   assert(!(await list({ category: 'pattern', sourceId: 'apg' })).entries.some(entry => entry.id === 'common.topic.foundations'),

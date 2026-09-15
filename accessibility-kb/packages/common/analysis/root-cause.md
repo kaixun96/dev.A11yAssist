@@ -58,8 +58,8 @@ Basis: [component semantics](../topics/component-accessibility.md),
 
 ## Reusable review-miss counterexamples
 
-These are sanitized, generalized **draft hypotheses** from historical review
-lessons. They are not claims about a current product or verified incidents here.
+These **draft hypotheses** illustrate causal mechanisms, not verified incidents
+or claims about a particular product.
 
 | Mechanism | Concrete accessibility risk | Positive verification / smallest responsible correction |
 |---|---|---|
@@ -78,10 +78,5 @@ does not prove an accessibility defect. Prefer a precise user impact, such as
 lost keyboard operation or an incorrect announced result, to importing generic
 architecture, performance or review-process policy.
 
-Historical basis: [review misses and parity calibration](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md#L21-L81),
-[React and asynchronous lifecycles](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/common-review-issues.md#L119-L178),
-[data contracts](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/common-review-issues.md#L244-L261),
-[cleanup and compatibility](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/common-review-issues.md#L332-L350),
-and [comparing shared copies](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md#L138-L151).
-Current applicability and observations remain pending; no historical person,
-work item, tenant or evidence artifact is needed to use these examples.
+Establish applicability and actual observations for the affected interaction
+before treating a hypothesis as a finding.

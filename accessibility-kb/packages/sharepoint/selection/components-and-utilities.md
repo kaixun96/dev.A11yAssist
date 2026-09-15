@@ -1,23 +1,20 @@
 # Select for the actual SharePoint host
 
 Status: draft. Owner: unassigned.
-Source IDs: `agentow-spds`, `agentow-accessibility`, `agentow-shared-utilities`, `agentow-replacement`.
+Active source status and entry bindings: [package metadata](../package.json).
 
-These are concrete historical ODSP-Web rules at AgentOW revision
-`7896845e51d75b0b9d632a2fd61876bc2f556ea5`, not current-approved API or support
+These are draft ODSP-Web rules, not current-approved API or support
 claims. Record the host, exact installed versions and wrapper exports before
 applying them elsewhere. Official SPDS/utility sources remain connection-pending.
 
 ## Component fit and host-scoped import order
-
-[Source: component fit and selection, lines 5–44](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/sharepoint-design-system-and-ux-components.md#L5-L44).
 
 Do not translate the noun “list” directly into an import. Compare data shape,
 selection, sorting/filtering/grouping, editing, keyboard model, virtualization,
 paging, drag, responsiveness and semantics. Compare the strongest two candidates
 when both plausibly fit, against installed APIs and nearby production usage.
 
-| Requirement | Historical selection and caller responsibility |
+| Requirement | Selection and caller responsibility |
 | --- | --- |
 | Conventional interactive table: sortable columns, selection, stable row identity, grid navigation | Prefer SPDS `DataGrid`; use its column definitions, controlled sort/selection and selection cells. Do not rebuild these with header buttons, standalone checkboxes, `role="grid"` or bespoke arrow navigation. |
 | Primarily presentational table | Prefer SPDS `Table` and preserve header/cell relationships. |
@@ -25,16 +22,15 @@ when both plausibly fit, against installed APIs and nearby production usage.
 | Server sorting, paging, upload, drag zone, status or dialogs alongside a grid | These do not alone justify `Table`. Keep sibling workflows outside the grid; drive requests from controlled `DataGrid` state. |
 | Narrow viewport/high zoom | Preserve relationships; a minimum grid width with horizontal scrolling can be better than collapsing columns. See `common.topic.visual-accessibility` for the scoped two-dimensional-content exception, not a blanket scrolling exemption. |
 
-For this historical host, use the highest supported layer that meets the need:
+For ODSP-Web, use the highest supported layer that meets the need:
 
 - Under the ODSP-Web **sp-client** source area, eager exported controls use
    `@msinternal/sharepoint-ui-react-stable-bundle`.
 - Under **odsp-common**, use `@msinternal/sharepoint-ui-react-stable` and verify
    the corresponding non-bundle export route.
 - Check `@msinternal/sharepoint-ui-react-stable/lib/LazyComponents` as well as
-   stable exports before falling back. The source names `Dialog`, `Checkbox` and
-   their documented subcomponents; the [replacement reference, lines 29–33](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-ref-replace-component/SKILL.md#L29-L33)
-   also names Drawer. These are export checks, not a promise every version exports
+   stable exports before falling back. Check `Dialog`, `Checkbox`, their
+   documented subcomponents and Drawer. These are export checks, not a promise every version exports
    every family there. The LazyComponents route belongs to the stable dependency,
    not merely the stable-bundle dependency.
 - When both SPDS stable entries lack the needed component, behavior, slot, token
@@ -50,15 +46,13 @@ For native/framework/host responsibility use `common.implementation.component-co
 
 Within that host, do not import directly from `@fluentui/react-components` when
 the required capability is available from SPDS stable or LazyComponents. Bypassing
-that supported route is an **Important** finding in the historical review policy.
+that supported route is an **Important** finding in this scoped ODSP-Web review
+guidance, not a MAS classification or current official product policy.
 An exception needs the concrete capability gap in both SPDS entry points and the
 chosen fallback's semantic, accessibility and theme fit; a styling preference or
 unexamined export is not an exception.
 
 ## Route to a concrete contract
-
-[Source: utility ownership, lines 179–219](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L179-L219)
-and [focus/content/scan utilities, lines 344–424](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L344-L424).
 
 | Need | Entry and rule |
 | --- | --- |
@@ -70,9 +64,6 @@ and [focus/content/scan utilities, lines 344–424](https://github.com/kaixun96/
 | Theme, shim, portal, replacement or scan coverage | [Themes and host verification](../verification/themes-and-host.md): classification, provider coverage and scan limitations. |
 
 ## Shared utility fit, not name matching
-
-[Source: capability and contract fit, lines 27–69](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md#L27-L69)
-and [package map/anti-patterns, lines 71–151](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md#L71-L151).
 
 Search by capability and representative callers. For accessibility-related
 formatting and shared UI, starting points include `@msinternal/utilities-strings`,

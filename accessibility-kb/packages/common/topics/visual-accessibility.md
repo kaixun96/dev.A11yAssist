@@ -68,9 +68,9 @@ defect; a raw spacing literal needs an actual impact, not a blanket token rule.
 | Full accessible value already supplied | The full name/value remains available without a duplicate hidden copy | A second description repeats the full label and makes speech unnecessarily verbose |
 | User text settings/localization growth | Text resize, spacing and longer translations retain content, target separation and operation | A fixed-height row clips instructions or an error message |
 
-Preserve the applicable contrast criterion's exceptions. Do not convert the
-historical reference's broad “all boundaries/states/focus indicators at 3:1”
-wording into a universal rule. Inactive controls, incidental decoration,
+Preserve the applicable contrast criterion's exceptions. Do not apply
+“all boundaries/states/focus indicators at 3:1” as a universal rule.
+Inactive controls, incidental decoration,
 unmodified user-agent presentation and other criterion-specific exceptions need
 their own applicability assessment. Test relevant disabled-state usability and
 distinction without asserting that every disabled label must meet normal-text
@@ -98,8 +98,5 @@ physical/spatial meaning where intentional, and record the scoped reason.
 Pair this with the [complete-message rules](forms-and-content.md), not an
 English-only visual snapshot.
 
-Historical draft basis: [rendered checks and exceptions](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L111),
-[custom UI checks](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L445-L465),
-and [localization and directional CSS](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L1-L19).
 Current standards mapping and rendered observations remain pending; these cases
 are acceptance examples, not measured results.

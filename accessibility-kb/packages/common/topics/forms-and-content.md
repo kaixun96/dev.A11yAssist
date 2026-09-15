@@ -98,7 +98,7 @@ when the meaning/context really matches; identical spelling is not enough.
   “{count} items selected” is a sentence; joining a number, a separately selected
   noun and “selected” is not a safely reorderable translation.
 - Do not universalize English zero/plural wording or a three-form interval set.
-  The pinned source's zero/one/plural convention belongs to its resource pipeline;
+  A zero/one/plural convention is specific to the resource pipeline;
   follow the target locale and formatter. A placeholder holding an entity name in
   “{name} deleted” is not a numeric count and does not require plural intervals.
 - Format user-facing lists with the user's/site's locale (for example
@@ -123,13 +123,5 @@ pipeline-specific annotations are not cross-product accessibility standards.
 An explicit compatibility/parity contract can intentionally constrain date or
 message formatting. Record that scope before calling the format a defect;
 compatibility does not excuse incorrect timezone calculations or automatically
-waive an applicable accessibility requirement. This is a context-needed or scoped
-exception decision, never invented approval.
-
-Historical draft basis: [accessibility content-checker boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L400-L409),
-[form/custom-control checklist and examples](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L425-L627),
-[localization reference](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md),
-[shared utility fit](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md),
-and [parity calibration](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md).
-These are pinned historical claims and generalized examples, not current owner
-approval or executed verification.
+waive an applicable accessibility requirement. This is a context-needed or
+scoped exception decision, never invented approval.

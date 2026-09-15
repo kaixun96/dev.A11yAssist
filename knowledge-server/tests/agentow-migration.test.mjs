@@ -12,12 +12,8 @@ import { assertCurrentEntries, currentPackages } from './helpers/current-package
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 const server = join(repository, 'knowledge-server');
 const kbRoot = join(repository, 'accessibility-kb');
-const inventoryRoot = join(repository, 'integrations/agentow/knowledge');
-const commit = '7896845e51d75b0b9d632a2fd61876bc2f556ea5';
-const prefix = `https://github.com/kaixun96/dev.AgentOW/blob/${commit}/`;
 const json = async path => JSON.parse(await readFile(path, 'utf8'));
 const digest = value => createHash('sha256').update(value).digest('hex');
-const normalize = text => text.replaceAll('\r\n', '\n');
 const compact = text => text.replace(/\s+/g, ' ');
 const kb = await loadKnowledgeBase(kbRoot);
 const body = id => {
@@ -38,67 +34,37 @@ function row(text, label) {
   return matches[0].split('|').slice(2, -1).map(cell => cell.trim());
 }
 
-test('migration provenance binds declared sources and citations to the hashed original inventory', async () => {
-  const inventory = await json(join(inventoryRoot, 'source-inventory.json'));
-  assert.equal(inventory.origin.commit, commit);
-  assert.equal(inventory.origin.repository, 'kaixun96/dev.AgentOW');
-  const candidates = inventory.files.filter(file => file.document && file.accessibilityMarker &&
-    !file.path.startsWith('copilot/skills/vercel-react-best-practices/'));
-  assert.equal(candidates.length, 53);
-  assert.equal(new Set(candidates.map(file => file.sha256)).size, 41);
-  const originals = new Map();
-  for (const file of candidates) {
-    assert.equal(file.disposition, 'snapshot');
-    assert.equal(file.sourceUrl, prefix + file.path);
-    const original = normalize(await readFile(join(inventoryRoot, file.target), 'utf8'));
-    assert.equal(digest(original), file.sha256, `Original inventory hash: ${file.path}`);
-    originals.set(file.path, original);
-  }
-  function citation(locator) {
-    assert(locator.startsWith(prefix), `Unpinned or unpermitted source: ${locator}`);
-    const relative = locator.slice(prefix.length);
-    const [path, fragment, extra] = relative.split('#');
-    assert.equal(extra, undefined);
-    assert(originals.has(path), `Source outside audited candidate inventory: ${path}`);
-    const lines = originals.get(path).trimEnd().split('\n').length;
-    if (fragment === undefined) return { path, start: 1, end: lines };
-    const range = /^L([1-9]\d*)(?:-L([1-9]\d*))?$/.exec(fragment);
-    assert(range, `Invalid source range: ${locator}`);
-    const start = Number(range[1]);
-    const end = Number(range[2] ?? range[1]);
-    assert(start <= end && end <= lines, `Out-of-bounds source citation: ${locator}`);
-    return { path, start, end };
+test('standalone KB files and descriptors are independent of AgentOW and export no provenance', () => {
+  for (const [path, content] of kb.files) {
+    assert.doesNotMatch(path, /agentow|7896845e51d75b0b9d632a2fd61876bc2f556ea5|provenance/i);
+    assert.doesNotMatch(content, /agentow|7896845e51d75b0b9d632a2fd61876bc2f556ea5/i, path);
   }
   for (const pkg of currentPackages) {
-    const historical = new Map();
-    for (const source of pkg.sources.filter(source => source.id.startsWith('agentow-'))) {
-      assert.equal(source.status, 'historical');
-      assert.equal(source.authority, 'historical-reference');
-      assert.equal(source.revision, commit);
-      historical.set(source.id, citation(source.locator));
+    assert.doesNotMatch(JSON.stringify(pkg), /agentow|7896845e51d75b0b9d632a2fd61876bc2f556ea5/i);
+    const exported = exportKnowledgeBase(kb, [pkg.id]);
+    for (const path of [...exported.files.keys(), ...Object.keys(exported.manifest.hashes)]) {
+      assert.doesNotMatch(path, /provenance/i, 'Maintainer history must not enter a standalone export');
     }
-    assert(historical.size > 0, `${pkg.id}: missing historical provenance`);
-    const used = new Set();
+  }
+});
+
+test('standalone entries reference existing current sources without invented approval', () => {
+  for (const pkg of currentPackages) {
+    const sources = new Set(pkg.sources.map(source => source.id));
+    assert.equal(sources.size, pkg.sources.length, `${pkg.id}: source IDs must be unique`);
+    for (const source of pkg.sources) {
+      assert(['connection-pending', 'review-pending'].includes(source.status), `${pkg.id}.${source.id}: no claimed source approval`);
+      assert.notEqual(source.authority, 'historical-reference');
+      assert.equal(source.revision, null, `${pkg.id}.${source.id}: no invented reviewed revision`);
+      if (source.status === 'connection-pending') assert.equal(source.locator, null);
+      else assert.match(source.locator, /^https:\/\//);
+    }
     for (const entry of pkg.entries) {
-      const declared = entry.sourceIds.filter(id => historical.has(id));
-      const bound = new Set();
-      const text = body(entry.id);
-      for (const match of text.matchAll(/https:\/\/github\.com\/kaixun96\/dev\.AgentOW\/[^\s)]+/g)) {
-        const linked = citation(match[0]);
-        const sources = declared.filter(id => {
-          const source = historical.get(id);
-          return source.path === linked.path && source.start <= linked.start && source.end >= linked.end;
-        });
-        assert(sources.length > 0, `${entry.id}: undeclared/out-of-scope citation ${match[0]}`);
-        sources.forEach(id => { bound.add(id); used.add(id); });
-      }
-      assert.deepEqual([...bound].sort(), declared.sort(), `${entry.id}: every historical source needs a bound citation`);
-      if (declared.length) {
-        assert.equal(entry.status, 'draft');
-        assert.equal(entry.owner, 'unassigned');
-      }
+      assert.equal(entry.status, 'draft', entry.id);
+      assert.equal(entry.owner, 'unassigned', entry.id);
+      assert.equal(entry.review, undefined, `${entry.id}: no invented review`);
+      for (const id of entry.sourceIds) assert(sources.has(id), `${entry.id}: unknown current source ${id}`);
     }
-    assert.deepEqual([...used].sort(), [...historical.keys()].sort(), `${pkg.id}: no unbound provenance metadata`);
   }
 });
 
@@ -116,7 +82,6 @@ test('migration preserves original IDs and registers exactly the three new utili
   }
   assert.deepEqual([...kb.entries.keys()].filter(id => !oldIds.includes(id)).sort(),
     newUtilities.map(name => `sharepoint.utilities.${name}`).sort());
-  const sharepoint = kb.packages.get('sharepoint');
   for (const name of newUtilities) {
     const entry = kb.entries.get(`sharepoint.utilities.${name}`);
     assert.equal(entry.path, `utilities/${name}.md`);
@@ -125,7 +90,7 @@ test('migration preserves original IDs and registers exactly the three new utili
       assert(kb.entries.get(parent).relations.includes(entry.id), `${parent}: missing discovery relation`);
       assert(body(parent).includes(`utilities/${name}.md`), `${parent}: missing navigable utility link`);
     }
-    assert(entry.sourceIds.every(id => sharepoint.sources.some(source => source.id === id && source.status === 'historical')));
+    assert.deepEqual(entry.sourceIds, [], 'Draft utility guidance must not invent an authoritative replacement source');
   }
   for (const [selected, closure] of [['common', ['common']], ['fluent', ['common', 'fluent']],
     ['sharepoint', ['common', 'fluent', 'sharepoint']]]) {
@@ -241,13 +206,13 @@ function verifySharePointAnnouncements(text) {
   assert.match(value, /page\/canvas, cross-view transitions.*`A11yManager` `saveActiveElementAs` \/ `restoreFocus`/);
   assert.match(value, /legacy\/custom\/unmanaged DOM outside Tabster ownership/);
   assert.match(value, /For \*\*migration-layer\*\*, not native V9, panels\/modals.*`useRestoreFocusOnDismiss`, `ModalShim` and `FocusTrapZoneShim`/);
-  assert.match(value, /historical AgentOW review scale classifies a missing perceivable completion, replacement, append, sort\/filter, empty or error outcome as \*\*Important\*\*/);
+  assert.match(value, /This scoped ODSP-Web review guidance classifies a missing perceivable completion, replacement, append, sort\/filter, empty or error outcome as \*\*Important\*\*/);
   assert.match(value, /Use \*\*Minor\*\* only when the transition is already perceivable and the change improves wording or reduces redundant speech/);
   assert.match(value, /A visible spinner or changed rows do not lower the severity of a missing programmatic result/);
   assert.match(value, /keyboard-triggered removal\/replacement that leaves focus on body, a detached node, a non-interactive wrapper or an unrelated control without a documented accessible destination is \*\*Important\*\*/);
   assert.match(value, /\*\*Minor\*\* applies only if focus already reaches a logical, visible, enabled destination and the remaining detail is non-blocking/);
   assert.match(value, /“By design” alone does not justify lowering severity; require the interaction contract and focused test evidence/);
-  assert.match(value, /These are the source review labels, not MAS classifications or a replacement for a product's rubric/);
+  assert.match(value, /These are draft review labels, not MAS classifications, current official product policy or a replacement for a product's rubric/);
 }
 
 function verifyRichText(text) {
@@ -270,7 +235,7 @@ function verifyDrag(text) {
   assert.match(row(text, 'Move')[0], /Arrow keys.*rather than adding a parallel live region/);
   assert.match(row(text, 'Disallowed move')[0], /`moveNotAllowed`.*not only a visual indication/);
   assert.match(row(text, 'Cancel')[0], /Escape cancels.*`moveCancelled`.*focus return to the handle/);
-  assert.match(row(text, 'Complete')[0], /`moveComplete`.*focus return to the handle.*does not identify the completion key or public completion API.*Do not invent Enter\/Space-to-drop/);
+  assert.match(row(text, 'Complete')[0], /`moveComplete`.*focus return to the handle.*completion key and public completion API are not specified here.*Do not invent Enter\/Space-to-drop/);
 }
 
 function verifyLocalization(text) {
@@ -301,7 +266,7 @@ function verifyHost(text) {
   assert.match(value, /`createV9Theme\(getTheme\(\)\)` reintroduces customer theme/);
   assert.match(row(text, '`runAccessibilityScanAsync` from the ODSP-Web tools/playwright-utilities area')[0], /Runs axe.*`includeSelectors`.*returns violation count.*no full call\/options signature.*zero count says nothing about excluded selectors, disabled rules or unvisited states/);
   assert.match(row(text, '`verifyAccessibilityWithSPA11yAssistant(page)`')[0], /SharePoint authoring-page scenarios.*not a general component API or an all-accessibility pass/);
-  assert.match(value, /no central author-facing `VisuallyHidden`\/`sr-only` React component \*\*at that historical scope\*\*. It does not establish current absence/);
+  assert.match(value, /Check the installed host for an established author-facing `VisuallyHidden`\/`sr-only` React component; this draft does not establish its availability or absence/);
 }
 
 // These verify connected conditions, prescriptions, exceptions and negative
@@ -325,7 +290,7 @@ test('Common rendered-UI review requires impact evidence for exclusions and a ma
   assert.match(value, /contrast\/forced colors, focus indicators, typography\/spacing, zoom\/reflow, overflow\/truncation, visibility, content order, targets, motion and state cues/);
   assert.match(value, /Include forms, transient surfaces, dynamic status and async collections even when the diff contains no explicit accessibility code/);
   assert.match(value, /Decorative-only spacing, radii or shadows are outside this trigger only with evidence that they cannot affect clipping, reflow, targets, focus, readability or semantics/);
-  assert.match(value, /migrated AgentOW review policy checks applicable WCAG 2\.1 A\/AA criteria and complete keyboard-only and screen-reader operation for affected UI/);
+  assert.match(value, /Check applicable WCAG 2\.1 A\/AA criteria and complete keyboard-only and screen-reader operation for affected UI/);
   assert.match(value, /Record not-applicable only with a diff-based explanation establishing no rendered UI, interaction or assistive-output impact/);
   assert.match(value, /Record runtime-dependent criteria as not verified until appropriate evidence exists; source inspection is not a conformance pass/);
   assert.match(value, /A current product may require a newer or additional standard; use `common.requirements.authority-and-applicability` to resolve that scope/);
@@ -346,7 +311,7 @@ test('Common migration retains semantic, localization, focus, review-miss and ve
   assert.match(forms, /placeholder holding an entity name.*not a numeric count and does not require plural intervals/);
   assert.match(forms, /checkbox or radio label should not acquire nested interactive links/);
   const visual = compact(body('common.topic.visual-accessibility'));
-  assert.match(visual, /Do not convert the historical reference's broad.*3:1.*wording into a universal rule/);
+  assert.match(visual, /Do not apply “all boundaries\/states\/focus indicators at 3:1” as a universal rule/);
   assert.match(visual, /Inactive controls, incidental decoration, unmodified user-agent presentation.*exceptions/);
   assert.match(visual, /do not double-flip it.*inline\/raw-CSS override outside that pipeline is not protected/);
   const focus = body('common.topic.keyboard-focus');
@@ -379,7 +344,7 @@ test('Fluent/SPDS selection keeps host-scoped imports, controlled grid fit and c
   assert.match(value, /LazyComponents route belongs to the stable dependency, not merely the stable-bundle dependency/);
   assert.match(value, /\*\*ODSP-Web-scoped\*\*, not a cross-product SPDS mandate/);
   assert.match(value, /Within that host, do not import directly from `@fluentui\/react-components` when the required capability is available from SPDS stable or LazyComponents/);
-  assert.match(value, /Bypassing that supported route is an \*\*Important\*\* finding in the historical review policy/);
+  assert.match(value, /Bypassing that supported route is an \*\*Important\*\* finding in this scoped ODSP-Web review guidance, not a MAS classification or current official product policy/);
   assert.match(value, /An exception needs the concrete capability gap in both SPDS entry points and the chosen fallback's semantic, accessibility and theme fit; a styling preference or unexamined export is not an exception/);
   for (const id of ['fluent.selection.components-and-utilities', 'sharepoint.spds.component-contract']) {
     const contract = compact(body(id));

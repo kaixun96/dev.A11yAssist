@@ -40,7 +40,7 @@ Basis: [foundations](../topics/foundations.md),
 
 ## Review absence, rendered impact and conflicting evidence
 
-**Pinned historical draft lessons.** Begin from changed user-visible behavior,
+Begin from changed user-visible behavior,
 not an `aria-*` search alone. A new asynchronous list with no accessibility code
 still needs the [complete outcome matrix](../topics/dynamic-content.md); a style
 change can affect focus/contrast/reflow without changing semantics in JSX.
@@ -70,9 +70,5 @@ names, focus lifecycle or announcements. Missing source, unknown provider
 ancestry and unavailable versions are context-needed, not pass and not a reason
 to invent an API. See [dynamic evidence](dynamic.md) and [test limits](testing.md).
 
-Historical basis: [review scope](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L19),
-[async outcomes](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L311),
-[audit tools and checklist](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L414-L465),
-and [contradictory completed checklist miss](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md#L49-L67).
 Repository report fields, severities and heading evidence filenames are excluded
 from these cross-product rules; no runtime audit is executed by reading them.

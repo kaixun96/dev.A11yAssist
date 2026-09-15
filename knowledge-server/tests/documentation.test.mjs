@@ -13,9 +13,6 @@ const json = async path => JSON.parse(await readFile(path, 'utf8'));
 const prose = text => text.replace(/```[\s\S]*?```/g, '');
 const designs = ['TECH-DESIGN.md', 'TECH-DESIGN.zh-CN.md'];
 const audits = ['AGENTOW-MIGRATION-AUDIT.md', 'AGENTOW-MIGRATION-AUDIT.zh-CN.md'];
-const commit = '7896845e51d75b0b9d632a2fd61876bc2f556ea5';
-const prefix = `https://github.com/kaixun96/dev.AgentOW/blob/${commit}/`;
-const packageIds = ['common', 'fluent', 'sharepoint'];
 
 test('maintained Chinese docs separate punctuation-ending bold spans from following text', async () => {
   for (const name of [
@@ -103,78 +100,19 @@ test('maintainer documentation links and reference definitions resolve without f
   }
 });
 
-test('audit source appendix exactly accounts for pinned candidate paths and hashes', async () => {
+test('bilingual archive notes retain pinned attribution without duplicate maps or operational authority', async () => {
   const inventory = await json(resolve(repository, 'integrations/agentow/knowledge/source-inventory.json'));
-  assert.equal(inventory.origin.commit, commit);
-  assert.deepEqual(inventory.totals, { tracked: 171, snapshot: 106, externalReference: 8, outsideKnowledgeScope: 57 });
-  const candidates = inventory.files.filter(file => file.document && file.accessibilityMarker &&
-    !file.path.startsWith('copilot/skills/vercel-react-best-practices/'));
-  assert.equal(candidates.length, 53);
-  assert.equal(new Set(candidates.map(file => file.sha256)).size, 41);
-  const byPath = new Map(candidates.map(file => [file.path, file]));
+  const origin = `https://github.com/${inventory.origin.repository}/tree/${inventory.origin.commit}`;
   for (const name of audits) {
     const text = await read(name);
-    const definitions = new Map([...text.matchAll(/^\[([sd]\d+)\]:\s+(\S+)/gm)].map(m => [m[1], m[2]]));
-    const paths = [...definitions.values()].map(url => {
-      assert(url.startsWith(prefix), `${name}: source link not pinned`);
-      return url.slice(prefix.length);
-    });
-    assert.deepEqual(paths.sort(), [...byPath.keys()].sort());
-    let verifiedRows = 0;
-    for (const line of text.split('\n')) {
-      const hash = line.match(/\| `([a-f0-9]{12})` \|/);
-      if (!hash) continue;
-      for (const match of line.matchAll(/\]\[([sd]\d+)\]/g)) {
-        const path = definitions.get(match[1]).slice(prefix.length);
-        assert.equal(byPath.get(path).sha256.slice(0, 12), hash[1], `${name}: wrong hash for ${path}`);
-      }
-      verifiedRows++;
-    }
-    assert.equal(verifiedRows, 41);
+    const content = prose(text).replace(/\s+/g, ' ');
+    assert(text.includes(`](${origin})`), `${name}: attribution must use the inventory origin`);
+    assert(text.includes('](../integrations/agentow/knowledge/source-inventory.json)'),
+      `${name}: retain the existing inventory link`);
+    assert.doesNotMatch(text, /provenance\/|^\s*\|/im, `${name}: no duplicate provenance links or mapping tables`);
+    assert.match(content, /Current entries remain draft\.|当前条目仍为 draft。/, name);
+    assert.match(content, /Historical sources and attribution do not establish official approval|历史来源与署名不等于官方批准/, name);
+    assert.match(content, /AgentOW and its archive are not operational, build, installation or source-map dependencies of the knowledge service or current KB maintenance|AgentOW 及其归档不是知识服务或当前 KB 维护的操作、构建、安装或来源映射依赖/, name);
+    assert.match(content, /the archive is not an active MCP source catalog|归档也不是活跃 MCP 来源目录/, name);
   }
-});
-
-test('both audits map completed B01-B16 and registered N01-N03 to actual entry files', async () => {
-  const packages = await Promise.all(packageIds.map(id =>
-    json(resolve(repository, `accessibility-kb/packages/${id}/package.json`))));
-  const entries = packages.flatMap(pkg => pkg.entries);
-  const targets = new Map(packages.flatMap(pkg => pkg.entries.map(entry =>
-    [entry.id, `../accessibility-kb/packages/${pkg.id}/${entry.path}`])));
-  const newIds = ['rich-text-accessibility', 'drag-and-drop', 'localization-and-formatting']
-    .map(name => `sharepoint.utilities.${name}`);
-  const mappings = [];
-  for (const name of audits) {
-    const text = await read(name);
-    const rows = [...text.matchAll(/^\| `((?:common|fluent|sharepoint)\.[a-z0-9.-]+)` \|(.+)$/gm)];
-    const ids = rows.map(m => m[1]);
-    assert.deepEqual(ids.sort(), entries.map(entry => entry.id).sort());
-    const links = row => [...row.matchAll(/\]\(([^)\s]+)\)/g)].map(m => m[1]);
-    for (const [, id, row] of rows) {
-      assert(links(row).includes(targets.get(id)), `${name}: ${id} must link to its declared file`);
-    }
-    const completed = [...text.matchAll(/^\| (B\d+) ·(.+)$/gm)];
-    assert.deepEqual(completed.map(m => m[1]), Array.from({ length: 16 }, (_, i) => `B${String(i + 1).padStart(2, '0')}`));
-    assert.match(text, /## 3\. (?:Source-to-KB implemented coverage|源到 KB 的已实现覆盖)/);
-    const mapped = [];
-    for (const [, id, row] of completed) {
-      assert.doesNotMatch(row, /partially covered|missing contract|部分覆盖|缺少具体契约/i);
-      const destinations = [...row.matchAll(/`((?:common|fluent|sharepoint)\.[a-z0-9.-]+)`/g)]
-        .map(match => {
-          assert(targets.has(match[1]), `${name}: ${id} has unregistered target ${match[1]}`);
-          return targets.get(match[1]);
-        }).sort();
-      assert(destinations.length > 0, `${name}: ${id} needs a registered target with a verified index link`);
-      mapped.push([id, destinations]);
-    }
-    const added = [...text.matchAll(/^\| (N\d+) ·(.+)$/gm)];
-    assert.deepEqual(added.map(m => m[1]), ['N01', 'N02', 'N03']);
-    for (const [i, [, id, row]] of added.entries()) {
-      assert(targets.has(newIds[i]), `${id} must be registered, not proposed`);
-      assert(row.includes(newIds[i]), `${name}: ${id} needs its actual ID`);
-      assert(links(row).includes(targets.get(newIds[i])), `${name}: ${id} needs its actual file link`);
-    }
-    mappings.push(mapped);
-    assert.doesNotMatch(text, /semantic migration incomplete|语义迁移未完成/);
-  }
-  assert.deepEqual(mappings[0], mappings[1], 'Bilingual completion rows must map to the same implementations');
 });

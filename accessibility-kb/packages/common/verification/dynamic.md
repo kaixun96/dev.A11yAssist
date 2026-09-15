@@ -49,7 +49,7 @@ with [static reasoning](static.md) and [test boundaries](testing.md).
 
 ## Interpreting scans and transition observations
 
-**Historical draft extension.** A DOM accessibility scan can find some supported
+A DOM accessibility scan can find some supported
 rule violations in the selected rendered state. Record its scope, rules,
 exclusions, disabled-rule rationale and state. A zero-violation count in selected
 content says nothing about excluded regions or unvisited loading/error/selection
@@ -79,17 +79,12 @@ simulated successful result. Product scan/helper APIs route through
 `sharepoint.selection.components-and-utilities`; no scanner or private helper is
 a Common dependency. No commands, hosts or assistive sessions are started here.
 
-Historical basis: [limits of source review](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L19),
-[async and focus outcomes](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L343),
-and [test/audit boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L400-L424).
 The interpretation examples are generalized guidance, not actual observed results.
 
 ## Voice Access overlay attribution
 
-Basis: [AgentOW evaluator evidence interpretation](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/agents/a11y-evaluator.agent.md#L29-L36).
-
 For a numbered-overlay before/after comparison, require matching canonical URL,
-viewport, scale, scroll, target selector and target geometry. The source scenario
+viewport, scale, scroll, target selector and target geometry. This comparison
 also requires the debug bar hidden and no dialogs; do not compare screenshots
 with different chrome/dialog states as if they demonstrate a page regression.
 For an intentionally changed geometry or dialog-specific task, define a separate
@@ -104,9 +99,6 @@ browser toolbar cannot prove the page has a wrongly interactive heading; a
 mapped non-actionable page target can be assessed against the actual task.
 
 ## Recorded screen-reader evidence and matched verification
-
-Basis: [recording quality](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/agents/a11y-evaluator.agent.md#L38-L45)
-and [scenario comparison and supporting inspection](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/agents/a11y-evaluator.agent.md#L79-L102).
 
 When evaluating an unattended NVDA/Narrator recording, require validated duration,
 frame dimensions, image variance, audio RMS/peak and an extracted frame showing

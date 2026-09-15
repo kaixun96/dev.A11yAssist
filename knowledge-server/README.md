@@ -2,6 +2,8 @@
 
 This is an independent, read-only stdio MCP service for the
 [Common / Fluent / SharePoint KB](../accessibility-kb/README.md).
+The KB is the single repository for new accessibility knowledge contributions;
+Common, Fluent and SharePoint own their respective scopes within it.
 It does not install, replace or register any marketplace plugin. Existing plugin
 skills, knowledge, operational MCP servers, configuration and workflows remain
 unchanged. A host administrator may register this service alongside them; it is
@@ -18,13 +20,6 @@ For contributors and maintainers, see the
 [technical design and extension guide](TECH-DESIGN.md) / [简体中文](TECH-DESIGN.zh-CN.md): architecture,
 content placement, entry/package examples, source review, schemas, tests and releases.
 
-The [AgentOW migration audit](AGENTOW-MIGRATION-AUDIT.md) /
-[迁移审查（简体中文）](AGENTOW-MIGRATION-AUDIT.zh-CN.md) maps the pinned upstream
-references to implemented Common, Fluent and SharePoint rules: B01–B16 coverage,
-three added utility entries, and an exact 35-entry index. Migration of the audited
-reusable accessibility rules from AgentOW commit
-`7896845e51d75b0b9d632a2fd61876bc2f556ea5` is complete in the authored packages.
-
 | Contribute to | Current authored content at version 0.1.1 |
 |---|---|
 | [Common](../accessibility-kb/packages/common/README.md) — 20 entries | Semantics, async outcome/focus matrices, localization, root-cause and verification cases |
@@ -37,12 +32,15 @@ WAI-ARIA normative requirements belong in Common; APG is distinct informative
 guidance, not a normative standard. Framework/product packages describe their
 scoped implementation responsibilities, not duplicate standards.
 
-Extend the owning body, bind the source in its package descriptor, add a scoped
+Extend the owning body, bind applicable active sources in its package descriptor, add a scoped
 positive/negative example, and update navigation, relations and exact dependencies.
+Bodies focus on usable rules, applicability and responsibilities, with current source
+citations supporting their claims. Historical attribution is not an active source binding.
 The design's sections 3–7 explain placement and authoring; sections 9–10 cover release
-and acceptance. All 35 entries remain draft: pinned historical provenance establishes
-the migrated basis, not official approval, current installed-version validity or
-observed conformance. Official MAS and product-support acquisition are separate work.
+and acceptance. All 35 entries remain draft: source provenance does not establish
+official approval, current installed-version validity or observed conformance.
+Many entries have empty `sourceIds`; do not fill those gaps with pending connection
+targets or inferred approval. Official MAS and product-support acquisition are separate work.
 
 **Planned, not implemented:** section 11 of that design specifies one KB MCP
 entrypoint for both local knowledge and authoritative MAS rules, with a MAS MCP
@@ -196,3 +194,7 @@ internal-use and redistribution authorization; this package grants no new licens
 
 This service has its own package/lockfile and does not change the marketplace
 catalog, release metadata, existing homepages or existing plugin installation.
+
+**Further reading**
+
+- [Historical attribution](AGENTOW-MIGRATION-AUDIT.md) / [历史来源说明](AGENTOW-MIGRATION-AUDIT.zh-CN.md) — optional archive history, not a service or content-maintenance dependency.

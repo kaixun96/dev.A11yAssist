@@ -38,7 +38,7 @@ Basis: [component semantics](../topics/component-accessibility.md),
 
 ## Concrete acceptance worksheet
 
-**Historical draft extension.** Describe outcomes, not just component names or
+Describe outcomes, not just component names or
 screenshots. For each changed region, specify its semantic/interaction purpose,
 state owner, contextual name, keyboard model, focus destination and feedback
 owner. An extracted component is useful when it owns an independently testable
@@ -64,9 +64,3 @@ Use [component cases](../topics/component-accessibility.md),
 those outcomes. Acceptance examples are proposed tests, not invented evidence or
 approval. Resolve contradictions against actual source and component contracts;
 a checklist stating “reviewed” cannot fill a missing design.
-
-Historical basis: [cross-cutting checks](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L59-L111),
-[async/focus matrices](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L343),
-[localization/RTL checklist](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L1-L19),
-[semantic and async decomposition](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/ux-architecture-and-bundle-boundaries.md#L5-L36),
-and [self-attested checklist miss](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md#L49-L67).

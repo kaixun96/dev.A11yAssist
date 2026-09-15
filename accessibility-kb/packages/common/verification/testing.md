@@ -43,7 +43,7 @@ Basis: [foundations](../topics/foundations.md),
 
 ## Component replacement: behavior regression matrix
 
-**Historical draft extension.** Bind a replacement comparison to the actual old
+Bind a replacement comparison to the actual old
 and new component versions, wrapper/export routes and host configuration. Use
 matched representative route, fixture, viewport, input and interaction state;
 record deliberate behavior differences separately from accidental regressions.
@@ -101,14 +101,6 @@ Zero violations is not coverage of keyboard journeys, screen-reader delivery,
 focus visibility or all themes. Content/editor scanners are not substitutes for
 semantic component tests. See [observation limits](dynamic.md).
 
-All examples are proposed verification, not executed tests. Historical basis:
-[exact-operation focus tests](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L399),
-[scan and checklist boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L400-L465),
-[replacement inventory and matched comparison](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-ref-replace-component/SKILL.md#L12-L52),
-[localization cases](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md),
-[first-paint miss](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md#L38-L47),
-[behavioral test guidance](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/common-review-issues.md#L283-L299),
-[reconciliation and prop-presence cleanup cautions](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/graduation.md#L483-L609),
-and [initialization/runtime identity risks](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/size-regression.md#L77-L123).
-Only accessibility-relevant regression reasoning is retained; historical
-graduation authority, report schemas, severity and performance budgets are not.
+All examples are proposed verification, not executed tests. These regression
+checks address accessibility, not release authority, report schemas, severity
+or performance budgets.

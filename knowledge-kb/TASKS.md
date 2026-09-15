@@ -10,6 +10,7 @@
 - Bug Bash 等调用方负责确定范围、读取知识、审查源码、执行获授权的检查和生成报告。
 - 对宿主保持一个 KB MCP 入口；目标由服务内部适配器管理 MAS 连接，当前 MAS 尚未实现。
 - 本目录仅保存项目规划，不是新的知识包。正文在 [accessibility-kb](../accessibility-kb/README.md)，服务在 [knowledge-server](../knowledge-server/README.md)，本清单不进入知识快照。
+- 新增知识统一维护在该 KB，由 Common / Fluent / SharePoint 按适用范围负责，不另建平行知识仓库。
 
 每个 PBI 可作为独立 backlog 方向，下面的稳定 Task ID 可拆成工作项。
 `[x]` 表示已实现的指定范围任务，`[ ]` 表示待完成；发布和真实宿主验收由各自任务记录。Owner 为建议角色，实际人员待分配。
@@ -22,7 +23,7 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 ### 当前能力与验证基线
 
 - 独立只读 MCP 提供知识发现与完整读取、精确版本/哈希快照、缓存及分发。
-- 已迁入 AgentOW 固定版本中审查出的可复用无障碍规则；35 个条目：Common 20、Fluent 4、SharePoint 11。当前快照有 7 个经人工策划的带标签条目。
+- 已有 35 个知识条目：Common 20、Fluent 4、SharePoint 11，覆盖无障碍规则、组件/API 责任、例外与正反例。当前快照有 7 个经人工策划的带标签条目；全部条目仍为 draft。
 - 内容包及精确依赖为 0.1.1，独立服务为 0.1.0；生成引用和哈希标识消费方读取的精确快照。
 - 2026-09-15 验证基线：KB 104 项、现有插件 79 项测试及两套生成检查通过。
 - 已实现的窄范围发现契约见 KB-05.10：范围 common/fluent/sharepoint 与类型 standards/patterns/cases/fixes/examples 分轴；WCAG/ARIA 规范性要求归 Common，APG 是不同的 informative 来源。类别不证明完整规范/criterion 覆盖或真实历史修复。
@@ -67,8 +68,8 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 **目标：可复用规则有明确归属，贡献者能持续补充而不重复维护。**
 
 - [x] KB-02.01 建立 Common / Fluent / SharePoint 分层、描述符、稳定 ID、来源绑定和精确依赖。
-- [x] KB-02.02 将审计 B01–B16 的可复用 AgentOW 规则迁入对应正文，新增富文本、拖动和本地化条目。
-- [ ] KB-02.03 由领域专家复核迁入条款的准确性和当前版本适用性；保留历史来源，补充有依据的当前来源。
+- [x] KB-02.02 提供通用交互规则、Fluent 版本契约及 SharePoint 组件和工具知识，包含富文本、拖动和本地化条目。
+- [ ] KB-02.03 由领域专家复核现有条款的准确性和当前版本适用性；历史仓库链接与署名保留在包描述符已有的来源 note 中，正文聚焦规则与责任，并补充有依据的当前来源。
 - [ ] KB-02.04 为各知识领域分配实际 Owner / reviewer，定义审核与问题反馈入口。
 - [ ] KB-02.05 整理 procedures：保留知识使用方法，避免写成服务负责执行的阶段或业务闸门。
 - [ ] KB-02.06 扩充正反例、错误修复和不适用案例，区分通用规则与产品/框架实现。
@@ -77,7 +78,7 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 
 **验收：** 新同事可按模板提交可检索条目；无未登记正文、无跨层复制；批准状态有真实审核依据。
 
-起点：[迁移映射](../knowledge-server/AGENTOW-MIGRATION-AUDIT.zh-CN.md)、[贡献规范](../accessibility-kb/governance/contribution.md)。
+起点：[扩展现有知识](../knowledge-server/TECH-DESIGN.zh-CN.md#32-扩展现有知识)、[贡献规范](../accessibility-kb/governance/contribution.md)。
 
 ## KB-03 — WCAG 标准与规则映射
 
@@ -236,3 +237,7 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 
 内容、服务和评估可以并行推进；试点不必等所有扩展方向结束，但不允许在它所需的知识或标准尚不可用时宣称完成。
 本清单只规划工作项，不创建 ADO/GitHub 工作项，不立即修改或删除现有 plugin。
+
+**延伸阅读**
+
+- [来源追溯审计](../knowledge-server/AGENTOW-MIGRATION-AUDIT.zh-CN.md) — 供维护者追溯来源的记录。

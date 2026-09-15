@@ -20,7 +20,7 @@
 | 候选中的不同正文 | 41 | CRLF → LF 后计算 SHA-256；有 12 个重复路径 |
 | 独立 KB 条目 | 35，全部为草稿 | Common 20 + Fluent 4 + SharePoint 11；精确目标索引见第 4 节 |
 
-**来源与批准：**描述符将迁移条款绑定到固定的 `historical-reference` / `historical` 来源。全部条目仍为 draft，owner 尚未分配；迁移不等于官方批准、当前安装版本有效性、再分发许可或已观察到的合规结果。相关审核遵循[贡献政策](../accessibility-kb/governance/contribution.md)。完成范围是经审计的可复用规则，不是仓库每个字、可执行程序或其链接的外部来源。
+**来源与批准：** 描述符将迁移条款绑定到固定的 `historical-reference` / `historical` 来源。全部条目仍为 draft，owner 尚未分配；迁移不等于官方批准、当前安装版本有效性、再分发许可或已观察到的合规结果。相关审核遵循[贡献政策](../accessibility-kb/governance/contribution.md)。完成范围是经审计的可复用规则，不是仓库每个字、可执行程序或其链接的外部来源。
 
 ## 2. 方法、复现与限制
 
@@ -118,9 +118,9 @@ B01–B16 保留原审计标识，便于贡献者追溯最初发现。所有目�
 ## 5. 操作边界与独立来源获取
 
 - **现有插件保持不变。** 设置、provider、浏览器/AT 操作、租约、证据采集、PR 发布及 run/harness 生命周期仍由其操作实现负责。保留 owner/run/affinity 与规范门禁。KB 流程提供推理，不是可执行替代品。
-- **有意保留的内容边界：**标题大纲决策、证据质量规则及历史有范围的 Important/Minor 评定规则已保留于 B02/B06/B07/B11/B12/B13/B15/B16；该评定规则不是 MAS 分类，也不替代当前产品政策。仓库专属产物/报告 schema 及执行流程（包括 Flight/KillSwitch 和发布命令）仍在 KB 内容之外。
+- **有意保留的内容边界：** 标题大纲决策、证据质量规则及历史有范围的 Important/Minor 评定规则已保留于 B02/B06/B07/B11/B12/B13/B15/B16；该评定规则不是 MAS 分类，也不替代当前产品政策。仓库专属产物/报告 schema 及执行流程（包括 Flight/KillSwitch 和发布命令）仍在 KB 内容之外。
 - **MAS 是独立的获取与实现工作。** 经审计源中没有官方 MAS 规则正文、ID 或获授权的规则 API。统一 KB/MAS 适配器仍是[技术设计第 11 节](TECH-DESIGN.zh-CN.md#11-待实现一个-kb-入口包含-mas-规则能力)中的设计，留待后续实现，不是已迁移 API。
-- **当前来源资格审核：**官方 SPDS/SharePoint 工具及产品支持连接仍待接入；Fluent V9 文档目标待审阅，不能作为 V8 来源。支持矩阵仍为 `awaiting-official-source`、`products: []`。通过贡献流程取得版本相关来源与审核，不编造声明。
+- **当前来源资格审核：** 官方 SPDS/SharePoint 工具及产品支持连接仍待接入；Fluent V9 文档目标待审阅，不能作为 V8 来源。支持矩阵仍为 `awaiting-official-source`、`products: []`。通过贡献流程取得版本相关来源与审核，不编造声明。
 
 ## 6. 维护与验证记录
 

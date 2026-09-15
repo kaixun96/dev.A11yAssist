@@ -16,6 +16,20 @@ const commit = '7896845e51d75b0b9d632a2fd61876bc2f556ea5';
 const prefix = `https://github.com/kaixun96/dev.AgentOW/blob/${commit}/`;
 const packageIds = ['common', 'fluent', 'sharepoint'];
 
+test('maintained Chinese docs separate punctuation-ending bold spans from following text', async () => {
+  for (const name of [
+    'TECH-DESIGN.zh-CN.md', 'AGENTOW-MIGRATION-AUDIT.zh-CN.md',
+    '../docs/BUG-BASH-EXECUTION-DESIGN.zh-CN.md',
+    '../docs/COMPOSABLE-PLUGIN-DESIGN.zh-CN.md'
+  ]) {
+    const text = prose(await read(name)).replace(/`[^`\n]*`/g, '');
+    for (const match of text.matchAll(/\*\*((?:(?!\*\*)[^\n])+)\*\*([^\n]?)/gu)) {
+      assert(!(/[：。]$/u.test(match[1]) && /^[\p{L}\p{N}]/u.test(match[2])),
+        `${name}: add a space after the closing bold delimiter in ${match[0]}`);
+    }
+  }
+});
+
 test('bilingual designs retain parallel sections, valid examples and planned-only MAS boundaries', async () => {
   const [en, zh] = await Promise.all(designs.map(read));
   const sections = text => [...prose(text).matchAll(/^#{2,3} (\d+(?:\.\d+)?)\.? /gm)].map(m => m[1]);

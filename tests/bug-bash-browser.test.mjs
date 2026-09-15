@@ -719,6 +719,7 @@ assert shape == {"queryKeys":["$expand","Locale","empty","token"],
 assert "private" not in json.dumps(shape)
 assert m.query_shape("v=1&v=2")["duplicateQueryKeys"] is True
 assert m.query_shape("%76=1&v=2")["duplicateQueryKeys"] is True
+assert m.query_shape("%40listUrl=private-list")["queryKeys"] == ["@listUrl"]
 for query in ("x="+"a"*8192, "&".join("x=1" for _ in range(41)),
               "bad%20name=value", "a"*65+"=value", "%FF=value"):
     assert m.query_shape(query) == {"queryKeys":[],"queryKeysComplete":False,"duplicateQueryKeys":None}
@@ -926,6 +927,30 @@ request = SimpleNamespace(url=rule["url"],method="POST",resource_type="fetch",
 assert m.policy_module.permits(policy, policy["allowedTargets"][0], request)
 request.headers["content-length"] = str(len(body))
 assert m.policy_module.permits(policy, policy["allowedTargets"][0], request)
+scoped = copy.deepcopy(policy); scoped["schemaVersion"] = 7
+scoped["requests"][0]["queryKeys"] = ["@listUrl"]
+m.validate_policy(scoped)
+image_policy = copy.deepcopy(scoped)
+image_policy["requests"] = [{"url":"https://images.example.org/known.png","methods":["GET"],"resourceTypes":["image"]}]
+m.validate_policy(image_policy)
+image_request = SimpleNamespace(url="https://images.example.org/known.png",method="GET",resource_type="image")
+assert m.policy_module.permits(image_policy,image_policy["allowedTargets"][0],image_request)
+image_request.resource_type = "script"
+assert not m.policy_module.permits(image_policy,image_policy["allowedTargets"][0],image_request)
+image_policy["requests"][0]["methods"] = ["POST"]
+try: m.validate_policy(image_policy)
+except ValueError: pass
+else: raise AssertionError("Image rule allowed mutation")
+request.url = rule["url"] + "?%40listUrl=private-list"
+assert m.policy_module.permits(scoped, scoped["allowedTargets"][0], request)
+for suffix in ("?@listUrl=one&%40listUrl=two","?other=unapproved"):
+    request.url = rule["url"] + suffix
+    assert not m.policy_module.permits(scoped, scoped["allowedTargets"][0], request)
+old_scoped = copy.deepcopy(scoped); old_scoped["schemaVersion"] = 6
+try: m.validate_policy(old_scoped)
+except ValueError: pass
+else: raise AssertionError("Legacy read-only query semantics changed")
+request.url = rule["url"]
 second_body = b'{"keys":["second"],"create":false}'
 second_rule = copy.deepcopy(rule)
 second_rule["readOnly"].update(bodySha256=hashlib.sha256(second_body).hexdigest(),
@@ -1005,6 +1030,28 @@ observed = m.policy_module.json_body_diagnostic(diagnostic, request)
 assert observed == {"state":"observed","bodySha256":hashlib.sha256(body).hexdigest(),
                     "booleanFields":{"create":False},"booleanFieldsComplete":True}
 assert "demo" not in json.dumps(observed)
+scoped_diagnostic = copy.deepcopy(diagnostic); scoped_diagnostic["schemaVersion"] = 7
+scoped_diagnostic["bodyDiagnostics"][0]["queryKeys"] = ["@listUrl"]
+m.validate_policy(scoped_diagnostic)
+request.url = rule["url"] + "?@listUrl=private-list"
+scoped_observed = m.policy_module.json_body_diagnostic(scoped_diagnostic, request)
+assert scoped_observed == observed and "private-list" not in json.dumps(scoped_observed)
+assert not m.policy_module.permits(scoped_diagnostic, scoped_diagnostic["allowedTargets"][0], request)
+request.url += "&extra=unapproved"
+assert m.policy_module.json_body_diagnostic(scoped_diagnostic, request) is None
+request.url = rule["url"]
+schema_only = copy.deepcopy(scoped_diagnostic)
+schema_only["bodyDiagnostics"][0].update(schemaOnly=True,jsonBooleanFields=[])
+m.validate_policy(schema_only)
+request.headers = {"content-type":"application/x-www-form-urlencoded"}
+request.post_data_buffer = b"authToken=super-private-secret&client=private-client"
+shape = m.policy_module.json_body_diagnostic(schema_only, request)
+assert shape == {"state":"observed-schema","format":"form","fields":["authToken","client"],"valuesAndDigestsOmitted":True}
+assert "private" not in json.dumps(shape) and "bodySha256" not in shape
+assert not m.policy_module.permits(schema_only,schema_only["allowedTargets"][0],request)
+request.headers = {"content-type":"application/json"}
+request.post_data_buffer = b'{"authToken":"super-private-secret","client":"private-client"}'
+assert m.policy_module.json_body_diagnostic(schema_only, request)["format"] == "json"
 request.post_data_buffer = b'{"create":"private-value","other":"private-other"}'
 observed = m.policy_module.json_body_diagnostic(diagnostic, request)
 assert not observed["booleanFieldsComplete"] and observed["booleanFields"] == {}

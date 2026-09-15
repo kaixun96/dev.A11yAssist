@@ -213,6 +213,20 @@ headers or raw bodies. Non-JSON, oversized, duplicate-key or missing/non-boolean
 fields leave explicit unavailable/incomplete metadata. These observations do not
 prove read-only semantics and never create a permission automatically.
 
+V7 can combine exact-body `readOnly` POST qualifications with explicit
+`queryKeys`, including OData aliases such as `@listUrl`. The same names-only scope
+is available on `bodyDiagnostics`, which still never grants transmission.
+Duplicate/unlisted parameters, changed bodies, other endpoints and unqualified
+POSTs remain denied. Query values and raw bodies are not added to diagnostics;
+older policy versions retain their previous query/body restrictions.
+For a transport that may carry credentials, v7 `bodyDiagnostics` may set
+`schemaOnly: true` with an empty `jsonBooleanFields` list. This reports only
+bounded root JSON/form field names and a format enum, never values or body
+digests. It remains denied and cannot target an authentication origin. Do not
+infer read-only semantics or grant access from those field names.
+V7 also permits explicit GET/HEAD `image` resource rules, so a known image URL
+need not grant script access to its entire CDN host. Other methods remain rejected.
+
 ## Scoped page dependencies (policy v4)
 
 Policy v4 keeps earlier defaults and adds explicit operator-owned declarations:

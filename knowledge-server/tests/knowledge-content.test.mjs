@@ -18,11 +18,12 @@ const compact = text => text.replace(/\s+/g, ' ');
 const kb = await loadKnowledgeBase(kbRoot);
 const body = id => {
   const entry = kb.entries.get(id);
-  assert(entry, `Missing migrated entry: ${id}`);
+  assert(entry, `Missing knowledge entry: ${id}`);
   return kb.files.get(`packages/${id.split('.')[0]}/${entry.path}`);
 };
-const newUtilities = ['rich-text-accessibility', 'drag-and-drop', 'localization-and-formatting'];
-// These immutable publications are the pre-migration baseline, not current pins.
+// Required coverage, not an exhaustive list of allowed utility entries.
+const requiredUtilities = ['rich-text-accessibility', 'drag-and-drop', 'localization-and-formatting'];
+// Published snapshots and raw hashes retained for existing consumers.
 const retained = {
   '3ffdfda8c2bd81db6954516061fc9cabf092fe303308b598b033232c4fc17c92': '3818085a203606c63c05656f82f7174fc587c207d940c9e590b2bd09cbf19056',
   '6c3c852d70bd013788744d48190b08d1456c79321f18812bf4ecd52fa5c4012b': '49cfbb82b7783bd57b0a4537d2701f931090591e014dc39240b14b0e469326b0'
@@ -68,29 +69,22 @@ test('standalone entries reference existing current sources without invented app
   }
 });
 
-test('migration preserves original IDs and registers exactly the three new utility contracts with version-closed dependencies', async () => {
-  const baseline = await json(join(repository, 'knowledge-distribution', Object.keys(retained)[0] + '.json'));
-  const oldIds = [];
+test('required utility contracts remain discoverable with version-closed package dependencies', () => {
   for (const pkg of currentPackages) {
-    const previous = JSON.parse(baseline.files[`packages/${pkg.id}/package.json`]);
-    assert.notEqual(pkg.version, previous.version, `${pkg.id}: migration must advance its version`);
-    oldIds.push(...previous.entries.map(entry => entry.id));
-    assert(previous.entries.every(entry => pkg.entries.some(current => current.id === entry.id && current.path === entry.path)));
     for (const [dependency, version] of Object.entries(pkg.dependencies)) {
       assert.equal(version, currentPackages.find(candidate => candidate.id === dependency).version);
     }
   }
-  assert.deepEqual([...kb.entries.keys()].filter(id => !oldIds.includes(id)).sort(),
-    newUtilities.map(name => `sharepoint.utilities.${name}`).sort());
-  for (const name of newUtilities) {
-    const entry = kb.entries.get(`sharepoint.utilities.${name}`);
+  for (const name of requiredUtilities) {
+    const id = `sharepoint.utilities.${name}`;
+    const entry = kb.entries.get(id);
+    assert(entry, `Missing required utility contract: ${id}`);
     assert.equal(entry.path, `utilities/${name}.md`);
     assert.equal(entry.kind, 'implementation-contract');
     for (const parent of ['sharepoint.overview', 'sharepoint.selection.components-and-utilities']) {
       assert(kb.entries.get(parent).relations.includes(entry.id), `${parent}: missing discovery relation`);
       assert(body(parent).includes(`utilities/${name}.md`), `${parent}: missing navigable utility link`);
     }
-    assert.deepEqual(entry.sourceIds, [], 'Draft utility guidance must not invent an authoritative replacement source');
   }
   for (const [selected, closure] of [['common', ['common']], ['fluent', ['common', 'fluent']],
     ['sharepoint', ['common', 'fluent', 'sharepoint']]]) {
@@ -118,7 +112,6 @@ test('current publications are descriptor-bound and retain every original artifa
     if (Object.hasOwn(retained, pin)) assert.equal(hash, retained[pin], 'Historical artifact bytes must never change');
   }
   for (const reference of current) {
-    assert(!Object.hasOwn(retained, reference.manifestSha256), 'Migrated content needs a new pin');
     assert.equal(index.artifacts[reference.manifestSha256], reference.distribution.sha256);
     const artifact = await json(join(distribution, `${reference.manifestSha256}.json`));
     for (const [id, version] of Object.entries(reference.packages)) {
@@ -282,7 +275,7 @@ const scenarios = [
   ['sharepoint.utilities.localization-and-formatting', 'formatWithLocalizedCountValue', verifyLocalization],
   ['sharepoint.verification.themes-and-host', 'includeSelectors', verifyHost]
 ];
-for (const [id, , verify] of scenarios) test(`migrated concrete contract: ${id}`, () => verify(body(id)));
+for (const [id, , verify] of scenarios) test(`knowledge content contract: ${id}`, () => verify(body(id)));
 
 test('Common rendered-UI review requires impact evidence for exclusions and a matched heading outline', () => {
   const value = compact(body('common.topic.component-accessibility'));
@@ -302,7 +295,7 @@ test('Common rendered-UI review requires impact evidence for exclusions and a ma
   assert.match(value, /without prescribing a repository artifact filename or a universal single-H1 rule/);
 });
 
-test('Common migration retains semantic, localization, focus, review-miss and verification exceptions', () => {
+test('Common guidance retains semantic, localization, focus, review-miss and verification exceptions', () => {
   const semantics = body('common.topic.component-accessibility');
   assert.match(row(semantics, 'Presentation and hiding')[1], /`role="none"` or `role="presentation"`.*focusable control or required table\/list structure/);
   assert.match(compact(semantics), /Keep simple tabular data a table unless the experience actually requires a composite grid/);
@@ -359,11 +352,11 @@ test('Fluent/SPDS selection keeps host-scoped imports, controlled grid fit and c
   assert.match(duplicate, /distinct legitimate result events.*`indicator`.*global duplicate-text filtering loses the second outcome/);
 });
 
-test('public local MCP search and read reach concrete migrated rules with current version citations, without network or execution', async () => {
+test('public local MCP search and read reach concrete knowledge rules with current version citations, without network or execution', async () => {
   let fetches = 0;
   const handler = createKnowledgeHandler(server, 'a11y-kb', {
     env: { A11Y_ASSIST_KB_ROOT: kbRoot },
-    fetchImpl: () => { fetches++; throw new Error('Local migration queries must never fetch'); }
+    fetchImpl: () => { fetches++; throw new Error('Local knowledge queries must never fetch'); }
   });
   const registered = await handler({ method: 'tools/list' });
   assert.deepEqual(registered.tools.map(tool => tool.name), ['list', 'search', 'read'].map(action => `a11y_kb_knowledge_${action}`));

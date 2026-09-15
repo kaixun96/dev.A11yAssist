@@ -9,7 +9,7 @@
 - KB 提供规则、适用性、来源、组件契约、案例和验证建议；不执行源码审查、页面操作、修复或任务编排。
 - Bug Bash 等调用方负责确定范围、读取知识、审查源码、执行获授权的检查和生成报告。
 - 对宿主保持一个 KB MCP 入口；目标由服务内部适配器管理 MAS 连接，当前 MAS 尚未实现。
-- 本目录仅保存项目规划，不是新的知识包。正文在 [accessibility-kb](../accessibility-kb/README.md)，服务在 [knowledge-server](../knowledge-server/README.md)，本清单不进入知识快照。
+- 本清单是项目规划，不是新的知识包。正文在 [accessibility-kb](../accessibility-kb/README.md)，本目录提供 [Knowledge MCP 服务](README.md)及其维护文档；本清单不进入知识快照。
 - 新增知识统一维护在该 KB，由 Common / Fluent / SharePoint 按适用范围负责，不另建平行知识仓库。
 
 每个 PBI 可作为独立 backlog 方向，下面的稳定 Task ID 可拆成工作项。
@@ -25,11 +25,11 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 - 独立只读 MCP 提供知识发现与完整读取、精确版本/哈希快照、缓存及分发。
 - 已有 35 个知识条目：Common 20、Fluent 4、SharePoint 11，覆盖无障碍规则、组件/API 责任、例外与正反例。当前快照有 7 个经人工策划的带标签条目；全部条目仍为 draft。
 - 内容包及精确依赖为 0.1.1，独立服务为 0.1.0；生成引用和哈希标识消费方读取的精确快照。
-- 2026-09-15 验证基线：KB 104 项、现有插件 79 项测试及两套生成检查通过。
+- 2026-09-15 验证基线：KB 103 项、现有插件 79 项测试及两套生成检查通过。
 - 已实现的窄范围发现契约见 KB-05.10：范围 common/fluent/sharepoint 与类型 standards/patterns/cases/fixes/examples 分轴；WCAG/ARIA 规范性要求归 Common，APG 是不同的 informative 来源。类别不证明完整规范/criterion 覆盖或真实历史修复。
 - 现有插件尚未切换到该 MCP；MAS 接入尚未实现。
 
-版本、兼容性、快照生成与发布政策见[技术设计第 9 节](../knowledge-server/TECH-DESIGN.zh-CN.md#9-版本生成与发布)。
+版本、兼容性、快照生成与发布政策见[技术设计第 9 节](TECH-DESIGN.zh-CN.md#9-版本生成与发布)。
 
 ## PBI 总览
 
@@ -61,7 +61,7 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 
 **验收：** 两个语言版本一致；以 Bug Bash 为例可明确回答谁检索、谁审查、谁执行、谁报告；没有将任何执行权限赋给 KB。
 
-起点：[技术设计](../knowledge-server/TECH-DESIGN.zh-CN.md)、[Bug Bash 架构](../docs/BUG-BASH-ARCHITECTURE.md)。
+起点：[技术设计](TECH-DESIGN.zh-CN.md)、[Bug Bash 架构](../docs/BUG-BASH-ARCHITECTURE.md)。
 
 ## KB-02 — 知识内容与贡献体系
 
@@ -69,7 +69,7 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 
 - [x] KB-02.01 建立 Common / Fluent / SharePoint 分层、描述符、稳定 ID、来源绑定和精确依赖。
 - [x] KB-02.02 提供通用交互规则、Fluent 版本契约及 SharePoint 组件和工具知识，包含富文本、拖动和本地化条目。
-- [ ] KB-02.03 由领域专家复核现有条款的准确性和当前版本适用性；历史仓库链接与署名保留在包描述符已有的来源 note 中，正文聚焦规则与责任，并补充有依据的当前来源。
+- [ ] KB-02.03 由领域专家复核现有条款的准确性和当前版本适用性；正文聚焦规则与责任，并在包描述符中补充有依据的当前来源。
 - [ ] KB-02.04 为各知识领域分配实际 Owner / reviewer，定义审核与问题反馈入口。
 - [ ] KB-02.05 整理 procedures：保留知识使用方法，避免写成服务负责执行的阶段或业务闸门。
 - [ ] KB-02.06 扩充正反例、错误修复和不适用案例，区分通用规则与产品/框架实现。
@@ -78,7 +78,7 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 
 **验收：** 新同事可按模板提交可检索条目；无未登记正文、无跨层复制；批准状态有真实审核依据。
 
-起点：[扩展现有知识](../knowledge-server/TECH-DESIGN.zh-CN.md#32-扩展现有知识)、[贡献规范](../accessibility-kb/governance/contribution.md)。
+起点：[扩展现有知识](TECH-DESIGN.zh-CN.md#32-扩展现有知识)、[贡献规范](../accessibility-kb/governance/contribution.md)。
 
 ## KB-03 — WCAG 标准与规则映射
 
@@ -119,7 +119,7 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 
 **验收：** 只注册 KB 的隔离宿主能读取真实 MAS 条款；错误不变成空规则成功；未授权内容和凭据不会进入快照、日志或其他用户缓存。
 
-起点：[MAS 设计](../knowledge-server/TECH-DESIGN.zh-CN.md)。
+起点：[MAS 设计](TECH-DESIGN.zh-CN.md)。
 
 ## KB-05 — MCP 检索与读取契约
 
@@ -136,12 +136,12 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 - [ ] KB-05.09 添加并发、多消费者、协议异常和提示注入数据的测试，不让正文变成执行命令。
 - [x] KB-05.10 实现标准、模式、案例、修复和示例的分类检索，支持包/适用性/来源组合过滤、分类计数与匹配来源；标注首批 7 个条目，并覆盖旧快照兼容、非法参数和隔离离线调用测试。
 
-本地参数、结果、错误和精确标签过滤见[英文设计第 8 节](../knowledge-server/TECH-DESIGN.md#8-consumer-layer-retrieval-validation-and-security-boundaries) /
-[中文设计第 8 节](../knowledge-server/TECH-DESIGN.zh-CN.md#8-消费层检索校验与安全边界)，双语 JSON 调用示例有自动执行测试。
+本地参数、结果、错误和精确标签过滤见[英文设计第 8 节](TECH-DESIGN.md#8-consumer-layer-retrieval-validation-and-security-boundaries) /
+[中文设计第 8 节](TECH-DESIGN.zh-CN.md#8-消费层检索校验与安全边界)，双语 JSON 调用示例有自动执行测试。
 
 **验收：** 按工具契约可完成发现、读取和引用；不暴露任意文件/URL/命令代理；多个调用方使用一致的知识版本。
 
-起点：[MCP handler](../knowledge-server/src/runtime/knowledge-mcp.mjs)、[服务说明](../knowledge-server/README.md)。
+起点：[MCP handler](src/runtime/knowledge-mcp.mjs)、[服务说明](README.md)。
 
 ## KB-06 — 安装、版本分发与运维
 
@@ -176,7 +176,7 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 
 **验收：** 自动测试和约定质量阈值均通过；关键失败路径不会产生假成功；真实结果可追溯，而不是只有 rubric。
 
-起点：[效果评估](../accessibility-kb/evaluations/README.md)、[自动测试](../knowledge-server/tests)。
+起点：[效果评估](../accessibility-kb/evaluations/README.md)、[自动测试](tests)。
 
 ## KB-08 — Bug Bash 试点及所有消费者迁移
 
@@ -237,7 +237,3 @@ VS Code 预览若显示原始方括号，需要支持任务列表的 Markdown �
 
 内容、服务和评估可以并行推进；试点不必等所有扩展方向结束，但不允许在它所需的知识或标准尚不可用时宣称完成。
 本清单只规划工作项，不创建 ADO/GitHub 工作项，不立即修改或删除现有 plugin。
-
-**延伸阅读**
-
-- [来源追溯审计](../knowledge-server/AGENTOW-MIGRATION-AUDIT.zh-CN.md) — 供维护者追溯来源的记录。

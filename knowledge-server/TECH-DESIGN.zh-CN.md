@@ -762,7 +762,3 @@ knowledge-distribution。offline、过期、权限变化和无法校验修订时
    完整依据不等于产品合规”的正负评估。
 
 完成上述验收后，才把 README 和本节对应能力从“待实现”改成已支持。
-
-**延伸阅读**
-
-- [历史来源说明](AGENTOW-MIGRATION-AUDIT.zh-CN.md) — 可选归档历史，不是服务或内容维护的依赖。

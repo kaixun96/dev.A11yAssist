@@ -822,7 +822,3 @@ separate source identities; never write live responses directly into files assoc
 
 Only after this acceptance is complete should the corresponding capabilities in the README and this section
 change from “planned” to supported.
-
-**Further reading**
-
-- [Historical attribution](AGENTOW-MIGRATION-AUDIT.md) — optional archive history, not a service or content-maintenance dependency.

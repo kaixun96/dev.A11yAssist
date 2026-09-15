@@ -194,7 +194,3 @@ internal-use and redistribution authorization; this package grants no new licens
 
 This service has its own package/lockfile and does not change the marketplace
 catalog, release metadata, existing homepages or existing plugin installation.
-
-**Further reading**
-
-- [Historical attribution](AGENTOW-MIGRATION-AUDIT.md) / [历史来源说明](AGENTOW-MIGRATION-AUDIT.zh-CN.md) — optional archive history, not a service or content-maintenance dependency.

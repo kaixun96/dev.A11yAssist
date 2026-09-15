@@ -12,11 +12,10 @@ const read = name => readFile(resolve(root, name), 'utf8');
 const json = async path => JSON.parse(await readFile(path, 'utf8'));
 const prose = text => text.replace(/```[\s\S]*?```/g, '');
 const designs = ['TECH-DESIGN.md', 'TECH-DESIGN.zh-CN.md'];
-const audits = ['AGENTOW-MIGRATION-AUDIT.md', 'AGENTOW-MIGRATION-AUDIT.zh-CN.md'];
 
 test('maintained Chinese docs separate punctuation-ending bold spans from following text', async () => {
   for (const name of [
-    'TECH-DESIGN.zh-CN.md', 'AGENTOW-MIGRATION-AUDIT.zh-CN.md',
+    'TECH-DESIGN.zh-CN.md', 'TASKS.md',
     '../docs/BUG-BASH-EXECUTION-DESIGN.zh-CN.md',
     '../docs/COMPOSABLE-PLUGIN-DESIGN.zh-CN.md'
   ]) {
@@ -78,7 +77,7 @@ test('bilingual discovery examples match tool schemas and execute against the pi
 });
 
 test('maintainer documentation links and reference definitions resolve without fetching upstream', async () => {
-  for (const name of ['README.md', ...designs, ...audits]) {
+  for (const name of ['README.md', ...designs, 'TASKS.md']) {
     const text = prose(await read(name));
     const references = new Map([...text.matchAll(/^\[([^\]]+)\]:\s+(\S+)/gm)].map(m => [m[1], m[2]]));
     const targets = [...text.matchAll(/\]\(([^)\s]+)\)/g)].map(m => m[1]);
@@ -97,22 +96,5 @@ test('maintainer documentation links and reference definitions resolve without f
         assert(headings.includes(fragment), `${name}: missing heading ${target}`);
       }
     }
-  }
-});
-
-test('bilingual archive notes retain pinned attribution without duplicate maps or operational authority', async () => {
-  const inventory = await json(resolve(repository, 'integrations/agentow/knowledge/source-inventory.json'));
-  const origin = `https://github.com/${inventory.origin.repository}/tree/${inventory.origin.commit}`;
-  for (const name of audits) {
-    const text = await read(name);
-    const content = prose(text).replace(/\s+/g, ' ');
-    assert(text.includes(`](${origin})`), `${name}: attribution must use the inventory origin`);
-    assert(text.includes('](../integrations/agentow/knowledge/source-inventory.json)'),
-      `${name}: retain the existing inventory link`);
-    assert.doesNotMatch(text, /provenance\/|^\s*\|/im, `${name}: no duplicate provenance links or mapping tables`);
-    assert.match(content, /Current entries remain draft\.|当前条目仍为 draft。/, name);
-    assert.match(content, /Historical sources and attribution do not establish official approval|历史来源与署名不等于官方批准/, name);
-    assert.match(content, /AgentOW and its archive are not operational, build, installation or source-map dependencies of the knowledge service or current KB maintenance|AgentOW 及其归档不是知识服务或当前 KB 维护的操作、构建、安装或来源映射依赖/, name);
-    assert.match(content, /the archive is not an active MCP source catalog|归档也不是活跃 MCP 来源目录/, name);
   }
 });

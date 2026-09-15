@@ -539,6 +539,22 @@ assert report["blockedRequests"] == [{"url":"https://example.org/blocked","type"
     "queryKeys":["token"],"queryKeysComplete":True,"duplicateQueryKeys":False,
     "expectedTelemetryDenial":False}]
 assert "private-query" not in json.dumps(report) and "private-request-body" not in json.dumps(report)
+assert report["blockedRequestCount"] == 1 and report["blockedRequestsTruncated"] is False
+class ManyDenialsPage(DeniedPage):
+    def goto(self, url, **kwargs):
+        for _ in range(205): super().goto(url, **kwargs)
+        return types.SimpleNamespace(status=200)
+page = ManyDenialsPage(); context = BootstrapContext(page); browser = Browser()
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(request, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+assert report["blockedRequestCount"] == 205 and len(report["blockedRequests"]) == 200
+assert report["blockedRequestsTruncated"] is True
+assert report["rows"][0]["status"] == "inconclusive"
 class DiagnosticFailurePage(Page):
     def screenshot(self, **kwargs): raise api.Error("unit diagnostic capture failed")
 page = DiagnosticFailurePage(); context = Context(page); browser = Browser()
@@ -695,6 +711,24 @@ request.url="https://broker.example.org/frame?origin=https%3A%2F%2Fother.example
 assert not m.policy_module.permits(base,target,request)
 request.url="https://login.example.org/token?request-id=opaque";request.method="POST";request.resource_type="fetch";request.frame=root
 assert m.policy_module.permits(base,target,request)
+initial = target + "?setup=1"
+canonical = copy.deepcopy(base); canonical["allowedTargets"].append(initial)
+assert not m.policy_module.permits(canonical,initial,request)
+assert m.policy_module.permits(canonical,initial,request,final_target=target)
+root.url = "https://example.org/foreign"
+assert not m.policy_module.permits(canonical,initial,request,final_target=target)
+root.url = target
+for unsupported in ("https://example.org/foreign","https://other.example.org/page"):
+    try: m.policy_module.permits(canonical,initial,request,final_target=unsupported)
+    except ValueError: pass
+    else: raise AssertionError("Foreign canonical frame root accepted")
+try: m.policy_module.permits(base,initial,request,final_target=target)
+except ValueError: pass
+else: raise AssertionError("Unprotected initial canonical scope accepted")
+frame_request = NS(url="https://broker.example.org/frame?origin=https%3A%2F%2Fexample.org",
+                   method="GET",resource_type="document",frame=NS(url="about:blank",parent_frame=root))
+assert not m.policy_module.permits(canonical,initial,frame_request)
+assert m.policy_module.permits(canonical,initial,frame_request,final_target=target)
 request.url += "&extra=1"
 assert not m.policy_module.permits(base,target,request,authenticating=True)
 request.url="https://login.example.org/token?request-id=opaque";request.frame=None
@@ -716,6 +750,17 @@ for policy in variants:
     try:m.validate_policy(policy)
     except ValueError:pass
     else:raise AssertionError("Unbounded network scope accepted")
+large = copy.deepcopy(base); large["schemaVersion"] = 5
+large["requests"] = [{"url":f"https://example.org/image/{i}.png","methods":["GET"],"resourceTypes":["xhr"]} for i in range(300)]
+m.validate_policy(large)
+large["requests"].append({"url":"https://example.org/image/300.png","methods":["GET"],"resourceTypes":["xhr"]})
+try: m.validate_policy(large)
+except ValueError: pass
+else: raise AssertionError("V5 explicit route budget exceeded")
+large["schemaVersion"] = 4; large["requests"] = large["requests"][:101]
+try: m.validate_policy(large)
+except ValueError: pass
+else: raise AssertionError("Legacy route budget changed")
 assert "playwright" not in sys.modules
 print("Scoped policy only; no browser or AT execution")
 `;

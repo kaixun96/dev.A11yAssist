@@ -41,6 +41,13 @@ budget. A momentarily absent asynchronous control is not rejected by an immediat
 count probe. Ambiguous targets still fail strictness checks, and password inputs
 remain forbidden.
 
+`{"action":"observe","milliseconds":1000}` provides an explicit observation
+dwell from 1 to 30,000 milliseconds for animation, asynchronous UI or a separately
+authorized observation capability. It sends no input or scripts, records actual
+start/end timing, and never extends the original request budget. A dwell larger
+than the remaining budget fails before waiting. It does not itself start AT,
+grant concurrent control or supply a speech/behavior verdict.
+
 Assertions are `focused`, `visible`, `count`, `text`, `target-size`,
 `axe-violations` and a small allow-list of accessibility attributes.
 Expected values are typed booleans, bounded counts/text

@@ -240,7 +240,8 @@ test('shared browser assessment rejects forged comparisons and stale or abnormal
 test('page-error listeners support Playwright callback metadata and retain error gating', () => {
   const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
   const script = `
-import contextlib, importlib.util, os, sys, tempfile, types
+import contextlib, copy, hashlib, importlib.util, json, os, sys, tempfile, time, types
+from pathlib import Path
 from unittest.mock import patch
 spec = importlib.util.spec_from_file_location("browser_runner", sys.argv[1])
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
@@ -293,7 +294,145 @@ assert context.closed and not browser.is_connected()
 assert report["rows"][0]["status"] == "inconclusive"
 assert not report["rows"][0]["capturePreflight"]["noUnexpectedPageState"]
 assert not report["rows"][0]["capturePostcheck"]["verified"]
+class Request:
+    method = "POST"
+    resource_type = "fetch"
+    headers = {}
+    post_data_buffer = b""
+    def __init__(self, url): self.url = url
+class Target:
+    def count(self): return 1
+    def aria_snapshot(self): return "UNIT TREE; not page evidence"
+class BootstrapPage(Page):
+    def __init__(self, mode): super().__init__(); self.mode = mode
+    def goto(self, url, **kwargs):
+        incoming = Request("https://example.org/bootstrap")
+        response = types.SimpleNamespace(request=incoming,status=200,
+            headers={"content-type":"application/json"},
+            body=lambda:json.dumps({"wrong":{}} if self.mode == "bad-response" else {"navigation":{}}).encode())
+        incoming.response = lambda: response
+        def send():
+            if self.mode == "request-failed":
+                self.listeners["requestfailed"](incoming)
+            elif self.mode != "pending":
+                self.listeners["response"](response)
+                self.listeners["requestfinished"](incoming)
+        route = types.SimpleNamespace(request=incoming,continue_=send,abort=lambda:None)
+        self.context.router(route)
+        return types.SimpleNamespace(status=200)
+    def locator(self, selector): return Target()
+    def screenshot(self, path): Path(path).write_bytes(b"UNIT IMAGE; not page evidence")
+    def wait_for_timeout(self, milliseconds): time.sleep(milliseconds / 1000)
+class BootstrapContext(Context):
+    def route(self, pattern, handler): self.router = handler
+for mode in ("good","bad-response","unknown","pending","request-failed"):
+    page = BootstrapPage(mode); context = BootstrapContext(page); browser = Browser()
+    permission = {"url":"https://example.org/bootstrap","methods":["POST"],"resourceTypes":["fetch"]}
+    if mode != "unknown":
+        permission["readOnly"] = {"bodySha256":hashlib.sha256(b"").hexdigest(),"responseKeys":["navigation"]}
+    policy = {"schemaVersion":3,"allowedTargets":[request["target"]],"assetHosts":[],
+              "connection":{"mode":"ephemeral"},"requests":[permission],"scanner":None}
+    scenario = copy.deepcopy(request)
+    if mode == "pending": scenario["budgetSeconds"] = 1
+    with tempfile.TemporaryDirectory() as output, \\
+         patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+         patch.object(m.sys, "platform", "win32"), \\
+         patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+         patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+         patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+        report = m.run(scenario, output, policy)
+    assert report["ownedBrowserClosed"] and page.removed
+    transaction = report["transactions"][0]
+    if mode == "good":
+        assert transaction["state"] == "read-only-confirmed"
+        assert report["rows"][0]["status"] == "observed-no-issue"
+        assert len(report["rows"][0]["evidence"]) == 2
+        assert not report.get("unresolvedTransaction")
+    else:
+        assert transaction["state"] != "read-only-confirmed"
+        assert report["rows"][0]["status"] == "inconclusive"
+        assert report["unresolvedTransaction"]
 print("Mocked event mapping only; no browser or AT execution")
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /no browser or AT execution/);
+});
+
+test('qualified bootstrap rules bind empty bodies and JSON responses without exempting unknown mutations', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const script = `
+import copy, hashlib, importlib.util, json, pathlib, sys
+from types import SimpleNamespace
+spec = importlib.util.spec_from_file_location("browser_runner", sys.argv[1])
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+empty = hashlib.sha256(b"").hexdigest()
+rule = {"url":"https://example.org/bootstrap","methods":["POST"],"resourceTypes":["fetch"],
+        "readOnly":{"bodySha256":empty,"responseKeys":["navigation"]}}
+policy = {"schemaVersion":3,"allowedTargets":["https://example.org/demo"],"assetHosts":[],
+          "connection":{"mode":"ephemeral"},"requests":[rule],"scanner":None}
+m.validate_policy(policy)
+request = SimpleNamespace(url=rule["url"],method="POST",resource_type="fetch",headers={},post_data_buffer=b"")
+assert m.policy_module.permits(policy, policy["allowedTargets"][0], request)
+for headers, body in (({},b"change"),({"X-HTTP-Method":"DELETE"},b""),
+                      ({"x-http-method-override":"PUT"},b""),
+                      ({"content-length":"1"},None),({"transfer-encoding":"chunked"},None)):
+    request.headers, request.post_data_buffer = headers, body
+    assert not m.policy_module.permits(policy, policy["allowedTargets"][0], request)
+request.headers, request.post_data_buffer = {}, b""
+auth = copy.deepcopy(policy)
+auth["connection"] = {"mode":"persistent","userDataDirectory":str(pathlib.Path.cwd()),
+                      "authenticationOrigins":["https://example.org"],"timeoutSeconds":30,"ready":{"css":"#main"}}
+m.validate_policy(auth)
+request.post_data_buffer = b"change"
+assert not m.policy_module.permits(auth, auth["allowedTargets"][0], request, authenticating=True)
+request.post_data_buffer = b""
+bad = []
+value=copy.deepcopy(policy);value["schemaVersion"]=2;bad.append(value)
+value=copy.deepcopy(policy);value["requests"].append(copy.deepcopy(rule));bad.append(value)
+value=copy.deepcopy(policy);value["requests"][0]["readOnly"]["bodySha256"]="0"*64;bad.append(value)
+value=copy.deepcopy(policy);value["requests"][0]["methods"]=["DELETE"];bad.append(value)
+value=copy.deepcopy(policy);value["requests"][0]["resourceTypes"]=["document"];bad.append(value)
+value=copy.deepcopy(policy);value["requests"][0]["readOnly"]["responseKeys"]=[];bad.append(value)
+value=copy.deepcopy(policy);value["requests"][0]["readOnly"]["responseKeys"]=["navigation","navigation"];bad.append(value)
+for value in bad:
+    try: m.validate_policy(value)
+    except ValueError: pass
+    else: raise AssertionError("Unqualified/ambiguous permission accepted")
+transaction={"state":"read-only-pending","bodySha256":empty,"responseKeys":["navigation"]}
+report={"transactions":[transaction]}
+assert m.unresolved_transactions(report,0)
+response=SimpleNamespace(status=200,headers={"content-type":"application/json; charset=utf-8"},
+                         body=lambda:json.dumps({"navigation":{"secret":"not-recorded"}}).encode())
+m.confirm_read_only_response(transaction,response)
+assert not m.unresolved_transactions(report,0)
+assert "not-recorded" not in json.dumps(report)
+report["transactions"].append({"state":"submitted-unknown"})
+assert m.unresolved_transactions(report,0)
+for state in ("submitted-unknown","read-only-unverified"):
+    try: m.confirm_read_only_response({"state":state,"responseKeys":["navigation"]},response)
+    except ValueError: pass
+    else: raise AssertionError("Unqualified transaction was reclassified")
+for status, content_type, data in ((500,"application/json",{"navigation":{}}),
+                                  (200,"text/html",{"navigation":{}}),
+                                  (200,"application/json",{"other":{}}),
+                                  (200,"application/json",[])):
+    item={"state":"read-only-pending","responseKeys":["navigation"]}
+    reply=SimpleNamespace(status=status,headers={"content-type":content_type},body=lambda:json.dumps(data).encode())
+    try: m.confirm_read_only_response(item,reply)
+    except ValueError: pass
+    else: raise AssertionError("Unexpected response was confirmed")
+    assert m.unresolved_transactions({"transactions":[item]},0)
+oversized=SimpleNamespace(status=200,headers={"content-type":"application/json"},body=lambda:b" "*(4*1024*1024+1))
+try: m.confirm_read_only_response({"state":"read-only-pending","responseKeys":["navigation"]},oversized)
+except ValueError: pass
+else: raise AssertionError("Unbounded bootstrap response accepted")
+legacy=copy.deepcopy(policy);legacy["schemaVersion"]=2;del legacy["requests"][0]["readOnly"]
+m.validate_policy(legacy)
+request.post_data_buffer=b"ordinary-authorized-transaction"
+assert m.policy_module.permits(legacy,legacy["allowedTargets"][0],request)
+assert "playwright" not in sys.modules
+print("Policy and response qualification only; no browser or AT execution")
 `;
   const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);

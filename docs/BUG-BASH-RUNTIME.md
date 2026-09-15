@@ -2,7 +2,7 @@
 
 **English** | [简体中文](BUG-BASH-RUNTIME.zh-CN.md)
 
-Package v0.21 / execution contract v0.11. Source implementation is separate from
+Package v0.22 / execution contract v0.11. Source implementation is separate from
 deployment and live qualification. This release never resumes an old task.
 
 The optional package-local CLI turns an accepted coverage plan into a durable

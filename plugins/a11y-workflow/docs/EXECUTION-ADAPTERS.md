@@ -35,6 +35,13 @@ becomes inconclusive and subsequent rows are not run. No automatic compensating
 delete, mutation retry, or reload-as-reset claim is supplied. WebSockets, service
 workers, arbitrary JavaScript and password filling remain unsupported.
 
+Policy v3 additionally supports separately qualified, exact empty-body bootstrap
+POSTs using the protected `readOnly` body hash and expected JSON keys described in
+[bounded browser scenarios](BROWSER.md#qualified-empty-body-bootstrap-posts).
+Body/method-override mismatches reject before dispatch. Pending or unverified
+responses remain unresolved; ordinary transaction/reset requirements are unchanged.
+The policy declaration is an operator responsibility, not a caller-supplied verdict.
+
 Additional typed assertions:
 
 ```json

@@ -240,6 +240,26 @@ def inspect_document(page):
     return value
 
 
+def unresolved_transactions(report, start):
+    return any(item["state"] != "read-only-confirmed" for item in report["transactions"][start:])
+
+
+def confirm_read_only_response(transaction, response):
+    if transaction.get("state") != "read-only-pending":
+        raise ValueError("Only an explicitly qualified pending request can be confirmed read-only")
+    content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+    if not 200 <= response.status < 300 or content_type != "application/json":
+        raise ValueError("Qualified bootstrap did not return successful JSON")
+    body = response.body()
+    if len(body) > 4 * 1024 * 1024:
+        raise ValueError("Qualified bootstrap JSON exceeds the response bound")
+    value = json.loads(body)
+    if not isinstance(value, dict) or any(key not in value for key in transaction["responseKeys"]):
+        raise ValueError("Qualified bootstrap response keys differ")
+    transaction.update(state="read-only-confirmed", responseStatus=response.status,
+                       responseContentType=content_type, confirmedAt=stamp())
+
+
 def run(request, output, policy):
     validate_request(request)
     validate_policy(policy)
@@ -280,20 +300,29 @@ def run(request, output, policy):
                 blocked_requests = []
                 critical_failures = [0]
                 authenticating = [report["connectionMode"] == "persistent"]
+                read_only_pending = []
 
                 def route_request(route):
                     parsed = urlsplit(route.request.url)
                     permitted = policy_module.permits(policy, request["target"], route.request, authenticating[0])
                     if permitted:
+                        rule = policy_module.request_rule(policy, route.request)
                         if (route.request.method not in {"GET", "HEAD"} and
-                                not (authenticating[0] and policy_module.authentication_request(policy, route.request))):
+                                (rule and "readOnly" in rule or not (
+                                    authenticating[0] and policy_module.authentication_request(policy, route.request)))):
                             if len(report["transactions"]) >= 100:
                                 critical_failures[0] += 1
                                 route.abort()
                                 return
-                            report["transactions"].append({"method": route.request.method,
+                            transaction = {"method": route.request.method,
                                 "url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
-                                "state": "submitted-unknown", "timestamp": stamp()})
+                                "state": "submitted-unknown", "timestamp": stamp()}
+                            if rule and "readOnly" in rule:
+                                transaction.update(state="read-only-pending",
+                                                   bodySha256=rule["readOnly"]["bodySha256"],
+                                                   responseKeys=rule["readOnly"]["responseKeys"])
+                                read_only_pending.append((route.request, transaction))
+                            report["transactions"].append(transaction)
                             save(state_path, report)
                         route.continue_()
                     else:
@@ -312,10 +341,41 @@ def run(request, output, policy):
                 page.bring_to_front()
                 page.set_default_timeout(5000)
                 page.set_default_navigation_timeout(15000)
+                def take_pending(request):
+                    pending = next((index for index, (original, _) in enumerate(read_only_pending)
+                                    if original is request), None)
+                    return read_only_pending.pop(pending)[1] if pending is not None else None
+
+                def failed_request(request):
+                    transaction = take_pending(request)
+                    if transaction is not None:
+                        transaction.update(state="read-only-unverified", reason="Qualified bootstrap request failed")
+                        critical_failures[0] += 1
+                        save(state_path, report)
+
                 def failed_response(response):
                     if response.status >= 400 and response.request.resource_type in {"script", "document", "stylesheet", "fetch", "xhr"}:
                         critical_failures[0] += 1
+
+                def finished_request(request):
+                    transaction = take_pending(request)
+                    if transaction is not None:
+                        try:
+                            if time.monotonic() >= deadline:
+                                raise TimeoutError("Qualified bootstrap exceeded the original budget")
+                            response = request.response()
+                            if response is None:
+                                raise ValueError("Qualified bootstrap response is unavailable")
+                            confirm_read_only_response(transaction, response)
+                            if time.monotonic() >= deadline:
+                                raise TimeoutError("Qualified bootstrap exceeded the original budget")
+                        except (PlaywrightError, OSError, ValueError) as error:
+                            transaction.update(state="read-only-unverified", reason=str(error))
+                            critical_failures[0] += 1
+                        save(state_path, report)
                 page.on("response", failed_response)
+                page.on("requestfailed", failed_request)
+                page.on("requestfinished", finished_request)
                 dialogs = []
                 page.on("dialog", lambda dialog: (dialogs.append(dialog.type), dialog.dismiss()))
                 for definition, row in zip(request["rows"], report["rows"]):
@@ -340,8 +400,12 @@ def run(request, output, policy):
                         if authenticating[0]:
                             policy_module.wait_authenticated(page, request, policy, deadline, time.monotonic)
                             authenticating[0] = False
-                        if len(report["transactions"]) > transaction_start:
-                            raise RuntimeError("Page startup dispatched a server mutation; reconcile it before triggering the scenario")
+                        while any(item["state"] == "read-only-pending" for item in report["transactions"][transaction_start:]):
+                            if time.monotonic() >= deadline:
+                                raise TimeoutError("Qualified bootstrap response exceeded the original budget")
+                            page.wait_for_timeout(25)
+                        if unresolved_transactions(report, transaction_start):
+                            raise RuntimeError("Page startup has an unresolved server request; reconcile it before triggering the scenario")
                         if not response or response.status >= 400 or page.url != request["target"]:
                             raise RuntimeError("Expected authorized page did not load")
                         row["capturePreflight"] = capture_health(
@@ -419,10 +483,10 @@ def run(request, output, policy):
                             page, request, not errors and not dialogs and critical_failures[0] == failure_start)
                         if not row["capturePostcheck"]["verified"]:
                             row.update(status="inconclusive", reason="Capture postcheck found an unexpected page/environment state")
-                        if len(report["transactions"]) > transaction_start:
+                        if unresolved_transactions(report, transaction_start):
                             report["unresolvedTransaction"] = True
                             row.update(status="inconclusive",
-                                       reason="Server mutation dispatched; independent server-state/reset verification required before another row")
+                                       reason="Server request effects are unresolved; independent server-state/reset verification required before another row")
                         save(state_path, report)
                         page.remove_listener("pageerror", on_error)
                 report["blockedRequests"] = blocked_requests

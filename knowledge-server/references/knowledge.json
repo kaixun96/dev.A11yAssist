@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "shared-accessibility-kb",
+  "rootEnv": "A11Y_ASSIST_KB_ROOT",
+  "developmentRoot": "../accessibility-kb",
+  "packages": {
+    "common": "0.1.1",
+    "fluent": "0.1.1",
+    "sharepoint": "0.1.1"
+  },
+  "manifestSha256": "77d9de00e70d2435f4b45b1ee89fd5bd9ff0827e537e253352f66b4aa65c1591",
+  "distribution": {
+    "url": "https://raw.githubusercontent.com/kaixun96/dev.A11yAssist/main/knowledge-distribution/77d9de00e70d2435f4b45b1ee89fd5bd9ff0827e537e253352f66b4aa65c1591.json",
+    "sha256": "ca082421766650fb77089c870a885b99dddae3a9310931ea4defd33a82015d77"
+  }
+}

@@ -1,0 +1,32 @@
+name: Standalone knowledge
+on:
+  pull_request:
+    paths:
+      - 'accessibility-kb/**'
+      - 'knowledge-server/**'
+      - 'knowledge-distribution/**'
+      - '.github/workflows/knowledge.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'accessibility-kb/**'
+      - 'knowledge-server/**'
+      - 'knowledge-distribution/**'
+      - '.github/workflows/knowledge.yml'
+permissions:
+  contents: read
+jobs:
+  knowledge:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: knowledge-server/package-lock.json
+      - run: npm ci --prefix knowledge-server
+      - run: npm run check --prefix knowledge-server
+      - run: npm test --prefix knowledge-server
+      - run: npm test
+      - run: npm run check

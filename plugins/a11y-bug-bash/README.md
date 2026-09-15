@@ -8,7 +8,7 @@ Feature accessibility bug bash: plan from context and verification steps, inspec
 
 ## Prerequisites
 
-Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks.
+Feature context and verification steps; native background subagent support and pinned read-only files for parallel source review; authorized Windows browser/AT tools and ownership for live checks.
 
 ## Install your selection
 

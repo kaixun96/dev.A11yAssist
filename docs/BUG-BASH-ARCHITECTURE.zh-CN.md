@@ -49,6 +49,12 @@ Bug Bash 不要求安装全部兄弟插件。如果已授权工作项提供 cont
 
 调用方使用内置[持久 CLI](BUG-BASH-RUNTIME.zh-CN.md)，通过明确配置的 provider 执行已接受计划。`run` 连续推进安全的确定性步骤；遇到源码分析、待定回调或有界步数上限时交回调用方。
 
+新建 `both` 任务默认源码／页面并行：父任务通过 Copilot 原生后台 subagent 工具
+调用内置只读 `a11y-source-review`，随即继续页面／AT 工作。两条线各有上下文和
+待处理身份，只合并有界、绑定源码版本／文件哈希的结构化结果。不新增 provider
+或插件；宿主缺少原生 subagent 能力时明确保留源码缺口，不静默退回串行。
+现有运行任务保留原版本和已记录执行模式。
+
 页面工作开始前，独立 test-categories 插件将范围内每个对象/状态展开为全部十类的每个编号步骤。适用步骤必须执行，不适用必须说明针对该对象的理由，不能用代表性抽查代替完整清单。矩阵门禁拒绝漏行并指出未完成覆盖；真实证据判断仍单独进行。清单完整性未知、缺少 AT 或预算用尽只能报告部分覆盖，不能缩小分母。
 
 #### 总流程：谁负责哪一步？
@@ -63,7 +69,7 @@ flowchart TD
     S["2b. a11y-setup<br/>此后才能检查 / 准备获授权页面及 AT 工具"]
     C["3. a11y-test-categories（独立插件）<br/>调用版本化矩阵 API<br/>每对象 / 状态十类、61 步"]
     E["5. a11y-bug-bash run / advance<br/>a11y-capture discovery-observe<br/>共享 a11y-browser 模块或已配置具名 AT 适配器"]
-    K["a11y-knowledge（内置，独立源码路径）<br/>只读审查 → 源码风险 / 待确认场景"]
+    K["a11y-source-review（原生后台 subagent）<br/>独立上下文、只读 a11y-knowledge 审查<br/>固定源码包 → 源码风险 / 待确认场景"]
     V["6. a11y-validate discovery<br/>原始回执 + 产物哈希 + 完整逐行核对<br/>独立行为评估仍单独标明"]
     G["7. a11y-test-categories（独立插件）<br/>matrix check：漏步骤拒绝，未完成保留缺口"]
     A["8. a11y-bug-bash<br/>对照预期判断、去重；源码风险与页面问题分开"]

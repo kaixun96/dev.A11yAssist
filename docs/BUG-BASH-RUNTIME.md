@@ -2,7 +2,7 @@
 
 **English** | [简体中文](BUG-BASH-RUNTIME.zh-CN.md)
 
-Package v0.22 / execution contract v0.11. Source implementation is separate from
+Package v0.23 / execution contract v0.11. Source implementation is separate from
 deployment and live qualification. This release never resumes an old task.
 
 The optional package-local CLI turns an accepted coverage plan into a durable
@@ -122,6 +122,99 @@ boundary. It never busy-polls a pending request, installs a watcher or restarts
 cancelled work. Continue through the original callback/scheduler and `reconcile`.
 
 ## Source review and adaptive additions
+
+### Native source subagent and parallel page lane
+
+New plans with `mode: "both"` default to `parallelSource: true`. The opt-out
+`parallelSource: false` is for an explicitly serial new task; existing tasks
+retain their original installed runtime and recorded plan. Other modes remain
+single-track. This changes discovery orchestration, not the real-AT evidence gate.
+
+The installed Bug Bash package includes `agents/a11y-source-review.agent.md`
+with `model: inherit` and only `view`, `grep` and `glob`. The parent skill invokes
+this agent through the caller's **native background Task/subagent tool**.
+There is no new source provider, MCP server, separate plugin or replacement model
+loop. The Node CLI prepares/binds/joins native work; it cannot invoke a model tool
+by itself. True overlap requires the caller to launch the background agent and
+immediately continue the page lane, not synchronously wait for the agent.
+If the host does not expose the agent/tool, record the source lane as unavailable,
+not a synthetic or silently serial result.
+
+For each source row provide bounded `parameters.sourceFiles` (1-50 absolute
+paths inside the accepted roots), plus the plan's fixed `sourceRevision`.
+`source-prepare` requires `{"subagentAvailable":true}` or `false`, based on the
+actual native tool inventory. Missing native capability, revision or files yields
+an explicit source gap without blocking ready independent page rows.
+
+```powershell
+node "$pluginRoot\runtime\bug-bash-cli.mjs" source-prepare my-task C:\private\source-availability.json
+```
+
+The returned `sourcePending` contains one work ID, packet hash and a minimal
+packet: task/plan/row identity, declared source revision, exact file hashes,
+deadline and read-only scope. It contains no parent transcript, credentials,
+browser connection, evaluator token, page result or permission to modify source.
+Files are individually bounded to 2 MiB and the set to 10 MiB. The declared
+revision is not a substitute for actual file-hash checks or an immutable checkout.
+
+Persist the prepared identity before native dispatch. Submit only this packet to
+`a11y-source-review` in background mode. Then call `source-start` with:
+
+```json
+{
+  "workId": "<sourcePending.id>",
+  "packetHash": "<sourcePending.packetHash>",
+  "workerSessionId": "<actual native Task job/session identifier>",
+  "callbackReference": "<actual completion callback reference>"
+}
+```
+
+Record actual native identity, never an invented ID. A lost launch acknowledgement
+leaves `prepared` ambiguous: inspect the original native invocation by the stable
+work ID and do not launch a second source worker. `source-start` is idempotent
+only for the same worker/callback. The parent then uses `run`, `advance` or its
+authorized page tools while the source context works independently. Only one
+page/AT operation and one source subagent may be outstanding for this task.
+
+On native completion, wrap its review in the existing `source` command:
+
+```json
+{
+  "workId": "<original source work ID>",
+  "packetHash": "<original packet hash>",
+  "workerSessionId": "<bound native worker ID>",
+  "review": {
+    "rowId": "<source row>",
+    "status": "observed-no-issue",
+    "actual": "<source-only observation>",
+    "files": [{"path": "<packet file>", "sha256": "<packet hash>", "startLine": 1, "endLine": 10}],
+    "risks": []
+  }
+}
+```
+
+Only this bounded schema (64 KiB, at most 50 risks) is merged. All packet file
+bytes are rechecked, citations must belong to the original packet, and source
+output cannot update a page row. The result stays `runtimeVerified:false`.
+The original page operation ID is preserved even if source completes first.
+No long-running model call holds the task's short mutation lock. Competing
+writers fail closed on the existing lock rather than overwriting state.
+
+For a failed/cancelled/expired subagent, `source-end` requires the same identity,
+an `outcome`, precise `reason`, and `terminationReference` from the native host.
+If launch was proven rejected before a worker started, use `outcome:"not-started"`
+and `workerSessionId:null`; timeout/unknown delivery is not that proof.
+These native receipts are verified by the caller; JSON assertions do not enforce
+an OS sandbox or prove that a native agent really ran. Qualify the caller's
+read-only tool policy and callback mechanism before claiming isolation.
+
+Cancellation and expiry preserve both original pending identities. Request
+cooperative termination/reconciliation through the native host, then record
+`source-end`; never kill a shared process. Per-attempt browser/AT cleanup remains
+mandatory, but aggregate task cleanup, validation/reporting and plan revisions
+wait for source reconciliation. No automatic lease release or active-run migration.
+
+### Serial and source-only review
 
 When `advance` requests source review, use the actual bundled
 `modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md` with read-only tools.

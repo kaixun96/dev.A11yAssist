@@ -19,6 +19,13 @@ commands. The guided plan/source path needs no provider configuration and remain
 valid when the executable path was not requested. Never silently switch a failed
 configured execution into a success-shaped guided result.
 
+New `both` tasks default to parallel source/page work. Read the native-subagent
+section of `docs/BUG-BASH-RUNTIME.md`. Use the bundled `a11y-source-review` agent
+through Copilot's native Task/subagent tool, not a new provider, MCP server or
+another Twin bot. The source agent has its own context and read-only tools;
+the parent remains the sole browser/AT coordinator. Existing tasks keep their
+original runtime and execution mode; never convert an active task in place.
+
 ## 1. Establish scope and available capabilities
 
 Extract the feature purpose, user journeys, acceptance/verification steps, URL,
@@ -113,6 +120,36 @@ non-applicability. Never rewrite an in-flight request or delete required coverag
 
 ## 3. Exercise the page and preserve observations
 
+For a new `both` task, start its source lane before waiting on the page lane:
+
+1. Check that the native background Task/subagent tool and the installed
+   `a11y-source-review` agent are actually available. Prepare explicit source
+   row `parameters.sourceFiles`, authorized roots and a fixed source revision.
+2. Call `source-prepare` with `{"subagentAvailable":true}`. Persist its work ID and
+   packet hash before dispatch. Give only the returned packet to the native
+   source subagent in background mode; do not forward the full parent transcript,
+   browser state, page findings or secrets. If the native tool/agent is unavailable,
+   call with `false`, retain the explicit source gap and continue page work.
+3. Bind the actual native job/session ID and completion callback using
+   `source-start`. A prepared packet is not a launched agent. If launch returns
+   an unknown result, reconcile that original native invocation; never dispatch
+   another agent merely because the packet is still `prepared`.
+4. Immediately execute ready page/AT rows with the parent's actual tools and
+   `run`/`advance`; do not wait/poll the source subagent first. Page/AT remains
+   single-flight on the original owned evaluator. Source can finish while a page
+   request is pending, and page batches can finish while source is pending.
+5. On the native completion callback, submit its bounded structured review
+   through `source` with the original work ID, packet hash and actual worker ID.
+   The runtime rechecks file bytes and merges only that source row under its lock.
+   Keep source risks unverified until separate page evidence exists. Dispatch a
+   later ready source packet only after the first job is reconciled.
+6. A blocked, cancelled, expired or rejected launch needs exact native termination
+   or proven-not-started evidence through `source-end`. Cancellation does not
+   forget either lane. No final report, aggregate cleanup/release or scope revision while a source
+   job remains unresolved. Preserve explicit gaps without silently using a serial
+   inline review as a claimed parallel execution.
+   Per-attempt browser/AT cleanup still runs immediately in its owning page lane.
+
 Use only actual available authorized tools. Start from the user's verification
 steps, then exercise the applicable matrix rows. Before interaction record
 route, flags, fixture, viewport/zoom, browser/OS and available build identity.
@@ -146,7 +183,10 @@ the source track. Its plugin root is `modules/a11y-knowledge`, so its
 `integrations/agentow/knowledge/README.md` resolve inside that module.
 The two skills and full references are copied from the SAME sources as the
 standalone knowledge plugin, not a second rule set or an additional installation.
-Do not invoke a globally installed same-name skill or dispatch another agent.
+Do not invoke a globally installed same-name skill. In the default parallel
+`both` mode, the dedicated source subagent performs this read-only substep;
+it must not recursively dispatch another agent. Explicit serial/source-only
+callers perform the same substep inline.
 
 Keep this substep read-only: inspect scoped components, parents, handlers, styles,
 localization and relevant library contracts. Respect the knowledge skill's ban

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "fluent",
+  "version": "0.1.1",
+  "dependencies": {"common":"0.1.1"},
+  "sources": [
+    {"id":"fluent-docs","authority":"component-contract","status":"review-pending","locator":"https://react.fluentui.dev/","revision":null,"note":"V9 official-documentation connection target only, not evidence for the historical-derived entries. Resolve installed versions and review exact component documentation before qualification; the official V8 source location remains to be confirmed."}
+  ],
+  "entries": [
+    {"id":"fluent.overview","path":"README.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["fluent"],"sourceIds":[],"relations":["fluent.selection.components-and-utilities","fluent.v8.component-contract","fluent.v9.component-contract","common.implementation.component-contract","common.requirements.authority-and-applicability"]},
+    {"id":"fluent.v8.component-contract","path":"v8/component-contract.md","kind":"implementation-contract","discoveryTags":["pattern","fix","example"],"status":"draft","owner":"unassigned","appliesTo":["fluent-v8"],"sourceIds":[],"relations":["fluent.selection.components-and-utilities","common.analysis.root-cause","common.topic.dynamic-content","common.topic.keyboard-focus","common.verification.testing"]},
+    {"id":"fluent.v9.component-contract","path":"v9/component-contract.md","kind":"implementation-contract","discoveryTags":["pattern","fix","example"],"status":"draft","owner":"unassigned","appliesTo":["fluent-v9"],"sourceIds":[],"relations":["fluent.selection.components-and-utilities","common.analysis.root-cause","common.topic.dynamic-content","common.topic.keyboard-focus","common.verification.testing"]},
+    {"id":"fluent.selection.components-and-utilities","path":"selection/components-and-utilities.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["fluent-v8","fluent-v9"],"sourceIds":[],"relations":["fluent.v8.component-contract","fluent.v9.component-contract","common.implementation.component-contract","common.topic.component-accessibility","common.topic.forms-and-content","common.topic.visual-accessibility","common.verification.testing"]}
+  ]
+}

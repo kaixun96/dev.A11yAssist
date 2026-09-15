@@ -1040,6 +1040,18 @@ assert not m.policy_module.permits(scoped_diagnostic, scoped_diagnostic["allowed
 request.url += "&extra=unapproved"
 assert m.policy_module.json_body_diagnostic(scoped_diagnostic, request) is None
 request.url = rule["url"]
+schema_only = copy.deepcopy(scoped_diagnostic)
+schema_only["bodyDiagnostics"][0].update(schemaOnly=True,jsonBooleanFields=[])
+m.validate_policy(schema_only)
+request.headers = {"content-type":"application/x-www-form-urlencoded"}
+request.post_data_buffer = b"authToken=super-private-secret&client=private-client"
+shape = m.policy_module.json_body_diagnostic(schema_only, request)
+assert shape == {"state":"observed-schema","format":"form","fields":["authToken","client"],"valuesAndDigestsOmitted":True}
+assert "private" not in json.dumps(shape) and "bodySha256" not in shape
+assert not m.policy_module.permits(schema_only,schema_only["allowedTargets"][0],request)
+request.headers = {"content-type":"application/json"}
+request.post_data_buffer = b'{"authToken":"super-private-secret","client":"private-client"}'
+assert m.policy_module.json_body_diagnostic(schema_only, request)["format"] == "json"
 request.post_data_buffer = b'{"create":"private-value","other":"private-other"}'
 observed = m.policy_module.json_body_diagnostic(diagnostic, request)
 assert not observed["booleanFieldsComplete"] and observed["booleanFields"] == {}

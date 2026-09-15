@@ -14,6 +14,14 @@ def valid_query_keys(keys, aliases=False):
             all(isinstance(key, str) and re.fullmatch(pattern, key) for key in keys) and
             len(set(keys)) == len(keys))
 
+def unique_json_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Ambiguous JSON object")
+        result[key] = value
+    return result
+
 
 def https_url(value, origin=False):
     if not isinstance(value, str) or not 1 <= len(value) <= 2048:
@@ -184,6 +192,8 @@ def validate(policy):
         diagnostic_fields = {"url", "jsonBooleanFields", "qualification"}
         if version >= 7 and isinstance(rule, dict) and "queryKeys" in rule:
             diagnostic_fields.add("queryKeys")
+        if version >= 7 and isinstance(rule, dict) and "schemaOnly" in rule:
+            diagnostic_fields.add("schemaOnly")
         if (not isinstance(rule, dict) or set(rule) != diagnostic_fields):
             raise ValueError("Body diagnostics require an exact endpoint and explicit operator qualification")
         parsed = https_url(rule["url"])
@@ -196,6 +206,8 @@ def validate(policy):
         if "queryKeys" in rule and not valid_query_keys(rule["queryKeys"], aliases=True):
             raise ValueError("Body diagnostic queries require explicit unique parameter names")
         names = rule["jsonBooleanFields"]
+        if "schemaOnly" in rule and (rule["schemaOnly"] is not True or names != []):
+            raise ValueError("Schema-only diagnostics cannot request body values")
         if (not isinstance(names, list) or len(names) > 10 or
                 any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,63}", name) for name in names) or
                 len(set(names)) != len(names)):
@@ -225,19 +237,37 @@ def json_body_diagnostic(policy, request):
     omitted = {"state": "unavailable", "booleanFields": {}}
     body = request.post_data_buffer or b""
     headers = {key.lower(): value for key, value in request.headers.items()}
+    if rule.get("schemaOnly"):
+        content_type = headers.get("content-type", "").split(";")[0].strip().lower()
+        if not 1 <= len(body) <= 65536:
+            return {"state": "unavailable", "scope": "body-schema-only"}
+        try:
+            text = body.decode("utf-8")
+            if content_type == "application/x-www-form-urlencoded":
+                parts = text.split("&")
+                if len(parts) > 40 or any("=" not in part for part in parts):
+                    raise ValueError("Unsupported form shape")
+                fields = [parse_qsl(part.split("=", 1)[0] + "=", keep_blank_values=True)[0][0] for part in parts]
+                format_name = "form"
+            elif content_type == "application/json":
+                data = json.loads(text, object_pairs_hook=unique_json_object)
+                if not isinstance(data, dict):
+                    raise ValueError("Unsupported JSON shape")
+                fields = list(data)
+                format_name = "json"
+            else:
+                return {"state": "unavailable", "scope": "body-schema-only", "format": "other"}
+            if not valid_query_keys(fields, aliases=True):
+                raise ValueError("Unbounded or ambiguous field names")
+        except (ValueError, UnicodeDecodeError, IndexError, RecursionError):
+            return {"state": "unavailable", "scope": "body-schema-only"}
+        return {"state": "observed-schema", "format": format_name, "fields": sorted(fields),
+                "valuesAndDigestsOmitted": True}
     if not 1 <= len(body) <= 65536 or headers.get("content-type", "").split(";")[0].strip().lower() != "application/json":
         return omitted
 
-    def unique_object(pairs):
-        result = {}
-        for key, value in pairs:
-            if key in result:
-                raise ValueError("Ambiguous JSON object")
-            result[key] = value
-        return result
-
     try:
-        data = json.loads(body.decode("utf-8"), object_pairs_hook=unique_object)
+        data = json.loads(body.decode("utf-8"), object_pairs_hook=unique_json_object)
     except (ValueError, UnicodeDecodeError, RecursionError):
         return omitted
     if not isinstance(data, dict):

@@ -219,6 +219,11 @@ is available on `bodyDiagnostics`, which still never grants transmission.
 Duplicate/unlisted parameters, changed bodies, other endpoints and unqualified
 POSTs remain denied. Query values and raw bodies are not added to diagnostics;
 older policy versions retain their previous query/body restrictions.
+For a transport that may carry credentials, v7 `bodyDiagnostics` may set
+`schemaOnly: true` with an empty `jsonBooleanFields` list. This reports only
+bounded root JSON/form field names and a format enum, never values or body
+digests. It remains denied and cannot target an authentication origin. Do not
+infer read-only semantics or grant access from those field names.
 V7 also permits explicit GET/HEAD `image` resource rules, so a known image URL
 need not grant script access to its entire CDN host. Other methods remain rejected.
 

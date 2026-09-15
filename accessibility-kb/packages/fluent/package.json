@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "id": "fluent",
-  "version": "0.1.1",
-  "dependencies": {"common":"0.1.1"},
+  "version": "0.1.2",
+  "dependencies": {"common":"0.1.2"},
   "sources": [
     {"id":"fluent-docs","authority":"component-contract","status":"review-pending","locator":"https://react.fluentui.dev/","revision":null,"note":"V9 official-documentation connection target only, not evidence for the historical-derived entries. Resolve installed versions and review exact component documentation before qualification; the official V8 source location remains to be confirmed."},
     {"id":"agentow-accessibility","authority":"historical-reference","status":"historical","locator":"https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L627","revision":"7896845e51d75b0b9d632a2fd61876bc2f556ea5","note":"Historical review reference, summarized as draft guidance, not active agent instructions or official MAS/Fluent approval. Fluent scope: component/document map 1-58; V9 MessageBar 112-156; V8 MessageBar 157-178; announcement ownership 179-219; stack-specific async choices 220-311; focus ownership and shims 314-399; usage checklist/examples 425-536. Exact installed V8/V9 patch versions are not supplied by this reference."},
@@ -12,8 +12,8 @@
   ],
   "entries": [
     {"id":"fluent.overview","path":"README.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["fluent"],"sourceIds":["agentow-accessibility"],"relations":["fluent.selection.components-and-utilities","fluent.v8.component-contract","fluent.v9.component-contract","common.implementation.component-contract","common.requirements.authority-and-applicability"]},
-    {"id":"fluent.v8.component-contract","path":"v8/component-contract.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["fluent-v8"],"sourceIds":["agentow-accessibility"],"relations":["fluent.selection.components-and-utilities","common.analysis.root-cause","common.topic.dynamic-content","common.topic.keyboard-focus","common.verification.testing"]},
-    {"id":"fluent.v9.component-contract","path":"v9/component-contract.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["fluent-v9"],"sourceIds":["agentow-accessibility"],"relations":["fluent.selection.components-and-utilities","common.analysis.root-cause","common.topic.dynamic-content","common.topic.keyboard-focus","common.verification.testing"]},
+    {"id":"fluent.v8.component-contract","path":"v8/component-contract.md","kind":"implementation-contract","discoveryTags":["pattern","fix","example"],"status":"draft","owner":"unassigned","appliesTo":["fluent-v8"],"sourceIds":["agentow-accessibility"],"relations":["fluent.selection.components-and-utilities","common.analysis.root-cause","common.topic.dynamic-content","common.topic.keyboard-focus","common.verification.testing"]},
+    {"id":"fluent.v9.component-contract","path":"v9/component-contract.md","kind":"implementation-contract","discoveryTags":["pattern","fix","example"],"status":"draft","owner":"unassigned","appliesTo":["fluent-v9"],"sourceIds":["agentow-accessibility"],"relations":["fluent.selection.components-and-utilities","common.analysis.root-cause","common.topic.dynamic-content","common.topic.keyboard-focus","common.verification.testing"]},
     {"id":"fluent.selection.components-and-utilities","path":"selection/components-and-utilities.md","kind":"implementation-contract","status":"draft","owner":"unassigned","appliesTo":["fluent-v8","fluent-v9"],"sourceIds":["agentow-accessibility","agentow-component-selection","agentow-localization","agentow-component-replacement"],"relations":["fluent.v8.component-contract","fluent.v9.component-contract","common.implementation.component-contract","common.topic.component-accessibility","common.topic.forms-and-content","common.topic.visual-accessibility","common.verification.testing"]}
   ]
 }

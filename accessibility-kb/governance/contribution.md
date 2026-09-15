@@ -28,6 +28,34 @@ bind a reviewed official support source, its locator/revision and the exact rule
 ID. Verification claims require an evidence reference; schema validity itself
 does not prove the observation or confer an exception.
 
+## Discovery metadata and versions
+
+Keep two axes separate: `kind` is the entry's primary role; optional
+`discoveryTags` are curated body-content facets. Read the full body before adding
+one to three unique tags from this closed set:
+
+- `pattern`: a concrete reusable interaction or implementation pattern, not
+   merely an APG citation or the presence of an implementation contract.
+- `fix`: corrective guidance contrasting wrong and corrected behavior, including
+   conditional recommendations; not proof of a verified historical fix.
+- `example`: an actual concrete positive or negative example, not a promise to
+   add examples or a generic checklist.
+
+Case discovery derives from `kind: case`; never add a `case` tag. Curate only
+supported facets, not every entry indiscriminately. Omit the property when no
+tags are curated; an empty array is invalid. Normative authority comes from
+applicable source provisions and their authority/review metadata, not either
+discovery axis. Tags do not promote draft status or turn hypothetical examples
+into official rules, real bugs, observed results or approved corrections.
+
+Tag additions, removals and corrections are content changes requiring a package
+version bump (a patch bump for metadata-only curation) and exact dependency
+updates in affected dependent packages, with their own version bumps. Publish a
+new snapshot; never rewrite retained manifests or distribution artifacts.
+Historical snapshots may omit `discoveryTags` and remain valid, but such entries
+have no curated-tag matches. Do not backfill by guessing from kind, title or
+source citations. Their `kind: case` discovery remains available.
+
 Entries with `owner: unassigned` cannot be approved. Approved entries require
 `review` metadata (`reviewer`, `date`, `evidence`) and all cited sources must be
 reviewed with an explicit revision, with at least one source. Review is per scoped claim, not a global

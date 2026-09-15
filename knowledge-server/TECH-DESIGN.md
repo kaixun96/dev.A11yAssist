@@ -7,7 +7,7 @@ The audited reusable accessibility rules from AgentOW commit
 `7896845e51d75b0b9d632a2fd61876bc2f556ea5` are migrated into the authored KB.
 
 This document is for content contributors, component/product experts, KB reviewers, and service maintainers.
-It describes schema v1, content packages 0.1.1 and standalone service 0.1.0,
+It describes schema v1, authored content packages 0.1.2 and the standalone service's 0.2.0 upgrade,
 without presenting planned capabilities as delivered features. For installation and host registration, see the
 [service README](README.md); for content review policy, see the
 [contribution guidelines](../accessibility-kb/governance/contribution.md).
@@ -33,6 +33,12 @@ plugin. Existing plugins retain their original knowledge, skills, configuration,
 This service does not read A11y workflow configuration, own execution providers, or perform fixes, tests, browser
 operations, or assistive technology (AT) operations. A `procedure` guides reasoning and planning; it is not an
 automatically executable workflow.
+
+**Ultimate replacement target:** after service readiness and consumer acceptance, all plugins needing accessibility
+knowledge should use the host's unified Knowledge MCP, retiring `a11y-knowledge`, `a11y-knowledge-odsp` and
+duplicate embedded knowledge. This is a future migration, not a change to current installations. Callers such as
+Bug Bash still review source, perform separately authorized execution, make conclusions and report results.
+This upgrade implements discovery only; it does not implement an Execution MCP or MAS integration.
 
 **Not currently provided:** automatic synchronization of official sources, web crawling, semantic/vector retrieval,
 automatic task-based package selection, automatic content approval, automatic plugin integration, or quantified
@@ -111,7 +117,19 @@ flowchart TD
 
 Arrows mean “depends on.” `common` must not depend on any product package; do not pull an entire product
 package back into Common just to cite a product case. Fluent should not contain SharePoint-specific business
-assumptions. Dependencies use exact versions such as `0.1.1`; `^0.1.1`, `latest`, and version ranges are unsupported.
+assumptions. Dependencies use exact versions such as `0.1.2`; `^0.1.2`, `latest`, and version ranges are unsupported.
+
+There are two independent organization axes: **scope** (`common` / `fluent` / `sharepoint`) and
+**knowledge type** (standards / patterns / cases / fixes / examples). Types are not additional packages or
+directories required by the protocol. WCAG and WAI-ARIA normative requirements belong in Common;
+Fluent and SharePoint describe scoped implementation and product responsibilities. APG is informative guidance,
+distinct from those normative requirements, even when an entry cites both.
+
+The discovery API uses singular categories `standard`, `pattern`, `case`, `fix`, `example`, not new `kind` values.
+`kind` remains the entry's primary authoring role; optional curated `discoveryTags` supply only
+`pattern` / `fix` / `example`. A `case` category derives from `kind: case`; a `standard` category derives from
+a directly cited source whose authority is `normative-standard`. Neither a source citation nor a category asserts
+complete coverage of a norm or criterion, approval, compliance, or a proven real historical fix.
 
 ### 3.1 Content Placement Quick Reference
 
@@ -164,8 +182,8 @@ registration and section 9 for coordinated versions and publication.
 |---|---|
 | package | `schemaVersion`, `id`, `version`, `dependencies`, `sources`, `entries`; arbitrary unknown fields are not allowed |
 | entry identity | `id` is unique across the KB and starts with its package ID; `path` is relative to the package directory. Identity is separate from file location |
-| entry classification | `kind` must use the schema enum; directory names are not a retrieval or authorization mechanism |
-| entry context | `appliesTo` is a nonempty string array recording versions/products/platforms; the current service does not automatically filter by it |
+| entry classification | `kind` must use the existing schema enum; optional `discoveryTags` contains 1–3 unique values from `pattern`, `fix`, `example`. Directory names do not assign categories or authority |
+| entry context | `appliesTo` is a nonempty string array recording versions/products/platforms; list/search can filter by an exact label, without automatic applicability or version inference |
 | entry sources | `sourceIds` may reference only IDs in this package's `sources`. Use `relations` for cross-package reading associations; do not borrow another package's source IDs directly |
 | entry relationships | Targets of `relations` and `deprecatedBy` must exist in the package or its dependency closure |
 | entry lifecycle | `status` is `draft` / `approved` / `deprecated`; approval information belongs in the descriptor, not merely a “reviewed” label in the body |
@@ -299,8 +317,8 @@ a package for every topic. Consider the example package `product-example`, which
 {
   "schemaVersion": 1,
   "id": "product-example",
-  "version": "0.1.1",
-  "dependencies": {"common": "0.1.1"},
+  "version": "0.1.2",
+  "dependencies": {"common": "0.1.2"},
   "sources": [],
   "entries": [
     {
@@ -317,7 +335,7 @@ a package for every topic. Consider the example package `product-example`, which
 }
 ```
 
-3. `dependencies` must match the actual package versions in the current KB. The example's `0.1.1` is not a
+3. `dependencies` must match the actual package versions in the current KB. The example's `0.1.2` is not a
    permanently valid default. If using Fluent contracts, depend on Fluent explicitly; do not add a product dependency
    to Common to bypass validation.
 4. Add bodies, sources, and relationships entry by entry as described in section 5. An ordinary new package does not require a schema change.
@@ -376,9 +394,97 @@ directly to live sources.
 
 | Tool | Input | Current behavior |
 |---|---|---|
-| `a11y_kb_knowledge_list` | `{}` | Returns entries and source metadata for the selected closure; does not automatically filter out draft/deprecated entries |
-| `a11y_kb_knowledge_search` | `query`, 1–256 characters | Local case-insensitive token matching; all terms must appear in the ID/body; at most 20 results, each with an excerpt of at most 580 characters |
-| `a11y_kb_knowledge_read` | `id`, 1–256 characters | Reads one complete declared entry, sources, hashes, and a `kb:<id>@<version>` citation |
+| `a11y_kb_knowledge_list` | Optional filters below; `{}` still works | Complete filtered `entries`, full selected-closure `sources`, applied `filters`, `facets`, `totalMatches`; does not automatically filter out draft/deprecated entries |
+| `a11y_kb_knowledge_search` | Required `query`, 1–256 characters, plus optional filters below | Local case-insensitive whitespace-token matching; all terms must appear in the ID/body; at most 20 `matches`, each with an excerpt of at most 580 characters; `totalMatches` counts all hits before truncation |
+| `a11y_kb_knowledge_read` | Required `id`, 1–256 characters; no discovery filters | Unchanged: reads one complete declared entry, its cited sources, hashes, and a `kb:<id>@<version>` citation |
+
+### 8.1 Exact Discovery Filters and Result Semantics
+
+All supplied filters compose with **AND**, for both list and search; search additionally requires every query term.
+
+| Filter | Matching contract |
+|---|---|
+| `category` | One of `standard`, `pattern`, `case`, `fix`, `example`; categories may overlap on an entry |
+| `standard` | Exact package-local source ID, such as `wcag` or `aria`, with `authority: normative-standard`; not a standard title, version, criterion ID or coverage assertion |
+| `sourceId` | Exact package-local source ID, including informative `apg`; use `packageId` to disambiguate IDs reused across packages |
+| `packageId` | Exact package ID within the pinned selection; does not include dependency entries in the results automatically |
+| `appliesTo` | Exact member of the entry's applicability labels, such as `fluent-v9`; no aliases, wildcards, case normalization or version inference |
+
+`sourceId`, `standard` and the normative requirement of `category: standard` must be satisfied by the **same
+directly cited source record**. For example, an entry citing both WCAG and APG does not match
+`sourceId: apg` together with `category: standard`, or with `standard: wcag`. There is no source/category/label
+inheritance through package dependencies or `relations`, and no inference of installed versions or source revisions.
+
+List/search entries add `packageId`, derived `categories` and full `matchedSources` records. `matchedSources`
+contains the entry's cited sources satisfying the source/normative filters; with none of those restrictions it contains
+all directly cited sources, possibly empty. List's top-level `sources` remains the full selected source catalog,
+not just matched sources. Its `facets` count entries in the **current fully filtered result**, not the unfiltered KB
+or a top-20 search page: categories (including zero counts), packages, exact applicability labels and cited sources
+(package-qualified full records with counts). Source facets count all citations on matching entries, not only
+`matchedSources`. Categories and labels can overlap, so their counts need not sum to `totalMatches`.
+Search returns applied `filters` without `query`, and no facets or full top-level source catalog.
+
+There are exactly seven curated tagged entries in content 0.1.2; tags are based on their bodies, not automatically
+assigned because an entry cites APG, is an implementation contract, has a suggestive title or relates to a case:
+
+| Entry ID | `discoveryTags` |
+|---|---|
+| `common.topic.dynamic-content` | `pattern`, `example` |
+| `common.case.dialog-focus` | `pattern`, `fix`, `example` |
+| `fluent.v8.component-contract` | `pattern`, `fix`, `example` |
+| `fluent.v9.component-contract` | `pattern`, `fix`, `example` |
+| `sharepoint.spds.component-contract` | `pattern`, `fix`, `example` |
+| `sharepoint.utilities.announcements-and-focus` | `pattern`, `example` |
+| `sharepoint.case.duplicate-announcement` | `fix`, `example` |
+
+`fix` denotes corrective guidance; `example` can be hypothetical or a counterexample, and `case` does not certify
+a reproduced historical incident. None of these labels supplies approval, authority or behavioral evidence.
+Old entries without tags remain valid: they have no pattern/fix/example category matches, while directly cited
+normative sources and `kind: case` still determine standard/case matches.
+
+A valid query with no match returns explicit `entries: []` or `matches: []` and `totalMatches: 0`, not a
+conformance verdict or evidence that no requirement applies. Invalid arguments return MCP tool `isError: true`:
+unknown keys, missing required query/ID, arrays/null instead of an argument object, wrong types, blank or over-256
+strings, malformed Unicode, invalid category values or malformed identifiers. `standard`, `sourceId`, `packageId`
+must start with a lowercase ASCII letter and contain only lowercase ASCII letters, digits or hyphens;
+syntactically valid unknown IDs/labels yield no matches, not aliases or fallback.
+An unknown read ID is an error. All successful tools retain `contentApprovalVerified: false` and
+`independentBehaviorVerified: false`; list/search require full reads via `fullEntryReadRequired: true`.
+
+### 8.2 Usable Local Tool Examples
+
+Send each JSON object as a separate MCP request after initialization, using a compatible service and matching
+pinned snapshot. Their IDs are from the current KB.
+
+Discover Common entries directly citing WCAG as a normative source, with an exact web label:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"a11y_kb_knowledge_list","arguments":{"category":"standard","standard":"wcag","sourceId":"wcag","packageId":"common","appliesTo":"web"}}}
+```
+
+Browse informative APG citations without pretending APG is normative:
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"a11y_kb_knowledge_list","arguments":{"sourceId":"apg","packageId":"common"}}}
+```
+
+Find curated Fluent V9 corrective guidance; `MessageBar` must also occur in the entry ID/body:
+
+```json
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"a11y_kb_knowledge_search","arguments":{"query":"MessageBar","category":"fix","packageId":"fluent","appliesTo":"fluent-v9"}}}
+```
+
+Read the full returned entry before applying the guidance:
+
+```json
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"a11y_kb_knowledge_read","arguments":{"id":"fluent.v9.component-contract"}}}
+```
+
+This valid request deliberately returns no entries: the same source cannot be both informative APG and normative:
+
+```json
+{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"a11y_kb_knowledge_list","arguments":{"category":"standard","sourceId":"apg","packageId":"common"}}}
+```
 
 Search is not semantic retrieval and has no relevance learning or ranking by authority level. Callers should first
 establish scope, then read the complete body, related IDs, and source status. Source metadata, source URLs, and
@@ -411,9 +517,18 @@ consider major for incompatible semantic/ID contract changes. Current code check
 format, not the business semantics of SemVer; PR review must enforce those. Changing content at the same version
 also changes its pin and does not establish compatibility or waive version review.
 
-The current content release coordinates Common, Fluent and SharePoint at `0.1.1`: Fluent depends on
-Common `0.1.1`, and SharePoint depends on both Common and Fluent `0.1.1`. The service implementation remains
-`0.1.0`; its version is independent of this content migration.
+The current authored content release coordinates Common, Fluent and SharePoint at `0.1.2`: Fluent depends on
+Common `0.1.2`, and SharePoint depends on both Common and Fluent `0.1.2`. The standalone service upgrade is
+`0.2.0`, independently versioned for the discovery API/runtime change; it is not content version `0.2.0`.
+The service package/lockfile and generated snapshot/reference are updated together. Building those artifacts
+does not publish their download URL or upgrade existing installations; deployment remains a separate release step.
+
+Compatibility is directional even with `schemaVersion: 1`: the new server accepts old snapshots without
+`discoveryTags`, but the old strict server rejects new tagged packages as unknown entry fields. Preserve old
+artifacts unchanged; older installations keep their old runtime/reference pins and read the old content, without
+the new tags or filter API. Upgrade the service and reviewed reference together at a safe transition point to use
+0.1.2 content. A newer server can use an old matching reference/snapshot, but cannot invent missing tags or
+silently substitute newer content. Roll back using the complete matching old runtime/reference set.
 
 After upgrading Common, update every exact version dependency that directly references it; if Fluent itself also
 upgrades, update SharePoint's Fluent dependency too. Review which downstream approved conclusions are affected

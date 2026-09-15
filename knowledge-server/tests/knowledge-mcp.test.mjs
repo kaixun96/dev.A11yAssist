@@ -175,12 +175,146 @@ test('knowledge MCP rejects arbitrary arguments before loading or downloading', 
       call(name, 'read', { path: '../../private' }),
       call(name, 'read', { id: null }), call(name, 'search', { query: ' ' }),
       call(name, 'search', { query: 'x'.repeat(257) }), call(name, 'list', []),
+      call(name, 'list', null), call(name, 'search', {}),
+      call(name, 'list', { category: 'Pattern' }), call(name, 'list', { category: ['case'] }),
+      call(name, 'list', { standard: '../wcag' }), call(name, 'list', { sourceId: 'https://example.invalid' }),
+      call(name, 'list', { packageId: 'common.*' }), call(name, 'list', { appliesTo: ' ' }),
+      call(name, 'search', { query: 'focus', filters: { category: 'pattern' } }),
+      call(name, 'read', { id: 'common.case.dialog-focus', category: 'case' }),
+      call(name, 'list', JSON.parse('{"__proto__":"case"}')),
       rpc('tools/call', { name: prefix(name) + 'execute', arguments: {} }),
       ...['doctor', 'invoke', 'execute', 'status', 'reconcile', 'operation_status', 'operation_reconcile']
         .map(action => rpc('tools/call', { name: 'a11y_kb_' + action, arguments: {} })),
       call('a11y-knowledge', 'list')
     ]) assert.equal((await handler(request)).isError, true);
     assert.equal(downloads, 0);
+  });
+});
+
+test('discovery lists standards, curated patterns and cases on independent exact scope axes', async () => {
+  const handler = createKnowledgeHandler(root, serverName, { env: { A11Y_ASSIST_KB_ROOT: kbRoot } });
+  const list = async args => content(await handler(call(serverName, 'list', args)));
+  const all = await list({});
+  assert.equal(all.totalMatches, 35);
+  assert.deepEqual(Object.fromEntries(all.entries.filter(entry => entry.discoveryTags).map(entry => [entry.id, entry.discoveryTags])), {
+    'common.topic.dynamic-content': ['pattern', 'example'],
+    'common.case.dialog-focus': ['pattern', 'fix', 'example'],
+    'fluent.v8.component-contract': ['pattern', 'fix', 'example'],
+    'fluent.v9.component-contract': ['pattern', 'fix', 'example'],
+    'sharepoint.spds.component-contract': ['pattern', 'fix', 'example'],
+    'sharepoint.utilities.announcements-and-focus': ['pattern', 'example'],
+    'sharepoint.case.duplicate-announcement': ['fix', 'example']
+  });
+  assert.deepEqual(all.filters, {});
+  for (const category of ['pattern', 'fix', 'example', 'case', 'standard']) {
+    const result = await list({ category });
+    const expected = currentPackages.flatMap(pkg => pkg.entries.filter(entry => category === 'case'
+      ? entry.kind === 'case' : category === 'standard'
+        ? entry.sourceIds.some(id => pkg.sources.some(source => source.id === id && source.authority === 'normative-standard'))
+        : entry.discoveryTags?.includes(category)).map(entry => entry.id));
+    assert.deepEqual(result.entries.map(entry => entry.id), expected);
+    assert.equal(result.totalMatches, expected.length);
+    assert.equal(all.facets.categories.find(facet => facet.value === category).count, expected.length);
+    assert.equal(result.fullEntryReadRequired, true);
+    assert.equal(result.contentApprovalVerified, false);
+    assert.equal(result.independentBehaviorVerified, false);
+  }
+  assert.deepEqual((await list({ category: 'case' })).entries.map(entry => entry.id), [
+    'common.case.dialog-focus', 'sharepoint.case.duplicate-announcement'
+  ]);
+  const v9 = await list({ category: 'pattern', packageId: 'fluent', appliesTo: 'fluent-v9' });
+  assert.deepEqual(v9.entries.map(entry => entry.id), ['fluent.v9.component-contract']);
+  assert.deepEqual(v9.facets.packages, [{ value: 'fluent', count: 1 }]);
+  assert.deepEqual(v9.facets.appliesTo, [{ value: 'fluent-v9', count: 1 }]);
+  assert(v9.entries[0].matchedSources.every(source => source.status === 'historical'));
+  const apg = await list({ sourceId: 'apg' });
+  assert(apg.entries.some(entry => entry.id === 'common.topic.foundations'));
+  assert(!(await list({ category: 'pattern', sourceId: 'apg' })).entries.some(entry => entry.id === 'common.topic.foundations'),
+    'APG citation alone is not a curated implementation pattern');
+  const wcag = await list({ standard: 'wcag' });
+  assert(wcag.entries.length > 0);
+  for (const entry of wcag.entries) {
+    assert.deepEqual(entry.matchedSources.map(source => source.id), ['wcag']);
+    assert.equal(entry.matchedSources[0].authority, 'normative-standard');
+    assert.equal(entry.matchedSources[0].status, 'review-pending');
+    assert.equal(entry.status, 'draft');
+  }
+  const sourceFacet = wcag.facets.sources.find(source => source.packageId === 'common' && source.id === 'wcag');
+  assert.equal(sourceFacet.count, wcag.totalMatches);
+  assert.equal(sourceFacet.revision, null);
+  assert((await list({ standard: 'aria' })).entries.some(entry => entry.id === 'common.topic.component-accessibility'));
+  assert((await list({ category: 'pattern', standard: 'wcag' })).entries.some(entry => entry.id === 'common.topic.dynamic-content'));
+  for (const args of [
+    { standard: 'apg' }, { standard: 'mas' }, { standard: 'wcag', sourceId: 'apg' },
+    { category: 'standard', sourceId: 'apg' }, { standard: 'wcag', packageId: 'fluent' },
+    { packageId: 'unknown' }, { sourceId: 'constructor' }, { appliesTo: 'fluent-v10' },
+    { packageId: 'common', appliesTo: 'fluent-v9' }
+  ]) {
+    const empty = await list(args);
+    assert.deepEqual(empty.entries, [], JSON.stringify(args));
+    assert.equal(empty.totalMatches, 0);
+    assert(empty.facets.categories.every(facet => facet.count === 0));
+  }
+});
+
+test('filtered search uses tags plus lexical terms and full read preserves classification and citations', async () => {
+  const handler = createKnowledgeHandler(root, serverName, { env: { A11Y_ASSIST_KB_ROOT: kbRoot } });
+  for (const [args, id] of [
+    [{ query: 'dialog focus', category: 'case', packageId: 'common' }, 'common.case.dialog-focus'],
+    [{ query: 'MessageBar', category: 'pattern', appliesTo: 'fluent-v9' }, 'fluent.v9.component-contract'],
+    [{ query: 'duplicate announcement', category: 'fix', packageId: 'sharepoint' }, 'sharepoint.case.duplicate-announcement'],
+    [{ query: 'focus', category: 'example', packageId: 'common' }, 'common.case.dialog-focus'],
+    [{ query: 'component', standard: 'aria' }, 'common.topic.component-accessibility']
+  ]) {
+    const result = content(await handler(call(serverName, 'search', args)));
+    assert(result.matches.some(entry => entry.id === id), JSON.stringify(args));
+    assert(result.matches.every(entry => entry.excerpt.length <= 580));
+    const { query, ...filters } = args;
+    assert.deepEqual(result.filters, filters);
+    assert.equal(result.fullEntryReadRequired, true);
+    const read = content(await handler(call(serverName, 'read', { id })));
+    const entry = currentPackages.flatMap(pkg => pkg.entries).find(entry => entry.id === id);
+    assert.deepEqual(read.entry.discoveryTags, entry.discoveryTags);
+    assert.equal(read.citation, `kb:${id}@${result.packages[id.split('.')[0]]}`);
+  }
+  const none = content(await handler(call(serverName, 'search', { query: 'dialog nonexistent-token', category: 'case' })));
+  assert.deepEqual(none.matches, []);
+  assert.equal(none.totalMatches, 0);
+});
+
+test('isolated cold and offline cached consumers retain discovery tags and source filtering', async () => {
+  await fixture(async ({ reference, artifact, run }) => {
+    const [cold] = run([call(serverName, 'list', { category: 'pattern', packageId: 'fluent' })],
+      { TEST_KB_URL: reference.distribution.url, TEST_KB_ARTIFACT: artifact });
+    const result = content(cold.result);
+    assert.equal(result.origin, 'download');
+    assert.deepEqual(result.entries.map(entry => entry.id), ['fluent.v8.component-contract', 'fluent.v9.component-contract']);
+    const [warm] = run([call(serverName, 'search', { query: 'focus', standard: 'wcag' })]);
+    const offline = content(warm.result);
+    assert.equal(offline.origin, 'cache');
+    assert(offline.matches.length > 0);
+    assert(offline.matches.every(entry => entry.matchedSources.every(source => source.id === 'wcag')));
+  });
+});
+
+test('new discovery handler reads retained untagged snapshots without inventing pattern labels', async () => {
+  await fixture(async ({ server, reference, env }) => {
+    const hash = '9a244b4320ea9f352195a8cebd3c783667ea7ccac07fb53a0ebecff33c3a0024';
+    const path = join(repository, 'knowledge-distribution', hash + '.json');
+    const artifact = await load(path);
+    const index = await load(join(repository, 'knowledge-distribution/index.json'));
+    const previous = { ...reference, packages: artifact.manifest.packages, manifestSha256: hash,
+      distribution: { url: `https://raw.githubusercontent.com/kaixun96/dev.A11yAssist/main/knowledge-distribution/${hash}.json`, sha256: index.artifacts[hash] } };
+    await writeFile(join(server, 'references/knowledge.json'), JSON.stringify(previous));
+    const handler = createKnowledgeHandler(server, serverName, { env, fetchImpl: async () => new Response(await readFile(path)) });
+    const listed = content(await handler(call(serverName, 'list')));
+    assert.equal(listed.entries.length, 35);
+    assert(listed.entries.every(entry => entry.discoveryTags === undefined));
+    for (const category of ['pattern', 'fix', 'example']) {
+      assert.deepEqual(content(await handler(call(serverName, 'list', { category }))).entries, []);
+    }
+    assert.equal(content(await handler(call(serverName, 'list', { category: 'case' }))).entries.length, 2);
+    assert(content(await handler(call(serverName, 'list', { standard: 'aria' }))).entries.length > 0);
   });
 });
 
@@ -217,6 +351,9 @@ test('synthetic Common-only MCP consumer excludes Fluent and SharePoint IDs with
     assert.deepEqual(Object.keys(listed.sources), ['common']);
     assertCurrentEntries(listed.entries, ['common']);
     assert(listed.entries.every(entry => entry.id.startsWith('common.')));
+    const patterns = content(await handler(call(name, 'list', { category: 'pattern' })));
+    assert(patterns.entries.length > 0 && patterns.entries.every(entry => entry.packageId === 'common'));
+    assert.deepEqual(content(await handler(call(name, 'list', { category: 'pattern', packageId: 'fluent' }))).entries, []);
     for (const id of ['fluent.overview', 'sharepoint.profile.support-policy']) {
       const result = await handler(call(name, 'read', { id }));
       assert.equal(result.isError, true);

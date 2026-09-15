@@ -4,6 +4,7 @@ import { access, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
+import { createKnowledgeHandler } from '../src/runtime/knowledge-mcp.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const repository = resolve(root, '..');
@@ -56,6 +57,27 @@ test('bilingual designs retain parallel sections, valid examples and planned-onl
   assert.match(zh, /## 11\. 待实现/);
   assert.match(en, /TECH-DESIGN\.zh-CN\.md/);
   assert.match(zh, /TECH-DESIGN\.md/);
+});
+
+test('bilingual discovery examples match tool schemas and execute against the pinned local KB', async () => {
+  const texts = await Promise.all(designs.map(read));
+  const examples = text => [...text.matchAll(/```json\r?\n([\s\S]*?)```/g)].map(match => JSON.parse(match[1])).filter(value => value.method === 'tools/call');
+  const requests = examples(texts[0]);
+  assert.deepEqual(requests, examples(texts[1]));
+  assert.equal(requests.length, 5);
+  const handler = createKnowledgeHandler(root, 'a11y-kb', { env: { A11Y_ASSIST_KB_ROOT: resolve(repository, 'accessibility-kb') } });
+  const { tools } = await handler({ method: 'tools/list' });
+  const validators = new Map(tools.map(tool => [tool.name, new Ajv({ strict: true }).compile(tool.inputSchema)]));
+  for (const [index, request] of requests.entries()) {
+    const validate = validators.get(request.params.name);
+    assert(validate?.(request.params.arguments), JSON.stringify(validate?.errors));
+    const response = await handler(request);
+    assert(!response.isError, response.content[0].text);
+    const result = JSON.parse(response.content[0].text);
+    if (request.params.name.endsWith('_read')) assert(result.content.length > 0);
+    else if (index === requests.length - 1) assert.equal(result.totalMatches, 0);
+    else assert(result.totalMatches > 0);
+  }
 });
 
 test('maintainer documentation links and reference definitions resolve without fetching upstream', async () => {

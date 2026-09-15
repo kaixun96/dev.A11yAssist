@@ -268,7 +268,7 @@ function validateSource(source, packageId) {
 
 function validateEntry(entry, pkg, sources) {
   keys(entry, ['id', 'path', 'kind', 'status', 'owner', 'appliesTo', 'sourceIds', 'relations'],
-    `KB entry in ${pkg.id}`, ['deprecatedBy', 'dataSchema', 'review']);
+    `KB entry in ${pkg.id}`, ['deprecatedBy', 'dataSchema', 'review', 'discoveryTags']);
   match(entry.id, ENTRY_ID, 'KB entry ID');
   assert(entry.id.startsWith(`${pkg.id}.`), `Wrong KB entry namespace: ${entry.id}`);
   safePath(entry.path);
@@ -280,6 +280,11 @@ function validateEntry(entry, pkg, sources) {
   strings(entry.appliesTo, 'KB entry appliesTo', 1);
   strings(entry.sourceIds, 'KB entry sourceIds');
   strings(entry.relations, 'KB entry relations');
+  if (own(entry, 'discoveryTags')) {
+    strings(entry.discoveryTags, 'KB entry discoveryTags', 1);
+    assert(entry.discoveryTags.length <= 3, 'Too many KB discoveryTags');
+    for (const tag of entry.discoveryTags) choice(tag, ['pattern', 'fix', 'example'], 'KB discovery tag');
+  }
   for (const source of entry.sourceIds) assert(sources.has(source), `Unknown KB source: ${entry.id}: ${source}`);
   for (const id of entry.relations) match(id, ENTRY_ID, `KB relation for ${entry.id}`);
   if (own(entry, 'deprecatedBy')) match(entry.deprecatedBy, ENTRY_ID, 'KB replacement ID');
@@ -444,8 +449,8 @@ function selectedContents(files, reference) {
     hashes: Object.fromEntries([...files].sort(([a], [b]) => a.localeCompare(b, 'en')).map(([path, body]) => [path, digest(body)]))
   };
   assert.equal(digest(json(manifest)), reference.manifestSha256, 'KB reference manifest/content mismatch; obtain the matching pinned snapshot');
-  return { manifest, entries: [...entries.values()].map(({ id, path, kind, status, appliesTo, relations, sourceIds }) =>
-    ({ id, path, kind, status, appliesTo, relations, sourceIds })), sources };
+  return { manifest, entries: [...entries.values()].map(({ id, path, kind, status, appliesTo, relations, sourceIds, discoveryTags }) =>
+    ({ id, path, kind, status, appliesTo, relations, sourceIds, ...(discoveryTags ? { discoveryTags } : {}) })), sources };
 }
 
 function validateArtifact(bytes, reference) {

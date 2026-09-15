@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "common",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "dependencies": {},
   "sources": [
     {"id": "mas", "authority": "company-requirements", "status": "connection-pending", "locator": null, "revision": null, "note": "Confirm the authorized CLEA MCP interface, source revision, exact rule IDs and caching permission. No MAS text or mapping is supplied."},
@@ -27,7 +27,7 @@
     {"id":"common.topic.component-accessibility","path":"topics/component-accessibility.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["html","aria","agentow-accessibility"],"relations":[]},
     {"id":"common.topic.keyboard-focus","path":"topics/keyboard-focus.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","apg","agentow-accessibility","agentow-architecture"],"relations":[]},
     {"id":"common.topic.forms-and-content","path":"topics/forms-and-content.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","html","agentow-accessibility","agentow-localization","agentow-reuse","agentow-review-misses"],"relations":[]},
-    {"id":"common.topic.dynamic-content","path":"topics/dynamic-content.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","aria","agentow-accessibility","agentow-localization","agentow-review-misses"],"relations":[]},
+    {"id":"common.topic.dynamic-content","path":"topics/dynamic-content.md","kind":"topic","discoveryTags":["pattern","example"],"status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","aria","agentow-accessibility","agentow-localization","agentow-review-misses"],"relations":[]},
     {"id":"common.topic.visual-accessibility","path":"topics/visual-accessibility.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","agentow-accessibility","agentow-localization"],"relations":[]},
     {"id":"common.requirements.authority-and-applicability","path":"requirements/authority-and-applicability.md","kind":"requirement-guidance","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":["mas","wcag","aria","html","apg","wcag-understanding"],"relations":[]},
     {"id":"common.analysis.root-cause","path":"analysis/root-cause.md","kind":"analysis","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":["agentow-review-misses","agentow-review-issues","agentow-reuse"],"relations":["common.implementation.component-contract"]},
@@ -36,7 +36,7 @@
     {"id":"common.verification.dynamic","path":"verification/dynamic.md","kind":"verification","status":"draft","owner":"unassigned","appliesTo":["web","windows-at"],"sourceIds":["wcag","apg","agentow-accessibility","agentow-evaluator"],"relations":["common.verification.static"]},
     {"id":"common.verification.design","path":"verification/design.md","kind":"verification","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":["wcag","agentow-accessibility","agentow-localization","agentow-architecture","agentow-review-misses"],"relations":["common.verification.dynamic"]},
     {"id":"common.verification.testing","path":"verification/testing.md","kind":"verification","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["agentow-accessibility","agentow-replacement","agentow-localization","agentow-review-misses","agentow-review-issues","agentow-graduation","agentow-size-regression"],"relations":["common.verification.dynamic"]},
-    {"id":"common.case.dialog-focus","path":"cases/dialog-focus.md","kind":"case","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["apg","agentow-accessibility"],"relations":["common.analysis.root-cause","common.topic.keyboard-focus"]},
+    {"id":"common.case.dialog-focus","path":"cases/dialog-focus.md","kind":"case","discoveryTags":["pattern","fix","example"],"status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["apg","agentow-accessibility"],"relations":["common.analysis.root-cause","common.topic.keyboard-focus"]},
     {"id":"common.procedure.find","path":"procedures/find.md","kind":"procedure","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.requirements.authority-and-applicability","common.verification.static","common.verification.dynamic"]},
     {"id":"common.procedure.fix","path":"procedures/fix.md","kind":"procedure","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.analysis.root-cause","common.verification.testing","common.verification.dynamic"]},
     {"id":"common.procedure.prevent","path":"procedures/prevent.md","kind":"procedure","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.implementation.component-contract","common.verification.design","common.verification.testing"]},

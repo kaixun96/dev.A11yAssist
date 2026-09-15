@@ -464,6 +464,27 @@ test('valid hashes cannot bypass semantic validation of selected package content
   assert.deepEqual(await directoryEntries(f.cache), []);
 });
 
+test('repinned discovery metadata must pass runtime validation independently of schema files', async t => {
+  for (const discoveryTags of [[], ['pattern', 'pattern'], ['standard'], ['case'], ['unknown'], 'pattern', null]) {
+    const f = await fixture(t);
+    const artifact = JSON.parse(f.bytes.toString('utf8'));
+    const path = 'packages/common/package.json';
+    const pkg = JSON.parse(artifact.files[path]);
+    pkg.entries[0].discoveryTags = discoveryTags;
+    artifact.files[path] = json(pkg);
+    artifact.manifest.hashes[path] = digest(artifact.files[path]);
+    const reference = structuredClone(f.reference);
+    reference.manifestSha256 = digest(json(artifact.manifest));
+    reference.distribution.url = distributionUrl(reference.manifestSha256);
+    const bytes = Buffer.from(json(artifact));
+    const pinned = await repinRaw(f.server, reference, bytes);
+    const http = syntheticHttp(pinned, () => new Response(bytes));
+    await assert.rejects(loadKnowledgeSnapshot(f.server, { env: f.env, fetchImpl: http.fetchImpl }), /discovery/i);
+    assert.equal(http.calls.length, 1);
+    assert.deepEqual(await directoryEntries(f.cache), []);
+  }
+});
+
 test('reference validation rejects unpinned selectors and caller-controlled distribution endpoints before fetching', async t => {
   const f = await fixture(t);
   validateKnowledgeReference(f.reference);

@@ -15,6 +15,12 @@ authorized workflow. Knowledge never grants that authority or bypasses its gates
   Resolve an ID through the selected catalog and its package descriptor.
 - Read the full applicable entry, its source status and declared relationships.
   Do not treat a title, search snippet or illustrative example as a component contract.
+- Discovery has two axes: `kind` describes the entry's primary role; optional
+  curated `discoveryTags` identify reusable interaction/implementation patterns
+  (`pattern`), corrective wrong-versus-corrected guidance (`fix`), and concrete
+  positive/negative examples (`example`). Cases derive from `kind: case`, not a
+  tag. Tags describe body content, not normative authority, approval or verified
+  historical fixes; consult the applicable source records and provisions.
 - Draft content is not approved; unassigned ownership and
   pending sources are deliberate gaps. No official company rule text is supplied
   by a pending source record. Unsourced methods remain current draft guidance
@@ -46,3 +52,9 @@ bodies are changed by this content addition. Consumers must refresh compatible
 references and host KB context at a safe point; hash pins prevent treating source
 changes as live auto-reload. The catalog selects content and the generated manifest
 binds its snapshot. Neither establishes conformance, content approval or runtime behavior.
+
+Discovery-tag changes are versioned content changes: bump the affected package
+version and update exact dependent versions before publishing a new snapshot.
+Retain older snapshots unchanged. Historical entries without `discoveryTags`
+remain valid but have no curated-tag matches; do not infer tags from their kind,
+title or citations. Case discovery still derives from `kind: case`.

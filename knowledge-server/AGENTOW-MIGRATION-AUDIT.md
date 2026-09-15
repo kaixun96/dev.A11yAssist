@@ -8,7 +8,7 @@ Design: [English](TECH-DESIGN.md) | [简体中文](TECH-DESIGN.zh-CN.md)
 
 **Migration of the audited reusable accessibility rules is complete in the authored Common, Fluent and SharePoint packages.** B01–B16 below map source clauses to implemented guidance, concrete API/ownership contracts, exceptions and verification examples. N01–N03 are registered entries, not proposals.
 
-Coverage update: 2026-09-15; source inventory audited 2026-09-14. Source: [kaixun96/dev.AgentOW at 7896845e51d75b0b9d632a2fd61876bc2f556ea5](https://github.com/kaixun96/dev.AgentOW/tree/7896845e51d75b0b9d632a2fd61876bc2f556ea5). Target: current authored packages, each version `0.1.1`, with exact coordinated dependencies. The local links identify the implemented bodies; generated references independently identify the snapshot a consumer reads.
+Coverage update: 2026-09-15; source inventory audited 2026-09-14. Source: [kaixun96/dev.AgentOW at 7896845e51d75b0b9d632a2fd61876bc2f556ea5](https://github.com/kaixun96/dev.AgentOW/tree/7896845e51d75b0b9d632a2fd61876bc2f556ea5). Target: current authored packages, each version `0.1.2`, with exact coordinated dependencies. The rule migration was delivered in `0.1.1`; `0.1.2` adds discovery metadata without changing that coverage. The local links identify the implemented bodies; generated references independently identify the snapshot a consumer reads.
 
 | Evidence set | Count | What it establishes |
 | --- | ---: | --- |

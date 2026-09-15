@@ -107,6 +107,9 @@ async function rejectedMutation(mutate, pattern) {
 }
 
 test('invalid metadata, duplicates, missing sources, relations and approvals fail closed', async () => {
+  for (const discoveryTags of [[], ['pattern', 'pattern'], ['standard'], ['case'], ['invented'], 'pattern', null]) {
+    await rejectedMutation(pkg => { pkg.entries[0].discoveryTags = discoveryTags; }, /Invalid KB package/);
+  }
   await rejectedMutation(pkg => { pkg.entries[0].status = 'looks-good'; }, /Invalid KB package/);
   await rejectedMutation(pkg => { pkg.entries.push(pkg.entries[0]); }, /Duplicate KB entry/);
   await rejectedMutation(pkg => { pkg.entries[1].path = 'README.md'; }, /Duplicate KB path/);

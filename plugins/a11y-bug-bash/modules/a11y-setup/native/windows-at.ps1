@@ -263,12 +263,87 @@ $recorder = $null
 $audioIntent = $false
 $audioPrepared = $false
 function Get-TraceId {
+    $query = [A11yNativeEtwControl]::Query($traceName)
+    if ($query.Status -ne 0 -or $query.LoggerId -eq 0) {
+        throw "Cannot query the owned ETW identity (status $($query.Status)); retain original creation intent."
+    }
     $lines = @(& "$env:SystemRoot\System32\logman.exe" query $traceName -ets 2>&1)
     if ($LASTEXITCODE -ne 0) { throw 'Cannot verify the owned ETW session.' }
-    $matches = @($lines | Select-String -Pattern '^\s*Logger Id:\s*(0x[0-9a-fA-F]+|\d+)\s*$')
-    if ($matches.Count -ne 1) { throw 'Cannot identify the exact ETW Logger Id; retain startup intent for recovery.' }
-    return $matches[0].Matches[0].Groups[1].Value
+    $details = $lines -join [Environment]::NewLine
+    if ($details -notmatch [regex]::Escape($traceName) -or
+        $details -notmatch [regex]::Escape((Join-Path $output 'narrator.etl')) -or
+        $details -notmatch 'Microsoft-Windows-Narrator') {
+        throw 'ETW name, output path or provider differs from the original creation intent.'
+    }
+    $after = [A11yNativeEtwControl]::Query($traceName)
+    if ($after.Status -ne 0 -or $after.LoggerId -ne $query.LoggerId) {
+        throw 'ETW instance changed during identity verification.'
+    }
+    return $query.LoggerId.ToString([Globalization.CultureInfo]::InvariantCulture)
 }
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class A11yNativeEtwControl {
+    public sealed class QueryResult {
+        public uint Status;
+        public ulong LoggerId;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Wnode {
+        public uint BufferSize, ProviderId;
+        public ulong HistoricalContext;
+        public long TimeStamp;
+        public Guid Guid;
+        public uint ClientContext, Flags;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Properties {
+        public Wnode Wnode;
+        public uint BufferSize, MinimumBuffers, MaximumBuffers, MaximumFileSize;
+        public uint LogFileMode, FlushTimer, EnableFlags, AgeLimit;
+        public uint NumberOfBuffers, FreeBuffers, EventsLost, BuffersWritten;
+        public uint LogBuffersLost, RealTimeBuffersLost;
+        public IntPtr LoggerThreadId;
+        public uint LogFileNameOffset, LoggerNameOffset;
+    }
+    [DllImport("advapi32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+    static extern uint ControlTraceW(ulong handle, string name, IntPtr properties, uint operation);
+    static IntPtr Allocate(string name) {
+        int header = Marshal.SizeOf(typeof(Properties));
+        int size = Math.Max(header + (name.Length + 1) * 2, header + 4096);
+        IntPtr buffer = Marshal.AllocHGlobal(size);
+        Marshal.Copy(new byte[size], 0, buffer, size);
+        Properties properties = new Properties();
+        properties.Wnode.BufferSize = (uint)size;
+        properties.Wnode.ClientContext = 1;
+        properties.Wnode.Flags = 0x00020000;
+        properties.LoggerNameOffset = (uint)header;
+        Marshal.StructureToPtr(properties, buffer, false);
+        byte[] text = System.Text.Encoding.Unicode.GetBytes(name + "\0");
+        Marshal.Copy(text, 0, IntPtr.Add(buffer, header), text.Length);
+        return buffer;
+    }
+    public static QueryResult Query(string name) {
+        IntPtr buffer = Allocate(name);
+        try {
+            uint status = ControlTraceW(0, name, buffer, 0);
+            QueryResult result = new QueryResult { Status = status };
+            if (status == 0) {
+                Properties properties = (Properties)Marshal.PtrToStructure(buffer, typeof(Properties));
+                result.LoggerId = properties.Wnode.HistoricalContext;
+            }
+            return result;
+        } finally { Marshal.FreeHGlobal(buffer); }
+    }
+    public static uint Stop(ulong loggerId) {
+        if (loggerId == 0) throw new ArgumentOutOfRangeException("loggerId");
+        IntPtr buffer = Allocate("");
+        try { return ControlTraceW(loggerId, null, buffer, 1); }
+        finally { Marshal.FreeHGlobal(buffer); }
+    }
+}
+'@
 Save-Report
 try {
     Assert-Desktop
@@ -318,7 +393,7 @@ try {
     }
     if ($request.at -eq 'narrator') {
         if ([Globalization.CultureInfo]::InstalledUICulture.TwoLetterISOLanguageName -cne 'en') {
-            throw 'This ETW Logger Id parser requires English Windows; no trace was started.'
+            throw 'This reviewed Narrator observation currently requires English Windows; no trace was started.'
         }
         $manifest = @(& "$env:SystemRoot\System32\wevtutil.exe" gp Microsoft-Windows-Narrator /ge:true /f:xml 2>&1)
         if ($LASTEXITCODE -ne 0) { throw 'Narrator ETW manifest is unavailable.' }
@@ -380,43 +455,53 @@ catch {
 finally {
     if ($traceStarted) {
         try {
-            if (-not $traceId -or (Get-TraceId) -cne $traceId) { throw 'ETW identity unknown/changed; do not stop a possibly foreign logger.' }
-            & "$env:SystemRoot\System32\logman.exe" stop $traceName -ets | Out-Null
-            if ($LASTEXITCODE -ne 0) { throw 'Owned Narrator ETW stop failed.' }
-            $sessions = @(& "$env:SystemRoot\System32\logman.exe" query -ets 2>&1)
-            if ($LASTEXITCODE -ne 0 -or @($sessions | Select-String -SimpleMatch $traceName).Count) {
-                throw 'Cannot confirm the owned ETW session is absent after stop.'
+            $beforeStop = [A11yNativeEtwControl]::Query($traceName)
+            if ($beforeStop.Status -eq 4201) {
+                $traceStarted = $false
+                $report.errors += 'Original ETW session is absent; trace continuity is not verified.'
             }
-            $traceStarted = $false
-            & "$env:SystemRoot\System32\tracerpt.exe" (Join-Path $output 'narrator.etl') `
-                -o (Join-Path $output 'narrator.xml') -of XML -y | Out-Null
-            if ($LASTEXITCODE -ne 0) { throw 'Narrator ETW decoding failed.' }
-            $readerSettings = [Xml.XmlReaderSettings]::new()
-            $readerSettings.DtdProcessing = [Xml.DtdProcessing]::Prohibit
-            $readerSettings.XmlResolver = $null
-            $reader = [Xml.XmlReader]::Create((Join-Path $output 'narrator.xml'), $readerSettings)
-            try { $events = [Xml.XmlDocument]::new(); $events.XmlResolver = $null; $events.Load($reader) }
-            finally { $reader.Dispose() }
-            foreach ($event in $events.SelectNodes("//*[local-name()='Event']")) {
-                $system = $event.SelectSingleNode("*[local-name()='System']")
-                if (-not $system) { continue }
-                $provider = $system.SelectSingleNode("*[local-name()='Provider']")
-                if (-not $provider -or $provider.GetAttribute('Name') -cne 'Microsoft-Windows-Narrator') { continue }
-                $id = $system.SelectSingleNode("*[local-name()='EventID']")
-                $execution = $system.SelectSingleNode("*[local-name()='Execution']")
-                $time = $system.SelectSingleNode("*[local-name()='TimeCreated']")
-                if (-not $id -or -not $execution -or -not $time) { throw 'Malformed Narrator event schema.' }
-                if ($execution.GetAttribute('ProcessID') -cne ([string]$request.atProcess.pid)) { continue }
-                if ($id.InnerText -in @('5', '6')) {
-                    $timestamp = [DateTimeOffset]::Parse($time.GetAttribute('SystemTime'))
-                    if (-not $report.Contains('triggerAt') -or -not $report.Contains('observationEndAt') -or
-                        $timestamp -lt [DateTimeOffset]::Parse($report.triggerAt) -or
-                        $timestamp -gt [DateTimeOffset]::Parse($report.observationEndAt)) { continue }
-                    $report.events += @{ id = [int]$id.InnerText; pid = [int]$request.atProcess.pid
-                        timestamp = $time.GetAttribute('SystemTime'); meaning = 'activity-marker-not-speech-text' }
+            else {
+                if (-not $traceId) {
+                    $traceId = Get-TraceId
+                    $report.trace = @{ name = $traceName; loggerId = $traceId; recoveredCreationIntent = $true }
+                    Save-Report
                 }
+                if ((Get-TraceId) -cne $traceId) { throw 'ETW identity changed; do not stop a replacement logger.' }
+                if ([A11yNativeEtwControl]::Stop([uint64]$traceId) -ne 0) { throw 'Owned identity-bound ETW stop failed.' }
+                if ([A11yNativeEtwControl]::Query($traceName).Status -ne 4201) {
+                    throw 'Cannot confirm the owned ETW session is absent after stop.'
+                }
+                $traceStarted = $false
+                & "$env:SystemRoot\System32\tracerpt.exe" (Join-Path $output 'narrator.etl') `
+                    -o (Join-Path $output 'narrator.xml') -of XML -y | Out-Null
+                if ($LASTEXITCODE -ne 0) { throw 'Narrator ETW decoding failed.' }
+                $readerSettings = [Xml.XmlReaderSettings]::new()
+                $readerSettings.DtdProcessing = [Xml.DtdProcessing]::Prohibit
+                $readerSettings.XmlResolver = $null
+                $reader = [Xml.XmlReader]::Create((Join-Path $output 'narrator.xml'), $readerSettings)
+                try { $events = [Xml.XmlDocument]::new(); $events.XmlResolver = $null; $events.Load($reader) }
+                finally { $reader.Dispose() }
+                foreach ($event in $events.SelectNodes("//*[local-name()='Event']")) {
+                    $system = $event.SelectSingleNode("*[local-name()='System']")
+                    if (-not $system) { continue }
+                    $provider = $system.SelectSingleNode("*[local-name()='Provider']")
+                    if (-not $provider -or $provider.GetAttribute('Name') -cne 'Microsoft-Windows-Narrator') { continue }
+                    $id = $system.SelectSingleNode("*[local-name()='EventID']")
+                    $execution = $system.SelectSingleNode("*[local-name()='Execution']")
+                    $time = $system.SelectSingleNode("*[local-name()='TimeCreated']")
+                    if (-not $id -or -not $execution -or -not $time) { throw 'Malformed Narrator event schema.' }
+                    if ($execution.GetAttribute('ProcessID') -cne ([string]$request.atProcess.pid)) { continue }
+                    if ($id.InnerText -in @('5', '6')) {
+                        $timestamp = [DateTimeOffset]::Parse($time.GetAttribute('SystemTime'))
+                        if (-not $report.Contains('triggerAt') -or -not $report.Contains('observationEndAt') -or
+                            $timestamp -lt [DateTimeOffset]::Parse($report.triggerAt) -or
+                            $timestamp -gt [DateTimeOffset]::Parse($report.observationEndAt)) { continue }
+                        $report.events += @{ id = [int]$id.InnerText; pid = [int]$request.atProcess.pid
+                            timestamp = $time.GetAttribute('SystemTime'); meaning = 'activity-marker-not-speech-text' }
+                    }
+                }
+                if (-not $report.events.Count) { $report.errors += 'No reviewed Narrator activity markers were captured.' }
             }
-            if (-not $report.events.Count) { $report.errors += 'No reviewed Narrator activity markers were captured.' }
         }
         catch { $report.cleanupErrors += $_.Exception.Message }
     }

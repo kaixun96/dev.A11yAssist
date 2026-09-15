@@ -69,6 +69,10 @@ runner/support hashes, target, viewport, actual tool versions and evidence bytes
 A trusted consumer independently compares each returned assertion/actual value
 with the original request before accepting a verdict.
 
+Each row uses a Python callback compatible with Playwright's event metadata and
+removes that same listener afterward. Observed page-script errors still prevent
+a conclusive row; callback compatibility must not disable error detection.
+
 The provider must preserve native correlation and reconcile unknown outcomes.
 Success includes observed owned-browser/process cleanup, not process presence or
 a claimed receipt. A configured discovery connection can retain one evaluator

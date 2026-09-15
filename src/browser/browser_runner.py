@@ -352,6 +352,8 @@ def run(request, output, policy):
                     raise RuntimeError("Actual browser identity is unavailable")
                 report["connectionMode"] = policy.get("connection", {}).get("mode", "ephemeral")
                 blocked_requests = []
+                blocked_request_count = [0]
+                expected_url = [request["target"]]
                 failed_responses = []
                 critical_failures = [0]
                 authenticating = [report["connectionMode"] == "persistent"]
@@ -359,7 +361,8 @@ def run(request, output, policy):
 
                 def route_request(route):
                     parsed = urlsplit(route.request.url)
-                    permitted = policy_module.permits(policy, request["target"], route.request, authenticating[0])
+                    permitted = policy_module.permits(policy, request["target"], route.request, authenticating[0],
+                                                      final_target=expected_url[0])
                     if permitted:
                         rule = policy_module.request_rule(policy, route.request)
                         if (route.request.method not in {"GET", "HEAD"} and
@@ -382,6 +385,7 @@ def run(request, output, policy):
                             save(state_path, report)
                         route.continue_()
                     else:
+                        blocked_request_count[0] += 1
                         telemetry = policy_module.telemetry_block(policy, route.request)
                         if not telemetry and route.request.resource_type in {"script", "document", "stylesheet", "fetch", "xhr"}:
                             critical_failures[0] += 1
@@ -451,6 +455,7 @@ def run(request, output, policy):
                 page.on("dialog", lambda dialog: (dialogs.append(dialog.type), dialog.dismiss()))
                 for definition, row in zip(request["rows"], report["rows"]):
                     row_request = {**request, "target": definition.get("expectedUrl", request["target"])}
+                    expected_url[0] = row_request["target"]
                     if report.get("unresolvedTransaction"):
                         row.update(status="not-run", attempted=False, reason="Earlier transaction effects require reconciliation")
                         save(state_path, report)
@@ -638,6 +643,8 @@ def run(request, output, policy):
                         save(state_path, report)
                         page.remove_listener("pageerror", on_error)
                 report["blockedRequests"] = blocked_requests
+                report["blockedRequestCount"] = blocked_request_count[0]
+                report["blockedRequestsTruncated"] = blocked_request_count[0] > len(blocked_requests)
                 report["failedResponses"] = failed_responses
                 report["state"] = "completed"
             finally:

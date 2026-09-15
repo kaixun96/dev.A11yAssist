@@ -69,7 +69,7 @@ def validate(policy):
         elif (not isinstance(ready, dict) or set(ready) != {"css"} or
               not isinstance(ready["css"], str) or not re.fullmatch(r"#[A-Za-z][A-Za-z0-9_-]{0,100}", ready["css"])):
             raise ValueError("Authentication readiness must be one exact protected element ID or v6 JSON response keys")
-    if not isinstance(policy["requests"], list) or len(policy["requests"]) > 100:
+    if not isinstance(policy["requests"], list) or len(policy["requests"]) > (300 if version >= 5 else 100):
         raise ValueError("Invalid transaction route budget")
     signatures = {}
     for rule in policy["requests"]:
@@ -265,18 +265,22 @@ def read_only_body_matches(rule, request):
     return True
 
 
-def rooted_at_target(request, target):
+def rooted_at_target(request, target, final_target=None):
     frame = getattr(request, "frame", None)
     if frame is None:
         return False
     for _ in range(16):
         if frame.parent_frame is None:
-            return frame.url == target
+            return frame.url == target or (final_target is not None and frame.url == final_target)
         frame = frame.parent_frame
     return False
 
 
-def permits(policy, target, request, authenticating=False):
+def permits(policy, target, request, authenticating=False, final_target=None):
+    if final_target is not None and final_target != target:
+        if ("?" not in target or final_target != target.split("?", 1)[0] or
+                target not in policy["allowedTargets"] or final_target not in policy["allowedTargets"]):
+            raise ValueError("Canonical frame scope requires both explicit same-path protected targets")
     parsed = urlsplit(request.url)
     if parsed.scheme != "https" or parsed.username or parsed.password or "\\" in request.url:
         return False
@@ -300,13 +304,13 @@ def permits(policy, target, request, authenticating=False):
     if rule and rule.get("frame") and request.frame.parent_frame is None:
         return False
     if rule and rule.get("frame"):
-        if not rooted_at_target(request, target):
+        if not rooted_at_target(request, target, final_target):
             return False
         origin_value = dict(parse_qsl(parsed.query, keep_blank_values=True)).get("origin")
         target_url = urlsplit(target)
         if origin_value is not None and origin_value != f"{target_url.scheme}://{target_url.netloc}":
             return False
-    if rule and rule.get("authentication") and not authenticating and not rooted_at_target(request, target):
+    if rule and rule.get("authentication") and not authenticating and not rooted_at_target(request, target, final_target):
         return False
     if rule and "readOnly" in rule:
         return read_only_body_matches(rule, request)

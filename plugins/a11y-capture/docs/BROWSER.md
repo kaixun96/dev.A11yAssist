@@ -49,6 +49,9 @@ readiness, observations, inspection and capture gates require the declared final
 URL. The request/evidence preserve both. This is not automatic URL normalization,
 cross-route redirection permission or an exemption for script/network failures.
 Without this field the original exact-URL requirement is unchanged.
+Explicit frame and silent-authentication rules also recognize this declared final
+root after query consumption, without granting a new endpoint or allowing another
+path. Foreign roots and undeclared final URLs remain rejected.
 
 On a failed preflight, an explicitly requested **leading** `observe` step may be
 used only for bounded diagnostic settling before the failure screenshot. It does
@@ -226,6 +229,15 @@ whether names repeat. Query values, headers and raw request bodies are never rec
 Oversized, malformed or unsupported names produce `queryKeysComplete: false`,
 not permission to guess a wider rule. An observed name is only a qualification
 input; it does not automatically authorize the endpoint or its parameter values.
+
+Policy v5 and later support at most 300 explicit request rules so galleries can
+bind individual image URLs without an origin-wide fetch permission. Earlier
+versions retain the 100-rule limit. This changes the bounded list capacity, not
+which URLs or methods a rule permits.
+
+Denial details remain capped at 200 records; `blockedRequestCount` and
+`blockedRequestsTruncated` expose any omitted tail. A truncated diagnostic list is
+not a complete network inventory and never removes the failure/evidence gap.
 
 ## Outputs and completion
 

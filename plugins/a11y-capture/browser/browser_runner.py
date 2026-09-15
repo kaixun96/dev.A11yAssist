@@ -61,6 +61,71 @@ def error_locations(error):
                 break
     return {"type": type(error).__name__, "frames": frames}
 
+def install_exception_diagnostics(context, page, report, error_type):
+    diagnostics = {"state": "unavailable", "scope": "main-CDP-target; separate iframe targets not covered", "coordinateBase": 0,
+                   "exceptions": [], "exceptionCount": 0, "truncated": False}
+    report["exceptionDiagnostics"] = diagnostics
+    if not hasattr(context, "new_cdp_session"):
+        diagnostics["reason"] = "Caller does not expose a Chromium diagnostic session"
+        return
+    scripts = {}
+
+    def location(url, line, column):
+        if not isinstance(url, str) or len(url) > 2048:
+            return None
+        try:
+            parsed = urlsplit(url)
+        except ValueError:
+            return None
+        if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
+            return None
+        return {"url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+                "line": line if type(line) is int else None,
+                "column": column if type(column) is int else None}
+
+    def script_parsed(event):
+        script_id = event.get("scriptId")
+        value = location(event.get("url"), None, None)
+        if isinstance(script_id, str) and len(script_id) <= 64 and value and len(scripts) < 300:
+            scripts[script_id] = value["url"]
+
+    def exception_thrown(event):
+        diagnostics["exceptionCount"] += 1
+        if len(diagnostics["exceptions"]) == 64:
+            diagnostics["truncated"] = True
+            return
+        details = event.get("exceptionDetails", {})
+        frames = []
+        direct = location(details.get("url") or scripts.get(details.get("scriptId")),
+                          details.get("lineNumber"), details.get("columnNumber"))
+        if direct:
+            frames.append(direct)
+        stack = details.get("stackTrace")
+        for _ in range(4):
+            if not isinstance(stack, dict):
+                break
+            for frame in stack.get("callFrames", [])[:20 - len(frames)]:
+                value = location(frame.get("url") or scripts.get(frame.get("scriptId")),
+                                 frame.get("lineNumber"), frame.get("columnNumber"))
+                if value:
+                    frames.append(value)
+            stack = stack.get("parent")
+        value_type = details.get("exception", {}).get("type")
+        diagnostics["exceptions"].append({
+            "valueType": value_type if value_type in {"object", "undefined", "string", "number", "boolean", "symbol", "bigint", "function"} else "unknown",
+            "locations": frames, "valuesAndDescriptionsOmitted": True})
+
+    try:
+        session = context.new_cdp_session(page)
+        session.on("Debugger.scriptParsed", script_parsed)
+        session.on("Runtime.exceptionThrown", exception_thrown)
+        session.send("Debugger.enable")
+        session.send("Debugger.setAsyncCallStackDepth", {"maxDepth": 16})
+        session.send("Runtime.enable")
+        diagnostics["state"] = "collecting"
+    except (error_type, ValueError) as error:
+        diagnostics.update(state="unavailable", reasonType=type(error).__name__)
+
 
 def locator_spec(value):
     if not isinstance(value, dict):
@@ -455,6 +520,7 @@ def run(request, output, policy):
                 page.on("requestfinished", finished_request)
                 dialogs = []
                 page.on("dialog", lambda dialog: (dialogs.append(dialog.type), dialog.dismiss()))
+                install_exception_diagnostics(context, page, report, PlaywrightError)
                 for definition, row in zip(request["rows"], report["rows"]):
                     row_request = {**request, "target": definition.get("expectedUrl", request["target"])}
                     expected_url[0] = row_request["target"]
@@ -670,6 +736,8 @@ def run(request, output, policy):
                 })
         raise
     finally:
+        if report.get("exceptionDiagnostics", {}).get("state") == "collecting" and report["ownedBrowserClosed"]:
+            report["exceptionDiagnostics"]["state"] = "closed"
         report["finishedAt"] = stamp()
         save(state_path, report)
     return report

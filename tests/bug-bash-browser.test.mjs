@@ -5,6 +5,36 @@ import { fileURLToPath } from 'node:url';
 import { Script } from 'node:vm';
 import { verifyBrowserObservations, validateBrowserParameters, browserRequest } from '../src/runtime/browser-contract.mjs';
 
+test('exception-origin diagnostics retain undefined locations without values, queries or pausing', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const script = `
+import importlib.util,json,sys
+from types import SimpleNamespace as NS
+spec=importlib.util.spec_from_file_location("runner",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+handlers={};commands=[]
+session=NS(on=lambda name,fn:handlers.update({name:fn}),send=lambda *args:commands.append(args))
+context=NS(new_cdp_session=lambda page:session)
+report={}
+m.install_exception_diagnostics(context,object(),report,RuntimeError)
+assert commands==[("Debugger.enable",),("Debugger.setAsyncCallStackDepth",{"maxDepth":16}),("Runtime.enable",)]
+handlers["Debugger.scriptParsed"]({"scriptId":"1","url":"https://example.org/bundle.js?secret=private"})
+event={"exceptionDetails":{"scriptId":"1","lineNumber":12,"columnNumber":34,
+       "exception":{"type":"undefined","description":"private description","value":"private credential"}}}
+handlers["Runtime.exceptionThrown"](event)
+value=report["exceptionDiagnostics"]
+assert value["coordinateBase"]==0
+assert value["exceptions"][0]["locations"]==[{"url":"https://example.org/bundle.js","line":12,"column":34}]
+assert value["exceptions"][0]["valueType"]=="undefined"
+assert "private" not in json.dumps(report) and "secret=" not in json.dumps(report)
+for _ in range(70):handlers["Runtime.exceptionThrown"](event)
+assert len(value["exceptions"])==64 and value["exceptionCount"]==71 and value["truncated"]
+absent={};m.install_exception_diagnostics(NS(),object(),absent,RuntimeError)
+assert absent["exceptionDiagnostics"]["state"]=="unavailable"
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test('v7 SSO loads only the pinned local Microsoft extension and retains browser/network guards', () => {
   const path = fileURLToPath(new URL('../src/browser/browser_policy.py', import.meta.url));
   const script = `

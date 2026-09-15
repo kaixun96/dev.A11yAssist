@@ -1,7 +1,7 @@
 {
   "name": "a11y-test-categories",
   "description": "All ten accessibility test procedures for every target/state, with step-level coverage accounting and explicit evidence gaps.",
-  "version": "0.28.0",
+  "version": "0.28.1",
   "author": {
     "name": "kaixun96"
   },

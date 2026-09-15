@@ -50,6 +50,17 @@ URL. The request/evidence preserve both. This is not automatic URL normalization
 cross-route redirection permission or an exemption for script/network failures.
 Without this field the original exact-URL requirement is unchanged.
 
+On a failed preflight, an explicitly requested **leading** `observe` step may be
+used only for bounded diagnostic settling before the failure screenshot. It does
+not run later clicks/keys/forms, become an executed scenario step, erase startup
+errors or change the failed verdict. The original target, credential-entry and
+remaining-budget guards apply before and after this wait. The report labels it
+`diagnosticObservation`, separately from actual scenario dwell.
+
+Page-error diagnostics preserve available stack URL paths and line/column numbers
+without query values, fragments, credentials, function arguments or raw stacks.
+Missing locations remain unknown; they never justify ignoring the error.
+
 `{"action":"observe","milliseconds":1000}` provides an explicit observation
 dwell from 1 to 30,000 milliseconds for animation, asynchronous UI or a separately
 authorized observation capability. It sends no input or scripts, records actual

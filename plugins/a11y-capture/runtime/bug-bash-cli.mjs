@@ -4,7 +4,8 @@ import { readConfig } from './core.mjs';
 import { createDiscovery, discoveryStatus, appendDiscoveryRows, observeDiscovery, reconcileDiscovery,
   cancelDiscovery, cleanupDiscovery, reviewDiscoverySource, recordDiscoveryGap,
   reportDiscovery, deliverDiscovery, advanceDiscovery, configureDiscoveryRows,
-  appendDiscoveryTargets, excludeDiscoveryRows, validateDiscovery, runDiscovery } from './bug-bash.mjs';
+  appendDiscoveryTargets, excludeDiscoveryRows, validateDiscovery, runDiscovery,
+  prepareDiscoverySource, startDiscoverySource, endDiscoverySource } from './bug-bash.mjs';
 
 const [command, taskOrFile, inputFile] = process.argv.slice(2);
 try {
@@ -23,12 +24,15 @@ try {
   else if (command === 'observe') result = await observeDiscovery(config, taskOrFile, input.rowIds);
   else if (command === 'reconcile') result = await reconcileDiscovery(config, taskOrFile);
   else if (command === 'source') result = await reviewDiscoverySource(config, taskOrFile, input);
+  else if (command === 'source-prepare') result = await prepareDiscoverySource(config, taskOrFile, input);
+  else if (command === 'source-start') result = await startDiscoverySource(config, taskOrFile, input);
+  else if (command === 'source-end') result = await endDiscoverySource(config, taskOrFile, input);
   else if (command === 'gap') result = await recordDiscoveryGap(config, taskOrFile, input.rowIds, input.reason);
   else if (command === 'cancel') result = await cancelDiscovery(config, taskOrFile, input.reason);
   else if (command === 'cleanup') result = await cleanupDiscovery(config, taskOrFile);
   else if (command === 'report') result = await reportDiscovery(config, taskOrFile);
   else if (command === 'deliver') result = await deliverDiscovery(config, taskOrFile);
-  else throw new Error('Usage: bug-bash-cli.mjs create <plan.json> | status|validate|run|advance|reconcile|cleanup|report|deliver <taskId> | append|configure|inventory|exclude|observe|source|gap|cancel <taskId> <input.json>');
+  else throw new Error('Usage: bug-bash-cli.mjs create <plan.json> | status|validate|run|advance|reconcile|cleanup|report|deliver <taskId> | append|configure|inventory|exclude|observe|source|source-prepare|source-start|source-end|gap|cancel <taskId> <input.json>');
   process.stdout.write(JSON.stringify(result, null, 2) + '\n');
 } catch (error) {
   process.stderr.write(JSON.stringify({ error: error.message, task: taskOrFile,

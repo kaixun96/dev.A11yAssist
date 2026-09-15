@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.22.0",
+  "version": "0.23.0",
   "marketplace": "a11y-assist",
   "plugins": [
     "a11y-intake",
@@ -18,13 +18,13 @@
   ],
   "knowledge": {
     "manifest": "src/knowledge/manifest.json",
-    "sha256": "651dba45e55fc9c0c3ca7374f613c79d849b090256ec35ec3ff5dc2d4e1a3d86"
+    "sha256": "4f626fbe7e3edbfcc3f5d1d5a35e053e04d737bf8f4c5cbf0af433a4826cbcff"
   },
   "integrations": [
     {
       "name": "agentow",
       "manifest": "integrations/agentow/knowledge/manifest.json",
-      "sha256": "16e13db59b3a5f0c2219d695054212f45af97413eff71aaadebf4910c6e2a2cd",
+      "sha256": "6e8df8c2a86aab5b4f7222a87924b9e8637f0228d76ecf85734f4ba38bab3473",
       "plugins": [
         "a11y-intake",
         "a11y-setup",
@@ -53,8 +53,8 @@
   ],
   "hashes": {
     "src/runtime/browser-contract.mjs": "7404e7e4c71e7625e5a8f6a631ca2e8a553d6ef681fe7edf3ec168e48b43950e",
-    "src/runtime/bug-bash-cli.mjs": "685145007eb9f0831ab0a19af3412b80d8dfaee2466e6373d22298c7c143b7dc",
-    "src/runtime/bug-bash.mjs": "1235785722f0961049c8f8b33267658aba08f2c45cc7064f464f7cb0a5b10d80",
+    "src/runtime/bug-bash-cli.mjs": "601766442be1bf40f1e7c45603a674f509e43fc670d8be8c515c187a39d819bd",
+    "src/runtime/bug-bash.mjs": "b1057862a53b376d9eb0c1cc29d0097a1ecc7f83badfd0872df033b04841c4f3",
     "src/runtime/builtin-ado.mjs": "2373e51d61072a4b8184ee87611dab4b533456c9fcad63c81371d26bbba493aa",
     "src/runtime/builtin-devcenter.mjs": "8c5be44e0132f1de1eb837936fa181dc1335a2d7b1001bbfc61cfdb342f47ae7",
     "src/runtime/builtin-windows-at.mjs": "60068129cb04812f775199566ee5d4731799a4f1619c4c28df2bd316ec4f86a9",
@@ -63,7 +63,7 @@
     "src/runtime/category-plugin.mjs": "d4bae894f14d433bfdd7bcd12d288132123467938532ec1c865e297f559ee891",
     "src/runtime/cli.mjs": "8935b905c50770d3d43feca8e005b3de241ca0d75dc14782c32ffa520e033ae7",
     "src/runtime/core.mjs": "f22de76d80b4743583b3e4d6f313818ba2a56be709779b512b602002707e865d",
-    "src/runtime/discovery-contract.mjs": "44f5337affd8f3ebe0f0e5e22a12352f56ce5cdee32d32f4713be5275754367b",
+    "src/runtime/discovery-contract.mjs": "4c4c644c5c5122ff73bb1009f399a226fa99455a2ee4b3a0e13717201a8683a5",
     "src/runtime/discovery-coverage.mjs": "ffeccd08cd06396313de643e1c953423ee3c2caf75b0716203f978d2b37a82e1",
     "src/runtime/evidence-files.mjs": "fe5d5a59e7a953ed838777aef2b8923f5f8f3b7b3503b5d349d169744a23877f",
     "src/runtime/evidence-v1.mjs": "6a087bd37a4e83ef3f71fead22a88cc83160776bc671fdaf8e93afc2792b1ff2",

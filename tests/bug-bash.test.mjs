@@ -61,6 +61,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
     const expected = [
       'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
       'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md', 'docs/BUG-BASH-RUNTIME.md', 'docs/BUG-BASH-RUNTIME.zh-CN.md',
+      'agents/a11y-source-review.agent.md',
       'docs/BROWSER.md', 'docs/EXECUTION-ADAPTERS.md',
       'docs/EXECUTION-LESSONS.md', 'docs/EXECUTION-LESSONS.zh-CN.md',
       'config/example.bug-bash.json',

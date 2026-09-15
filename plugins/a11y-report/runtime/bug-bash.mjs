@@ -94,10 +94,12 @@ function summary(current) {
     row.attempts.some(attempt => attempt.observation.attempted ?? conclusive.has(attempt.observation.status)));
   const applicable = rows.filter(row => row.status !== 'not-applicable');
   const concluded = rows.filter(row => conclusive.has(row.status));
+  const sourceLaneGap = state.plan.parallelSource && !rows.some(row => row.track === 'source')
+    ? 'No source-review rows were supplied for the requested both-mode task' : null;
   const categories = categoryCoverage(state.plan, rows, current.categories);
   const scenarioOutcome = concluded.length === applicable.length ? 'complete' : attempted.length ? 'partial' : 'blocked';
   const coverageOutcome = state.plan.mode === 'plan-only' ? 'plan-only'
-    : scenarioOutcome === 'complete' && (state.plan.mode === 'source-only' || categories?.accountingComplete)
+    : !sourceLaneGap && scenarioOutcome === 'complete' && (state.plan.mode === 'source-only' || categories?.accountingComplete)
     ? 'complete' : attempted.length ? 'partial' : 'blocked';
   return { taskId: state.plan.taskId, feature: state.plan.feature, mode: state.plan.mode,
     target: state.plan.target, filingRequested: state.plan.filingRequested === true,
@@ -106,11 +108,15 @@ function summary(current) {
     rows, coverage: { total: rows.length, attempted: attempted.length, conclusive: concluded.length },
     categoryCoverage: categories, issues: issueSummary(rows), scenarioOutcome,
     inventoryComplete: state.plan.inventory?.inventoryComplete ?? false,
-    coverageOutcome, outcome: state.delivered && state.cleaned && !state.pending && !state.cancelRequested
+    coverageOutcome, outcome: state.delivered && state.cleaned && !state.pending && !state.sourcePending && !state.cancelRequested
       ? coverageOutcome : state.plan.mode === 'plan-only' ? 'plan-only' : coverageOutcome === 'complete' ? 'partial' : coverageOutcome,
-    lifecycle: state.delivered && state.cleaned && !state.pending ? (state.cancelRequested ? 'cancelled' : 'closed')
-      : state.pending ? 'pending' : state.cancelRequested ? 'cancel-requested' : 'active',
-    pending: state.pending, cleaned: state.cleaned, delivered: state.delivered, report: state.report,
+    lifecycle: state.delivered && state.cleaned && !state.pending && !state.sourcePending ? (state.cancelRequested ? 'cancelled' : 'closed')
+      : state.pending || state.sourcePending ? 'pending' : state.cancelRequested ? 'cancel-requested' : 'active',
+    pending: state.pending, sourcePending: state.sourcePending ?? null,
+    sourceJobs: state.sourceJobs ?? [],
+    parallelSource: state.plan.parallelSource === true,
+    sourceLaneGap,
+    cleaned: state.cleaned, delivered: state.delivered, report: state.report,
     cancelReason: state.cancelReason ?? null,
     cancelOperationIssued: state.operations.some(operation => operation.kind === 'cancel'),
     lastOperationFailure: state.operations.length && state.operations.at(-1).outcome !== 'pass'
@@ -120,6 +126,7 @@ function summary(current) {
       : 'review remaining source rows or execute supported page rows; then clean, report and deliver' };
 }
 export async function createDiscovery(config, plan) {
+  plan = { ...plan, parallelSource: plan.parallelSource ?? plan.mode === 'both' };
   const categories = await loadCategoryPlugin(config, Boolean(plan.inventory) && plan.mode !== 'source-only');
   plan = expandCoverage(plan, categories);
   validateDiscoveryPlan(plan);
@@ -170,7 +177,7 @@ export async function discoveryStatus(config, taskId) {
 }
 export async function validateDiscovery(config, taskId) {
   const result = await discoveryStatus(config, taskId);
-  demand(!result.pending, 'Reconcile pending effects before final discovery validation');
+  demand(!result.pending && !result.sourcePending, 'Reconcile pending effects before final discovery validation');
   return {
     taskId, planHash: result.planHash, revision: result.revision, integrity: 'verified',
     behavior: {
@@ -190,7 +197,7 @@ export async function appendDiscoveryRows(config, taskId, rows, reason) {
   demand(typeof reason === 'string' && reason.trim(), 'Plan revision needs a reason');
   return mutate(config, taskId, async current => {
     const state = current.state;
-    demand(!state.cancelRequested && !state.delivered && !state.pending, 'Cannot revise a cancelled, delivered or in-flight plan');
+    demand(!state.cancelRequested && !state.delivered && !state.pending && !state.sourcePending, 'Cannot revise a cancelled, delivered or in-flight plan');
     const next = expandCoverage({ ...state.plan, rows: [...state.plan.rows, ...rows] }, current.categories);
     validateDiscoveryPlan(next);
     if (config.discoveryProfiles?.[next.profile]?.kind === 'browser-scenarios') {
@@ -209,7 +216,7 @@ export async function configureDiscoveryRows(config, taskId, updates, reason) {
     typeof reason === 'string' && reason.trim(), 'Scenario configuration needs unique rows and a reason');
   return mutate(config, taskId, async current => {
     const state = current.state;
-    demand(!state.pending && !state.delivered && !state.cancelRequested &&
+    demand(!state.pending && !state.sourcePending && !state.delivered && !state.cancelRequested &&
       Date.now() < Date.parse(state.deadlineAt), 'Cannot configure in-flight, expired or closed coverage');
     demand(state.binding === binding(config, state.plan), 'Selected provider/profile changed');
     const rows = structuredClone(state.plan.rows);
@@ -236,7 +243,7 @@ export async function appendDiscoveryTargets(config, taskId, inventory, reason) 
   demand(typeof reason === 'string' && reason.trim(), 'Inventory revision needs a reason');
   return mutate(config, taskId, async current => {
     const state = current.state;
-    demand(!state.pending && !state.delivered && !state.cancelRequested &&
+    demand(!state.pending && !state.sourcePending && !state.delivered && !state.cancelRequested &&
       state.plan.mode !== 'source-only' && Date.now() < Date.parse(state.deadlineAt),
     'Cannot revise in-flight, source-only, expired or closed inventory');
     for (const target of state.plan.inventory?.targets ?? []) {
@@ -260,7 +267,7 @@ export async function excludeDiscoveryRows(config, taskId, exclusions) {
   demand(Array.isArray(exclusions) && exclusions.length > 0 &&
     new Set(exclusions.map(item => item.rowId)).size === exclusions.length, 'Choose unique non-applicable rows');
   return mutate(config, taskId, async current => {
-    demand(!current.state.pending && !current.state.delivered && !current.state.cancelRequested,
+    demand(!current.state.pending && !current.state.sourcePending && !current.state.delivered && !current.state.cancelRequested,
       'Cannot exclude in-flight or closed coverage');
     for (const item of exclusions) {
       demand(current.state.rows[item.rowId]?.status === 'planned' &&
@@ -321,6 +328,7 @@ async function begin(config, taskId, kind, rowIds = []) {
       context = { ...context, scenarioHash: discoveryHash(input), evaluator: plan.evaluator };
       plugin = 'a11y-capture'; action = 'discovery-observe'; state.cleaned = false;
     } else {
+      demand(!state.sourcePending, 'Reconcile the source lane before lifecycle operations');
       demand(['cancel', 'cleanup', 'deliver'].includes(kind), 'Unsupported discovery lifecycle action');
       if (kind === 'cancel') demand(state.cancelRequested, 'Task cancellation must be recorded first');
       if (kind === 'cleanup') demand(!state.cleaned, 'No outstanding owned cleanup');
@@ -406,18 +414,156 @@ export async function cancelDiscovery(config, taskId, reason) {
     return summary(await commit(current, current.state, 'cancel-requested'));
   });
   // Unknown effects must first be reconciled, never hidden by discarding a pending operation.
-  if (result.pending || result.cleaned) return result;
+  if (result.pending || result.sourcePending || result.cleaned) return result;
   const pending = await begin(config, taskId, 'cancel');
   return executePending(config, taskId, pending);
 }
 export async function cleanupDiscovery(config, taskId) {
   const current = await load(config, taskId);
+  demand(!current.state.sourcePending, 'Reconcile the source lane before cleanup');
   if (current.state.cleaned) return summary(current);
   const pending = await begin(config, taskId, 'cleanup');
   return executePending(config, taskId, pending);
 }
 export async function reviewDiscoverySource(config, taskId, review) {
   return mutate(config, taskId, async current => {
+    if (current.state.plan.parallelSource) {
+      demand(Object.keys(review).every(key => ['workId', 'packetHash', 'workerSessionId', 'review'].includes(key)) &&
+        Buffer.byteLength(JSON.stringify(review)) <= 64 * 1024, 'Source result envelope exceeds its isolated schema/budget');
+      const job = requireSourceJob(current.state, review);
+      demand(hash(await readFile(new URL('../agents/a11y-source-review.agent.md', import.meta.url))) ===
+        job.packet.agentSha256, 'Native source agent changed; retain its original definition');
+      demand(review.review && Object.keys(review.review).every(key =>
+        ['rowId', 'status', 'actual', 'files', 'risks'].includes(key)) &&
+        Array.isArray(review.review.risks) && review.review.risks.length <= 50,
+      'Subagent may return bounded source analysis only, not transcript or page evidence');
+      const roots = await Promise.all(current.state.plan.sourceRoots.map(root => realpath(root)));
+      for (const file of job.packet.files) {
+        const path = await realpath(file.path);
+        demand(roots.some(root => within(root, path) && root !== path) &&
+          hash(await readFile(path)) === file.sha256, 'Frozen source packet changed; do not merge stale analysis');
+      }
+      demand(review.review?.rowId === job.packet.row.id, 'Subagent returned a different source row');
+      for (const file of review.review.files ?? []) {
+        demand(job.packet.files.some(expected => expected.path === file.path && expected.sha256 === file.sha256),
+          'Subagent source result is outside the frozen file packet');
+      }
+      current.state.sourcePending = null;
+      current.state.sourceJobs ??= [];
+      current.state.sourceJobs.push({ id: job.id, workerSessionId: job.workerSessionId,
+        packetHash: job.packetHash, outcome: 'completed', completedAt: new Date().toISOString() });
+      return recordSourceReview(config, current, review.review);
+    }
+    return recordSourceReview(config, current, review);
+  });
+}
+
+function requireSourceJob(state, input) {
+  const job = state.sourcePending;
+  demand(job && job.status === 'dispatched' && input.workId === job.id &&
+    input.packetHash === job.packetHash && input.workerSessionId === job.workerSessionId,
+  'Reconcile the exact native subagent job/context; no substituted result or replay');
+  return job;
+}
+
+export async function prepareDiscoverySource(config, taskId, input) {
+  demand(typeof input?.subagentAvailable === 'boolean', 'Declare actual native subagent availability');
+  return mutate(config, taskId, async current => {
+    const state = current.state;
+    demand(state.plan.parallelSource && !state.cancelRequested && !state.delivered &&
+      Date.now() < Date.parse(state.deadlineAt), 'No new parallel source work in a closed, cancelled or expired task');
+    demand(!state.pending || state.pending.kind === 'observe', 'Do not prepare source during lifecycle effects');
+    demand(state.binding === binding(config, state.plan), 'Selected source/profile binding changed');
+    if (state.sourcePending) return summary(current);
+    const row = state.plan.rows.find(row => row.track === 'source' && state.rows[row.id].status === 'planned' &&
+      (row.dependsOn ?? []).every(id => conclusive.has(state.rows[id].status) || state.rows[id].status === 'not-applicable'));
+    if (!row) return summary(current);
+    const reason = !input.subagentAvailable ? 'Native isolated source subagent is unavailable; page lane may continue'
+      : !state.plan.sourceRevision ? 'A pinned source revision is required for isolated review'
+      : !state.plan.sourceRoots.length || !row.parameters?.sourceFiles?.length
+        ? 'Explicit authorized source files are required for the isolated review packet' : null;
+    if (reason) {
+      Object.assign(state.rows[row.id], { status: 'blocked', reason });
+      state.report = null;
+      return summary(await commit(current, state, 'source-lane-gap'));
+    }
+    const roots = await Promise.all(state.plan.sourceRoots.map(root => realpath(root)));
+    const files = [];
+    let total = 0;
+    for (const path of row.parameters.sourceFiles) {
+      const actual = await realpath(path);
+      const info = await stat(actual);
+      demand(roots.some(root => within(root, actual) && root !== actual) && info.isFile() &&
+        info.size <= 2 * 1024 * 1024, 'Source snapshot file is outside the authorized bounded roots');
+      total += info.size;
+      demand(total <= 10 * 1024 * 1024, 'Source snapshot exceeds ten MiB');
+      files.push({ path, sha256: hash(await readFile(actual)) });
+    }
+    const id = `source-${discoveryHash({ taskId, revision: current.revision, rowId: row.id }).slice(0, 48)}`;
+    const packet = {
+      schemaVersion: 1, workId: id, taskId, agentName: 'a11y-source-review',
+      agentSha256: hash(await readFile(new URL('../agents/a11y-source-review.agent.md', import.meta.url))),
+      planHash: discoveryHash(state.plan),
+      sourceRevision: state.plan.sourceRevision, feature: state.plan.feature,
+      row: { id: row.id, journey: row.journey, state: row.state, expected: row.expected,
+        preconditions: row.preconditions, actions: row.actions },
+      files, deadlineAt: state.deadlineAt, readOnly: true,
+      allowedActions: ['read-scoped-source', 'read-bundled-knowledge', 'return-source-review'],
+      forbiddenActions: ['browser', 'assistive-technology', 'edit', 'build', 'shell', 'delegate'],
+      resultScope: 'source-risk-only; runtimeVerified=false',
+    };
+    state.sourcePending = { id, status: 'prepared', packet, packetHash: discoveryHash(packet),
+      workerSessionId: null, callbackReference: null, createdAt: new Date().toISOString() };
+    state.report = null;
+    return summary(await commit(current, state, 'source-context-prepared'));
+  });
+}
+
+export async function startDiscoverySource(config, taskId, input) {
+  return mutate(config, taskId, async current => {
+    const job = current.state.sourcePending;
+    demand(job && input.workId === job.id && input.packetHash === job.packetHash &&
+      typeof input.workerSessionId === 'string' && input.workerSessionId.trim() && input.workerSessionId.length <= 256 &&
+      typeof input.callbackReference === 'string' && input.callbackReference.trim() && input.callbackReference.length <= 1024,
+    'Bind the actual native subagent identity and completion callback to the original packet');
+    if (job.status === 'dispatched') {
+      demand(job.workerSessionId === input.workerSessionId && job.callbackReference === input.callbackReference,
+        'Original source subagent already bound; do not launch another');
+      return summary(current);
+    }
+    // A late launch acknowledgement is still recorded after cancel/expiry so its
+    // actual worker cannot be forgotten. It does not authorize new work.
+    Object.assign(job, { status: 'dispatched', workerSessionId: input.workerSessionId,
+      callbackReference: input.callbackReference });
+    return summary(await commit(current, current.state, 'source-subagent-dispatched'));
+  });
+}
+
+export async function endDiscoverySource(config, taskId, input) {
+  return mutate(config, taskId, async current => {
+    const state = current.state, job = state.sourcePending;
+    if (job?.status === 'prepared') {
+      demand(input.workId === job.id && input.packetHash === job.packetHash &&
+        input.workerSessionId === null && input.outcome === 'not-started',
+      'Unbound source launch requires original-runtime proof it never started');
+    } else requireSourceJob(state, input);
+    demand(['blocked', 'cancelled', 'expired', 'not-started'].includes(input.outcome) &&
+      (job.status === 'prepared' || input.outcome !== 'not-started') &&
+      typeof input.reason === 'string' && input.reason.trim() && input.reason.length <= 4096 &&
+      typeof input.terminationReference === 'string' && input.terminationReference.trim() &&
+      input.terminationReference.length <= 1024, 'Source stop requires actual native termination proof and reason');
+    Object.assign(state.rows[job.packet.row.id], { status: 'blocked', reason: input.reason });
+    state.sourceJobs ??= [];
+    state.sourceJobs.push({ id: job.id, workerSessionId: job.workerSessionId,
+      packetHash: job.packetHash, outcome: input.outcome, terminationReference: input.terminationReference,
+      completedAt: new Date().toISOString() });
+    state.sourcePending = null;
+    state.report = null;
+    return summary(await commit(current, state, 'source-subagent-ended'));
+  });
+}
+
+async function recordSourceReview(config, current, review) {
     const state = current.state, row = state.plan.rows.find(row => row.id === review.rowId);
     demand(state.plan.mode !== 'plan-only' && !state.cancelRequested && !state.delivered &&
       Date.now() < Date.parse(state.deadlineAt) &&
@@ -454,14 +600,13 @@ export async function reviewDiscoverySource(config, taskId, review) {
       origin: 'caller-read-only-analysis', runtimeVerified: false };
     state.report = null;
     return summary(await commit(current, state, 'source-review-recorded'));
-  });
 }
 const md = value => String(value ?? '').replace(/[\\`|<>[\]]/g, char => '\\' + char).replace(/\r?\n/g, ' ');
 export async function reportDiscovery(config, taskId) {
   await validateDiscovery(config, taskId);
   return mutate(config, taskId, async current => {
     const state = current.state, result = summary(current);
-    demand(!state.pending && !state.delivered, 'Reconcile pending effects before generating a final report');
+    demand(!state.pending && !state.sourcePending && !state.delivered, 'Reconcile pending effects before generating a final report');
     const filing = await (await import('./file-bug.mjs')).discoveryBugRecords(config, result);
     demand(!filing.some(item => item.status === 'pending'), 'Reconcile pending Bug creation before the final report');
     demand(!result.filingRequested || !filing.some(item => item.status === 'not-requested'),
@@ -473,6 +618,7 @@ export async function reportDiscovery(config, taskId) {
       `Source risks (not page findings): ${result.rows.reduce((count, row) => count + (row.sourceReview?.risks.length ?? 0), 0)}.`,
       `Feature: ${md(state.plan.feature)}`,
       `Mode: ${state.plan.mode}`, `Coverage outcome: ${result.coverageOutcome}`,
+      ...(result.sourceLaneGap ? [`Source lane gap: ${md(result.sourceLaneGap)}`] : []),
       `Cleanup at report creation: ${state.cleaned ? 'verified/no effects' : 'outstanding'}`,
       'Delivery and final lifecycle status are recorded separately in the task receipt.',
       `Plan SHA-256: ${discoveryHash(state.plan)}`, `Declared source revision: ${state.plan.sourceRevision ?? 'unknown'}`,
@@ -555,7 +701,7 @@ export async function recordDiscoveryGap(config, taskId, rowIds, reason) {
   demand(Array.isArray(rowIds) && rowIds.length > 0 && new Set(rowIds).size === rowIds.length &&
     typeof reason === 'string' && reason.trim(), 'Coverage gaps require unique rows and a precise reason');
   return mutate(config, taskId, async current => {
-    demand(!current.state.pending && !current.state.delivered, 'Cannot change in-flight or delivered coverage');
+    demand(!current.state.pending && !current.state.sourcePending && !current.state.delivered, 'Cannot change in-flight or delivered coverage');
     for (const id of rowIds) {
       demand(current.state.rows[id]?.status === 'planned', 'Only unexecuted rows can be marked as gaps');
       Object.assign(current.state.rows[id], { status: 'blocked', reason });
@@ -586,8 +732,9 @@ export async function advanceDiscovery(config, taskId) {
   if (result.lastOperationFailure && ['cleanup','deliver','cancel'].includes(result.lastOperationFailure.kind)) {
     return { ...result, nextAction: `Recover ${result.lastOperationFailure.kind} before an explicit retry: ${result.lastOperationFailure.reason}` };
   }
-  if (!result.lifecycle.startsWith('cancel') && result.mode !== 'plan-only') {
+  if (!result.cancelReason && result.mode !== 'plan-only') {
     if (Date.now() >= Date.parse(result.deadlineAt)) {
+      if (result.sourcePending) return { ...result, nextAction: 'Reconcile original source job; deadline does not cancel it' };
       const expired = result.rows.filter(row => row.status === 'planned');
       if (expired.length) return recordDiscoveryGap(config, taskId, expired.map(row => row.id), 'Original discovery budget exhausted');
     }
@@ -604,14 +751,21 @@ export async function advanceDiscovery(config, taskId) {
       const profile = config.discoveryProfiles?.[result.profile];
       return observeDiscovery(config, taskId, ready.slice(0, profile?.maxBatchRows ?? 30).map(row => row.id));
     }
+    if (result.sourcePending) return { ...result, nextAction: 'Source review is executing independently; reconcile its original job' };
     const source = result.rows.find(row => row.status === 'planned' && row.track === 'source' && satisfied(row));
-    if (source) return { ...result, nextAction: `Use the bundled read-only knowledge review for ${source.id}, then record its source-bound analysis` };
+    if (source) return { ...result, nextAction: result.parallelSource
+      ? `Prepare a source packet for ${source.id}, dispatch the native read-only subagent in background, then continue page work`
+      : `Use the bundled read-only knowledge review for ${source.id}, then record its source-bound analysis` };
     const blocked = result.rows.filter(row => row.status === 'planned');
     if (blocked.length) return recordDiscoveryGap(config, taskId, blocked.map(row => row.id), 'Required prerequisite rows were not concluded');
+  }
+  if (result.cancelReason && result.sourcePending) {
+    return { ...result, nextAction: 'Stop/reconcile the exact native source subagent and record source-end before cleanup' };
   }
   if (result.lifecycle === 'cancel-requested' && !result.cleaned && !result.cancelOperationIssued) {
     return cancelDiscovery(config, taskId, result.cancelReason);
   }
+  if (result.sourcePending) return { ...result, nextAction: 'Reconcile source cleanup before finishing the task' };
   if (!result.cleaned) return cleanupDiscovery(config, taskId);
   const filing = await (await import('./file-bug.mjs')).discoveryBugRecords(config, result);
   if (filing.some(item => item.status === 'pending' ||

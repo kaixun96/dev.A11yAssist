@@ -73,6 +73,11 @@ the same two read-only skills and all references used by `a11y-knowledge` under
 `modules/a11y-knowledge/`, preserving their relative paths without registering
 duplicate public commands or requiring another installation. Its context,
 coverage and report resources are generated from `src/bug-bash/`.
+Its one native read-only source agent is authored in `src/agents/` and generated
+into `plugins/a11y-bug-bash/agents/`. The caller's native background Task tool
+owns isolated model execution; the discovery CLI owns frozen context packets,
+job identities and locked result merging. There is no source provider or new
+plugin. New both-mode tasks default parallel, while old tasks retain their pins.
 `bundleTestCategories` packages `src/test-categories/` only into standalone
 `a11y-test-categories`. Bug Bash and all other runtime packages contain no
 category procedures or matrix tools. `runtime/category-plugin.mjs` resolves the

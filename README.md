@@ -10,7 +10,7 @@ Pick the accessibility plugin you need, install it in Copilot CLI, and use it in
 
 | Plugin and instructions | What it does | What you need |
 |---|---|---|
-| [a11y-bug-bash](plugins/a11y-bug-bash/README.md) | Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks | Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks |
+| [a11y-bug-bash](plugins/a11y-bug-bash/README.md) | Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks | Feature context and verification steps; native background subagent support and pinned read-only files for parallel source review; authorized Windows browser/AT tools and ownership for live checks |
 | [a11y-test-categories](plugins/a11y-test-categories/README.md) | Apply all ten accessibility test categories, step by step, to every in-scope target and reachable state | Feature scope and target/state inventory; Node.js 22+ for local accounting; authorized browser/AT tools and ownership for live checks |
 | [a11y-report](plugins/a11y-report/README.md) | Generate the overall accessibility report after validation and any approved Bug filing | Original private discovery journal, artifact bytes and compatible category-plugin version |
 

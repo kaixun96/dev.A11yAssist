@@ -23,6 +23,9 @@ input aid, not an execution receipt. Store completed copies privately.
   product browser and AT host, with caller-required placement and identity evidence:
 - Published / installed / compatible / live-qualified versions and setup handoff:
 - Completion callback, bounded stall watcher and exact pending owner-update IDs:
+- Native source subagent availability; fixed source revision and explicit
+  `parameters.sourceFiles`; packet hash, actual subagent ID and callback reference:
+- Independent source-lane status versus exclusive page/AT-lane status:
 
 ## User verification journey
 

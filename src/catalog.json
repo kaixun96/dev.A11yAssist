@@ -5,13 +5,13 @@
     "docs": ["docs/BUG-BASH.md", "docs/BUG-BASH-RUNTIME.md", "bug-bash/context.template.md", "bug-bash/report.template.md", "modules/a11y-setup/docs/SETUP.md", "modules/a11y-knowledge/skills/a11y-knowledge/SKILL.md", "modules/a11y-knowledge/integrations/agentow/knowledge/README.md"],
     "en": {
       "purpose": "Feature accessibility bug bash: plan from context and verification steps, inspect the page, review source and separate reproduced bugs from code risks",
-      "requires": "Feature context and verification steps; read-only source for code review; existing authorized Windows browser/AT tools and ownership for live checks",
+      "requires": "Feature context and verification steps; native background subagent support and pinned read-only files for parallel source review; authorized Windows browser/AT tools and ownership for live checks",
       "example": "/a11y-bug-bash Review <feature>: <context and expected behavior>. Verify using <steps> on <authorized test URL and safe fixture>; source <paths/revision>. Use my existing browser connection, budget 30 minutes, save to <private output directory>. Report page bugs and code risks separately; do not fix or file.",
       "limits": "Bundles knowledge/setup modules. Install a11y-test-categories separately and set pluginRoots.testCategories; no category procedures or matrix tools are copied into Bug Bash. All ten categories and applicable steps remain required. Node 22+ and authorized providers support execution; a11y-file-bug handles separately approved filing, a11y-report generates the final report. No automatic installation, fixes, builds, filing or PRs."
     },
     "zh": {
       "purpose": "面向 feature 的无障碍 Bug Bash：根据 context 和验证步骤制定覆盖清单，检查页面、审查源码，分开报告已复现 bug 与代码风险",
-      "requires": "Feature context 和验证步骤；代码审查需要只读源码；实际页面和 AT 检查需要已有、获授权的 Windows 工具连接及资源归属",
+      "requires": "Feature context 和验证步骤；并行源码线需要原生后台 subagent 能力及固定版本只读文件；实际页面和 AT 检查需要获授权的 Windows 工具连接及资源归属",
       "example": "/a11y-bug-bash 检查 <feature>：<context 和预期行为>。按 <验证步骤> 操作 <获授权测试 URL 和安全数据>，源码在 <路径/版本>。使用已有浏览器连接，预算 30 分钟，报告保存到 <私有输出目录>。分开报告页面 bug 和代码风险，不修改代码或提单。",
       "limits": "内置知识和 setup 模块。a11y-test-categories 单独安装并配置 pluginRoots.testCategories；Bug Bash 不复制测试规程或矩阵工具。每个对象/状态仍需全部十类和适用步骤。执行需要 Node 22+ 和获授权连接；另行授权的提单交给 a11y-file-bug，最终报告由 a11y-report 生成。不自动安装、修复、构建、提单或建 PR。"
     }

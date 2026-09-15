@@ -259,7 +259,7 @@ def run(request, output, policy):
                     row.update(status="inconclusive", attempted=True, reason="Execution started; reconcile interruption before retry")
                     save(state_path, report)
                     errors = []
-                    on_error = errors.append
+                    on_error = lambda error: errors.append(error)
                     failure_start = critical_failures[0]
                     transaction_start = len(report["transactions"])
                     dialogs.clear()

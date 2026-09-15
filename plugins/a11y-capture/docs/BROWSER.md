@@ -36,6 +36,11 @@ Locators use an exact element ID (`#open`) or an exact role/name pair. Actions a
 Escape and arrows. Arbitrary JavaScript, shell commands, OS shortcuts and password
 entry are not supported.
 
+Actions use Playwright's strict locator auto-wait within the original remaining
+budget. A momentarily absent asynchronous control is not rejected by an immediate
+count probe. Ambiguous targets still fail strictness checks, and password inputs
+remain forbidden.
+
 Assertions are `focused`, `visible`, `count`, `text`, `target-size`,
 `axe-violations` and a small allow-list of accessibility attributes.
 Expected values are typed booleans, bounded counts/text

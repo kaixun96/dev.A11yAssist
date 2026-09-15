@@ -352,11 +352,22 @@ class BootstrapPage(Page):
         value = b"UNIT IMAGE; not page evidence"
         if path is not None: Path(path).write_bytes(value)
         return value
+    def get_by_role(self, role, **kwargs):
+        page = self
+        class ActionTarget:
+            def count(self): raise AssertionError("Actions must use strict auto-wait, not a premature count")
+            def click(self):
+                if page.mode == "action-ambiguous": raise api.Error("strict mode violation")
+                page.actionPerformed = True
+            def get_attribute(self, name): return "password" if page.mode == "password" else "text"
+            def fill(self, value): page.actionPerformed = True
+        return ActionTarget()
     def wait_for_timeout(self, milliseconds): time.sleep(milliseconds / 1000)
 class BootstrapContext(Context):
     def route(self, pattern, handler): self.router = handler
 for mode in ("good","bad-response","unknown","pending","request-failed",
-             "telemetry","telemetry-page-error","telemetry-http-error","unexpected-network"):
+             "telemetry","telemetry-page-error","telemetry-http-error","unexpected-network",
+             "action-wait","action-ambiguous","password"):
     page = BootstrapPage(mode); context = BootstrapContext(page); browser = Browser()
     permission = {"url":"https://example.org/bootstrap","methods":["POST"],"resourceTypes":["fetch"]}
     if mode != "unknown":
@@ -368,6 +379,11 @@ for mode in ("good","bad-response","unknown","pending","request-failed",
             "url":"https://telemetry.example.org/collect","methods":["POST"],"resourceTypes":["fetch"],
             "qualification":"Synthetic out-of-band test channel; not UI data"}])
     scenario = copy.deepcopy(request)
+    page.actionPerformed = False
+    if mode in ("action-wait","action-ambiguous"):
+        scenario["rows"][0]["steps"] = [{"action":"click","target":{"role":"button","name":"Async"}}]
+    if mode == "password":
+        scenario["rows"][0]["steps"] = [{"action":"fill","target":{"role":"textbox","name":"Async"},"value":"unit"}]
     if mode == "pending": scenario["budgetSeconds"] = 1
     with tempfile.TemporaryDirectory() as output, \\
          patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
@@ -377,6 +393,10 @@ for mode in ("good","bad-response","unknown","pending","request-failed",
          patch.object(m.policy_module, "open_context", return_value=(browser,context)):
         report = m.run(scenario, output, policy)
     assert report["ownedBrowserClosed"] and page.removed
+    if mode in ("action-wait","action-ambiguous","password"):
+        assert page.actionPerformed == (mode == "action-wait")
+        assert report["rows"][0]["status"] == ("observed-no-issue" if mode == "action-wait" else "blocked")
+        continue
     if mode.startswith("telemetry") or mode == "unexpected-network":
         assert page.aborted and not report["transactions"]
         assert report["blockedRequests"][0]["expectedTelemetryDenial"] == mode.startswith("telemetry")

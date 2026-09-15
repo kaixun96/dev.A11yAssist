@@ -1,5 +1,6 @@
 """Operator-owned browser connection/network policy; never supplied by scenario rows."""
 from pathlib import Path
+import hashlib
 import re
 from urllib.parse import urlsplit
 
@@ -19,7 +20,7 @@ def https_url(value, origin=False):
 def validate(policy):
     common = {"schemaVersion", "allowedTargets", "assetHosts"}
     version = policy.get("schemaVersion") if isinstance(policy, dict) else None
-    if type(version) is not int or version not in {1, 2}:
+    if type(version) is not int or version not in {1, 2, 3}:
         raise ValueError("Invalid protected browser policy version")
     if set(policy) != (common if version == 1 else common | {"connection", "requests", "scanner"}):
         raise ValueError("Unexpected protected browser policy fields")
@@ -58,8 +59,12 @@ def validate(policy):
             raise ValueError("Authentication readiness must be one exact protected element ID")
     if not isinstance(policy["requests"], list) or len(policy["requests"]) > 100:
         raise ValueError("Invalid transaction route budget")
+    signatures = set()
     for rule in policy["requests"]:
-        if not isinstance(rule, dict) or set(rule) != {"url", "methods", "resourceTypes"}:
+        fields = {"url", "methods", "resourceTypes"}
+        if version == 3 and isinstance(rule, dict) and "readOnly" in rule:
+            fields.add("readOnly")
+        if not isinstance(rule, dict) or set(rule) != fields:
             raise ValueError("Transaction rules require exact URLs, methods and resource types")
         https_url(rule["url"])
         for key, allowed in (("methods", {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"}),
@@ -67,6 +72,26 @@ def validate(policy):
             if (not isinstance(rule[key], list) or not rule[key] or len(rule[key]) != len(set(rule[key])) or
                     any(not isinstance(item, str) or item not in allowed for item in rule[key])):
                 raise ValueError("Unsupported transaction rule")
+        if "readOnly" in rule:
+            qualification = rule["readOnly"]
+            if (rule["methods"] != ["POST"] or
+                    any(kind not in {"fetch", "xhr"} for kind in rule["resourceTypes"]) or
+                    not isinstance(qualification, dict) or
+                    set(qualification) != {"bodySha256", "responseKeys"} or
+                    qualification["bodySha256"] != hashlib.sha256(b"").hexdigest() or
+                    not isinstance(qualification["responseKeys"], list) or
+                    not 1 <= len(qualification["responseKeys"]) <= 20 or
+                    any(not isinstance(key, str) or not re.fullmatch("[A-Za-z][A-Za-z0-9_]{0,100}", key)
+                        for key in qualification["responseKeys"]) or
+                    len(set(qualification["responseKeys"])) != len(qualification["responseKeys"])):
+                raise ValueError("Read-only bootstrap rules require an empty POST body and explicit JSON response keys")
+        if version == 3:
+            for method in rule["methods"]:
+                for kind in rule["resourceTypes"]:
+                    signature = (rule["url"], method, kind)
+                    if signature in signatures:
+                        raise ValueError("Overlapping request permissions are ambiguous")
+                    signatures.add(signature)
     scanner = policy["scanner"]
     if scanner is not None:
         if (not isinstance(scanner, dict) or set(scanner) != {"path", "sha256"} or
@@ -76,19 +101,37 @@ def validate(policy):
     return policy
 
 
+def request_rule(policy, request):
+    for rule in policy.get("requests", []):
+        if (request.url == rule["url"] and request.method in rule["methods"] and
+                request.resource_type in rule["resourceTypes"]):
+            return rule
+    return None
+
+
+def read_only_body_matches(rule, request):
+    headers = {key.lower(): value for key, value in request.headers.items()}
+    if (any(key in headers for key in ("x-http-method", "x-http-method-override", "x-method-override",
+                                      "transfer-encoding")) or
+            headers.get("content-length", "0").strip() != "0"):
+        return False
+    return hashlib.sha256(request.post_data_buffer or b"").hexdigest() == rule["readOnly"]["bodySha256"]
+
+
 def permits(policy, target, request, authenticating=False):
     parsed = urlsplit(request.url)
     if parsed.scheme != "https" or parsed.username or parsed.password or "\\" in request.url:
         return False
     origin = f"{parsed.scheme}://{parsed.netloc}"
     connection = policy.get("connection", {})
+    rule = request_rule(policy, request)
+    if rule and "readOnly" in rule:
+        return read_only_body_matches(rule, request)
     if (authenticating and connection.get("mode") == "persistent" and
             origin in {value.rstrip("/") for value in connection["authenticationOrigins"]}):
         return request.method in {"GET", "HEAD", "POST"} and request.resource_type != "websocket"
-    for rule in policy.get("requests", []):
-        if (request.url == rule["url"] and request.method in rule["methods"] and
-                request.resource_type in rule["resourceTypes"]):
-            return True
+    if rule:
+        return True
     allowed = (request.method in {"GET", "HEAD"} and
                request.resource_type not in {"fetch", "xhr", "websocket", "eventsource"} and
                parsed.netloc in {urlsplit(target).netloc, *policy["assetHosts"]})

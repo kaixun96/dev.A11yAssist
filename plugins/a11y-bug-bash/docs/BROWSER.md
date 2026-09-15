@@ -66,6 +66,41 @@ interpreter/import mode as setup. `--validate-only` checks request shape without
 importing Playwright or opening a browser. Live execution requires an owned
 Windows evaluator; Codespaces/non-Windows execution rejects before UI effects.
 
+## Qualified empty-body bootstrap POSTs
+
+Policy v3 retains the v1/v2 defaults and adds an explicit, operator-qualified
+read-only rule for an exact empty-body `POST` configuration fetch:
+
+```json
+{
+  "url": "https://example.org/bootstrap",
+  "methods": ["POST"],
+  "resourceTypes": ["fetch"],
+  "readOnly": {
+    "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "responseKeys": ["navigation"]
+  }
+}
+```
+
+This declaration belongs only in the protected operator policy, never scenario
+input. First establish and authorize the endpoint's read-only purpose using the
+actual application contract and observed request/response. Empty bytes and JSON
+shape alone are not proof that an arbitrary endpoint has no server-side effects.
+The example policy enables no target or rule.
+
+Only empty POST bodies are supported. Different body bytes, method overrides,
+nonzero content lengths or transfer encoding reject before dispatch; overlapping
+v3 permissions reject at validation. The request is journaled as pending before
+transmission and becomes `read-only-confirmed` only after a successful JSON response
+contains every declared top-level key. Confirmation waits for the actual
+request-finished event within the original budget; JSON bodies are limited to
+4 MiB. Response values are not copied to the
+receipt. Pending, failed or unexpected responses retain unresolved effects and
+block subsequent rows within the original budget. All ordinary authorized
+non-GET/HEAD requests still require the original effect/reset reconciliation.
+This is neither a blanket POST exception nor an accessibility verdict.
+
 ## Outputs and completion
 
 Every requested row is retained as a conclusive observation or a precise gap.

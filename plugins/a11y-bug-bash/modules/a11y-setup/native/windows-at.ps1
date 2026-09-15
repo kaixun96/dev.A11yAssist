@@ -1,13 +1,71 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName='Observe')]
 param(
-    [Parameter(Mandatory)][string]$PolicyPath,
-    [Parameter(Mandatory)][string]$RequestPath,
-    [Parameter(Mandatory)][string]$OutputDirectory
+    [Parameter(Mandatory,ParameterSetName='Observe')][string]$PolicyPath,
+    [Parameter(Mandatory,ParameterSetName='Observe')][string]$RequestPath,
+    [Parameter(Mandatory,ParameterSetName='Observe')][string]$OutputDirectory,
+    [Parameter(Mandatory,ParameterSetName='InspectIdentity')]
+    [ValidateRange(1,2147483647)][int]$InspectProcessId
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if ([Environment]::OSVersion.Platform -ne 'Win32NT' -or $env:CODESPACES -eq 'true' -or $env:CODESPACE_NAME) {
     throw 'Real AT observation requires the owned interactive Windows evaluator.'
+}
+if (-not ('A11yNativeProcessIdentity' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Text;
+public sealed class A11yNativeProcessSnapshot {
+    public int Id;
+    public uint SessionId;
+    public string ImagePath;
+    public DateTime StartedAtUtc;
+}
+public static class A11yNativeProcessIdentity {
+    [DllImport("kernel32.dll", SetLastError=true)]
+    static extern IntPtr OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+    static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder path, ref uint size);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    static extern bool GetProcessTimes(IntPtr process, out long creation, out long exit, out long kernel, out long user);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    static extern bool ProcessIdToSessionId(uint pid, out uint sessionId);
+    [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr handle);
+    public static A11yNativeProcessSnapshot Read(int pid) {
+        IntPtr handle = OpenProcess(0x1000, false, pid);
+        if (handle == IntPtr.Zero) throw new Win32Exception(Marshal.GetLastWin32Error());
+        try {
+            uint size = 32767, sessionId;
+            StringBuilder path = new StringBuilder((int)size);
+            if (!QueryFullProcessImageName(handle, 0, path, ref size))
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            long creation, exit, kernel, user;
+            if (!GetProcessTimes(handle, out creation, out exit, out kernel, out user) ||
+                !ProcessIdToSessionId((uint)pid, out sessionId))
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            return new A11yNativeProcessSnapshot {
+                Id = pid, SessionId = sessionId, ImagePath = path.ToString(),
+                StartedAtUtc = DateTime.FromFileTimeUtc(creation)
+            };
+        } finally { CloseHandle(handle); }
+    }
+}
+'@
+}
+if ($PSCmdlet.ParameterSetName -eq 'InspectIdentity') {
+    $identity = [A11yNativeProcessIdentity]::Read($InspectProcessId)
+    if ($identity.SessionId -ne (Get-Process -Id $PID).SessionId) {
+        throw 'Read-only identity inspection is limited to the caller session.'
+    }
+    [ordered]@{
+        schemaVersion = 1; scope = 'read-only-process-identity'; pid = $identity.Id
+        sessionId = $identity.SessionId; imagePath = $identity.ImagePath
+        startedAt = $identity.StartedAtUtc.ToString('o')
+        realAssistiveTechnologyVerified = $false
+    } | ConvertTo-Json -Compress
+    return
 }
 $policy = Get-Content -LiteralPath $PolicyPath -Encoding UTF8 -Raw | ConvertFrom-Json
 $request = Get-Content -LiteralPath $RequestPath -Encoding UTF8 -Raw | ConvertFrom-Json
@@ -85,10 +143,11 @@ function Assert-Authority {
     }
 }
 function Get-BoundProcess($Identity, $Executable) {
-    $process = Get-Process -Id ([int]$Identity.pid) -ErrorAction Stop
+    # UIAccess processes can hide module paths from Limited callers; metadata needs no VM access.
+    $process = [A11yNativeProcessIdentity]::Read([int]$Identity.pid)
     if ($process.SessionId -ne (Get-Process -Id $PID).SessionId -or
-        $process.StartTime.ToUniversalTime().Ticks -ne ([DateTimeOffset]::Parse($Identity.startedAt)).UtcDateTime.Ticks -or
-        $process.Path -ine $Executable.path) {
+        $process.StartedAtUtc.Ticks -ne ([DateTimeOffset]::Parse($Identity.startedAt)).UtcDateTime.Ticks -or
+        $process.ImagePath -ine $Executable.path) {
         throw 'Borrowed process PID, start time, session or executable identity changed.'
     }
     Assert-PinnedFile $Executable
@@ -214,7 +273,7 @@ Save-Report
 try {
     Assert-Desktop
     $boundAt = Get-BoundProcess $request.atProcess $atExecutable
-    $report.atVersion = $boundAt.MainModule.FileVersionInfo.FileVersion
+    $report.atVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($atExecutable.path).FileVersion
     if ([string]::IsNullOrWhiteSpace($report.atVersion)) { throw 'Actual AT file version is unavailable.' }
     $report.windowsVersion = [Environment]::OSVersion.Version.ToString()
     if ($request.keys.Count -gt 10 -or $request.observeMilliseconds -lt 1000 -or $request.observeMilliseconds -gt 10000) {

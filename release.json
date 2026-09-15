@@ -89,7 +89,7 @@
     "src/native/pr-description.mjs": "58270b5c5a632149fb21ed53185d4ea6c3c3e54e292506de9b737a6899f8eedf",
     "src/native/provenance.json": "eb9bfb249f1620d36ca1ea401e51ce312b1e5555bfb8953695f85ded4816dd2d",
     "src/native/windows-at.policy.example.json": "63eeb18489eeaa2daa1b495bc3842243c941bb000a1c84e92b639e37054414a9",
-    "src/native/windows-at.ps1": "c63e64d821d4e60942a04b34ef3e76183087bcb35df4d5a8af5fa128b76d36ba",
+    "src/native/windows-at.ps1": "7680c96f18eb01e679ea0dd5b152acbb4715d236d93c8c414b037e266eb414fb",
     "src/native/windows-host.ps1": "ded63f5d0b1663ae11d05776808a46a484497adf8ffd4d7d501cb1e2d53eb9ae"
   }
 }

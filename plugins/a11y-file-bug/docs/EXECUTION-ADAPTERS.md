@@ -81,6 +81,21 @@ Only selected AT dependencies are required. The original execution token is
 resolved from a process environment-variable **name**, never passed in tool input.
 Use the original live pool, not a copied registry.
 
+Native process binding uses `PROCESS_QUERY_LIMITED_INFORMATION` to read the image
+path and creation time from one handle. This supports UIAccess AT processes whose
+`Get-Process.Path`, CIM executable path or module enumeration can be unavailable
+to a Limited caller. No VM-read/debug access, elevation or relaxed PID/time/path/
+session/hash checks are used. AT version is read from the validated image file,
+not by enumerating another process's modules.
+
+An authorized caller can run the packaged `native/windows-at.ps1
+-InspectProcessId <actual-pid>` for read-only identity metadata in the caller's
+Windows session. It returns the image path and unrounded seven-digit start time,
+does not import UI Automation, and cannot be combined with observation parameters.
+It grants no execution ownership, foreground control, recording or AT verdict.
+Use it to populate a separately authorized observation request, never to adopt an
+unrelated process or bypass the original lease and protected policy.
+
 The policy's selected `atExecutables` map accepts `nvda`, `narrator` and
 `voice-access`, each with its installed absolute `path` and actual `sha256`.
 NVDA additionally uses `nvdaSpeechViewerTitle`. Narrator/Voice Access add pinned

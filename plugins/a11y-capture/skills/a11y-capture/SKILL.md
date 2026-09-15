@@ -14,6 +14,21 @@ context.evaluator; AFTER also requires context.head. Supply
 context.beforeReceiptSha256 when the caller requests a bound comparison.
 The input carries the real scenario/request understood by the capture connection.
 
+For startup, navigation or cleanup failures, read `docs/EXECUTION-LESSONS.md`,
+especially "Capture: distinguish startup, navigation and product evidence".
+Record the last completed execution boundary. A listener-registration failure
+before target navigation is infrastructure failure, not a tested product case.
+Qualify the real installed browser API and cleanup after a reviewed correction;
+preserve the original request and version rather than silently replaying it.
+
+For raw native observations, read `docs/EXECUTION-ADAPTERS.md` and use the built-in
+`windows-at` connection with `observe-at`. It supports actual NVDA Speech Viewer
+deltas, Narrator ETW/audio and Voice Access number-overlay command/UIA/audio.
+Require original execution ownership and exact already-running process identities.
+This narrower action does not implement the full BEFORE/AFTER/discovery verdict:
+retain its raw-output scope, independent review and unmapped Voice Access labels.
+Never relabel the receipt or replace an active multi-action capture connection.
+
 Do not require this repository's intake stage or create a full workflow run.
 The capture connection must verify permission, exclusive ownership of the shared
 desktop, installed runtime identity and the capabilities needed by this scenario.

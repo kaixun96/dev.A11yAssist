@@ -2,7 +2,37 @@
 
 ## Current delivery
 
-v0.18 / execution envelope v0.9 changes plugin boundaries:
+v0.20 / envelope v0.11 introduces real bounded execution adapters described in
+[EXECUTION-ADAPTERS.md](EXECUTION-ADAPTERS.md). New `observe-at` and `recover-devbox`
+receipts intentionally prove only raw native observation or cloud power. They
+cannot replace BEFORE/AFTER/discovery behavior evidence, complete recovery,
+pool allocation, or release. Native AT borrows already-owned configured processes.
+
+Browser policy v1 remains the restrictive default; v2 explicitly opts into
+persistent Chromium, protected auth origins/network routes and a local pinned
+axe-core script. Server mutations remain journaled/inconclusive until original
+effects and reset are independently reconciled. Host Azure CLI auth is optional;
+existing environment-header configuration is unchanged.
+
+Retain original v0.10 runtime/provider/browser/category closures for unfinished
+work. Do not change their version, request or policy to adopt these adapters.
+No installed worker, resource, browser/AT session or AgentOW pin is changed.
+Source publication is not deployment or live qualification.
+
+v0.19 / execution envelope v0.10 adds process-field and bounded duplicate
+inspection, configurable description/ReproSteps fields, explicitly configured
+chunked WIT uploads, correlation-based lost-create readback, explicit safe
+continuation and proven-unstarted abandonment. Generic CLI/custom-provider filing
+now shares the exact-draft/task guards; task locks fence filing, reconciliation
+and final report delivery. Failed receipts retain their original subject binding
+even when the provider's optional nonpass subject echo is absent.
+
+Approved drafts now bind destination, fields and upload limits; native recovery
+uses the persisted original draft and a phased mutation ledger. These are new
+operation semantics: retain the entire old v0.9 runtime/provider/draft for pending
+v0.18 work, never edit its version or replay it through v0.10.
+
+v0.18 / execution envelope v0.9 changed plugin boundaries:
 
 | Previous surface | New owner / action |
 |---|---|
@@ -16,7 +46,10 @@ pin the external plugin version/tool/procedures and never load a bundled fallbac
 For requested filing, `filingRequested:true` yields before reporting until each
 finding has an actual result or explicit skip reason. No automatic Bug creation
 or upload is authorized by discovery. Media bytes and caller playback review
-remain separate; the native simple uploader is bounded to 128 MiB total.
+remain separate. Default simple upload remains bounded to 128 MiB total; v0.19
+allows explicitly configured chunked/auto transfers up to 1 GiB total, subject to
+the organization's actual limits. Read [FILE-BUG.md](FILE-BUG.md) before selecting
+limits or resuming an interrupted transfer.
 
 **New operations only:** preserve old resources-plugin operations, category
 copies and provider/runtime pins until their original work is reconciled and

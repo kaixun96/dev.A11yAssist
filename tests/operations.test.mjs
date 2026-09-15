@@ -36,6 +36,12 @@ test('general capabilities need no remediation journal; filing separately requir
       if (!definition.plugin || action === 'file-bug') continue;
       const binding = action.startsWith('discovery-') ? { ...context, subject: 'task:fixture-test' } : context;
       const input = action.startsWith('discovery-') ? capabilityInput(action)
+        : action === 'recover-devbox' ? { recoveryId: 'd'.repeat(32), authorizationReference: 'unit-owner-request' }
+        : action === 'observe-at' ? { at: 'nvda', nativeRunId: 'd'.repeat(32),
+          atProcess: { pid: 123, startedAt: '2026-01-01T00:00:00.1234567Z' },
+          browserProcess: { pid: 456, startedAt: '2026-01-01T00:00:00.7654321Z' },
+          browserWindowHandle: '123456', command: null,
+          keys: [{ key: 'Tab', delayMilliseconds: 100 }], observeMilliseconds: 1000 }
         : ['release-evaluator', 'recover-media', 'recover-nvda'].includes(action) ? { nativeRunId: 'd'.repeat(32) } : {};
       const result = await executeOperation(independent, definition.plugin, `one-${action}`, action, binding, input);
       assert.equal(result.status, 'finished');
@@ -248,7 +254,7 @@ test('copied capture recovery and workflow cleanup expose invoke/status/reconcil
       const replies = child.stdout.trim().split('\n').map(JSON.parse);
       const tools = replies.shift().result.tools;
       assert.deepEqual(tools.find(tool => tool.name === `${prefix}_invoke`).inputSchema.properties.action.enum,
-        plugin === 'a11y-capture' ? ['discovery-observe', 'recover-media', 'recover-nvda', 'before', 'after'] : ['cleanup']);
+        plugin === 'a11y-capture' ? ['discovery-observe', 'observe-at', 'recover-media', 'recover-nvda', 'before', 'after'] : ['cleanup']);
       assert.equal(tools.some(tool => tool.name === `${prefix}_progress`), plugin === 'a11y-workflow');
       assert.equal(tools.some(tool => tool.name === `${prefix}_abandon`), plugin === 'a11y-workflow');
       for (const reply of replies) assert.equal(reply.result?.isError, undefined, JSON.stringify(reply));

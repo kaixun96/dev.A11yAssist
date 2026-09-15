@@ -25,7 +25,18 @@ authorized shell/file tools on the actual Windows host without a provider.
 Codespaces and non-Windows hosts stop before probing or installing.
 Source-only review requires none of this setup.
 
+For live handoff or prerequisite failures, follow the setup section in
+[execution lessons](EXECUTION-LESSONS.md) / [简体中文](EXECUTION-LESSONS.zh-CN.md).
+The report template records actual host roles, exact import mode, complete
+deployment compatibility and separate launch/target/evidence qualification.
+
 ## Check, select, prepare, qualify
+
+The built-in `recover-devbox` adapter can start an existing DevBox under the
+original recovery lease/token and reconcile without replay. Its receipt proves
+cloud power only, not Console/worker/AT readiness. Use a separately configured
+standalone setup call; it does not replace the original pool allocator/status/
+release connection. See [execution adapters](EXECUTION-ADAPTERS.md).
 
 **Resource first:** select an eligible DevBox through the original resource
 manager, obtain task-bound exclusive setup/recovery authority, then check and
@@ -107,6 +118,11 @@ another session's NVDA. Do not install into product source or modify a worker.
 
 ## Persistent browser
 
+For product-independent bounded scenarios, the shared browser runner now supports
+a protected existing Chromium profile through policy v2, retaining the same
+visible context from renewal through capture. See [execution adapters](EXECUTION-ADAPTERS.md).
+The legacy helper below retains its narrower compatibility behavior.
+
 Prefer an already working authorized connection. For the bundled compatibility
 route, separately authorize helper installation; it copies the packaged helper
 to `$setupRoot` and invalidates that helper's previous authentication receipt.
@@ -137,7 +153,10 @@ try {
 
 Bootstrap is headed and requires an owned interactive desktop. Let visible
 Windows account renewal run; ask the owner only for an explicit remaining
-password, Windows Hello, MFA, certificate or consent prompt. Never copy cookie
+password, Windows Hello, MFA, unavailable certificate authority or application
+consent not already explicitly authorized for the expected grant. For authorized
+application confirmations, follow the origin/account/app/scope and observed-result
+gates in the execution lessons; this document grants no consent. Never copy cookie
 databases or open system Edge on the Chromium-owned profile.
 
 `CheckPersonalEvaluatorBrowser` runs the legacy helper's headless check and

@@ -33,11 +33,12 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-Includes former resource status and completed-assignment release MCP tools; no separate resources plugin. Establish original DevBox/setup ownership before host changes. Local inventory uses approved host tools; resource MCP calls need a configured connection. No generic allocator, forced release, automatic scanner install or implied readiness.
+Includes resource status/release and an optional original-lease Dev Center start/readback adapter; no separate resources plugin. Cloud power is not Console/AT readiness. Preserve the original allocator and active connections. No forced release, automatic scanner install or implied readiness.
 
 ## Reference
 
 - [Environment setup and authorization gates](docs/SETUP.md)
+- [Built-in execution adapters and supported scope](docs/EXECUTION-ADAPTERS.md)
 - [Capability readiness report](setup/report.template.md)
 
 [Back to the plugin catalog](https://github.com/kaixun96/dev.A11yAssist)

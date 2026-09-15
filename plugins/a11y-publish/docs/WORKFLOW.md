@@ -1,6 +1,6 @@
 # Evidence-first workflow contract
 
-Envelope version: 0.9.0. This is the OPTIONAL full-workflow contract, not a prerequisite
+Envelope version: 0.11.0. This is the OPTIONAL full-workflow contract, not a prerequisite
 for small capabilities. See `CAPABILITIES.md` for caller-owned composition.
 During migration the
 existing deployment's canonical execution contract remains authoritative;
@@ -86,6 +86,12 @@ qualification and must not be used as coordination authority.
 Do not report completed until cleanup gates and actual summary delivery pass.
 A worker reply, running process, prepared candidate or accepted trigger alone is
 not proof of task progress or execution recovery.
+
+Follow [execution lessons](EXECUTION-LESSONS.md) /
+[简体中文](EXECUTION-LESSONS.zh-CN.md) for delivery-state reconciliation, actual
+goal versus round completion, and caller-runtime ownership. Nonpass remediation
+runs still obey their cleanup/stop gates; an unfinished higher-level goal does
+not grant permission to advance failed evidence or rewrite a closed run.
 
 ## Compatibility and rollout
 

@@ -88,3 +88,66 @@ test('shared browser assessment rejects forged comparisons and stale or abnormal
     assert.throws(() => verifyBrowserObservations(changed, request));
   }
 });
+
+test('page-error listeners support Playwright callback metadata and retain error gating', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const script = `
+import contextlib, importlib.util, os, sys, tempfile, types
+from unittest.mock import patch
+spec = importlib.util.spec_from_file_location("browser_runner", sys.argv[1])
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+request = {"schemaVersion":1,"taskId":"browser-callback-unit","target":"https://example.org/demo",
+           "budgetSeconds":30,"viewport":{"width":1280,"height":720},
+           "rows":[{"id":"entry","steps":[],"assertions":[{"kind":"count","target":{"css":"#main"},"expected":1}]}]}
+class Browser:
+    version = "unit-only"
+    connected = True
+    def is_connected(self): return self.connected
+    def close(self): self.connected = False
+class Page:
+    url = request["target"]
+    viewport_size = request["viewport"]
+    def __init__(self): self.listeners = {}; self.removed = False
+    def on(self, event, handler):
+        # Playwright's synchronous API attaches metadata to the original callable.
+        setattr(handler, "_pw_impl_instance_", object())
+        self.listeners[event] = handler
+    def remove_listener(self, event, handler):
+        assert self.listeners[event] is handler
+        del self.listeners[event]; self.removed = True
+    def bring_to_front(self): pass
+    def set_default_timeout(self, timeout): pass
+    def set_default_navigation_timeout(self, timeout): pass
+    def goto(self, url, **kwargs):
+        self.listeners["pageerror"]("unit page-script error")
+        return types.SimpleNamespace(status=200)
+    def is_closed(self): return False
+    def evaluate(self, script): return {"visible":True,"focused":True}
+class Context:
+    closed = False
+    def __init__(self, page): self.pages = [page]; page.context = self
+    def route(self, *args): pass
+    def route_web_socket(self, *args): pass
+    def close(self): self.closed = True
+page = Page(); context = Context(page); browser = Browser()
+api = types.ModuleType("playwright.sync_api")
+api.sync_playwright = lambda: contextlib.nullcontext(None)
+api.Error = type("UnitPlaywrightError", (Exception,), {})
+with tempfile.TemporaryDirectory() as output, \\
+     patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
+     patch.object(m.sys, "platform", "win32"), \\
+     patch.dict(os.environ, {"CODESPACES":"false","CODESPACE_NAME":""}), \\
+     patch.object(m.importlib.metadata, "version", return_value="unit-only"), \\
+     patch.object(m.policy_module, "open_context", return_value=(browser,context)):
+    report = m.run(request, output, {"schemaVersion":1,"allowedTargets":[request["target"]],"assetHosts":[]})
+assert page.removed and "pageerror" not in page.listeners
+assert context.closed and not browser.is_connected()
+assert report["rows"][0]["status"] == "inconclusive"
+assert not report["rows"][0]["capturePreflight"]["noUnexpectedPageState"]
+assert not report["rows"][0]["capturePostcheck"]["verified"]
+print("Mocked event mapping only; no browser or AT execution")
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /no browser or AT execution/);
+});

@@ -10,7 +10,8 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const text = async path => (await readFile(path, 'utf8')).replaceAll('\r\n', '\n');
 const shared = ['skills/a11y-setup/SKILL.md', 'native/windows-host.ps1',
   'integrations/agentow/runtime/personal-evaluator-browser.py',
-  'setup/profiles.json', 'setup/report.template.md', 'docs/SETUP.md'];
+  'setup/profiles.json', 'setup/report.template.md', 'docs/SETUP.md',
+  'docs/EXECUTION-LESSONS.md', 'docs/EXECUTION-LESSONS.zh-CN.md'];
 async function filesUnder(directory, prefix = '') {
   const files = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -90,6 +91,23 @@ test('native dependency selection is side-effect-isolated and propagates failure
   assert.equal(child.status, 0, child.stdout + child.stderr);
   assert.match(child.stdout, /dependency selection passed/);
   assert.match(child.stdout, /Scoped inventory passed/);
+});
+
+test('setup handoff distinguishes host roles, exact runtime and owner authority from installation', async () => {
+  const skill = await text(join(root, 'src/skills/a11y-setup/SKILL.md'));
+  const report = await text(join(root, 'src/setup/report.template.md'));
+  assert.match(skill, /docs\/EXECUTION-LESSONS\.md/);
+  assert.match(skill, /standing\/task\s+authority/);
+  assert.match(skill, /explicit applicable prior\s+consent/);
+  assert.match(skill, /same interpreter\/import mode/);
+  assert.match(skill, /actual browser callback initialization/);
+  for (const field of ['Control plane', 'Connection window / SSH origin',
+    'Source / plugin command execution', 'Product browser / real AT',
+    'Published revision', 'Installed package', 'complete dependency closure',
+    'callback registration', 'Exact target', 'preflight and postcheck',
+    'including `-I`', 'pending delivery identity']) {
+    assert(report.includes(field), `Missing qualification handoff: ${field}`);
+  }
 });
 
 test('packaged host script rejects Codespaces and invalid dependency selections before any effects', {

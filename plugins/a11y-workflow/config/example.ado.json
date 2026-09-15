@@ -15,6 +15,20 @@
       "project": "YOUR-PROJECT",
       "repositoryId": "YOUR-REPOSITORY-ID",
       "authorizationEnvironmentVariable": "A11Y_ADO_AUTHORIZATION"
+    },
+    "bugs": {
+      "kind": "ado",
+      "organization": "https://dev.azure.com/YOUR-ORGANIZATION",
+      "project": "YOUR-PROJECT",
+      "descriptionField": "System.Description",
+      "authorizationEnvironmentVariable": "A11Y_ADO_AUTHORIZATION",
+      "attachmentUpload": {
+        "mode": "simple",
+        "maxTotalBytes": 134217728,
+        "maxFileBytes": 134217728,
+        "chunkSizeBytes": 8388608,
+        "timeoutSeconds": 120
+      }
     }
   }
 }

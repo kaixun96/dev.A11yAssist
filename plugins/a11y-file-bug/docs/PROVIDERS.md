@@ -2,7 +2,17 @@
 
 ## What is executable today
 
-v0.18 adds the `bugs` ADO connection for `file-bug`: validated discovery,
+v0.20 / envelope v0.11 adds bounded executable integrations for persistent
+Chromium/authenticated routes, local pinned axe-core and target-size measurement,
+raw named-AT observation, original-lease Dev Center start/reconciliation and
+host Azure CLI authentication. Read [supported execution adapters](EXECUTION-ADAPTERS.md)
+before configuring them; narrow raw/power receipts do not certify a workflow stage.
+
+v0.19 / envelope v0.10 completes the built-in `bugs` connection's bounded
+chunked transfer, process-field/duplicate inspection, original-create correlation,
+explicit safe continuation and proven-unstarted abandonment. All filing entrypoints
+share the validated task/draft gate and lock; reports retain nonpass outcomes.
+v0.18 introduced the `bugs` ADO connection for `file-bug`: validated discovery,
 explicit exact-draft/destination approval, WIT binary attachments, Bug creation
 and field/relation/byte readback. It is not a generic workflow PASS. See
 [Bug filing](FILE-BUG.md) for project fields, video review and bounded upload.
@@ -18,13 +28,20 @@ optional persistent workflow state machine,
 stage gates, artifact hashing, version/owner fencing, bounded subprocess RPC,
 request reconciliation, progress assessment, packaging checks and tests.
 
-They do **not** contain a generic live Dev Center recovery driver, AT recorder,
-ADO credential broker or a new AgentOW implementation. Those remain the existing
-deployment's trusted programs until migrated/qualified. Missing configuration
-fails explicitly; `doctor` never reports configuration as live readiness.
+The native `windows-at` connection implements only `observe-at`; the native
+`devcenter` connection implements only caller-polled `recover-devbox`.
+Do not replace a multi-action deployment provider with these narrower mappings
+for an active run. Missing configuration fails explicitly; `doctor` never reports
+configuration as live readiness. No new AgentOW implementation is supplied.
 
 This boundary is intentional: publishing private scripts wholesale would leak
 personal infrastructure assumptions and could establish a second unsafe pool.
+The bundled browser retains anonymous/client-side defaults and adds explicit
+policy-v2 routes in [BROWSER.md](BROWSER.md). Native AT produces raw observations,
+not speech interpretation, complete Voice Access label attribution or an accepted
+discovery/evidence-v1 verdict. Server mutation/reset semantics, arbitrary visual
+checks, cloud provisioning/Console readiness and product-specific behavior
+assessment remain separately supported/qualified capabilities.
 Installing the full workflow is not yet proof that a fresh user's environment
 can autonomously complete a real A11y Bug.
 
@@ -75,6 +92,9 @@ bounded diagnostics; core only reports the byte count, not raw diagnostic data.
 ```
 
 `operation: reconcile` uses the SAME request ID. Do not treat it as execute.
+The built-in ADO filing connection additionally supports explicit `resume` and
+`discard-unstarted` through its specialized tools/CLI. These are not new executable
+provider protocol obligations or general workflow-stage retries. See FILE-BUG.
 Long-lived work must live in a provider-owned detached executor with durable
 progress, not in the short-lived RPC process. A completion callback remains
 required unless the caller explicitly selects the polling contract below.
@@ -225,7 +245,7 @@ public configuration, operation inputs or output.
 
 In the full workflow, resource mutations belong inside the stage provider that owns their timing
 (intake claims, BEFORE evaluator acquisition, source Codespace acquisition,
-cleanup token-bound release). The standalone resources plugin exposes status
+cleanup token-bound release). The setup plugin's resource tools expose status
 and ownership diagnosis plus explicit `release-evaluator` for one exact completed
 native assignment. It does not acquire resources. That release must use the
 original authority's token/lock/completion validation with durable no-replay

@@ -12,9 +12,12 @@ servers implicitly. Missing connection/authority is a filing gap, not a fake Bug
    reproduced observed-page findings qualify. Source risks, seeded fixture
    defects, invalid evidence and inconclusive observations must not become Bugs.
 2. Confirm destination organization/project, area, required process fields,
-   severity and tags from authorized project guidance. Do not guess assignment
-   or invent required metadata. Search for existing Bugs before filing; link an
-   existing issue rather than creating a duplicate.
+   severity and tags from authorized project guidance. Call `a11y_file_bug_inspect`
+   to read actual process fields and exact-title candidates. Choose the real
+   description/ReproSteps field; do not guess assignment or required metadata.
+   Search beyond exact title when necessary; this tool is not semantic deduplication.
+   Link an existing issue instead of creating a duplicate. If candidates are distinct,
+   record their exact IDs and justification in `approval.duplicateReview`.
 3. Call `a11y_file_bug_draft` with taskId, issueId and details. Describe OS,
    browser/version, AT/version or not used, actual build, viewport/zoom, locale,
    route/flags/test data, numbered preconditions/actions, expected versus actual,
@@ -26,7 +29,9 @@ servers implicitly. Missing connection/authority is a filing gap, not a fake Bug
    playback, identify timestamps and provide a text transcript/summary so the
    Bug remains understandable without playing media. Screenshots are not speech.
 5. Obtain explicit filing/upload authorization bound to the returned draft hash
-   and exact organization/project; existing explicit authority can be recorded
+   and exact organization/project, process fields and upload policy. For larger
+   videos, select approved chunked/auto limits before drafting, never after approval.
+   Existing explicit authority can be recorded
    without asking again. Call `a11y_file_bug_submit` with the unchanged details
    and approval. Native ADO uploads WIT attachments, reads back their bytes,
    creates the Bug with AttachedFile relations, then rereads fields/relations.
@@ -34,7 +39,12 @@ servers implicitly. Missing connection/authority is a filing gap, not a fake Bug
 6. Preserve the deterministic operation ID and receipt. On timeout/unknown
    outcome call `a11y_file_bug_operation_reconcile` on that ID. Never resubmit,
    switch IDs or delete orphan attachments to conceal an incomplete operation.
-   Report the exact remaining remote check and retained artifacts.
+   Lost create responses use the original unique correlation tag. Read-only
+   reconciliation never starts new effects. Use explicit `a11y_file_bug_resume`
+   only for the documented proven next-step checkpoints; partial unknown uploads
+   cannot be replayed. `a11y_file_bug_discard_unstarted` records an explicit reason
+   only when the original checkpoint proves no mutation began. It preserves
+   artifacts and does not reset the operation. Report remaining uncertainty.
 7. Return actual Bug ID/URL, approved description, attachment references and
    filing outcome to `a11y-report`. Failed/skipped filing must remain visible.
    Do not edit product code, change assignments, close Bugs or post PR comments.

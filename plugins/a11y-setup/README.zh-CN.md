@@ -33,11 +33,12 @@ copilot plugin install a11y-setup@a11y-assist
 
 ## 能力边界
 
-合并原资源状态查询和已完成任务释放的 MCP 工具，不再单装 resources。变更前先取得原资源管理器的 DevBox/setup 归属。主机检查使用获授权工具；资源 MCP 需要配置连接。不提供通用分配器、强制释放或自动扫描器安装；安装不代表就绪。
+包含资源查询/释放及可选的原 recovery lease 下 Dev Center 启动/回读适配器，不再单装 resources。云端开机不代表 Console/AT 就绪；保留原分配器和进行中连接，不强制释放或自动安装扫描器。
 
 ## 参考资料
 
 - [环境准备与授权门禁](docs/SETUP.md)
+- [内置执行适配器与支持范围](docs/EXECUTION-ADAPTERS.md)
 - [环境能力就绪报告](setup/report.template.md)
 
 [返回插件目录](https://github.com/kaixun96/dev.A11yAssist/blob/main/README.zh-CN.md)

@@ -24,6 +24,13 @@ remaining work. Separate repeated observations, seeded defects and source risks
 from distinct product Bugs. Report actual cleanup, retained ownership and
 uncertainty. A complete report is not complete coverage or WCAG certification.
 
+Read "Categories and reports: keep the denominator" in
+`docs/EXECUTION-LESSONS.md`. Preserve all requested targets/states and benchmark
+cases, including unrun/inconclusive entries; a generated matrix or a startup
+failure is not executed coverage. Report last successful execution boundary,
+actual runtime version and outstanding owner-goal work separately from a closed
+round or delivered report. Do not infer goal completion from resource release.
+
 Save the immutable private report with its SHA-256. Use `a11y_report_deliver`
 only for the authorized destination after cleanup; local-file delivery says
 `messageSent:false`. Never publish private paths/content to a public tracker.

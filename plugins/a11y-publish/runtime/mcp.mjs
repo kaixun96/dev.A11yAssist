@@ -3,7 +3,7 @@ import { createInterface } from 'node:readline';
 import { plugins, VERSION, readConfig, doctor, createRun, loadRun, publicRun,
   executeStage, reconcile, resourceStatus, assessProgress, abandonRun } from './core.mjs';
 import { capabilities } from './capability.mjs';
-import { executeOperation, operationStatus, reconcileOperation } from './operations.mjs';
+import { executeOperation, operationStatus, reconcileOperation, discardUnstartedOperation } from './operations.mjs';
 import { validateEvidenceFiles } from './evidence-files.mjs';
 
 const plugin = process.argv[2];
@@ -43,6 +43,9 @@ if (plugin === 'a11y-report') {
 }
 if (plugin === 'a11y-file-bug') {
   const properties = { taskId: { type: 'string' }, issueId: { type: 'string' }, details: { type: 'object' } };
+  tools.push({ name: `${prefix}_inspect`, description: 'Read configured ADO Bug process fields and bounded exact-title duplicate candidates for a validated finding. Does not upload or create; not semantic duplicate exclusion.',
+    inputSchema: { type: 'object', properties: { taskId: { type: 'string' }, issueId: { type: 'string' } },
+      required: ['taskId', 'issueId'], additionalProperties: false } });
   tools.push({ name: `${prefix}_draft`, description: 'Prepare a detailed Bug draft from a validated production finding and bound evidence. Read-only; returns draft SHA-256 for explicit approval.',
     inputSchema: { type: 'object', properties, required: Object.keys(properties), additionalProperties: false } });
   tools.push({ name: `${prefix}_submit`, description: 'File exactly one explicitly approved draft using the configured Bug provider. Retain the deterministic operation ID; unknown effects must be reconciled, never resubmitted.',
@@ -51,6 +54,12 @@ if (plugin === 'a11y-file-bug') {
   tools.push({ name: `${prefix}_skip`, description: 'Record why an unfiled finding is intentionally not being filed; cannot hide an existing or pending creation.',
     inputSchema: { type: 'object', properties: { taskId: { type: 'string' }, issueId: { type: 'string' }, reason: { type: 'string' } },
       required: ['taskId', 'issueId', 'reason'], additionalProperties: false } });
+  tools.push({ name: `${prefix}_resume`, description: 'Explicitly continue the original approved native Bug filing from a proven checkpoint. Starts only previously unstarted steps; never repeats an uncertain upload/chunk/create. Original configuration, approval and operation identity remain pinned.',
+    inputSchema: { type: 'object', properties: { operationId: { type: 'string' } },
+      required: ['operationId'], additionalProperties: false } });
+  tools.push({ name: `${prefix}_discard_unstarted`, description: 'Record explicit abandonment only when the original native checkpoint proves no upload/create mutation started. Preserves all artifacts; cannot discard unknown effects or permit replay.',
+    inputSchema: { type: 'object', properties: { operationId: { type: 'string' }, reason: { type: 'string' } },
+      required: ['operationId', 'reason'], additionalProperties: false } });
 }
 const operationSchema = { type: 'object', properties: { operationId: { type: 'string' } },
   required: ['operationId'], additionalProperties: false };
@@ -126,6 +135,9 @@ async function handle(request) {
     else if (action === 'generate') result = await (await import('./bug-bash.mjs')).reportDiscovery(config, args.taskId);
     else if (action === 'deliver') result = await (await import('./bug-bash.mjs')).deliverDiscovery(config, args.taskId);
     else if (action === 'draft') result = await (await import('./file-bug.mjs')).prepareDiscoveryBug(config, args.taskId, args.issueId, args.details);
+    else if (action === 'inspect') result = await (await import('./file-bug.mjs')).inspectDiscoveryBug(config, args.taskId, args.issueId);
+    else if (action === 'resume') result = await (await import('./file-bug.mjs')).resumeDiscoveryBug(config, args.operationId);
+    else if (action === 'discard_unstarted') result = await discardUnstartedOperation(config, plugin, args.operationId, args.reason);
     else if (action === 'submit') result = await (await import('./file-bug.mjs')).fileDiscoveryBug(config, args);
     else if (action === 'skip') result = await (await import('./bug-bash.mjs')).skipDiscoveryBug(config, args.taskId, args.issueId, args.reason);
     else if (action === 'invoke') result = await executeOperation(config, plugin, args.operationId, args.action, args.context, args.input ?? {});

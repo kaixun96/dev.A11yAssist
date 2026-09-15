@@ -33,11 +33,12 @@ copilot plugin install a11y-capture@a11y-assist
 
 ## 能力边界
 
-安装插件不会自动创建 DevBox 或录制器，也不生成模拟 AT 结果。AFTER 保持相同场景和评估机。明确调用 recover-media/recover-nvda 需要原任务记录和获授权的 operations 连接；窄范围恢复不代表完整清理或资源释放。
+内置 observe-at 在原归属下采集 NVDA Speech Viewer、Narrator ETW/音频及 Voice Access 数字指令/UIA/音频。原始观测不等于 BEFORE/AFTER/discovery PASS；行为、媒体和标签归属需独立评估。不自动安装工具、停止借用进程或释放租约。
 
 ## 参考资料
 
 - [能力接口与边界](docs/CAPABILITIES.md)
 - [连接配置与协议](docs/PROVIDERS.md)
+- [内置执行适配器与支持范围](docs/EXECUTION-ADAPTERS.md)
 
 [返回插件目录](https://github.com/kaixun96/dev.A11yAssist/blob/main/README.zh-CN.md)

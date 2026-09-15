@@ -12,6 +12,11 @@ Read packaged `docs/WORKFLOW.md`, `docs/PROVIDERS.md` and `contracts/workflow.js
 Call `a11y_workflow_doctor`. Missing providers mean incomplete environment setup,
 not permission to run a mock or copy someone else's private infrastructure.
 
+For unattended work, delayed owner updates or an ended partial round, read
+`docs/EXECUTION-LESSONS.md`. Keep owner-goal completion separate from per-run
+cleanup/outcome. Existing nonpass cleanup gates remain mandatory; continued
+supervision never authorizes advancing a failed evidence stage.
+
 1. Identify exact Bug and original run. `a11y_workflow_create` creates a journal,
    not ownership; intake provider must atomically claim and inspect current
    comments/attachments before accepting a canonical scenario.
@@ -53,5 +58,10 @@ by default. Only explicitly configured CLI caller polling substitutes a
 caller-owned bounded scheduler; retain the original deadline and never downgrade
 a failed callback. Deadline expiry is not cancellation or permission to replay.
 If no next safe action is available, surface exact blocker and resume condition.
+Distinguish accepted, queued, delivered, acted-on and artifact-confirmed updates.
+Inspect the exact pending event before repeating an instruction. Require actual
+phase/artifact progress, not a busy bit. Shared RPC health, bounded send waits,
+out-of-queue alerting and history maintenance belong to the caller runtime;
+do not implement them by duplicating prompts or restarting shared services.
 Do not restart shared Copilot, impersonate an owner, release a foreign lease,
 or delete history/change accounts to evade service safety controls.

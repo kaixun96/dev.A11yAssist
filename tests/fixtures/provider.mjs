@@ -65,9 +65,24 @@ if (request.operation === 'status') {
     receipt.nativeRunId = request.input.nativeRunId;
     receipt.releaseMode = 'completed-owned-run';
   }
+  if (request.stage === 'recover-devbox') Object.assign(receipt, {
+    recoveryId: request.input.recoveryId, scope: 'devbox-power-start-only',
+    interactiveReady: false, atReady: false, leaseReleased: false
+  });
+  if (request.stage === 'observe-at') Object.assign(receipt, {
+    nativeRunId: request.input.nativeRunId, at: request.input.at, scope: 'raw-at-output',
+    behaviorVerdict: 'not-evaluated', independentBehaviorVerified: false,
+    fullCleanupVerified: false, borrowedAtStopped: false
+  });
   if (request.stage === 'file-bug') {
     receipt.bug = { id: 42, url: 'https://example.invalid/unit/_workitems/edit/42' };
     receipt.draftSha256 = request.input.approval.draftSha256;
+    if (process.argv.includes('--blocked-filing')) {
+      receipt.outcome = 'blocked';
+      receipt.reason = 'Unit filing unavailable';
+      delete receipt.subject;
+      delete receipt.bug;
+    }
   }
   if (request.stage === 'recover-media') {
     receipt.nativeRunId = request.input.nativeRunId;

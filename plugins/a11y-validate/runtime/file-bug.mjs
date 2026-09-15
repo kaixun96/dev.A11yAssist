@@ -1,9 +1,11 @@
 import { join } from 'node:path';
 import { discoveryStatus, validateDiscovery } from './bug-bash.mjs';
-import { executeOperation, operationStatus } from './operations.mjs';
+import { executeOperation, operationStatus, resumeOperation } from './operations.mjs';
 import { discoveryHash, requireDiscovery as demand } from './discovery-contract.mjs';
 import { withDirectoryLock } from './core.mjs';
 import { bugDescription } from '../native/bug-description.mjs';
+import { bugDestination, inspectAdoBugDestination } from '../native/ado-bug-client.mjs';
+import { hostAuthorization } from '../native/host-auth.mjs';
 
 export const filingOperationId = (taskId, issueId) =>
   `bug-${discoveryHash({ taskId, issueId }).slice(0, 48)}`;
@@ -46,6 +48,9 @@ export async function prepareDiscoveryBug(config, taskId, issueId, details) {
     if ([selected.name, selected.path].some(path => /\.(mp4|webm|mov|mkv|avi)$/i.test(path))) {
       demand(selected.kind === 'video', 'Video must use the video review contract');
     }
+    if ([selected.name, selected.path].some(path => /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(path))) {
+      demand(selected.kind === 'audio', 'Audio must use the audio review contract');
+    }
     if (selected.kind === 'video' || selected.kind === 'audio') demand(
       selected.playbackReviewed === true && text(selected.transcript) &&
       text(selected.timestamps), 'Media needs playback review, relevant timestamps and a text transcript/summary');
@@ -57,6 +62,7 @@ export async function prepareDiscoveryBug(config, taskId, issueId, details) {
   const draft = {
     schemaVersion: 1, taskId, issueId, planHash: result.planHash,
     operationId: filingOperationId(taskId, issueId),
+    destination: bugDestination(config.providers?.bugs ?? {}),
     title: issue.title, impact: issue.impact, categories: issue.categories,
     environment: details.environment, cause: details.cause,
     scenarios: rows.map(row => ({ rowId: row.id, target: result.target ?? result.feature,
@@ -71,16 +77,52 @@ export async function prepareDiscoveryBug(config, taskId, issueId, details) {
 }
 
 export async function fileDiscoveryBug(config, { taskId, issueId, details, approval }) {
+  const status = await discoveryStatus(config, taskId);
+  return executeOperation(config, 'a11y-file-bug', filingOperationId(taskId, issueId), 'file-bug',
+    { subject: taskId, scenarioHash: status.planHash }, { taskId, issueId, details, approval });
+}
+
+export async function withFilingTask(config, taskId, body) {
   await discoveryStatus(config, taskId);
-  return withDirectoryLock(join(config.stateRoot, 'bug-bash', taskId), async () => {
+  return withDirectoryLock(join(config.stateRoot, 'bug-bash', taskId), body);
+}
+
+export async function withValidatedFiling(config, operationId, context, input, body) {
+  const { taskId, issueId, details, approval } = input;
+  return withFilingTask(config, taskId, async () => {
     const status = await discoveryStatus(config, taskId);
-    demand(!status.delivered, 'The final report was already delivered; do not silently add filing effects to a closed task');
+    demand(!status.delivered && !status.pending && !status.lifecycle.startsWith('cancel'),
+      'The task is in flight, cancelled or its final report was already delivered; do not add filing effects');
     const prepared = await prepareDiscoveryBug(config, taskId, issueId, details);
     validateFilingApproval(config, prepared, approval);
-    return executeOperation(config, 'a11y-file-bug', prepared.draft.operationId, 'file-bug',
-      { subject: taskId, scenarioHash: prepared.draft.planHash },
-      { taskId, issueId, details, approval });
+    demand(operationId === prepared.draft.operationId && context.subject === taskId &&
+      context.scenarioHash === prepared.draft.planHash, 'Filing must bind the original task, plan and deterministic issue identity');
+    return body(prepared);
   });
+}
+
+export async function resumeDiscoveryBug(config, operationId) {
+  return resumeOperation(config, 'a11y-file-bug', operationId);
+}
+
+export async function inspectDiscoveryBug(config, taskId, issueId) {
+  await validateDiscovery(config, taskId);
+  const status = await discoveryStatus(config, taskId);
+  const issue = status.issues.find(item => item.id === issueId && item.scope === 'observed-page');
+  demand(issue, 'Only validated observed-page findings may be inspected for filing');
+  const provider = config.providers?.bugs;
+  demand(provider?.kind === 'ado', 'Built-in destination inspection requires the configured ADO Bug provider');
+  return inspectAdoBugDestination({ ...provider, authorization: await filingAuthorization(provider) }, issue.title);
+}
+
+export async function filingAuthorization(provider) {
+  return hostAuthorization(provider);
+}
+
+export async function assertFilingContinuation(config, taskId) {
+  const status = await discoveryStatus(config, taskId);
+  demand(!status.delivered && !status.pending && !status.lifecycle.startsWith('cancel'),
+    'Cannot continue filing effects in an in-flight, cancelled or delivered task');
 }
 
 export function validateFilingApproval(config, prepared, approval) {
@@ -97,8 +139,8 @@ export async function discoveryBugRecords(config, result) {
     const operationId = filingOperationId(result.taskId, issue.id);
     try {
       const operation = await operationStatus(config, 'a11y-file-bug', operationId);
-      demand(operation.action === 'file-bug' && (operation.receipt === undefined ||
-        operation.receipt.subject === result.taskId), 'Filing receipt belongs to another task/action');
+      demand(operation.action === 'file-bug' && operation.subject === result.taskId,
+        'Filing receipt belongs to another task/action');
       records.push({ issueId: issue.id, operationId, status: operation.status,
         outcome: operation.receipt?.outcome, bug: operation.receipt?.bug,
         reason: operation.receipt?.reason });

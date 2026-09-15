@@ -13,7 +13,10 @@ const taskPattern = /^[a-z][a-z0-9-]{2,47}$/;
 const implementationHash = discoveryHash(await Promise.all([
   'bug-bash.mjs', 'discovery-contract.mjs', 'discovery-coverage.mjs', 'browser-contract.mjs', 'operations.mjs',
   'capability.mjs', 'canonical.mjs', 'core.mjs', 'waiting.mjs', '../contracts/capabilities.json',
-  'category-plugin.mjs', 'file-bug.mjs'
+  'category-plugin.mjs', 'file-bug.mjs', 'builtin-ado.mjs', '../native/ado-bugs.mjs',
+  '../native/ado-bug-client.mjs', '../native/ado-bug-evidence.mjs', '../native/bug-description.mjs',
+  '../native/host-auth.mjs', 'builtin-devcenter.mjs', '../native/devcenter.mjs',
+  'builtin-windows-at.mjs', '../native/windows-at.ps1'
 ].map(async file => ({ file,
   sha256: hash((await readFile(new URL(file, import.meta.url), 'utf8')).replaceAll('\r\n', '\n'))
 }))));
@@ -321,7 +324,10 @@ async function begin(config, taskId, kind, rowIds = []) {
       demand(['cancel', 'cleanup', 'deliver'].includes(kind), 'Unsupported discovery lifecycle action');
       if (kind === 'cancel') demand(state.cancelRequested, 'Task cancellation must be recorded first');
       if (kind === 'cleanup') demand(!state.cleaned, 'No outstanding owned cleanup');
-      if (kind === 'deliver') demand(state.cleaned && state.report, 'Cleanup and a saved report are required before delivery');
+      if (kind === 'deliver') {
+        demand(state.cleaned && state.report, 'Cleanup and a saved report are required before delivery');
+        await requireCurrentFiling(config, summary(current));
+      }
       input = { taskId, operationIds: state.operations.filter(operation => operation.kind === 'observe').map(operation => operation.id),
         reason: kind === 'cancel' ? state.cancelReason : `Discovery ${kind} for the exact original task` };
       if (kind === 'deliver') input.report = { path: join(current.dir, state.report.relativePath), sha256: state.report.sha256 };
@@ -522,13 +528,10 @@ export async function reportDiscovery(config, taskId) {
   });
 }
 export async function deliverDiscovery(config, taskId) {
-  const checked = await discoveryStatus(config, taskId);
-  const filing = await (await import('./file-bug.mjs')).discoveryBugRecords(config, checked);
-  demand(checked.report?.filingHash === discoveryHash(filing) && !filing.some(item => item.status === 'pending'),
-    'Bug-filing state changed; regenerate the final report before delivery');
   if (!config.providers?.operations) {
     return mutate(config, taskId, async current => {
       const state = current.state;
+      await requireCurrentFiling(config, summary(current));
       demand(state.cleaned && !state.pending && state.report && !state.delivered &&
         !state.operations.some(operation => operation.kind === 'observe'),
       'Provider-free delivery is limited to reconciled tasks with no external effects');
@@ -542,6 +545,11 @@ export async function deliverDiscovery(config, taskId) {
   }
   const pending = await begin(config, taskId, 'deliver');
   return executePending(config, taskId, pending);
+}
+async function requireCurrentFiling(config, result) {
+  const filing = await (await import('./file-bug.mjs')).discoveryBugRecords(config, result);
+  demand(result.report?.filingHash === discoveryHash(filing) && !filing.some(item => item.status === 'pending'),
+    'Bug-filing state changed; regenerate the final report before delivery');
 }
 export async function recordDiscoveryGap(config, taskId, rowIds, reason) {
   demand(Array.isArray(rowIds) && rowIds.length > 0 && new Set(rowIds).size === rowIds.length &&

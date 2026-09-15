@@ -356,13 +356,17 @@ def run(request, output, policy):
                         if not telemetry and route.request.resource_type in {"script", "document", "stylesheet", "fetch", "xhr"}:
                             critical_failures[0] += 1
                         if len(blocked_requests) < 200:
-                            blocked_requests.append({"url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+                            observation = {"url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
                                                      "type": route.request.resource_type,
                                                      "method": route.request.method,
                                                      "hasQuery": bool(parsed.query),
                                                      **query_shape(parsed.query),
                                                      "bodyBytes": len(route.request.post_data_buffer or b""),
-                                                     "expectedTelemetryDenial": telemetry is not None})
+                                                     "expectedTelemetryDenial": telemetry is not None}
+                            body_diagnostic = policy_module.json_body_diagnostic(policy, route.request)
+                            if body_diagnostic is not None:
+                                observation["bodyDiagnostic"] = body_diagnostic
+                            blocked_requests.append(observation)
                         route.abort()
 
                 context.route("**/*", route_request)

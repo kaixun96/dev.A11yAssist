@@ -1,6 +1,7 @@
 """Operator-owned browser connection/network policy; never supplied by scenario rows."""
 from pathlib import Path
 import hashlib
+import json
 import re
 from urllib.parse import parse_qsl, urlsplit
 
@@ -20,11 +21,13 @@ def https_url(value, origin=False):
 def validate(policy):
     common = {"schemaVersion", "allowedTargets", "assetHosts"}
     version = policy.get("schemaVersion") if isinstance(policy, dict) else None
-    if type(version) is not int or version not in {1, 2, 3, 4}:
+    if type(version) is not int or version not in {1, 2, 3, 4, 5}:
         raise ValueError("Invalid protected browser policy version")
     fields = common if version == 1 else common | {"connection", "requests", "scanner"}
-    if version == 4:
+    if version >= 4:
         fields.add("telemetryBlocks")
+    if version >= 5 and "bodyDiagnostics" in policy:
+        fields.add("bodyDiagnostics")
     if set(policy) != fields:
         raise ValueError("Unexpected protected browser policy fields")
     if (not isinstance(policy["allowedTargets"], list) or len(policy["allowedTargets"]) > 100 or
@@ -67,7 +70,7 @@ def validate(policy):
         fields = {"url", "methods", "resourceTypes"}
         if version >= 3 and isinstance(rule, dict) and "readOnly" in rule:
             fields.add("readOnly")
-        if version == 4 and isinstance(rule, dict):
+        if version >= 4 and isinstance(rule, dict):
             fields.update(key for key in ("queryKeys", "frame", "authentication") if key in rule)
         if not isinstance(rule, dict) or set(rule) != fields:
             raise ValueError("Transaction rules require exact URLs, methods and resource types")
@@ -100,17 +103,27 @@ def validate(policy):
             raise ValueError("Query-scoped documents require explicit frame or authentication scope")
         if "readOnly" in rule:
             qualification = rule["readOnly"]
+            if not isinstance(qualification, dict):
+                raise ValueError("Read-only qualification must be an operator-owned object")
+            expected_fields = {"bodySha256", "responseKeys"}
+            if version >= 5 and "bodyBytes" in qualification:
+                expected_fields |= {"bodyBytes", "bodyFormat"}
+                body_qualified = (
+                    type(qualification["bodyBytes"]) is int and 1 <= qualification["bodyBytes"] <= 65536 and
+                    qualification.get("bodyFormat") == "json" and
+                    isinstance(qualification.get("bodySha256"), str) and
+                    re.fullmatch(r"[a-f0-9]{64}", qualification["bodySha256"]) is not None)
+            else:
+                body_qualified = qualification.get("bodySha256") == hashlib.sha256(b"").hexdigest()
             if (rule["methods"] != ["POST"] or
                     any(kind not in {"fetch", "xhr"} for kind in rule["resourceTypes"]) or
-                    not isinstance(qualification, dict) or
-                    set(qualification) != {"bodySha256", "responseKeys"} or
-                    qualification["bodySha256"] != hashlib.sha256(b"").hexdigest() or
+                    set(qualification) != expected_fields or not body_qualified or
                     not isinstance(qualification["responseKeys"], list) or
                     not 1 <= len(qualification["responseKeys"]) <= 20 or
                     any(not isinstance(key, str) or not re.fullmatch("[A-Za-z][A-Za-z0-9_]{0,100}", key)
                         for key in qualification["responseKeys"]) or
                     len(set(qualification["responseKeys"])) != len(qualification["responseKeys"])):
-                raise ValueError("Read-only bootstrap rules require an empty POST body and explicit JSON response keys")
+                raise ValueError("Read-only POST rules require an exact qualified body and explicit JSON response keys")
         if version >= 3:
             for method in rule["methods"]:
                 for kind in rule["resourceTypes"]:
@@ -118,7 +131,7 @@ def validate(policy):
                     if signature in signatures:
                         raise ValueError("Overlapping request permissions are ambiguous")
                     signatures.add(signature)
-    if version == 4:
+    if version >= 4:
         blocks = policy["telemetryBlocks"]
         if not isinstance(blocks, list) or len(blocks) > 20:
             raise ValueError("Invalid telemetry denial budget")
@@ -133,6 +146,25 @@ def validate(policy):
                 if (not isinstance(rule[key], list) or not rule[key] or
                         len(set(rule[key])) != len(rule[key]) or any(item not in allowed for item in rule[key])):
                     raise ValueError("Telemetry denials cannot hide document, script or other feature failures")
+    diagnostic_rules = policy.get("bodyDiagnostics", [])
+    if not isinstance(diagnostic_rules, list) or len(diagnostic_rules) > 10:
+        raise ValueError("Invalid body diagnostic budget")
+    diagnostic_urls = set()
+    for rule in diagnostic_rules:
+        if (not isinstance(rule, dict) or set(rule) != {"url", "jsonBooleanFields", "qualification"}):
+            raise ValueError("Body diagnostics require an exact endpoint and explicit operator qualification")
+        parsed = https_url(rule["url"])
+        if (parsed.query or rule["url"] in diagnostic_urls or
+                f"{parsed.scheme}://{parsed.netloc}" in {
+                    origin.rstrip("/") for origin in connection.get("authenticationOrigins", [])} or
+                not isinstance(rule["qualification"], str) or not 1 <= len(rule["qualification"].strip()) <= 1024):
+            raise ValueError("Body diagnostics cannot target authentication or ambiguous endpoints")
+        diagnostic_urls.add(rule["url"])
+        names = rule["jsonBooleanFields"]
+        if (not isinstance(names, list) or len(names) > 10 or
+                any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,63}", name) for name in names) or
+                len(set(names)) != len(names)):
+            raise ValueError("Only explicit root-level JSON boolean fields may be diagnosed")
     scanner = policy["scanner"]
     if scanner is not None:
         if (not isinstance(scanner, dict) or set(scanner) != {"path", "sha256"} or
@@ -140,6 +172,37 @@ def validate(policy):
                 not isinstance(scanner["sha256"], str) or not re.fullmatch(r"[a-f0-9]{64}", scanner["sha256"])):
             raise ValueError("Scanner must be a pinned operator-installed axe-core script")
     return policy
+
+
+def json_body_diagnostic(policy, request):
+    rule = next((rule for rule in policy.get("bodyDiagnostics", [])
+                 if rule["url"] == request.url), None)
+    if rule is None or request.method != "POST" or request.resource_type not in {"fetch", "xhr"}:
+        return None
+    omitted = {"state": "unavailable", "booleanFields": {}}
+    body = request.post_data_buffer or b""
+    headers = {key.lower(): value for key, value in request.headers.items()}
+    if not 1 <= len(body) <= 65536 or headers.get("content-type", "").split(";")[0].strip().lower() != "application/json":
+        return omitted
+
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("Ambiguous JSON object")
+            result[key] = value
+        return result
+
+    try:
+        data = json.loads(body.decode("utf-8"), object_pairs_hook=unique_object)
+    except (ValueError, UnicodeDecodeError, RecursionError):
+        return omitted
+    if not isinstance(data, dict):
+        return omitted
+    flags = {name: data[name] for name in rule["jsonBooleanFields"]
+             if type(data.get(name)) is bool}
+    return {"state": "observed", "bodySha256": hashlib.sha256(body).hexdigest(),
+            "booleanFields": flags, "booleanFieldsComplete": len(flags) == len(rule["jsonBooleanFields"])}
 
 
 def endpoint_matches(url, request):
@@ -171,11 +234,24 @@ def request_rule(policy, request):
 
 def read_only_body_matches(rule, request):
     headers = {key.lower(): value for key, value in request.headers.items()}
+    body = request.post_data_buffer or b""
+    qualification = rule["readOnly"]
+    expected_bytes = qualification.get("bodyBytes", 0)
     if (any(key in headers for key in ("x-http-method", "x-http-method-override", "x-method-override",
                                       "transfer-encoding")) or
-            headers.get("content-length", "0").strip() != "0"):
+            headers.get("content-length", str(expected_bytes)).strip() != str(expected_bytes) or
+            len(body) != expected_bytes):
         return False
-    return hashlib.sha256(request.post_data_buffer or b"").hexdigest() == rule["readOnly"]["bodySha256"]
+    if hashlib.sha256(body).hexdigest() != qualification["bodySha256"]:
+        return False
+    if expected_bytes:
+        if headers.get("content-type", "").split(";")[0].strip().lower() != "application/json":
+            return False
+        try:
+            return isinstance(json.loads(body.decode("utf-8")), dict)
+        except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
+            return False
+    return True
 
 
 def rooted_at_target(request, target):

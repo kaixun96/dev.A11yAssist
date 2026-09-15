@@ -705,3 +705,105 @@ print("Policy and response qualification only; no browser or AT execution")
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /no browser or AT execution/);
 });
+
+test('v5 read-only JSON POST requires exact bytes, JSON content type and response qualification', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const script = `
+import copy, hashlib, importlib.util, json, sys
+from types import SimpleNamespace
+spec = importlib.util.spec_from_file_location("browser_runner", sys.argv[1])
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+body = b'{"keys":["demo"],"create":false}'
+rule = {"url":"https://example.org/read","methods":["POST"],"resourceTypes":["fetch"],
+        "readOnly":{"bodySha256":hashlib.sha256(body).hexdigest(),
+                    "bodyBytes":len(body),"bodyFormat":"json","responseKeys":["value"]}}
+policy = {"schemaVersion":5,"allowedTargets":["https://example.org/demo"],"assetHosts":[],
+          "connection":{"mode":"ephemeral"},"requests":[rule],"scanner":None,"telemetryBlocks":[]}
+m.validate_policy(policy)
+request = SimpleNamespace(url=rule["url"],method="POST",resource_type="fetch",
+                          headers={"content-type":"application/json; charset=utf-8"},
+                          post_data_buffer=body)
+assert m.policy_module.permits(policy, policy["allowedTargets"][0], request)
+request.headers["content-length"] = str(len(body))
+assert m.policy_module.permits(policy, policy["allowedTargets"][0], request)
+for altered in (body.replace(b"false",b"true"), body+b" ", b""):
+    request.post_data_buffer = altered
+    assert not m.policy_module.permits(policy, policy["allowedTargets"][0], request)
+request.post_data_buffer = body
+for extra in ({"x-http-method":"DELETE"},{"X-HTTP-Method-Override":"PUT"},
+              {"x-method-override":"PATCH"},{"transfer-encoding":"chunked"},
+              {"content-length":"0"},{"content-type":"text/plain"},{"content-type":""}):
+    request.headers = {"content-type":"application/json",**extra}
+    assert not m.policy_module.permits(policy, policy["allowedTargets"][0], request)
+request.headers = {"content-type":"application/json"}
+for data in (b"[]", b"null", b"invalid-json", b'{"value":"'+bytes([255])+b'"}'):
+    altered = copy.deepcopy(policy)
+    altered["requests"][0]["readOnly"].update(bodySha256=hashlib.sha256(data).hexdigest(),bodyBytes=len(data))
+    m.validate_policy(altered)
+    request.post_data_buffer = data
+    assert not m.policy_module.permits(altered, altered["allowedTargets"][0], request)
+bad=[]
+for version in (3,4):
+    altered=copy.deepcopy(policy);altered["schemaVersion"]=version
+    if version==3: del altered["telemetryBlocks"]
+    bad.append(altered)
+for size in (0,-1,65537,True,"30"):
+    altered=copy.deepcopy(policy);altered["requests"][0]["readOnly"]["bodyBytes"]=size;bad.append(altered)
+for key,value in (("bodyFormat","text"),("bodySha256","not-a-hash"),("responseKeys",[])):
+    altered=copy.deepcopy(policy);altered["requests"][0]["readOnly"][key]=value;bad.append(altered)
+altered=copy.deepcopy(policy);del altered["requests"][0]["readOnly"]["bodyBytes"];bad.append(altered)
+altered=copy.deepcopy(policy);altered["requests"][0]["methods"]=["DELETE"];bad.append(altered)
+altered=copy.deepcopy(policy);altered["requests"].append(copy.deepcopy(rule));bad.append(altered)
+for altered in bad:
+    try: m.validate_policy(altered)
+    except ValueError: pass
+    else: raise AssertionError("Unqualified JSON request accepted")
+transaction={"state":"read-only-pending","bodySha256":rule["readOnly"]["bodySha256"],"responseKeys":["value"]}
+assert m.unresolved_transactions({"transactions":[transaction]},0)
+response=SimpleNamespace(status=200,headers={"content-type":"application/json"},
+                         body=lambda:b'{"value":[{"private":"not-recorded"}]}')
+m.confirm_read_only_response(transaction,response)
+assert transaction["state"] == "read-only-confirmed"
+assert not m.unresolved_transactions({"transactions":[transaction]},0)
+assert "not-recorded" not in json.dumps(transaction)
+diagnostic = copy.deepcopy(policy)
+diagnostic["requests"] = []
+diagnostic["bodyDiagnostics"] = [{"url":rule["url"],"jsonBooleanFields":["create"],
+                                "qualification":"Known non-secret read/create flag; never transmit during diagnosis."}]
+m.validate_policy(diagnostic)
+request.post_data_buffer = body
+request.headers = {"content-type":"application/json"}
+assert not m.policy_module.permits(diagnostic, diagnostic["allowedTargets"][0], request)
+observed = m.policy_module.json_body_diagnostic(diagnostic, request)
+assert observed == {"state":"observed","bodySha256":hashlib.sha256(body).hexdigest(),
+                    "booleanFields":{"create":False},"booleanFieldsComplete":True}
+assert "demo" not in json.dumps(observed)
+request.post_data_buffer = b'{"create":"private-value","other":"private-other"}'
+observed = m.policy_module.json_body_diagnostic(diagnostic, request)
+assert not observed["booleanFieldsComplete"] and observed["booleanFields"] == {}
+assert "private" not in json.dumps(observed)
+for data in (b'{"create":false,"create":true}', b"[]", b" "*65537, bytes([255])):
+    request.post_data_buffer = data
+    assert m.policy_module.json_body_diagnostic(diagnostic, request)["state"] == "unavailable"
+request.post_data_buffer = body
+request.headers = {"content-type":"application/x-www-form-urlencoded"}
+assert m.policy_module.json_body_diagnostic(diagnostic, request)["state"] == "unavailable"
+request.url = "https://example.org/other"
+assert m.policy_module.json_body_diagnostic(diagnostic, request) is None
+for change in (
+    lambda v:v.update(schemaVersion=4),
+    lambda v:v["bodyDiagnostics"][0].update(url=rule["url"]+"?token=value"),
+    lambda v:v["bodyDiagnostics"][0].update(jsonBooleanFields=["create","create"]),
+    lambda v:v["bodyDiagnostics"][0].update(jsonBooleanFields=["nested.flag"]),
+    lambda v:v["bodyDiagnostics"][0].update(qualification=""),
+    lambda v:v["bodyDiagnostics"].append(copy.deepcopy(v["bodyDiagnostics"][0]))
+):
+    altered=copy.deepcopy(diagnostic);change(altered)
+    try: m.validate_policy(altered)
+    except ValueError: pass
+    else: raise AssertionError("Unqualified body diagnostics accepted")
+assert "playwright" not in sys.modules
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+});

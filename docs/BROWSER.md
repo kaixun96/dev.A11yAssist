@@ -106,6 +106,40 @@ block subsequent rows within the original budget. All ordinary authorized
 non-GET/HEAD requests still require the original effect/reset reconciliation.
 This is neither a blanket POST exception nor an accessibility verdict.
 
+## Qualified JSON reads (policy v5)
+
+Some independently established read-only APIs require a JSON POST body. Policy v5
+allows a protected `readOnly` qualification to additionally declare
+`bodyFormat: "json"` and `bodyBytes` (1-65,536), with the SHA-256 of the exact
+source-qualified request body. Versions 1-4 retain their previous restrictions.
+
+The operator must first establish the exact endpoint's read-only semantics,
+including any flags that could create or update state. A POST, an API name or a
+JSON boolean alone never proves read-only behavior. The policy stores the digest
+and byte count, not request contents. No wildcard body, field projection,
+normalization, unknown query or automatic permission discovery is supported.
+
+Before transmission the actual bytes, length, JSON object format and
+`application/json` content type must match. Method-override and transfer-encoding
+headers, mismatched content lengths and any changed body remain denied.
+The same pending-before-send journal, bounded successful JSON response and
+explicit response-key checks apply. Missing or failed responses retain unresolved
+effects; this is not a reset exemption for ordinary mutations or an A11y result.
+Empty-body bootstrap qualifications and all other policy-v4 scopes remain available.
+
+When source and live request shape differ, v5 can separately opt into
+`bodyDiagnostics`: at most ten exact non-authentication URLs, each with
+`jsonBooleanFields` (at most ten explicitly named root boolean fields, possibly
+empty) and a nonempty operator `qualification`. This observes **denied** JSON
+POSTs without transmitting them or adding any permission. Qualify only known
+non-secret-bearing application APIs, never credential submissions.
+
+The bounded diagnostic records the exact body digest and only those named
+boolean values. It never records strings, numbers, arbitrary keys, nested values,
+headers or raw bodies. Non-JSON, oversized, duplicate-key or missing/non-boolean
+fields leave explicit unavailable/incomplete metadata. These observations do not
+prove read-only semantics and never create a permission automatically.
+
 ## Scoped page dependencies (policy v4)
 
 Policy v4 keeps earlier defaults and adds explicit operator-owned declarations:
@@ -138,7 +172,7 @@ Preflight and postcheck diagnostics retain page errors, dialog observations and
 critical request failure counts even when capture is forbidden. Failed response
 diagnostics omit query values. Infrastructure gaps are not product findings.
 Denied-request diagnostics additionally record bounded query parameter names and
-whether names repeat. Values, headers and request bodies are never recorded.
+whether names repeat. Query values, headers and raw request bodies are never recorded.
 Oversized, malformed or unsupported names produce `queryKeysComplete: false`,
 not permission to guess a wider rule. An observed name is only a qualification
 input; it does not automatically authorize the endpoint or its parameter values.

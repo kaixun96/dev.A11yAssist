@@ -62,6 +62,7 @@ test('isolated Bug Bash has one public skill and the exact complete knowledge mo
       'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
       'skills/a11y-bug-bash/SKILL.md', 'docs/BUG-BASH.md', 'docs/BUG-BASH-RUNTIME.md', 'docs/BUG-BASH-RUNTIME.zh-CN.md',
       'docs/BROWSER.md', 'docs/EXECUTION-ADAPTERS.md',
+      'docs/EXECUTION-LESSONS.md', 'docs/EXECUTION-LESSONS.zh-CN.md',
       'config/example.bug-bash.json',
       ...resources.map(path => `bug-bash/${path}`),
       'docs/FILE-BUG.md', 'docs/REPORT.md',
@@ -110,6 +111,35 @@ test('category index routes all procedures without adding an execution backend',
   assert.match(index, /Source-only and plan-only never execute/);
   assert.match(index, /Real AT always runs serially/);
   assert.match(index, /not new Bug Bash result enums or an installed execution backend/);
+});
+
+test('trial lessons are packaged at execution owners without adding a plugin or changing category ownership', async () => {
+  for (const name of ['a11y-bug-bash', 'a11y-setup', 'a11y-capture', 'a11y-workflow', 'a11y-report']) {
+    for (const language of ['md', 'zh-CN.md']) {
+      const relative = `docs/EXECUTION-LESSONS.${language}`;
+      const source = await text(join(root, relative));
+      const installed = await text(join(root, 'plugins', name, relative));
+      assert.equal(installed, source, `${name} lessons drifted`);
+      for (const match of installed.matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)) {
+        if (!/^https:/.test(match[1])) await access(join(root, 'plugins', name, dirname(relative), match[1]));
+      }
+    }
+  }
+  for (const name of ['a11y-bug-bash', 'a11y-setup', 'a11y-capture', 'a11y-workflow']) {
+    assert.match(await text(join(root, 'src/skills', name, 'SKILL.md')), /docs\/EXECUTION-LESSONS\.md/);
+  }
+  const bash = await text(join(root, 'src/skills/a11y-bug-bash/SKILL.md'));
+  assert.match(bash, /partial report or resource release does not complete/);
+  assert.match(bash, /control host, connection-window\/SSH-origin host/);
+  const workflow = await text(join(root, 'src/skills/a11y-workflow/SKILL.md'));
+  assert.match(workflow, /accepted, queued, delivered, acted-on and artifact-confirmed/);
+  assert.match(workflow, /belong to the caller runtime/);
+  const lessons = await text(join(root, 'docs/EXECUTION-LESSONS.md'));
+  for (const owner of ['a11y-setup', 'a11y-capture', 'a11y-bug-bash', 'a11y-workflow',
+    'a11y-test-categories', 'a11y-report']) assert(lessons.includes(owner));
+  assert.match(lessons, /this document\s+does not install|document does\s+not install/);
+  assert.match(lessons, /plugin prompt cannot repair a dead shared\s+transport/);
+  assert.match(lessons, /initial matrix,[\s\S]*do not establish page\/AT execution/);
 });
 
 test('Voice Access guidance requires actual speech, scoped actions and separate recovery evidence', async () => {

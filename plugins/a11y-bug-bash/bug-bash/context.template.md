@@ -18,6 +18,11 @@ input aid, not an execution receipt. Store completed copies privately.
 - Requested mode: both (default), plan-only, page-only or source-only:
 - Time budget, priorities and privately accessible output location:
 - Missing facts that block a specific check:
+- Original owner goal and round scope; what proves actual goal completion:
+- Control host / connection-window or SSH-origin host / source execution host /
+  product browser and AT host, with caller-required placement and identity evidence:
+- Published / installed / compatible / live-qualified versions and setup handoff:
+- Completion callback, bounded stall watcher and exact pending owner-update IDs:
 
 ## User verification journey
 

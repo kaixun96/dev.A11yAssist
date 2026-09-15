@@ -9,6 +9,10 @@ Read `docs/BUG-BASH.md`, `bug-bash/context.template.md`,
 `bug-bash/coverage.json` and `bug-bash/report.template.md` before starting.
 This is a discovery workflow, not the single-Bug remediation workflow.
 
+Before live work and when a round stalls, read `docs/EXECUTION-LESSONS.md`.
+Use its ownership/trigger table to route setup, browser, supervision and reporting
+issues without inventing a new plugin or moving operational work into static review.
+
 For explicitly configured executable composition, also read `docs/BUG-BASH-RUNTIME.md`.
 Use the package-local `runtime/bug-bash-cli.mjs`, not the remediation create/run
 commands. The guided plan/source path needs no provider configuration and remains
@@ -37,6 +41,12 @@ connection on a Windows DevBox; real AT needs its own qualified connection and
 exclusive desktop ownership. Missing tools are gaps, not a reason to invent tool
 names or receipts. Follow deployment ownership gates before interactive control.
 Do not acquire resources with a dummy Bug or fake capture request.
+
+Record the control host, connection-window/SSH-origin host, source/plugin execution
+host and product browser/AT host independently. Verify the caller's intended
+placement before connecting; remote source execution alone does not establish
+evaluator-side UI. Record published, installed, compatible and live-qualified
+states separately, using the setup module's actual-host handoff.
 
 If the user explicitly requests tooling qualification rather than a product
 round, `docs/BUG-BASH.md` describes the optional bounded
@@ -181,6 +191,13 @@ The round is complete only when in-scope applicable rows have been inspected,
 the report is saved/delivered and owned resources restored; otherwise report
 partial/blocked with exact remaining rows and next actions. `not-applicable`
 requires a feature-specific reason and never inflates executed coverage.
+
+A partial report or resource release does not complete a larger requested live
+goal. Retain separate goal, round, operation and delivery status. Continue safe
+independent work and the next permitted recovery action; record distinct attempts
+and the exact unsatisfied authority when no safe path remains. Do not stop the
+goal's supervision solely because one worker issued a final partial report.
+Respect explicit owner stops and fixed budgets; never silently extend either.
 
 For interruption, preserve scope, row statuses, original resource/operation IDs,
 artifact locations and the exact next safe action. Reconcile unknown effects

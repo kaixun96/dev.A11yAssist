@@ -97,6 +97,8 @@ commit-pinned until separately updated. Read [setup boundaries](SETUP.md).
 
 ## Further contracts
 
+- [Live execution lessons and capability ownership](EXECUTION-LESSONS.md) / [简体中文](EXECUTION-LESSONS.zh-CN.md) (actual-host qualification, recovery, delivery and completion; runtime issues stay with the runtime owner)
+
 - [Bug Bash plugin design](BUG-BASH-ARCHITECTURE.md) / [简体中文](BUG-BASH-ARCHITECTURE.zh-CN.md) (purpose, child capabilities, composition, user inputs and outputs; current versus planned behavior)
 - [Bug Bash execution contracts and qualification](BUG-BASH-EXECUTION-DESIGN.md) / [简体中文](BUG-BASH-EXECUTION-DESIGN.zh-CN.md) (supporting implementation proposal; not installed capability)
 - [Reusable large-plugin design and maintenance method](COMPOSABLE-PLUGIN-DESIGN.md) / [简体中文](COMPOSABLE-PLUGIN-DESIGN.zh-CN.md) (service composition, constrained adaptation and evaluated evolution)

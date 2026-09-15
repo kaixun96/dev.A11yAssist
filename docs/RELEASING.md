@@ -39,6 +39,12 @@ without actually installing packages or changing the CI desktop. This is not
 live Windows driver, authentication, audio or AT qualification. The retained
 SharePoint browser helper is not a generic product browser connector.
 
+Apply the qualification ladder in [execution lessons](EXECUTION-LESSONS.md).
+Record separately whether the release passed static/package checks, mocked
+browser regressions, real evaluator launch/navigation/cleanup, and feature/AT
+coverage. Missing live qualification must remain a release limitation, not a
+claim that every installed deployment is ready.
+
 `a11y-knowledge` includes the ODSP subskill and complete inert reference profile
 by default; this does not add executable tools, MCP, configuration or workflow
 authority. The old ODSP package is compatibility-only and must not be installed

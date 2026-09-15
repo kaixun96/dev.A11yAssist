@@ -7,6 +7,11 @@ explicit server routes, pinned axe-core scanning and actual target-size measurem
 It is not a real-AT adapter or blanket permission to modify production data.
 Read [execution adapters](EXECUTION-ADAPTERS.md) for the exact bounds.
 
+For initialization, navigation or policy failures, use the capture section of
+[execution lessons](EXECUTION-LESSONS.md) / [简体中文](EXECUTION-LESSONS.zh-CN.md).
+Record the last completed boundary and keep infrastructure errors distinct from
+product findings; a packaged fix still needs real installed-runner qualification.
+
 ## Inputs
 
 Select a `browser-scenarios` profile in the optional discovery CLI. The operator

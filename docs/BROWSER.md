@@ -12,6 +12,15 @@ For initialization, navigation or policy failures, use the capture section of
 Record the last completed boundary and keep infrastructure errors distinct from
 product findings; a packaged fix still needs real installed-runner qualification.
 
+The browser context starts offline with service workers blocked. The runner installs
+HTTP/WebSocket routing and response listeners before enabling networking, and requires
+the initial page to be `about:blank`. A restored nonblank page fails closed without
+navigating it or changing profile preferences. Preserve the owned profile and
+reconcile its startup state through the authorized recovery path; do not retry
+without the guard. `networkStartup` records this boundary, not evidence that older
+runs had no unobserved traffic. This context-level guard is not an OS firewall or
+a claim to intercept the approved authentication extension's own transport.
+
 ## Inputs
 
 Select a `browser-scenarios` profile in the optional discovery CLI. The operator

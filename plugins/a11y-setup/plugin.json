@@ -1,6 +1,6 @@
 {
   "name": "a11y-setup",
-  "version": "0.30.0",
+  "version": "0.30.1",
   "description": "Resource-first Windows setup: establish authorized DevBox ownership before preparing selected accessibility tools.",
   "author": {
     "name": "kaixun96"

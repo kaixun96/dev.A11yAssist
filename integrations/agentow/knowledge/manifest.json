@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "kaixun96/dev.A11yAssist",
-  "version": "0.31.1",
+  "version": "0.31.2",
   "scope": "agentow-execution-integration",
   "origin": {
     "repository": "kaixun96/dev.AgentOW",

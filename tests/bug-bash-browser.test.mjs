@@ -188,10 +188,20 @@ for status in (200,304,301,302,303,307,308):
 calls=[]
 def fail(**kwargs):raise RuntimeError("synthetic fulfillment failure")
 response=NS(status=200,headers={},dispose=lambda:calls.append("disposed"))
-try:m.forward_without_redirects(NS(fetch=lambda **kwargs:response,fulfill=fail),500)
+trace={}
+try:m.forward_without_redirects(NS(fetch=lambda **kwargs:response,fulfill=fail),500,trace=trace)
 except RuntimeError:pass
 else:raise AssertionError("Fulfillment failure swallowed")
 assert calls==["disposed"]
+assert trace=={"stage":"fulfill","originStatus":200}
+trace={}
+try:m.forward_without_redirects(NS(fetch=fail),500,trace=trace)
+except RuntimeError:pass
+else:raise AssertionError("Fetch failure swallowed")
+assert trace=={"stage":"fetch"}
+assert m.transport_failure_kind(RuntimeError("Invalid InterceptionId private-query"))=="interception-lifetime"
+assert m.transport_failure_kind(RuntimeError("HPE_INVALID_HEADER_TOKEN private-cookie"))=="http-parser"
+assert m.transport_failure_kind(RuntimeError("private token body"))=="other-transport-error"
 `;
   const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
@@ -722,6 +732,10 @@ for mode in ("good","bad-response","unknown","pending","request-failed","redirec
     if mode == "transport-error":
         assert report["authorizedTransportFailureCount"] == 1 and page.aborted
         assert "private transport details" not in json.dumps(report)
+        assert report["authorizedTransportFailures"][0]["stage"] == "fetch"
+        assert report["authorizedTransportFailures"][0]["url"] == "https://example.org/bootstrap"
+        assert report["authorizedTransportFailures"][0]["failureKind"] == "other-transport-error"
+        assert not report["authorizedTransportFailuresTruncated"]
     if mode == "good":
         assert transaction["state"] == "read-only-confirmed"
         assert report["rows"][0]["status"] == "observed-no-issue"

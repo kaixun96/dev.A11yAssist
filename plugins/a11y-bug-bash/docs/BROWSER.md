@@ -40,6 +40,13 @@ bounded count and query-free destination paths, with no response bodies or
 credentials. A denied redirect invalidates the affected scenario; it is not a
 simulated successful response, a product finding, or permission to replay a write.
 
+Authorized transport failures retain at most 100 query-free endpoint/method/type
+records, the forwarding stage, an available origin status and a heuristic failure
+kind. Raw error messages, request/response headers and bodies are not retained.
+The total counter and truncation flag preserve the diagnostic gap. These records
+distinguish an origin fetch from response replay/cleanup; they do not establish a
+root cause by themselves and never exempt an error from capture gates.
+
 ## Inputs
 
 Select a `browser-scenarios` profile in the optional discovery CLI. The operator

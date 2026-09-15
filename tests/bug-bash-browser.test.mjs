@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory() as folder:
         assert len(calls)==1 and calls[0][1]["headless"] is False
         assert calls[0][1]["service_workers"]=="block"
         assert calls[0][1]["ignore_default_args"]==["--disable-extensions"]
-        assert calls[0][1]["args"]==["--disable-extensions-except="+str(extension),"--load-extension="+str(extension)]
+        assert calls[0][1]["args"]==["--disable-extensions-except="+str(extension.resolve()),"--load-extension="+str(extension.resolve())]
         assert provenance["windowsAccountsExtension"]["verifiedBeforeLaunch"] is True
         (extension/"main.js").write_text("// changed")
         try:m.open_context(playwright,{"viewport":{}},policy)

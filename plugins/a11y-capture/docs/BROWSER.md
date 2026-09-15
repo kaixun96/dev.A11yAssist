@@ -101,6 +101,38 @@ block subsequent rows within the original budget. All ordinary authorized
 non-GET/HEAD requests still require the original effect/reset reconciliation.
 This is neither a blanket POST exception nor an accessibility verdict.
 
+## Scoped page dependencies (policy v4)
+
+Policy v4 keeps earlier defaults and adds explicit operator-owned declarations:
+
+- `queryKeys` permits only named, non-duplicated parameters on one exact endpoint.
+  Query values are not copied into policy or diagnostics. Application query rules
+  are GET/HEAD only; they do not allow a whole origin or arbitrary paths.
+- `frame: true` permits a GET document only in a child frame rooted at the current
+  target page. A supplied `origin` parameter must match that target's origin.
+- `authentication: true` binds an exact endpoint to an already configured trusted
+  authentication origin. It supports normal token refresh from the owned target,
+  not accepting consent, filling passwords, changing accounts or granting scopes.
+  Query-name constraints remain enforced even during authentication.
+- `telemetryBlocks` **denies**, never sends, requests to exact operator-qualified
+  out-of-band telemetry endpoints. Each rule needs `url` without query values,
+  bounded `methods`/`resourceTypes` and a nonempty `qualification`. Document,
+  script, stylesheet and PUT/PATCH/DELETE failures cannot be hidden this way.
+  Defaults contain no such rules.
+
+An intentional telemetry denial is recorded as `expectedTelemetryDenial`; it
+does not by itself fail page readiness. This is a declared privacy/test condition,
+not a general ignore-error switch. Qualify that the endpoint is telemetry rather
+than required feature data, report this condition and inspect the actual UI.
+Page-script errors, unexpected dialogs, other blocked requests, failed functional
+responses, authentication, focus and scenario checks retain their existing gates.
+Do not reclassify product/API failures as telemetry or use this to change expected
+benchmark results. Ordinary mutation/effect/reset rules are unchanged.
+
+Preflight and postcheck diagnostics retain page errors, dialog observations and
+critical request failure counts even when capture is forbidden. Failed response
+diagnostics omit query values. Infrastructure gaps are not product findings.
+
 ## Outputs and completion
 
 Every requested row is retained as a conclusive observation or a precise gap.

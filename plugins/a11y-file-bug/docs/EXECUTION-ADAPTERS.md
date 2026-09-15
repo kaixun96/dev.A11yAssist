@@ -42,6 +42,14 @@ Body/method-override mismatches reject before dispatch. Pending or unverified
 responses remain unresolved; ordinary transaction/reset requirements are unchanged.
 The policy declaration is an operator responsibility, not a caller-supplied verdict.
 
+Policy v4 adds exact-endpoint query-name scopes, owned-target child-frame
+permissions and explicit requests to existing authentication origins. It also
+supports declared telemetry denials: those requests remain blocked and visible
+in diagnostics, while every other failure and UI/JavaScript gate stays active.
+See [scoped page dependencies](BROWSER.md#scoped-page-dependencies-policy-v4).
+These are private operator qualifications, not enabled public defaults or
+permission to relabel a functional dependency as telemetry.
+
 Additional typed assertions:
 
 ```json

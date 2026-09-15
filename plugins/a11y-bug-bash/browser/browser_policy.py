@@ -2,7 +2,7 @@
 from pathlib import Path
 import hashlib
 import re
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 
 
 def https_url(value, origin=False):
@@ -20,9 +20,12 @@ def https_url(value, origin=False):
 def validate(policy):
     common = {"schemaVersion", "allowedTargets", "assetHosts"}
     version = policy.get("schemaVersion") if isinstance(policy, dict) else None
-    if type(version) is not int or version not in {1, 2, 3}:
+    if type(version) is not int or version not in {1, 2, 3, 4}:
         raise ValueError("Invalid protected browser policy version")
-    if set(policy) != (common if version == 1 else common | {"connection", "requests", "scanner"}):
+    fields = common if version == 1 else common | {"connection", "requests", "scanner"}
+    if version == 4:
+        fields.add("telemetryBlocks")
+    if set(policy) != fields:
         raise ValueError("Unexpected protected browser policy fields")
     if (not isinstance(policy["allowedTargets"], list) or len(policy["allowedTargets"]) > 100 or
             not isinstance(policy["assetHosts"], list) or len(policy["assetHosts"]) > 30):
@@ -62,8 +65,10 @@ def validate(policy):
     signatures = set()
     for rule in policy["requests"]:
         fields = {"url", "methods", "resourceTypes"}
-        if version == 3 and isinstance(rule, dict) and "readOnly" in rule:
+        if version >= 3 and isinstance(rule, dict) and "readOnly" in rule:
             fields.add("readOnly")
+        if version == 4 and isinstance(rule, dict):
+            fields.update(key for key in ("queryKeys", "frame", "authentication") if key in rule)
         if not isinstance(rule, dict) or set(rule) != fields:
             raise ValueError("Transaction rules require exact URLs, methods and resource types")
         https_url(rule["url"])
@@ -72,6 +77,27 @@ def validate(policy):
             if (not isinstance(rule[key], list) or not rule[key] or len(rule[key]) != len(set(rule[key])) or
                     any(not isinstance(item, str) or item not in allowed for item in rule[key])):
                 raise ValueError("Unsupported transaction rule")
+        if "queryKeys" in rule:
+            if (urlsplit(rule["url"]).query or not isinstance(rule["queryKeys"], list) or
+                    len(rule["queryKeys"]) > 40 or
+                    any(not isinstance(key, str) or not re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$.-]{0,63}", key)
+                        for key in rule["queryKeys"]) or
+                    len(set(rule["queryKeys"])) != len(rule["queryKeys"]) or "readOnly" in rule):
+                raise ValueError("Query-scoped rules require an exact endpoint and explicit unique parameter names")
+            if not rule.get("authentication") and any(method not in {"GET", "HEAD"} for method in rule["methods"]):
+                raise ValueError("Query-scoped application requests are GET/HEAD only")
+        if "frame" in rule and (rule["frame"] is not True or rule["methods"] != ["GET"] or rule["resourceTypes"] != ["document"]):
+            raise ValueError("Frame permissions require a child-frame GET document")
+        if "authentication" in rule:
+            parsed = urlsplit(rule["url"])
+            if (rule["authentication"] is not True or "readOnly" in rule or
+                    f"{parsed.scheme}://{parsed.netloc}" not in {
+                        origin.rstrip("/") for origin in connection.get("authenticationOrigins", [])} or
+                    any(method not in {"GET", "POST"} for method in rule["methods"])):
+                raise ValueError("Authentication rules must use an existing trusted authentication origin")
+        if ("queryKeys" in rule and "document" in rule["resourceTypes"]
+                and not rule.get("frame") and not rule.get("authentication")):
+            raise ValueError("Query-scoped documents require explicit frame or authentication scope")
         if "readOnly" in rule:
             qualification = rule["readOnly"]
             if (rule["methods"] != ["POST"] or
@@ -85,13 +111,28 @@ def validate(policy):
                         for key in qualification["responseKeys"]) or
                     len(set(qualification["responseKeys"])) != len(qualification["responseKeys"])):
                 raise ValueError("Read-only bootstrap rules require an empty POST body and explicit JSON response keys")
-        if version == 3:
+        if version >= 3:
             for method in rule["methods"]:
                 for kind in rule["resourceTypes"]:
                     signature = (rule["url"], method, kind)
                     if signature in signatures:
                         raise ValueError("Overlapping request permissions are ambiguous")
                     signatures.add(signature)
+    if version == 4:
+        blocks = policy["telemetryBlocks"]
+        if not isinstance(blocks, list) or len(blocks) > 20:
+            raise ValueError("Invalid telemetry denial budget")
+        for rule in blocks:
+            if not isinstance(rule, dict) or set(rule) != {"url", "methods", "resourceTypes", "qualification"}:
+                raise ValueError("Telemetry denials need an exact endpoint and operator qualification")
+            endpoint = https_url(rule["url"])
+            if (endpoint.query or not isinstance(rule["qualification"], str) or
+                    not 1 <= len(rule["qualification"].strip()) <= 1024):
+                raise ValueError("Telemetry denials never store query values or omit qualification")
+            for key, allowed in (("methods", {"GET", "HEAD", "POST"}), ("resourceTypes", {"fetch", "xhr", "ping"})):
+                if (not isinstance(rule[key], list) or not rule[key] or
+                        len(set(rule[key])) != len(rule[key]) or any(item not in allowed for item in rule[key])):
+                    raise ValueError("Telemetry denials cannot hide document, script or other feature failures")
     scanner = policy["scanner"]
     if scanner is not None:
         if (not isinstance(scanner, dict) or set(scanner) != {"path", "sha256"} or
@@ -101,11 +142,30 @@ def validate(policy):
     return policy
 
 
-def request_rule(policy, request):
-    for rule in policy.get("requests", []):
-        if (request.url == rule["url"] and request.method in rule["methods"] and
+def endpoint_matches(url, request):
+    expected, actual = urlsplit(url), urlsplit(request.url)
+    return (expected.scheme, expected.netloc, expected.path) == (actual.scheme, actual.netloc, actual.path)
+
+
+def telemetry_block(policy, request):
+    for rule in policy.get("telemetryBlocks", []):
+        if (endpoint_matches(rule["url"], request) and request.method in rule["methods"] and
                 request.resource_type in rule["resourceTypes"]):
             return rule
+    return None
+
+
+def request_rule(policy, request):
+    for rule in policy.get("requests", []):
+        if request.method not in rule["methods"] or request.resource_type not in rule["resourceTypes"]:
+            continue
+        if "queryKeys" in rule:
+            keys = [key for key, _ in parse_qsl(urlsplit(request.url).query, keep_blank_values=True)]
+            if not endpoint_matches(rule["url"], request) or len(keys) != len(set(keys)) or any(key not in rule["queryKeys"] for key in keys):
+                continue
+        elif request.url != rule["url"]:
+            continue
+        return rule
     return None
 
 
@@ -118,13 +178,44 @@ def read_only_body_matches(rule, request):
     return hashlib.sha256(request.post_data_buffer or b"").hexdigest() == rule["readOnly"]["bodySha256"]
 
 
+def rooted_at_target(request, target):
+    frame = getattr(request, "frame", None)
+    if frame is None:
+        return False
+    for _ in range(16):
+        if frame.parent_frame is None:
+            return frame.url == target
+        frame = frame.parent_frame
+    return False
+
+
 def permits(policy, target, request, authenticating=False):
     parsed = urlsplit(request.url)
     if parsed.scheme != "https" or parsed.username or parsed.password or "\\" in request.url:
         return False
+    if telemetry_block(policy, request):
+        return False
     origin = f"{parsed.scheme}://{parsed.netloc}"
     connection = policy.get("connection", {})
     rule = request_rule(policy, request)
+    constrained = any("queryKeys" in candidate and endpoint_matches(candidate["url"], request)
+                      and request.method in candidate["methods"] and request.resource_type in candidate["resourceTypes"]
+                      for candidate in policy.get("requests", []))
+    if constrained and rule is None:
+        return False
+    if rule and rule.get("frame") and getattr(request, "frame", None) is None:
+        return False
+    if rule and rule.get("frame") and request.frame.parent_frame is None:
+        return False
+    if rule and rule.get("frame"):
+        if not rooted_at_target(request, target):
+            return False
+        origin_value = dict(parse_qsl(parsed.query, keep_blank_values=True)).get("origin")
+        target_url = urlsplit(target)
+        if origin_value is not None and origin_value != f"{target_url.scheme}://{target_url.netloc}":
+            return False
+    if rule and rule.get("authentication") and not authenticating and not rooted_at_target(request, target):
+        return False
     if rule and "readOnly" in rule:
         return read_only_body_matches(rule, request)
     if (authenticating and connection.get("mode") == "persistent" and

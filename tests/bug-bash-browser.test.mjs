@@ -158,7 +158,9 @@ class Target:
 class BootstrapPage(Page):
     def __init__(self, mode): super().__init__(); self.mode = mode
     def goto(self, url, **kwargs):
-        incoming = Request("https://example.org/bootstrap")
+        incoming = Request("https://telemetry.example.org/collect" if self.mode.startswith("telemetry") else
+                           "https://example.org/required" if self.mode == "unexpected-network" else
+                           "https://example.org/bootstrap")
         response = types.SimpleNamespace(request=incoming,status=200,
             headers={"content-type":"application/json"},
             body=lambda:json.dumps({"wrong":{}} if self.mode == "bad-response" else {"navigation":{}}).encode())
@@ -169,21 +171,33 @@ class BootstrapPage(Page):
             elif self.mode != "pending":
                 self.listeners["response"](response)
                 self.listeners["requestfinished"](incoming)
-        route = types.SimpleNamespace(request=incoming,continue_=send,abort=lambda:None)
+        self.aborted = False
+        route = types.SimpleNamespace(request=incoming,continue_=send,
+                                      abort=lambda:setattr(self,"aborted",True))
         self.context.router(route)
+        if self.mode == "telemetry-page-error":
+            self.listeners["pageerror"]("unit unhandled error")
+        if self.mode == "telemetry-http-error":
+            self.listeners["response"](types.SimpleNamespace(status=503,url="https://example.org/required?secret=redact",
+                request=types.SimpleNamespace(resource_type="fetch")))
         return types.SimpleNamespace(status=200)
     def locator(self, selector): return Target()
     def screenshot(self, path): Path(path).write_bytes(b"UNIT IMAGE; not page evidence")
     def wait_for_timeout(self, milliseconds): time.sleep(milliseconds / 1000)
 class BootstrapContext(Context):
     def route(self, pattern, handler): self.router = handler
-for mode in ("good","bad-response","unknown","pending","request-failed"):
+for mode in ("good","bad-response","unknown","pending","request-failed",
+             "telemetry","telemetry-page-error","telemetry-http-error","unexpected-network"):
     page = BootstrapPage(mode); context = BootstrapContext(page); browser = Browser()
     permission = {"url":"https://example.org/bootstrap","methods":["POST"],"resourceTypes":["fetch"]}
     if mode != "unknown":
         permission["readOnly"] = {"bodySha256":hashlib.sha256(b"").hexdigest(),"responseKeys":["navigation"]}
     policy = {"schemaVersion":3,"allowedTargets":[request["target"]],"assetHosts":[],
               "connection":{"mode":"ephemeral"},"requests":[permission],"scanner":None}
+    if mode.startswith("telemetry") or mode == "unexpected-network":
+        policy.update(schemaVersion=4,requests=[],telemetryBlocks=[{
+            "url":"https://telemetry.example.org/collect","methods":["POST"],"resourceTypes":["fetch"],
+            "qualification":"Synthetic out-of-band test channel; not UI data"}])
     scenario = copy.deepcopy(request)
     if mode == "pending": scenario["budgetSeconds"] = 1
     with tempfile.TemporaryDirectory() as output, \\
@@ -194,6 +208,16 @@ for mode in ("good","bad-response","unknown","pending","request-failed"):
          patch.object(m.policy_module, "open_context", return_value=(browser,context)):
         report = m.run(scenario, output, policy)
     assert report["ownedBrowserClosed"] and page.removed
+    if mode.startswith("telemetry") or mode == "unexpected-network":
+        assert page.aborted and not report["transactions"]
+        assert report["blockedRequests"][0]["expectedTelemetryDenial"] == mode.startswith("telemetry")
+        assert report["rows"][0]["status"] == ("observed-no-issue" if mode == "telemetry" else "inconclusive")
+        if mode == "telemetry-page-error":
+            assert report["rows"][0]["pageErrors"] == ["unit unhandled error"]
+        if mode == "telemetry-http-error":
+            assert report["failedResponses"][0]["status"] == 503
+            assert report["failedResponses"][0]["url"] == "https://example.org/required"
+        continue
     transaction = report["transactions"][0]
     if mode == "good":
         assert transaction["state"] == "read-only-confirmed"
@@ -205,6 +229,75 @@ for mode in ("good","bad-response","unknown","pending","request-failed"):
         assert report["rows"][0]["status"] == "inconclusive"
         assert report["unresolvedTransaction"]
 print("Mocked event mapping only; no browser or AT execution")
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /no browser or AT execution/);
+});
+
+test('v4 query/frame/auth scopes stay bounded and telemetry denials never grant network access', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const script = `
+import copy, importlib.util, pathlib, sys
+from types import SimpleNamespace as NS
+spec=importlib.util.spec_from_file_location("runner",sys.argv[1])
+m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+target="https://example.org/page"
+base={"schemaVersion":4,"allowedTargets":[target],"assetHosts":[],
+      "connection":{"mode":"persistent","userDataDirectory":str(pathlib.Path.cwd()),
+                    "authenticationOrigins":["https://login.example.org/"],"timeoutSeconds":30,"ready":{"css":"#main"}},
+      "requests":[
+        {"url":"https://example.org/config","methods":["GET"],"resourceTypes":["fetch"],"queryKeys":["locale","v"]},
+        {"url":"https://broker.example.org/frame","methods":["GET"],"resourceTypes":["document"],
+         "queryKeys":["origin","state"],"frame":True},
+        {"url":"https://login.example.org/token","methods":["POST"],"resourceTypes":["fetch"],
+         "queryKeys":["request-id"],"authentication":True}],
+      "telemetryBlocks":[{"url":"https://telemetry.example.org/collect","methods":["POST"],"resourceTypes":["xhr"],
+                         "qualification":"Synthetic telemetry transport, not feature data"}],"scanner":None}
+m.validate_policy(base)
+root=NS(url=target,parent_frame=None)
+request=NS(url="https://example.org/config?locale=en-US&v=1",method="GET",resource_type="fetch",frame=root)
+assert m.policy_module.permits(base,target,request)
+for url in ("https://example.org/config?locale=en-US&extra=1",
+            "https://example.org/config?locale=en&locale=fr",
+            "https://other.example.org/config?locale=en"):
+    request.url=url
+    assert not m.policy_module.permits(base,target,request)
+request.url="https://broker.example.org/frame?origin=https%3A%2F%2Fexample.org&state=opaque"
+request.resource_type="document";request.frame=NS(url="about:blank",parent_frame=root)
+assert m.policy_module.permits(base,target,request)
+request.frame=root
+assert not m.policy_module.permits(base,target,request)
+request.frame=NS(url="about:blank",parent_frame=NS(url="https://example.org/other",parent_frame=None))
+assert not m.policy_module.permits(base,target,request)
+request.frame=NS(url="about:blank",parent_frame=root)
+request.url="https://broker.example.org/frame?origin=https%3A%2F%2Fother.example.org"
+assert not m.policy_module.permits(base,target,request)
+request.url="https://login.example.org/token?request-id=opaque";request.method="POST";request.resource_type="fetch";request.frame=root
+assert m.policy_module.permits(base,target,request)
+request.url += "&extra=1"
+assert not m.policy_module.permits(base,target,request,authenticating=True)
+request.url="https://login.example.org/token?request-id=opaque";request.frame=None
+assert not m.policy_module.permits(base,target,request)
+request.url="https://telemetry.example.org/collect?secret=not-recorded";request.resource_type="xhr"
+assert m.policy_module.telemetry_block(base,request)
+assert not m.policy_module.permits(base,target,request,authenticating=True)
+variants=[]
+bad=copy.deepcopy(base);bad["schemaVersion"]=3;variants.append(bad)
+bad=copy.deepcopy(base);bad["requests"][0]["methods"]=["POST"];variants.append(bad)
+bad=copy.deepcopy(base);bad["requests"][0]["url"]+="?locale=en";variants.append(bad)
+bad=copy.deepcopy(base);bad["requests"][0]["queryKeys"]=["v","v"];variants.append(bad)
+bad=copy.deepcopy(base);bad["requests"][1]["frame"]=False;variants.append(bad)
+bad=copy.deepcopy(base);bad["requests"][2]["url"]="https://untrusted.example.org/token";variants.append(bad)
+bad=copy.deepcopy(base);bad["telemetryBlocks"][0]["resourceTypes"]=["script"];variants.append(bad)
+bad=copy.deepcopy(base);bad["telemetryBlocks"][0]["methods"]=["DELETE"];variants.append(bad)
+bad=copy.deepcopy(base);bad["telemetryBlocks"][0]["qualification"]="";variants.append(bad)
+for policy in variants:
+    try:m.validate_policy(policy)
+    except ValueError:pass
+    else:raise AssertionError("Unbounded network scope accepted")
+assert "playwright" not in sys.modules
+print("Scoped policy only; no browser or AT execution")
 `;
   const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);

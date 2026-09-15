@@ -9,6 +9,13 @@ context.evaluator; AFTER also requires context.head. Supply
 context.beforeReceiptSha256 when the caller requests a bound comparison.
 The input carries the real scenario/request understood by the capture connection.
 
+For startup, navigation or cleanup failures, read `docs/EXECUTION-LESSONS.md`,
+especially "Capture: distinguish startup, navigation and product evidence".
+Record the last completed execution boundary. A listener-registration failure
+before target navigation is infrastructure failure, not a tested product case.
+Qualify the real installed browser API and cleanup after a reviewed correction;
+preserve the original request and version rather than silently replaying it.
+
 For raw native observations, read `docs/EXECUTION-ADAPTERS.md` and use the built-in
 `windows-at` connection with `observe-at`. It supports actual NVDA Speech Viewer
 deltas, Narrator ETW/audio and Voice Access number-overlay command/UIA/audio.

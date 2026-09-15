@@ -15,6 +15,11 @@ bundled personal-browser helper is `integrations/agentow/runtime/personal-evalua
 These are the same authored implementations used by existing AgentOW exports,
 not commands to execute from the historical knowledge archive.
 
+For live execution or a stalled prerequisite, read `docs/EXECUTION-LESSONS.md`,
+especially "Setup: qualify the whole path". Record the host-role map and the
+published/installed/compatible/launch/target/evidence readiness ladder in the
+setup report. This is a procedural gate, not a new tool or automatic qualification.
+
 ## 1. Scope and authority
 
 Identify the actual execution host, requested scenarios, existing tools, private
@@ -83,7 +88,10 @@ elevate, transfer the Console session or reboot.
 
 In prepare mode, record explicit authorization for the actual host, selected
 packages, downloads/package agreements and configuration changes first. Existing
-authorization need not be requested twice. Use `InstallSafeDependencies` with
+authorization need not be requested twice: inspect applicable standing/task
+authority before labeling configuration or protected deployment unauthorized.
+Record the exact missing operation/host/scope, not a blanket request for consent.
+Use `InstallSafeDependencies` with
 an explicit `-Dependency` array derived from the chosen profiles, never its
 legacy all-dependencies default. The script adds required Python/Playwright
 dependencies, skips installed imports/binaries, and propagates installer errors.
@@ -100,7 +108,10 @@ For the personal-browser route, follow the dedicated helper installation and
 headed authentication procedure in `docs/SETUP.md`. Reuse a compatible owned
 profile; never copy cookies, start Edge against a Chromium profile or overwrite
 another deployment's helper/profile. Keep owner email process-local. Password,
-Windows Hello, MFA, certificates and consent require the owner. A headless login
+Windows Hello, MFA and unavailable certificate authority require the owner.
+An application confirmation may be clicked only with explicit applicable prior
+consent and verified origin/account/app/scopes; absent that consent, ask the owner.
+Record actual redirect/result, not accepted notification. A headless login
 result alone is not that blocker; use approved visible silent renewal first.
 
 VB-CABLE staging/driver installation, Voice Access first-run consent, elevated
@@ -129,6 +140,12 @@ real named/versioned AT output for AT work; scoped harmless audio recognition
 for Voice Access. `ValidateHost` is an optional Console-only desktop-frame/tone
 diagnostic, not product evidence or long-running screenshot automation. Read its
 privacy and ownership requirements before use. No screenshot proves speech.
+
+Before handing off live readiness, require the same interpreter/import mode and
+complete deployed dependency closure, actual browser callback initialization,
+observed target/policy compatibility and owned cleanup. Record each ladder stage
+separately; do not promote imports, mocks or request-shape validation into a live
+qualification. A failed stage gets its exact error and changed recovery hypothesis.
 
 Use `setup/report.template.md`. Each requested capability is `ready`,
 `missing-installation`, `missing-configuration`, `needs-authorization`,

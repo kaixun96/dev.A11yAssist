@@ -88,6 +88,9 @@ async function bundleSetup(base, includeSkill = true) {
   await bundleRuntime(base);
 }
 async function bundleRuntime(base) {
+  for (const file of ['EXECUTION-LESSONS.md', 'EXECUTION-LESSONS.zh-CN.md']) {
+    await emit(`${base}/docs/${file}`, await text(join(root, 'docs', file)));
+  }
   for (const dir of ['runtime', 'contracts', 'adapters', 'native']) {
     for (const file of await readdir(join(source, dir))) {
       await emit(`${base}/${dir}/${file}`, await text(join(source, dir, file)));

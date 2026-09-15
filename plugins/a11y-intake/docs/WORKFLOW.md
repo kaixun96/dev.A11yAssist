@@ -87,6 +87,12 @@ Do not report completed until cleanup gates and actual summary delivery pass.
 A worker reply, running process, prepared candidate or accepted trigger alone is
 not proof of task progress or execution recovery.
 
+Follow [execution lessons](EXECUTION-LESSONS.md) /
+[简体中文](EXECUTION-LESSONS.zh-CN.md) for delivery-state reconciliation, actual
+goal versus round completion, and caller-runtime ownership. Nonpass remediation
+runs still obey their cleanup/stop gates; an unfinished higher-level goal does
+not grant permission to advance failed evidence or rewrite a closed run.
+
 ## Compatibility and rollout
 
 Existing runs are NOT migrated automatically. Existing script providers

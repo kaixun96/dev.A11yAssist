@@ -1,7 +1,12 @@
 # Hypothetical case: duplicate result announcement
 
 Status: draft. Owner: unassigned. Case type: hypothetical; no observed evidence.
-Source IDs: `sharepoint-utilities`, `spds-docs`, `sharepoint-support`.
+Source ID: `agentow-accessibility`.
+
+Historical basis: AgentOW revision `7896845e51d75b0b9d632a2fd61876bc2f556ea5`,
+[MessageBar and alert ownership, lines 112–219](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L112-L219)
+and [distinct collection results, lines 220–294](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L294).
+These are not current-approved component or utility contracts.
 
 ## Symptom and context needed
 
@@ -30,6 +35,21 @@ Use `common.analysis.root-cause` and
 `common.implementation.component-contract` to locate the first duplicated
 responsibility, not merely the last place where text appears.
 
+## Concrete historical integration cases
+
+| Hypothetical implementation | Source-supported correction, conditional on installed composition |
+| --- | --- |
+| SPDS-backed V9 `MessageBar` has its intent under an application `AriaLiveAnnouncer`, while `useScreenReaderAlert` publishes the same save error | Preserve the component-owned path; remove the duplicate caller event, not the MessageBar semantics. Use `fluent.v9.component-contract` for presets and prerequisites. |
+| V9 MessageBar has no required ancestor announcer; caller adds an alert wrapper | Repair the owning application provider prerequisite, after tracing the host root. A wrapper role or feature-local second announcer is not the documented replacement. |
+| A correctly configured V9 MessageBar and caller `useAnnounce` both announce the error | Keep the intent-owned announcement; reserve manual announcement for distinct uncovered transitions. |
+| Default V8 MessageBar plus caller `Announced`, shared alert or role wrapper | Use `fluent.v8.component-contract`: built-in feedback owns that message. First inspect any `delayedRender`, role, shim, portal or composition override that may change the actual behavior. |
+| An error MessageBar was shown, then retry succeeds or load-more appends rows | Do not delete the distinct localized success/loaded/append announcement merely because one component announces errors. |
+| Two separate saves finish with identical text | They are distinct legitimate result events. The shared component's supported `indicator` mechanism permits repetition; global duplicate-text filtering loses the second outcome. |
+
+The table supplies product-specific positive/negative reasoning, not evidence
+that any actual installed stack produced duplicate speech. Keep V8 and V9
+contracts separate and consult [SPDS delegation](../spds/component-contract.md).
+
 ## Wrong-but-plausible fixes
 
 - Hide all result text from AT, losing the required feedback or accessible name.
@@ -43,7 +63,8 @@ responsibility, not merely the last place where text appears.
 If evidence confirms that the documented framework path fully owns this result,
 remove the redundant caller path at the integration boundary. If the host owns
 feedback instead, correct event delivery or lifecycle there while preserving the
-required message. No API names or actual source changes are prescribed here.
+required message. The historical cases name candidate APIs, but do not establish
+an actual source defect or prescribe changes to an uninspected installed host.
 Assess other callers, multiple instances, repeated saves, failures, cancellation,
 navigation and unmount/remount before generalizing the correction.
 

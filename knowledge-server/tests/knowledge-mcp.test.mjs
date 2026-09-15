@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createKnowledgeHandler } from '../src/runtime/knowledge-mcp.mjs';
 import { createCommonReferenceFixture } from './helpers/common-reference.mjs';
+import { assertCurrentEntries, currentPackages } from './helpers/current-packages.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const repository = fileURLToPath(new URL('../../', import.meta.url));
@@ -64,7 +65,7 @@ test('isolated standalone CLI exposes exactly three lazy read-only knowledge too
     const [listed] = run([call(serverName, 'list')], { A11Y_ASSIST_KB_ROOT: kbRoot });
     const snapshot = content(listed.result);
     assert.equal(snapshot.origin, 'configured');
-    assert.equal(snapshot.entries.length, 32);
+    assertCurrentEntries(snapshot.entries);
     assert.deepEqual(Object.keys(snapshot.packages), ['common', 'fluent', 'sharepoint']);
     await assert.rejects(readdir(cache), { code: 'ENOENT' });
   });
@@ -88,7 +89,7 @@ test('runtime handler is import-only and defaults to the standalone tool prefix'
   assert.equal(child.stderr, '');
 });
 
-test('standalone server cold-bootstraps all 32 entries then reads Common and ODSP offline across processes', async () => {
+test('standalone server cold-bootstraps all declared entries then reads Common and ODSP offline across processes', async () => {
   const name = serverName;
   await fixture(async ({ dir, reference, artifact, run }) => {
     // Exercise normal Windows cache defaults, not an A11y KB root/cache setting.
@@ -97,7 +98,7 @@ test('standalone server cold-bootstraps all 32 entries then reads Common and ODS
     const [first] = run([call(name, 'list')], { ...environment, TEST_KB_URL: reference.distribution.url, TEST_KB_ARTIFACT: artifact });
     const listed = content(first.result);
     assert.equal(listed.origin, 'download');
-    assert.equal(listed.entries.length, 32);
+    assertCurrentEntries(listed.entries);
     assert.deepEqual(Object.keys(listed.packages), ['common', 'fluent', 'sharepoint']);
     assert.equal(listed.contentApprovalVerified, false);
     assert.equal(listed.independentBehaviorVerified, false);
@@ -116,7 +117,10 @@ test('standalone server cold-bootstraps all 32 entries then reads Common and ODS
     assert.equal(read.content, (await readFile(join(kbRoot, 'packages/common/analysis/root-cause.md'), 'utf8')).replaceAll('\r\n', '\n'));
     assert.equal(read.citation, `kb:common.analysis.root-cause@${reference.packages.common}`);
     assert.match(read.sha256, /^[a-f0-9]{64}$/);
-    assert.deepEqual(read.sources, []); // Authored analysis has no declared external authority.
+    const common = currentPackages.find(pkg => pkg.id === 'common');
+    const analysis = common.entries.find(entry => entry.id === read.entry.id);
+    assert.deepEqual(read.sources, common.sources.filter(source => analysis.sourceIds.includes(source.id)));
+    assert(read.sources.every(source => source.authority === 'historical-reference' && source.status === 'historical'));
     const foundations = content(replies[2].result);
     assert.deepEqual(foundations.sources.map(source => source.id), ['wcag', 'apg']);
     assert(foundations.sources.every(source => foundations.entry.sourceIds.includes(source.id)));
@@ -138,8 +142,8 @@ test('standalone server cold-bootstraps all 32 entries then reads Common and ODS
     const distribution = await load(artifact);
     assert.equal(odsp.sha256, distribution.manifest.hashes[`packages/sharepoint/${entry.path}`]);
     assert.deepEqual(odsp.sources, packageDescriptor.sources.filter(source => entry.sourceIds.includes(source.id)));
-    assert.deepEqual(odsp.sources.map(source => source.id), ['sharepoint-utilities']);
-    assert(odsp.sources.every(source => source.status === 'connection-pending' && source.locator === null && source.revision === null));
+    assert.deepEqual(odsp.sources.map(source => source.id), ['agentow-accessibility']);
+    assert(odsp.sources.every(source => source.authority === 'historical-reference' && source.status === 'historical'));
     assert.equal(odsp.contentApprovalVerified, false);
     assert.equal(odsp.independentBehaviorVerified, false);
   });
@@ -211,7 +215,7 @@ test('synthetic Common-only MCP consumer excludes Fluent and SharePoint IDs with
     const listed = content(await handler(call(name, 'list')));
     assert.deepEqual(Object.keys(listed.packages), ['common']);
     assert.deepEqual(Object.keys(listed.sources), ['common']);
-    assert.equal(listed.entries.length, 20);
+    assertCurrentEntries(listed.entries, ['common']);
     assert(listed.entries.every(entry => entry.id.startsWith('common.')));
     for (const id of ['fluent.overview', 'sharepoint.profile.support-policy']) {
       const result = await handler(call(name, 'read', { id }));

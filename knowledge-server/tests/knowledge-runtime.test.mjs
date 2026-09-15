@@ -7,6 +7,7 @@ import { isAbsolute, join, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findDevelopmentKbRoot, loadKnowledgeSnapshot, validateKnowledgeReference } from '../src/runtime/knowledge.mjs';
 import { createCommonReferenceFixture } from './helpers/common-reference.mjs';
+import { assertCurrentEntries } from './helpers/current-packages.mjs';
 
 const serverRoot = fileURLToPath(new URL('../', import.meta.url));
 const repository = fileURLToPath(new URL('../../', import.meta.url));
@@ -125,7 +126,7 @@ test('single isolated server cold-downloads pinned bytes, then revalidates offli
   assert.equal(downloaded.origin, 'download');
   assertSnapshot(downloaded, f.reference, f.bytes);
   assert.deepEqual(Object.keys(downloaded.reference.packages), ['common', 'fluent', 'sharepoint']);
-  assert.equal(downloaded.entries.length, 32);
+  assertCurrentEntries(downloaded.entries);
   assert.equal(http.calls.length, 1);
   assert.deepEqual(await directoryEntries(cache), [`${f.reference.manifestSha256}.json`]);
   assert.deepEqual(await readFile(join(cache, `${f.reference.manifestSha256}.json`)), f.bytes);
@@ -164,7 +165,7 @@ test('independent server installs share cache while a synthetic Common consumer 
   assert.equal(selected.origin, 'download');
   assertSnapshot(selected, commonReference, commonBytes);
   assert.deepEqual(Object.keys(selected.manifest.packages), ['common']);
-  assert.equal(selected.entries.length, 20);
+  assertCurrentEntries(selected.entries, ['common']);
   assert(selected.entries.every(entry => entry.id.startsWith('common.')));
   assert([...selected.files.keys()].every(path => !/^packages\/(fluent|sharepoint)\//.test(path)));
   assert.deepEqual(await directoryEntries(f.cache), [

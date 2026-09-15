@@ -35,3 +35,38 @@ Basis: [component semantics](../topics/component-accessibility.md),
 [forms and content](../topics/forms-and-content.md),
 [dynamic content](../topics/dynamic-content.md), and
 [visual accessibility](../topics/visual-accessibility.md).
+
+## Concrete acceptance worksheet
+
+**Historical draft extension.** Describe outcomes, not just component names or
+screenshots. For each changed region, specify its semantic/interaction purpose,
+state owner, contextual name, keyboard model, focus destination and feedback
+owner. An extracted component is useful when it owns an independently testable
+contract; arbitrary file splitting or a pass-through wrapper is not a design
+improvement by itself.
+
+| Design question | Positive acceptance example | Negative / unresolved design |
+|---|---|---|
+| Group and structure | Delivery options have a named group; a section title has a justified heading relationship | Only visual proximity implies grouping; font size determines heading level |
+| Form failure | Submit failure keeps entered data, identifies invalid fields and makes correction/retry reachable | Only a red border or transient toast identifies the problem |
+| Collection lifecycle | Each reachable state in the collection matrix specifies visible, programmatic and focus outcomes | Loading/empty/error/end/no-change designs are omitted because only the populated mockup exists |
+| Disappearing controls | After the final item is deselected, row focus stays; a focused disappearing command has a persistent fallback | “Restore focus” with no target, owner or timing |
+| Truncation and direction | Full text remains available to keyboard/touch/AT; translated/RTL layouts preserve reading and tab order | Hover alone reveals a clipped label; a mirrored layout silently reverses meaning |
+| Visual states | Focus, selected/error, themes, forced colors and reflow are specified with criterion exceptions | A token choice or a single default-state screenshot is treated as proof of contrast |
+| Custom interaction | A documented primitive gap is paired with the complete semantics/input/state/focus contract and tests | A custom clickable container gets only `role="button"` |
+| Async/lazy region | Loading/error/retry and eventual focus entry are part of the same workflow contract | A lazily loaded panel has no accessible loading/failure or cancellation plan |
+
+Use [component cases](../topics/component-accessibility.md),
+[forms/localization](../topics/forms-and-content.md),
+[collection outcomes](../topics/dynamic-content.md),
+[focus outcomes](../topics/keyboard-focus.md), and
+[visual/RTL cases](../topics/visual-accessibility.md) as the detailed source of
+those outcomes. Acceptance examples are proposed tests, not invented evidence or
+approval. Resolve contradictions against actual source and component contracts;
+a checklist stating “reviewed” cannot fill a missing design.
+
+Historical basis: [cross-cutting checks](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L59-L111),
+[async/focus matrices](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L343),
+[localization/RTL checklist](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L1-L19),
+[semantic and async decomposition](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/ux-architecture-and-bundle-boundaries.md#L5-L36),
+and [self-attested checklist miss](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md#L49-L67).

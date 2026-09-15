@@ -37,3 +37,42 @@ Basis: [foundations](../topics/foundations.md),
 [component semantics](../topics/component-accessibility.md),
 [forms and content](../topics/forms-and-content.md), and
 [visual accessibility](../topics/visual-accessibility.md).
+
+## Review absence, rendered impact and conflicting evidence
+
+**Pinned historical draft lessons.** Begin from changed user-visible behavior,
+not an `aria-*` search alone. A new asynchronous list with no accessibility code
+still needs the [complete outcome matrix](../topics/dynamic-content.md); a style
+change can affect focus/contrast/reflow without changing semantics in JSX.
+Record not-applicable only with a reason the change cannot affect interaction,
+assistive output or accessibility-relevant rendering. Decorative-only changes
+can be outside a particular check; arbitrary spacing values are not automatic
+standards violations.
+
+For each reachable transition, identify visible feedback, the established
+programmatic owner and the pre/post focus plan. Inspect first load, empty/error,
+retry, repeated refresh/no-change, append/end, selection and background completion.
+Do not infer that a spinner, busy flag, count variable or DOM reorder announces.
+Conversely, inspect provider/component behavior before flagging absent local ARIA.
+
+| Available fact | Sound conclusion | Unsound conclusion |
+|---|---|---|
+| Source shows an icon-only action with no name path and all wrappers are known | Source-supported naming gap in that usage | Every similarly named component in the repository is broken |
+| A wrapper supplies native semantics and valid state | No extra caller ARIA needed for that contract | Add a duplicate role because the usage lacks `aria-*` |
+| Localized message resource and call exist | Source provides a feedback path; runtime delivery/repetition needs observation | The screen reader spoke it exactly once |
+| A test only checks that a row exists after deletion | Rendering existence checked; focus retention not established | Keyboard continuity passes |
+| Checklist says “reviewed” but current import/provider/source contradicts it | Investigate the contradiction; a self-attested report is not independent evidence | Checklist completion overrides the source |
+| A thread is marked resolved or promises a follow-up | Inspect the current implementation for the claimed fix | Resolution status proves the current source is accessible |
+
+An automated static/diff audit can flag known markup, ARIA, keyboard or styling
+patterns. Its clean report cannot establish the complete runtime tree, computed
+names, focus lifecycle or announcements. Missing source, unknown provider
+ancestry and unavailable versions are context-needed, not pass and not a reason
+to invent an API. See [dynamic evidence](dynamic.md) and [test limits](testing.md).
+
+Historical basis: [review scope](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L19),
+[async outcomes](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L311),
+[audit tools and checklist](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L414-L465),
+and [contradictory completed checklist miss](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/docs/review-misses.md#L49-L67).
+Repository report fields, severities and heading evidence filenames are excluded
+from these cross-product rules; no runtime audit is executed by reading them.

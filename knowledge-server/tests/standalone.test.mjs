@@ -7,10 +7,17 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { buildKnowledge } from '../tools/build.mjs';
 import { loadKnowledgeSnapshot } from '../src/runtime/knowledge.mjs';
+import { loadKnowledgeBase } from '../tools/knowledge-base.mjs';
+import { createKnowledgeReference } from '../tools/knowledge-reference.mjs';
+import { assertCurrentEntries, expectedEntries } from './helpers/current-packages.mjs';
 
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 const server = join(repository, 'knowledge-server');
 const json = value => JSON.stringify(value, null, 2) + '\n';
+async function currentPins(root) {
+  const kb = await loadKnowledgeBase(join(root, 'accessibility-kb'));
+  return new Set([['common'], ['sharepoint']].map(selected => createKnowledgeReference(kb, selected).manifestSha256));
+}
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'standalone-kb-build-'));
   t.after(() => rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 }));
@@ -27,7 +34,7 @@ test('independent build never changes existing plugin, source or root metadata',
     await mkdir(dirname(join(root, path)), { recursive: true });
     await writeFile(join(root, path), `untouched:${path}`);
   }
-  assert.deepEqual(await buildKnowledge(root), { entries: 32, retainedArtifacts: 2 });
+  assert.deepEqual(await buildKnowledge(root), { entries: expectedEntries().length, retainedArtifacts: (await currentPins(root)).size });
   await buildKnowledge(root, { check: true });
   for (const path of preserved) assert.equal(await readFile(join(root, path), 'utf8'), `untouched:${path}`);
 });
@@ -44,7 +51,10 @@ test('new KB pins retain old artifact bytes and old consumers can cold-load them
   await writeFile(join(consumer, 'references/knowledge.json'), json(oldReference));
   const topic = join(root, 'accessibility-kb/packages/common/topics/foundations.md');
   await writeFile(topic, await readFile(topic, 'utf8') + '\nSynthetic reviewed-next-snapshot fixture.\n');
-  assert.equal((await buildKnowledge(root)).retainedArtifacts, 4);
+  const expectedPins = new Set([...oldArtifacts.keys()].map(path => path.slice(0, -5)).concat([...(await currentPins(root))]));
+  assert.equal((await buildKnowledge(root)).retainedArtifacts, expectedPins.size);
+  assert.deepEqual((await readdir(join(root, 'knowledge-distribution'))).sort(),
+    ['index.json', ...[...expectedPins].map(pin => `${pin}.json`)].sort());
   await buildKnowledge(root, { check: true });
   for (const [path, bytes] of oldArtifacts) assert.deepEqual(await readFile(join(root, 'knowledge-distribution', path)), bytes);
   const loaded = await loadKnowledgeSnapshot(consumer, {
@@ -55,7 +65,7 @@ test('new KB pins retain old artifact bytes and old consumers can cold-load them
     }
   });
   assert.equal(loaded.origin, 'download');
-  assert.equal(loaded.entries.length, 32);
+  assertCurrentEntries(loaded.entries);
   assert.equal(loaded.reference.manifestSha256, oldReference.manifestSha256);
 });
 

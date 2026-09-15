@@ -3,16 +3,17 @@
 [English](TECH-DESIGN.md) | 简体中文
 
 来源覆盖情况见 [AgentOW 迁移审查](AGENTOW-MIGRATION-AUDIT.zh-CN.md)。
-原归档保全不等于已完整迁移到新 KB。
+AgentOW 固定提交 `7896845e51d75b0b9d632a2fd61876bc2f556ea5` 中经审计的
+可复用无障碍规则已迁入 authored KB。
 
 本文面向内容贡献者、组件/产品专家、KB reviewer 和服务维护者。
-描述当前 schema v1、独立服务 0.1.0 的实现与扩展约束，不把计划中的能力当作已交付功能。
+描述当前 schema v1、内容包 0.1.1、独立服务 0.1.0，不把计划中的能力当作已交付功能。
 安装和宿主注册见 [服务 README](README.md)；内容审核政策见
 [贡献规范](../accessibility-kb/governance/contribution.md)。
 
 **目标架构补充：一个 KB 入口同时提供本地知识与 MAS 权威规则能力。**
 第 1–10 节描述已实现的本地快照服务；第 11 节定义同事后续要实现的 MAS 接入。
-本次只更新设计，没有增加 MAS 连接、工具、配置解析或运行时闸门。
+MAS 补充部分仅为设计，MAS 连接、工具、配置解析和运行时闸门尚未实现。
 
 ## 1. 目标与边界
 
@@ -30,8 +31,10 @@ KB 将跨产品知识、框架契约和产品约束组织为可引用、可审�
 `procedure` 是推理和计划指导，不是可自动执行的 workflow。
 
 **当前不提供：**官方来源自动同步、网页爬取、语义/向量检索、按任务自动挑选包、
-内容自动审批、插件自动接入或已量化的 agent 效果保证。32 条初始内容均为 draft；
-Common 20、Fluent 4、SharePoint 8 是当前种子集合，不是长期数量上限或完整性承诺。
+内容自动审批、插件自动接入或已量化的 agent 效果保证。当前 35 条内容（Common 20、
+Fluent 4、SharePoint 11）包含具体迁移规则、API 责任、例外与正反例，状态仍为 draft：
+固定历史来源证明迁移依据，不等于官方批准或当前安装版本的资格验证。迁移范围是经审计的
+可复用规则，不是旧仓库的每个字、可执行程序或其引用的外部权威材料。
 
 **后续目标：**MAS MCP 客户端/适配器随独立 KB 服务提供，宿主只注册一个 KB MCP；
 不用让每个宿主分别编排 KB 和 MAS。MAS 连接由 KB 服务内部管理，凭据仍由运行环境
@@ -102,7 +105,7 @@ flowchart TD
 
 箭头表示“依赖”。`common` 不允许依赖任何产品包；不能为了引用一个产品案例，
 把整个产品包反向拉入 Common。Fluent 不应包含 SharePoint 专属业务前提。
-依赖使用精确版本，例如 `0.1.0`，不支持 `^0.1.0`、`latest` 或版本范围。
+依赖使用精确版本，例如 `0.1.1`，不支持 `^0.1.1`、`latest` 或版本范围。
 
 ### 3.1 内容放置速查表
 
@@ -127,19 +130,22 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 通过 `relations` 关联，不复制三份通用规则。来源相互冲突时记录上下文缺口，
 由有权限的领域 reviewer 决定适用条款；不能由服务自动假定某来源覆盖另一来源。
 
-### 3.2 当前最值得完善的缺口
+### 3.2 扩展已迁移规则
 
-| 工作项 | 主要落点 | 完成条件 |
+从已有正文出发，不另建重复清单。审计将 B01–B16 映射到精确 ID；各包概览提供阅读路由，
+描述符绑定历史来源记录。
+
+| 领域 / 起点 | 应保留的已实现覆盖 | 有用的下一步贡献 |
 |---|---|---|
-| 确认公司要求的授权获取接口、版本和缓存许可 | Common `sources.mas` 与 requirements 条目 | 有可审核条款与授权，不用占位文本冒充 MAS |
-| 审核 HTML/ARIA/WCAG/APG 的实际条款 | Common 来源和对应 topic/contract | 逐条 claim 对应到适用版本；APG 示例不等于强制唯一实现 |
-| 补 Fluent V8/V9 真实组件契约及负例 | Fluent 来源、`v8/`、`v9/`、`selection/` | 确认 API/版本/责任边界，而非按另一版本类推 |
-| 补 SPDS、公告/焦点工具和宿主行为 | SharePoint 来源、`spds/`、`utilities/` | 授权文档和审核版本齐备；不猜 API 签名 |
-| 接通正式产品支持清单 | SharePoint `profiles/` | 每个产品版本、规则及例外有正式依据 |
-| 分配 owner/reviewer 并做知识效果评估 | 每条 `owner`/`review` 与 evaluations rubric | 能追踪审核和代表性正负案例，不只让 schema 通过 |
+| [Common 概览](../accessibility-kb/packages/common/README.md) | 渲染语义；完整的异步可见/程序化/焦点结果；消失控件焦点；本地化消息；有范围的扫描与替换案例 | 在所属主题添加缺失交互或反例，再关联验证与流程 |
+| [Fluent 选型](../accessibility-kb/packages/fluent/selection/components-and-utilities.md)、[V8](../accessibility-kb/packages/fluent/v8/component-contract.md)、[V9](../accessibility-kb/packages/fluent/v9/component-contract.md) | 组件到文档映射；V8 `delayedRender`/`Announced`；V9 intent/`AriaLiveAnnouncer`/`useAnnounce`；恢复焦点与 shim 边界 | 核实安装版本的导出、provider 与覆盖行为；保留唯一播报/焦点责任方 |
+| [SharePoint 概览](../accessibility-kb/packages/sharepoint/README.md) | Table/DataGrid 与 stable/LazyComponents 选型；SPDS 组合；共享播报和焦点；中性主题 provider 与替换检查 | 扩展具体宿主场景，保留产品范围与调用方义务 |
+| [RTE](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md)、[拖动/重排](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md)、[格式化](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) | 已注册 N01–N03：检查器能力、移动状态协议、完整计数/ReactNode 资源及 RTL 例外 | 在固定来源仅给出名称/行为之处补有版本依据的签名或边界案例，不猜缺失 API 细节 |
+| Common requirements 与 SharePoint profiles | 来源/适用性政策，以及独立的支持/验证维度 | 获取官方条款/支持声明、分配 reviewer、记录审核证据；MAS 实施仍见第 11 节 |
 
-这是协作 backlog，不是已取得这些资料的声明。原始私有资料、运行证据、账户与环境
-信息保留在授权外部系统；库内只放允许分发的摘要与可授权访问的依据引用。
+每项贡献记录“源条款 → 目标 ID → 有范围的规则/例外 → 正反验证案例”。保留历史来源以追溯，
+为资格验证另加独立审核的当前来源。私有资料、凭据与运行证据留在授权外部系统。
+按第 4–7 节登记，按第 9 节协调版本与发布。
 
 ## 4. 数据模型与引用契约
 
@@ -278,8 +284,8 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 {
   "schemaVersion": 1,
   "id": "product-example",
-  "version": "0.1.0",
-  "dependencies": {"common": "0.1.0"},
+  "version": "0.1.1",
+  "dependencies": {"common": "0.1.1"},
   "sources": [],
   "entries": [
     {
@@ -296,7 +302,7 @@ Fluent 写“特定版本 Dialog 提供什么契约”，SharePoint 写“宿主
 }
 ```
 
-3. `dependencies` 必须匹配当前库中的实际包版本。例子的 `0.1.0` 不是永远有效的默认值。
+3. `dependencies` 必须匹配当前库中的实际包版本。例子的 `0.1.1` 不是永远有效的默认值。
    如果使用 Fluent 契约，显式依赖 Fluent；不能在 Common 中加入产品依赖来绕过校验。
 4. 按第 5 节逐条加正文、来源与关系。普通新包不需要修改 schema。
 5. **决定是否发布、由哪个服务选择。**注册 catalog 只让 source manifest 包含它，
@@ -379,6 +385,10 @@ Loader 顺序：显式绝对根目录 → 经身份校验的开发 checkout → 
 修改评估 major。当前代码仅校验三段数字格式，不强制 SemVer 的业务语义；必须由 PR 审核执行。
 同版本内容修改也会改变 pin，不能因此宣称兼容或免于版本审核。
 
+当前内容发布将 Common、Fluent、SharePoint 协调为 `0.1.1`：Fluent 依赖 Common
+`0.1.1`，SharePoint 依赖 Common 和 Fluent `0.1.1`。服务实现仍为 `0.1.0`，其版本
+独立于本次内容迁移。
+
 升级 Common 后，所有直接依赖它的精确版本都要更新；如果 Fluent 自身也升级，
 SharePoint 对 Fluent 的依赖也要随之更新。审查依赖变动会影响哪些下游已审核结论。
 
@@ -438,7 +448,8 @@ artifact 中的包集合与服务 reference 一致，不能只更新通过的测
 | 分发/发布 | [standalone tests](tests/standalone.test.mjs)：旧引用冷启动、产物保留、中断恢复和现有文件不变 |
 | 知识是否改善判断 | [效果评估 rubric](../accessibility-kb/evaluations/README.md)：单独授权的真实评估，不能用 unit test 代替 |
 
-初始测试包含 32/20 条目的断言和固定示例 ID。增加内容时，更新合理的计数和预期集合，
+当前预期条目集合为完整闭包 35、Common-only 20（Fluent 增加 4，SharePoint 增加 11）。
+除数量外还要核对精确 ID。增加内容时，更新合理的计数和预期集合，
 同时保留 Common 不泄漏产品知识、未选中包不可读、缺来源不产生 approved 等负面断言。
 评估至少包含一个真实风险样例、一个干净反例、一个缺上下文场景，以及一个版本/产品不适用场景。
 记录误报/漏报、修复层次、证据校准和回归风险；未运行要写未运行，不能补造结果。

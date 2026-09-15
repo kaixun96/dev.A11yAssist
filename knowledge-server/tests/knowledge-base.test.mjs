@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadKnowledgeBase, exportKnowledgeBase, knowledgePath, validateKnowledgeLinks } from '../tools/knowledge-base.mjs';
+import { assertCurrentEntries } from './helpers/current-packages.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const kbRoot = fileURLToPath(new URL('../../accessibility-kb', import.meta.url));
@@ -16,7 +17,7 @@ const digest = value => createHash('sha256').update(value).digest('hex');
 test('shared KB validates all entries and binds its complete manifest to the standalone reference', async () => {
   const kb = await loadKnowledgeBase(kbRoot);
   assert.deepEqual([...kb.packages.keys()], ['common', 'fluent', 'sharepoint']);
-  assert.equal(kb.entries.size, 32);
+  assertCurrentEntries([...kb.entries.values()]);
   const bundle = exportKnowledgeBase(kb, ['sharepoint']);
   assert.equal(bundle.files.get('manifest.json'), await text(join(kbRoot, 'manifest.json')));
   const reference = await load(join(root, 'references/knowledge.json'));
@@ -44,17 +45,20 @@ test('dependency-closed content works standalone without a repository or harness
       if (selected[0] === 'common') {
         assert.deepEqual([...isolated.packages.keys()], ['common']);
         for (const [path, content] of bundle.files) {
-          assert.doesNotMatch(content, /sharepoint|spds|fluent|agentow|CLAUDE_PLUGIN_ROOT/i, path);
+          // Optional stable IDs and pinned provenance are data, not dependencies.
+          assert.doesNotMatch(path, /^packages\/(?:sharepoint|fluent)\//);
+          assert.doesNotMatch(content, /CLAUDE_PLUGIN_ROOT|\]\([^)]*\.\.\/(?:sharepoint|fluent)\//i, path);
         }
       }
     } finally { await rm(dir, { recursive: true }); }
   }
 });
 
-test('standalone KB content has no archive metadata or routing', async () => {
+test('standalone KB permits inert provenance but has no archive payloads or runtime routing', async () => {
   const kb = await loadKnowledgeBase(kbRoot);
   for (const [path, content] of kb.files) {
-    assert.doesNotMatch(content, /agentow|integrations[\\/]|\barchiv(?:e|ed|es)\b|migration compatibility|legacy compatibility/i, path);
+    assert.doesNotMatch(path, /(?:^|\/)(?:integrations|snapshot|runtime|skills)\/|\.source\.(?:md|txt)$/i);
+    assert.doesNotMatch(content, /integrations[\\/]|CLAUDE_PLUGIN_ROOT|migration compatibility|legacy compatibility/i, path);
   }
   assert.doesNotMatch(await text(join(kbRoot, 'manifest.json')), /agentow|integrations[\\/]/i);
 });
@@ -66,17 +70,20 @@ test('pending authority sources and product support gaps are not populated with 
   assert.equal(mas.locator, null);
   assert.equal(mas.revision, null);
   const fluent = kb.packages.get('fluent');
-  assert.deepEqual(fluent.sources.map(source => source.id), ['fluent-docs']);
+  assert.deepEqual(fluent.sources.filter(source => source.status !== 'historical').map(source => source.id), ['fluent-docs']);
   assert.equal(fluent.sources[0].authority, 'component-contract');
   assert.equal(fluent.sources[0].status, 'review-pending');
   assert.equal(fluent.sources[0].locator, 'https://react.fluentui.dev/');
   assert.equal(fluent.sources[0].revision, null);
   assert.match(fluent.sources[0].note, /V8 source location remains to be confirmed/);
   for (const entry of fluent.entries) {
-    assert.deepEqual(entry.sourceIds, ['fluent-docs']);
-    assert.match(kb.files.get(`packages/fluent/${entry.path}`), /unsourced draft guidance/);
+    assert(entry.sourceIds.length > 0);
+    assert(entry.sourceIds.every(id => fluent.sources.some(source => source.id === id && source.status === 'historical')));
+    assert.match(kb.files.get(`packages/fluent/${entry.path}`), /historical/i);
   }
-  for (const source of kb.packages.get('sharepoint').sources) {
+  const pending = kb.packages.get('sharepoint').sources.filter(source => source.status !== 'historical');
+  assert.deepEqual(pending.map(source => source.id), ['sharepoint-support', 'spds-docs', 'sharepoint-utilities']);
+  for (const source of pending) {
     assert.equal(source.status, 'connection-pending');
     assert.equal(source.locator, null);
     assert.equal(source.revision, null);
@@ -132,7 +139,7 @@ test('dependency errors, undeclared files and broken links are rejected', async 
   await rejectedMutation(async (_pkg, dir) => {
     const path = join(dir, 'packages/fluent/package.json');
     const fluent = await load(path);
-    fluent.dependencies.sharepoint = '0.1.0';
+    fluent.dependencies.sharepoint = (await load(join(dir, 'packages/sharepoint/package.json'))).version;
     await writeFile(path, JSON.stringify(fluent));
   }, /Cyclic KB dependency/);
   await rejectedMutation(async (_pkg, dir) => { await writeFile(join(dir, 'undeclared.md'), 'unexpected'); }, /Undeclared or missing/);

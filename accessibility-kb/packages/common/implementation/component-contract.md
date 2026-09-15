@@ -45,3 +45,59 @@ Basis: [component semantics](../topics/component-accessibility.md),
 [keyboard and focus](../topics/keyboard-focus.md),
 [forms and content](../topics/forms-and-content.md), and
 [dynamic content](../topics/dynamic-content.md).
+
+## Prove reuse fits the accessible behavior
+
+**Historical draft extension.** Search by the needed capability, not only an
+API's name. Inspect the public export, implementation, supported version and
+representative callers. A shared utility or a visually similar replacement is
+not a fit if it changes the semantic role, keyboard model, urgency, repeat-event
+support, focus owner, provider lifetime or failure behavior. Verify that its
+dependency/host boundary is valid; a private editor helper is not a general
+component API merely because it contains “accessibility” in its name.
+
+| Reuse decision | Positive case | Negative case |
+|---|---|---|
+| Component fits | Documented slots/subcomponents preserve naming, state and keyboard behavior with caller-owned localized text | Extra wrappers or custom nested controls bypass the component's compound interaction |
+| Shared status mechanism fits | Existing provider and API cover a routine repeated result exactly once | A legacy assertive-only helper replaces a polite routine status, or two utilities announce the same event |
+| Small shared gap | Extend the stable owning contract where multiple consumers need the same capability and compatibility is understood | Copy private hidden-text CSS or a local alert implementation into another feature without its lifecycle constraints |
+| No valid shared fit | Retain a justified local implementation with a complete accessibility contract and tests | Force reuse across an invalid ownership/runtime boundary merely to remove duplication |
+| Formatter fits | Locale, numeric count domain, repeat placeholders and element-valued placeholders match the caller | A generic string formatter replaces a node-aware sentence formatter or loses valid zero values |
+
+For copied implementations, compare behavior/defaults/edge cases before making
+a reuse claim. Divergent announcements, focus fallback or localized resources
+are concrete behavior risks, not merely stylistic duplication. If the copies
+agree and shared ownership is unsuitable, duplication alone is not a defect.
+Do not claim there is no suitable visually-hidden utility based on a historical
+repository inventory; inspect the current owning surface and prefer a supported
+pattern. Screen-reader-only controls require an actual interaction need.
+
+## Maintain ownership through composition and lazy loading
+
+A region with its own semantic purpose, interaction state, focus lifecycle or
+test contract may merit an independent component. Keep coordinated state at the
+nearest common owner, especially when selection changes a sibling toolbar or
+deletion closes a dialog and updates its collection. Splitting files or adding
+pass-through wrappers does not create a useful accessibility boundary by itself.
+
+An asynchronous boundary must retain loading, error, retry, naming and restoration
+contracts. Positive: a dialog's name and focus entry become available together
+after loading, and cancellation invalidates late completion. Negative: a lazy
+body mounts without its title/provider, or a late chunk steals focus after the
+user dismissed the surface. Prefer a single established owner to competing
+effects at each wrapper. See [focus lifecycle](../topics/keyboard-focus.md) and
+[replacement tests](../verification/testing.md).
+
+Product API details are intentionally routed, not duplicated: optional IDs
+`fluent.selection.components-and-utilities`, `fluent.v8.component-contract`,
+`fluent.v9.component-contract`, `sharepoint.spds.component-contract`,
+`sharepoint.selection.components-and-utilities` and
+`sharepoint.utilities.announcements-and-focus`. Common has no dependency on those
+packages; their availability/version must be established before using them.
+
+Historical basis: [rendered and component ownership checks](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L59-L219),
+[focus and utility boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L344-L424),
+[reuse fit and comparison](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/shared-utility-reuse.md#L9-L151),
+and [semantic/state and async boundaries](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/ux-architecture-and-bundle-boundaries.md#L5-L36).
+These generalizations retain useful contracts without imposing historical
+package preferences, review severities or operational commands.

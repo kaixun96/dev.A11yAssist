@@ -6,9 +6,9 @@
 
 ## 1. 结论与基线
 
-**AgentOW 无障碍知识尚未全部迁移到独立 KB 的对应条目中。** 历史归档已通过机械校验，但现有 32 个草稿条目主要提供通用知识和契约核查工作表，尚未承载源材料中的多项具体 Fluent/SharePoint 契约。主题相似不等于迁移完整，也不等于内容已获批准。
+**经审计的可复用无障碍规则已完成迁移，落在 authored Common、Fluent、SharePoint 包中。** 下文 B01–B16 将源条款映射到已实现的指导、具体 API/责任契约、例外及验证案例。N01–N03 已登记为条目，不再是提案。
 
-审计日期：2026-09-14。源：[kaixun96/dev.AgentOW，固定提交 7896845e51d75b0b9d632a2fd61876bc2f556ea5](https://github.com/kaixun96/dev.AgentOW/tree/7896845e51d75b0b9d632a2fd61876bc2f556ea5)。检查时该提交被记录为 main；本报告引用不可变提交，不使用会移动的 main 链接。目标内容基线：dev.A11yAssist 的 `a7ac1ce`。下文的本地 KB 链接指向现有落点；审计结论描述该基线，不代表后续修改后的状态。
+覆盖更新：2026-09-15；源清单审计：2026-09-14。源：[kaixun96/dev.AgentOW，固定提交 7896845e51d75b0b9d632a2fd61876bc2f556ea5](https://github.com/kaixun96/dev.AgentOW/tree/7896845e51d75b0b9d632a2fd61876bc2f556ea5)。目标为当前 authored 包，三个包均为 `0.1.1`，精确依赖已协调。本地链接指向已实现正文；消费方实际读取的快照由生成引用另行标识。
 
 | 证据集合 | 数量 | 可以证明什么 |
 | --- | ---: | --- |
@@ -18,9 +18,9 @@
 | 快照知识范围外文件 | 57 | 清单中明确记录的处置，不是语义无关的证明 |
 | 宽范围匹配的第一方 Markdown 候选 | 53 个路径 | 路径**或**正文命中标记 |
 | 候选中的不同正文 | 41 | CRLF → LF 后计算 SHA-256；有 12 个重复路径 |
-| 独立 KB 条目 | 32，全部为草稿 | Common 20 + Fluent 4 + SharePoint 8；不能声称已批准或迁移完整 |
+| 独立 KB 条目 | 35，全部为草稿 | Common 20 + Fluent 4 + SharePoint 11；精确目标索引见第 4 节 |
 
-本审查与中英文技术设计一起提供，不修改 KB 正文、描述符、来源状态、快照、分发固定值、运行时或插件。下文记录仍需完成的迁移工作，不表示本次已经补齐这些契约。
+**来源与批准：**描述符将迁移条款绑定到固定的 `historical-reference` / `historical` 来源。全部条目仍为 draft，owner 尚未分配；迁移不等于官方批准、当前安装版本有效性、再分发许可或已观察到的合规结果。相关审核遵循[贡献政策](../accessibility-kb/governance/contribution.md)。完成范围是经审计的可复用规则，不是仓库每个字、可执行程序或其链接的外部来源。
 
 ## 2. 方法、复现与限制
 
@@ -31,49 +31,49 @@
    node tools/agentow-knowledge-snapshot.mjs <source-checkout> 7896845e51d75b0b9d632a2fd61876bc2f556ea5 --check
    ```
 
-   本次已针对固定提交重新运行检查器并通过：`check: true`、`tracked: 171`、`snapshot: 106`、`externalReference: 8`、`outsideKnowledgeScope: 57`。`--check` 检查的是归档完整性/漂移，不是 KB 语义覆盖。
+   2026-09-15 已重新检查并通过：`check: true`、`tracked: 171`、`snapshot: 106`、`externalReference: 8`、`outsideKnowledgeScope: 57`。`--check` 检查归档完整性/漂移；下方条款映射记录 KB 覆盖。
 3. 候选发现遍历该树中**全部被跟踪的第一方 Markdown**，排除检查器标识的第三方性能材料子树。对路径或完整正文应用 `/a11y|accessib|aria[- ]|screen.?reader|spds|fluent|wcag|nvda|narrator|voice.?access|keyboard|contrast|focus|evaluator/i`。将 CRLF 规范化为 LF 后，对 UTF-8 正文计算哈希。不能只搜索名称含 “accessibility” 的文件。附录 A 列出了全部 53 个路径及 41 个正文。
 4. 将高相关参考中的实质条款与已注册目标正文和精确 ID 对照。区分通用概念与版本相关 API、生命周期前提、例外、产品范围和验证责任。操作指令继续归属于源/运行时文档，不能一律视为 KB 缺失正文。
-5. 使用以下分类：**部分覆盖**＝有实质交集，但缺少细节或可追溯关系；**缺少具体契约**＝已有工作表，但没有源材料的具体契约；**操作性内容**＝执行/所有权/证据契约应位于内容层之外；**外部权威来源待接入**＝需要独立获取材料。不会仅因存在通用主题就标记“完全覆盖”。
+5. 记录已实现规则、所属目标 ID 及保留的例外。跨产品结果放 Common，框架 API 放 Fluent，宿主契约放 SharePoint。操作指令留在 KB 内容之外；官方来源获取与历史迁移分开处理。
 
-**限制：**关键词扫描不能证明 100% 的语义完整性。未命中的正文、非 Markdown 实现/测试、链接指向的仓库、官方文档、私有材料及更早版本可能包含其他知识。53 个候选不等于 53 项独立要求。非 Markdown 的归档处置必须按用途复核，不能仅按扩展名排除。本审计不证明实现迁移、真实提供程序就绪、AT 行为、合规、再分发许可或历史 API 当前仍然有效。未操作真实 Bug、桌面、提供程序或浏览器。
+53 个候选是发现集合，不是 53 项独立要求。附录 A 保留精确的路径/哈希核对，包括重复项及操作性/相邻材料的处置。非 Markdown 材料若支撑具体声明，应按用途评估；范围不扩展到未检查的修订或链接仓库。
 
-## 3. 源到 KB 的发现与可执行待办
+## 3. 源到 KB 的已实现覆盖
 
-优先级是建议的内容审阅顺序，不是无障碍缺陷严重度。P1 优先补足容易导致修错责任层的具体契约；P2 补充其余具体知识及审阅覆盖。所有目标 ID 均为第 4 节列出的现有草稿。源链接提供固定版本的历史证据，**不表示批准其中的指令**。
+B01–B16 保留原审计标识，便于贡献者追溯最初发现。所有目标 ID 均可从第 4 节找到正文。“已实现”指可用知识内容，不表示执行过所描述的 UI 行为。
 
-| 工作项 / 历史来源 | 目标基线的发现 | 现有目标 ID 与下一步 |
+| 审计项 / 历史来源 | 已实现条款及保留例外 | 所属目标 ID |
 | --- | --- | --- |
-| B01 · P1 · [组件文档映射及 SPDS/Fluent 关系](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L58) | **部分覆盖。** 已有版本/责任工作表，未迁移组件到文档的映射及具体委托关系声明。 | `fluent.selection.components-and-utilities`、`fluent.v9.component-contract`、`sharepoint.spds.component-contract`：确认当前组件文档与包装器版本，记录有范围限定的委托关系，不能假设每个 SPDS 包装器继承全部行为。 |
-| B02 · P2 · [跨领域检查](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L59-L111)与[后续检查清单/示例][s01] | **部分覆盖。** 语义、标签、分组、视觉状态、表单和自定义控件原则有大量交集，但不能据此证明逐条迁移。 | `common.topic.component-accessibility`、`common.topic.forms-and-content`、`common.topic.visual-accessibility`、`common.implementation.component-contract`、`common.verification.design`：将保留的原则与例外映射到已审阅标准；不要把仓库专用的标题证据门禁或历史上过于宽泛的对比度表述变成通用规则。 |
-| B03 · P1 · [V9 MessageBar](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L112-L156) | **缺少具体契约。** 通用“避免重复”指导没有保留 `MessageBar` intent、祖先 `AriaLiveAnnouncer` 或组合前提。 | `fluent.v9.component-contract`；关联 `sharepoint.spds.component-contract` 与 `sharepoint.case.duplicate-announcement`。审阅已安装版本的前提、组件播报责任、包装器重复播报和 `MessageBarGroup` 组合，补充正反例。 |
-| B04 · P1 · [V8 MessageBar](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L157-L178) | **缺少具体契约。** V8 工作表没有具体的 `delayedRender`、内置播报及 `Announced` 区别。 | `fluent.v8.component-contract`：获取 V8 来源，不能使用已登记的 V9 文档入口替代；验证默认/覆盖行为以及额外播报机制何时会造成重复。 |
-| B05 · P1 · [播报工具](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L179-L219) | **缺少具体契约。** 已有事件责任原则，但没有 `useAnnounce`、`useScreenReaderAlert`、重复消息 `indicator`、读取模式和旧版 `ScreenReader.alert` 的区别。 | `fluent.v9.component-contract`、`sharepoint.utilities.announcements-and-focus`、`sharepoint.selection.components-and-utilities`：经所有者/版本审阅后，记录每个事件仅使用一条既有机制、提供程序前提、重复消息及旧接口适用范围。 |
-| B06 · P1 · [异步集合](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L311) | **部分覆盖。** Common 已有实质性的状态转换矩阵；具体技术栈选择、显式刷新/无变化情况和完整本地化结果仍未充分映射。 | `common.topic.dynamic-content`、`common.verification.static`、`common.verification.dynamic`，以及两个 Fluent 契约 ID 和 `sharepoint.utilities.announcements-and-focus`：对每个适用转换追踪可见、程序化反馈及焦点结果，保留重复结果与避免重复播报的案例。源审阅严重度不能变成通用要求。 |
-| B07 · P1 · [动态焦点转换](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L343) | **部分覆盖。** Common 覆盖删除、工具栏、替换和异步焦点生命周期，但未覆盖全部具体生命周期及精确操作断言。 | `common.topic.keyboard-focus`、`common.case.dialog-focus`、`common.verification.testing`：添加有范围限定的消失操作控件、选择和后备目标示例；指定更新后的预期活动元素，不能把通用 Tab 顺序测试当作充分证明。 |
-| B08 · P1 · [焦点责任方选择](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L344-L399) | **缺少具体契约。** 已有通用责任划分，缺少 `useRestoreFocusTarget`/`useRestoreFocusSource`、`A11yManager`、`Focus`、`FocusTransition`、`Keyboard` 和迁移 shim 边界。 | `fluent.v9.component-contract`、`fluent.v8.component-contract`、`sharepoint.utilities.announcements-and-focus`：审阅触发器/界面配对、捕获/恢复时机、已挂载后备目标、跨视图责任和未托管 DOM 路径；同一生命周期不能有两个恢复责任方。 |
-| B09 · P2 · [富文本检查](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L400-L409) | **缺少专用工具内容；通用内容部分覆盖。** 表单/内容指导未保留 `checkA11yForRte`、`runH1A11yChecks` 或编辑器范围。 | `common.topic.forms-and-content` 提供通用原则；从 `sharepoint.selection.components-and-utilities` 将产品契约路由到下文提议 N01。审阅编辑器与组件编写的边界以及扫描器限制。 |
-| B10 · P2 · [拖动/重排工具](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L410-L413) | **缺少具体交互协议。** 已有通用键盘/拖动替代方式，未包含 `sp-dragzone` 契约。 | `common.topic.keyboard-focus` 保留跨产品原则；`sharepoint.selection.components-and-utilities` 路由到提议 N02。审阅开始/移动/取消/完成、手柄焦点和本地化移动状态消息。**不能把产品专用的 Enter/Space/方向键行为转成通用键盘标准。** |
-| B11 · P2 · [审计工具及工具边界](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L414-L424) | **部分覆盖。** 已有通用测试/证据限制，尚未映射产品扫描器/辅助方法的适用范围。 | `common.verification.static`、`common.verification.dynamic`、`common.verification.testing`、`sharepoint.selection.components-and-utilities`：审阅 `runAccessibilityScanAsync`、`verifyAccessibilityWithSPA11yAssistant` 及审计命令范围。私有辅助方法不是公开 API；历史上缺少共享视觉隐藏工具不等于当前事实。执行仍在操作文档中，不转成可执行 KB 流程。 |
-| B12 · P1 · [SPDS 选型/导入/组合参考][s04] | **部分覆盖 / 缺少具体契约。** 缺少 Table/DataGrid 选型（5–23）及组合示例（104–170）；包路径（24–44）、私有样式和例外（55–103）仅有通用交集；语义（171 起）有共享覆盖。 | `sharepoint.selection.components-and-utilities`、`sharepoint.spds.component-contract`、`fluent.selection.components-and-utilities`、`common.implementation.component-contract`：审阅 `Table` 与 `DataGrid`、stable 与 `LazyComponents` 导出、受支持样式与 `.fui-*`，以及操作/导航组合边界。保留宿主范围，不能恢复为跨产品一律 SPDS 优先。 |
-| B13 · P1 · [主题分类/提供程序参考][s05]与[Detheme skill][s06] | **缺少具体契约；通用验证部分覆盖。** 宿主工作表没有实际界面分类、`NeutralThemeProvider`、`NeutralV8ThemeProvider` 或 hook/提供程序处理。 | `sharepoint.verification.themes-and-host`、`sharepoint.spds.component-contract`：审阅应用框架/页面/内容/窗格/覆盖层分类、祖先覆盖、V8 shim、嵌套提供程序、令牌和回归状态。提供程序/开关发布机制仍属操作层。产品颜色不是通用无障碍要求。 |
-| B14 · P2 · [本地化][s02]及[共享工具复用][s03] | **部分覆盖。** 已提及本地化/复数消息，但未映射具体区间/计数、完整句子、ReactNode 格式化、RTL 和安全富文本边界。 | `common.topic.forms-and-content`、`common.topic.dynamic-content`、`common.topic.visual-accessibility`、`sharepoint.selection.components-and-utilities`：只抽象跨产品原则；提议 N03 承载经审阅的产品格式化/资源契约。审阅 `StringHelper.formatWithLocalizedCountValue`、`formatToArray`、区域相关列表与 Fluent 自动翻转范围，不能直接引入英语复数或 RTL 假设。 |
-| B15 · P2 · [ReplaceComponent 参考][s07] | **知识部分覆盖 / 执行属于操作层。** 通用宿主检查未逐项列出迁移专有的焦点、portal、提供程序、关闭和键盘风险。 | `fluent.selection.components-and-utilities`、`sharepoint.verification.themes-and-host`、`common.verification.testing`：添加绑定版本的验证清单。Flight/KillSwitch 执行、依赖更新、发布命令和证据采集仍位于源/运行时文档。 |
-| B16 · P2 · [相邻审阅参考及遗漏记录](#a3-相邻或偶然命中的文档) | **部分可复用经验 / 其余为偶然命中。** 架构、性能或通用代理文档中出现标记，不表示整份文档都是无障碍知识。 | `common.analysis.root-cause`、`common.implementation.component-contract`、`common.verification.static`、`common.verification.design`、`common.verification.testing`：经审阅仅提取独立有用、已去敏的无障碍反例；通用架构/包体积和审阅流程契约保留在源中。 |
+| B01 · [组件文档映射及 SPDS/Fluent 关系](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L58) | 组件到文档映射覆盖标签、具名控件、MessageBar、焦点、通知与截断。SPDS 委托已确认的 V9 责任方，明确的行为覆盖除外；检查包装器 props 与组合。 | `fluent.selection.components-and-utilities`、`fluent.v9.component-contract`、`sharepoint.spds.component-contract` |
+| B02 · [跨领域检查](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L59-L111)与[审阅触发条件/清单/示例][s01] | 新增/改动的渲染 UI 及无障碍相关样式触发审阅；不适用须有基于 diff 的无影响说明，依赖运行时的准则在证据缺失时保持未验证。历史范围为适用的 WCAG 2.1 A/AA 及完整键盘/读屏操作。渲染语义、标签/分组、标题/表格、表单/图像/自定义控件及视觉/重排/目标检查保留对比度/二维内容例外。标题级别变更需前后完整 live 页面/对话框大纲、目标/父级/兄弟标题及理由；上下文缺失则暂缓决定。不设通用单 H1 或禁用态对比度规则。 | `common.topic.component-accessibility`、`common.topic.forms-and-content`、`common.topic.visual-accessibility`、`common.implementation.component-contract`、`common.verification.design` |
+| B03 · [V9 MessageBar](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L112-L156) | intent 配合唯一应用祖先 `AriaLiveAnnouncer`；不叠加 role/live region/手动播报。politeness 覆盖须经 owner 确认；`MessageBar` 保持为 `MessageBarGroup` 的直接子项。根节点/重试示例区分前提缺失与重复播报。 | `fluent.v9.component-contract`、`sharepoint.spds.component-contract`、`sharepoint.case.duplicate-announcement` |
+| B04 · [V8 MessageBar](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L157-L178) | 默认 `delayedRender` 向内部 live region 插入内容；error/blocked/severeWarning 使用 alert 行为。同一消息不另加 `Announced`。检查 `delayedRender={false}`、role、shim、portal 覆盖，不直接推定静默或引入 V9 前提。 | `fluent.v8.component-contract`、`sharepoint.case.duplicate-announcement` |
+| B05 · [播报工具](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L179-L219) | provider 支撑的 `useAnnounce` 或既有 `useScreenReaderAlert`/`ScreenReaderAlert.read`，每事件一条机制。常规结果用 `ReadAfterOtherContent`，紧急错误用 `ReadImmediately`；组件 `indicator` 支持重复文本。旧版 `ScreenReader.alert(id, message)` 为 assertive；typing helper 不代替通用状态。 | `fluent.v9.component-contract`、`sharepoint.utilities.announcements-and-focus`、`sharepoint.selection.components-and-utilities` |
+| B06 · [异步集合](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L220-L312) | 可见/程序化/焦点矩阵覆盖加载、计数、空态、错误/重试、追加/结束、排序/筛选/搜索/分组/分页/替换、刷新有变化/无变化、选择和后台完成。完整本地化结果及重复事件；spinner/busy 标记或先前错误条不覆盖完成。V8/V9/宿主机制分别绑定。历史 Important 覆盖可感知结果缺失；Minor 仅限转换已可感知时的措辞/冗余改进。行内容变化不能豁免程序化反馈缺失；所供证据须区分可见、实际播报及焦点结果。 | `common.topic.dynamic-content`、`common.verification.static`、`common.verification.dynamic`、`fluent.v8.component-contract`、`fluent.v9.component-contract`、`sharepoint.utilities.announcements-and-focus` |
+| B07 · [动态焦点转换](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L343)及[严重度校准][s01] | 删除/替换、消失工具栏/toast/内联/Keep both/Retry 操作的稳定身份与提交后后备目标；最后取消选择保留仍存在的行焦点。后台完成不抢焦点。关闭、突然卸载、动画案例断言精确操作后的 `document.activeElement`，不只检查 DOM 存在；焦点轨迹本身不能证明可见性。历史 Important 覆盖键盘触发的焦点丢失或无关落点；Minor 要求已到达逻辑合理、可见、启用的目标，且剩余问题不阻塞操作。“By design” 需交互契约和针对性测试证据。 | `common.topic.keyboard-focus`、`common.case.dialog-focus`、`common.verification.dynamic`、`common.verification.testing`、`sharepoint.utilities.announcements-and-focus` |
+| B08 · [焦点责任方选择](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L344-L399) | 组件/Tabster 优先；仅对未满足的恢复职责使用 V9 `useRestoreFocusTarget`/`useRestoreFocusSource`。跨视图用 `A11yManager.saveActiveElementAs`/`restoreFocus`；未托管 DOM 用 `Focus`、`FocusTransition`、`Keyboard`、`A11yAttribute`。迁移层专属 `useRestoreFocusOnDismiss`、`ModalShim`、`FocusTrapZoneShim`；唯一责任方与已挂载后备目标，不编造重载。 | `fluent.v9.component-contract`、`fluent.v8.component-contract`、`sharepoint.utilities.announcements-and-focus` |
+| B09 · [富文本检查](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L400-L409) | N01 记录 `@msinternal/sp-a11y-checker-util`、`checkA11yForRte`、`runH1A11yChecks`：标题/H1、空链接、表头、图像替代及文本/图像/覆盖层对比度。编辑器/内容范围与组件编写分开；不编造源未提供的签名。 | `sharepoint.utilities.rich-text-accessibility`、`sharepoint.selection.components-and-utilities`、`common.topic.forms-and-content` |
+| B10 · [拖动/重排工具](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L410-L413) | N02 保留 `sp-dragzone` / `IDragZoneA11yStrings`：Enter/Space 开始、方向键移动、Escape 取消、取消/完成后手柄焦点；本地化 `moveStarted`、`moveComplete`、`moveCancelled`、`moveNotAllowed`。源未指定完成键/API；产品协议不是通用键盘政策。 | `sharepoint.utilities.drag-and-drop`、`sharepoint.selection.components-and-utilities`、`common.topic.keyboard-focus` |
+| B11 · [审计工具及工具边界](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L414-L424)与[评估器证据规则][s11]（`agentow-evaluator`） | `runAccessibilityScanAsync`：axe、`includeSelectors`、详情/截图/计数及禁用规则理由；`verifyAccessibilityWithSPA11yAssistant(page)` 仍限 authoring page。保留私有 helper 边界及仅属历史的 `VisuallyHidden` 缺失；零违规不等于交互覆盖。Voice Access 比较匹配规范 URL、viewport、缩放、滚动、selector/几何、隐藏 debug bar 且无对话框；几何变更/对话框任务另设匹配场景。将编号坐标映射到 DOM/UIA 边界，排除浏览器/OS chrome，不仅因编号就判可操作控件违规，未映射编号保持 inconclusive。读屏录制要求时长/尺寸/图像方差/音频 RMS/peak、可见焦点帧、持久音频端点的真实语音及合成 Windows 桌面；仅有 MP4、静音/幻灯片/浏览器局部录制或质量元数据不足。每个适用步骤链接不可变证据；要求匹配基线/场景/修订及原失败实际消失，不能用静态扫描代替（B16）。 | `sharepoint.verification.themes-and-host`、`sharepoint.selection.components-and-utilities`、`common.verification.static`、`common.verification.dynamic`、`common.verification.testing` |
+| B12 · [SPDS 选型/导入/组合参考][s04] | DataGrid/Table 能力选型、受控排序/选择；sp-client stable-bundle 与 odsp-common stable、`LazyComponents` 依赖路径。ODSP-Web 中 SPDS stable/LazyComponents 满足需求时，不得直接导入 `@fluentui/react-components`：绕过在历史政策中为 Important；例外需两个入口均有具体能力缺口，且后备方案满足语义/无障碍/主题要求，不能仅凭样式偏好。优先受支持 slots/tokens/typography，私有 `.fui-*` 仅限有记录的窄例外。兄弟 info action 与 `BreadcrumbItem > Menu > MenuTrigger > Button` 保留操作/导航语义。 | `sharepoint.selection.components-and-utilities`、`sharepoint.spds.component-contract`、`fluent.selection.components-and-utilities`、`common.implementation.component-contract` |
+| B13 · [主题分类/provider 参考][s05]与[Detheme skill][s06] | chrome/自有页面/客户内容/内联窗格/覆盖层分类；`NeutralThemeProvider`、`enabledCustomStyleHooks`、祖先复用与有意嵌套。V8 shim 需同时启用迁移且存在匹配 shim，否则用 `NeutralV8ThemeProvider`。保留嵌套 `getTheme()`/`createV9Theme(getTheme())` 风险及 V9 token 分层/import；适用处保留客户主题。共同记录分类、provider 祖先链、token/样式决策及相关渲染状态截图；可见主题变更缺少截图须明确标为证据缺口，不能凭源码/token 判通过。 | `sharepoint.verification.themes-and-host`、`sharepoint.spds.component-contract` |
+| B14 · [本地化][s02]及[共享工具复用][s03] | N03：资源包括辅助文本/回退、完整可重排句子与翻译上下文。数值计数用 `StringHelper.formatWithLocalizedCountValue` 配合句子区间（示例 `0\|\|1\|\|2-`）；实体名占位符不要求区间。`formatToArray`、`Intl.ListFormat`、安全富文本、选择标签的 `linkify: false`；Fluent 自动翻转例外仅限其样式管线。Common 保留语言中立原则与工具适配推理。 | `sharepoint.utilities.localization-and-formatting`、`sharepoint.selection.components-and-utilities`、`common.topic.forms-and-content`、`common.topic.dynamic-content`、`common.topic.visual-accessibility`、`fluent.selection.components-and-utilities` |
+| B15 · [ReplaceComponent 参考][s07] | 绑定版本的 Panel/Drawer 清单：`onRender*`、header/body/footer、几何/滚动、portal/provider、保留 V8 控件、键盘、关闭/动画与焦点后备。比较相同 route/fixture/viewport/state 及所有可达分支；以源 props/shim 行为判断等价，不只看名称或截图。 | `fluent.selection.components-and-utilities`、`sharepoint.verification.themes-and-host`、`common.verification.testing` |
+| B16 · [相邻审阅参考及遗漏记录](#a3-相邻或偶然命中的文档)与[评估器匹配证据][s11] | 去敏案例覆盖副本分歧、首次渲染错误空态、自述清单、过期异步、取消/数据域错误、生命周期清理和有范围的 parity。语义/状态责任、lazy 边界、reconciliation/prop 是否存在及必要初始化/runtime identity 转为无障碍回归检查。B11 证据规则要求实际观察到请求验证的失败，以相同已批准场景/基线对照实际测试修订/构建，并为每个适用步骤链接不可变证据；缺失、阻塞、跳过、不确定或矛盾的观察不能靠 diff 或扫描升级为通过。通用包体积预算、报告 schema 和工作流执行留在内容外。 | `common.analysis.root-cause`、`common.implementation.component-contract`、`common.verification.static`、`common.verification.dynamic`、`common.verification.design`、`common.verification.testing` |
 
-### 提议的新落点——尚未创建或注册
+### 已新增落点——N01–N03
 
-范围相同应优先扩展现有条目。以下仅为可选的**提议 NEW 路径**，相对于仓库根目录；它们不是现有条目，也不是可用链接：
+三个正文均已在 SharePoint `0.1.1` 登记来源绑定和关系，并从概览及选型条目链接。
 
-| 提议 | 提议路径 | 提议 ID / 现有路由条目 |
+| 新增项 | 已实现正文 | 已注册 ID |
 | --- | --- | --- |
-| N01 · RTE/内容检查器契约 | accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md | `sharepoint.utilities.rich-text-accessibility`；从 `sharepoint.selection.components-and-utilities` 路由 |
-| N02 · 产品拖动/重排契约 | accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md | `sharepoint.utilities.drag-and-drop`；从 `sharepoint.selection.components-and-utilities` 路由 |
-| N03 · 产品本地化契约 | accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md | `sharepoint.utilities.localization-and-formatting`；从 `sharepoint.selection.components-and-utilities` 路由 |
+| N01 · RTE/内容检查器契约 | [富文本无障碍](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md) | `sharepoint.utilities.rich-text-accessibility` |
+| N02 · 产品拖动/重排契约 | [拖动与重排](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md) | `sharepoint.utilities.drag-and-drop` |
+| N03 · 产品本地化契约 | [本地化与格式化](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) | `sharepoint.utilities.localization-and-formatting` |
 
 ## 4. 现有目标精确索引
 
-以下全部条目在审计基线均为**草稿**。这是落点索引，不是 32 项迁移完成声明。描述符：[Common](../accessibility-kb/packages/common/package.json)、[Fluent](../accessibility-kb/packages/fluent/package.json)、[SharePoint](../accessibility-kb/packages/sharepoint/package.json)。
+以下精确列出 35 个已注册 ID，除迁移规则正文外还包括概览、流程及支持档案。三个包均为 `0.1.1`。描述符：[Common](../accessibility-kb/packages/common/package.json)、[Fluent](../accessibility-kb/packages/fluent/package.json)、[SharePoint](../accessibility-kb/packages/sharepoint/package.json)。
 
 | 现有 ID | 现有正文 |
 | --- | --- |
@@ -98,34 +98,43 @@
 | `common.procedure.review-design` | [设计审阅流程](../accessibility-kb/packages/common/procedures/review-design.md) |
 | `common.procedure.add-tests` | [添加测试流程](../accessibility-kb/packages/common/procedures/add-tests.md) |
 | `fluent.overview` | [Fluent 概览](../accessibility-kb/packages/fluent/README.md) |
-| `fluent.v8.component-contract` | [V8 契约工作表](../accessibility-kb/packages/fluent/v8/component-contract.md) |
-| `fluent.v9.component-contract` | [V9 契约工作表](../accessibility-kb/packages/fluent/v9/component-contract.md) |
+| `fluent.v8.component-contract` | [V8 播报/焦点契约](../accessibility-kb/packages/fluent/v8/component-contract.md) |
+| `fluent.v9.component-contract` | [V9 组件/播报/焦点契约](../accessibility-kb/packages/fluent/v9/component-contract.md) |
 | `fluent.selection.components-and-utilities` | [Fluent 选型](../accessibility-kb/packages/fluent/selection/components-and-utilities.md) |
 | `sharepoint.overview` | [SharePoint 概览](../accessibility-kb/packages/sharepoint/README.md) |
 | `sharepoint.selection.components-and-utilities` | [SharePoint 选型](../accessibility-kb/packages/sharepoint/selection/components-and-utilities.md) |
-| `sharepoint.spds.component-contract` | [SPDS 契约工作表](../accessibility-kb/packages/sharepoint/spds/component-contract.md) |
-| `sharepoint.utilities.announcements-and-focus` | [播报/焦点工作表](../accessibility-kb/packages/sharepoint/utilities/announcements-and-focus.md) |
+| `sharepoint.spds.component-contract` | [SPDS 委托/组合契约](../accessibility-kb/packages/sharepoint/spds/component-contract.md) |
+| `sharepoint.utilities.announcements-and-focus` | [播报/焦点契约](../accessibility-kb/packages/sharepoint/utilities/announcements-and-focus.md) |
+| `sharepoint.utilities.rich-text-accessibility` | [富文本无障碍](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md) |
+| `sharepoint.utilities.drag-and-drop` | [拖动与重排](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md) |
+| `sharepoint.utilities.localization-and-formatting` | [本地化与格式化](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) |
 | `sharepoint.profile.support-policy` | [支持策略](../accessibility-kb/packages/sharepoint/profiles/support-policy.md) |
 | `sharepoint.profile.support-matrix` | [支持矩阵](../accessibility-kb/packages/sharepoint/profiles/support-matrix.json) |
 | `sharepoint.verification.themes-and-host` | [主题/宿主验证](../accessibility-kb/packages/sharepoint/verification/themes-and-host.md) |
 | `sharepoint.case.duplicate-announcement` | [重复播报案例](../accessibility-kb/packages/sharepoint/cases/duplicate-announcement.md) |
 
-概览与 Common 流程提供导航/推理方法，不能代替历史代理执行。基础知识及权威性/适用性条目用于解释来源。支持策略/矩阵仍等待官方输入，不能据此声称 AgentOW 提供过完整支持清单。通用案例也不能证明具体历史 API 案例已迁移。
+用概览选择契约，用 Common 流程组织推理。基础知识及权威性/适用性解释来源；支持档案将支持、适用性、验证及例外分开。两个案例提供具体的假设性正反场景，不是事故记录。
 
-## 5. 区分操作契约与权威来源缺口
+## 5. 操作边界与独立来源获取
 
-- 附录 A2 中的代理指令、证据契约、Windows 宿主测试、PR 采集、设置、浏览器所有权以及运行/harness 生命周期文档，继续归属操作性源/运行时文档。KB 流程可以解释证据推理，但不能获取租约、启动 AT、采集 PR、授权修复，或暗示仅源码检查已经观察到行为。
-- 原始 owner/run/affinity 与规范门禁应保留在实际操作实现中。历史标题大纲产物、审阅 schema 字段、严重度标签和发布命令不能变为跨产品 KB 要求。本审计不证明运行时迁移完整。
-- 非 Markdown 契约、实现和测试可以支撑这些边界或 API 声明。106 个归档文件包含此类参考；应在审阅具体声明时检查，不能直接判定所有非 Markdown 文件都不在范围内。
-- **被审计源中没有真正权威的 MAS 规则。** 获取规则正文、条款 ID、版本及授权访问是独立的资料获取缺口，不是迁移丢失。不能将 `common.requirements.authority-and-applicability` 或设计中的未来 MAS 集成描述为已连接能力。
-- 官方 SPDS 文档、SharePoint 工具契约和产品支持声明仍待接入，这与历史 AgentOW 声明是两回事。Fluent 已登记的文档入口仍待审阅，也不能支撑 V8 契约。固定版本的历史声明与当前权威契约属于不同证据类型。
-- 将来提升内容状态之前，需获取当前文档和已安装版本适用依据，确认所有者/审阅者与许可/再分发权限，仅概述允许使用的材料，登记准确来源元数据，并按[贡献政策](../accessibility-kb/governance/contribution.md)记录审阅证据。仅历史来源不能支持 approved 条目。不得将私有源码正文、个人信息或运行证据复制进 KB。
+- **现有插件保持不变。** 设置、provider、浏览器/AT 操作、租约、证据采集、PR 发布及 run/harness 生命周期仍由其操作实现负责。保留 owner/run/affinity 与规范门禁。KB 流程提供推理，不是可执行替代品。
+- **有意保留的内容边界：**标题大纲决策、证据质量规则及历史有范围的 Important/Minor 评定规则已保留于 B02/B06/B07/B11/B12/B13/B15/B16；该评定规则不是 MAS 分类，也不替代当前产品政策。仓库专属产物/报告 schema 及执行流程（包括 Flight/KillSwitch 和发布命令）仍在 KB 内容之外。
+- **MAS 是独立的获取与实现工作。** 经审计源中没有官方 MAS 规则正文、ID 或获授权的规则 API。统一 KB/MAS 适配器仍是[技术设计第 11 节](TECH-DESIGN.zh-CN.md#11-待实现一个-kb-入口包含-mas-规则能力)中的设计，留待后续实现，不是已迁移 API。
+- **当前来源资格审核：**官方 SPDS/SharePoint 工具及产品支持连接仍待接入；Fluent V9 文档目标待审阅，不能作为 V8 来源。支持矩阵仍为 `awaiting-official-source`、`products: []`。通过贡献流程取得版本相关来源与审核，不编造声明。
 
-## 6. 关闭标准与验证记录
+## 6. 维护与验证记录
 
-未来获授权的变更应逐项记录 B01–B16 的“源条款 → 目标 ID → 有范围的摘要 → 保留例外 → 已审阅版本/来源 → 所有者/审阅者 → 正反例评估”，并说明任何有意排除。新增条目需登记描述符，遵循正确分层/依赖及关系；发布变更需执行正常构建、依赖闭包/链接/schema 和回归检查。单元/schema 成功不等于语义完整，也不等于观察到 AT 成功。
+2026-09-15 验证：**KB 97 项、现有插件 79 项测试通过**，两套生成检查通过。
+内容构建包含 35 个条目，保留四份不可变产物（两份原快照及两份新 0.1.1 快照）。
+MCP 回归通过公开的本地工具检索、读取迁入规则；未修改现有插件、运行时实现或 MAS 适配器。
 
-本报告对照了重新运行的快照检查、固定源清单、重新计算的候选清单/哈希、相关源正文、三个包描述符及目标契约/主题正文。两种语言均包含相同的 16 项待办、3 个提议落点、32 个现有 ID 和 53 路径附录。文档回归测试检查映射与双语一致性，不证明语义等价。**结果：历史归档保全已验证；语义迁移未完成；批准及当前权威依据仍待解决。**
+后续贡献同时更新所属正文和描述符：“源条款 → 目标 ID → 有范围的规则/例外 → 正反例”。范围不变则复用现有 ID；新增可独立引用内容时补导航和关系。Common 保持产品独立，Fluent 保持版本区分，SharePoint 保持宿主范围。协调精确版本并按[设计中的发布流程](TECH-DESIGN.zh-CN.md#9-版本生成与发布)发布。
+
+本次更新将当前 authored 正文、包 README 与描述符对照既有固定来源审计。两种语言均保留 B01–B16、已注册 N01–N03、精确的 35 个目标 ID 及未改动的 53 路径 / 41 正文附录。
+
+在仓库根目录验证：重跑第 2 节快照命令，检查固定来源归档完整性/漂移；用 `npm --prefix knowledge-server run build`、`npm --prefix knowledge-server test` 和 `npm --prefix knowledge-server run check` 检查 KB 生成/发布、schema/内容/文档回归及生成一致性。用 `npm run build`、`npm test` 和 `npm run check` 检查插件市场生成、回归及生成一致性。按已完成的运行记录结果；这些检查不证明 live AT 行为或官方来源批准。
+
+**结果：经审计的可复用规则已在 authored 内容中完成迁移；独立来源资格审核、发布验证和未来 MAS 适配器是分别跟进的工作。**
 
 ## 附录 A. 完整宽范围候选清单
 
@@ -145,7 +154,7 @@
 
 ### A2. 操作、路由与代理文档——31 路径 / 29 正文
 
-这些候选保留在其实际操作来源中。可复用的证据推理可能关联 Common 验证/流程，但不等于可执行工作流已迁移。
+这些候选同时包含操作指令和可复用评估规则。评估器的覆盖层归因、录制质量及匹配基线/逐步骤证据规则，已在 B11 通过 `agentow-evaluator` 迁移到 `common.verification.dynamic`，B16 补充回归解释。代理执行、路由、验证器及产物/报告 schema 仍留在实际操作来源中。
 
 | 候选源路径（配对路径为重复正文） | SHA-256 前缀 |
 | --- | --- |

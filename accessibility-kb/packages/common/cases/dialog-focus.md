@@ -45,3 +45,28 @@ Basis: [keyboard and focus](../topics/keyboard-focus.md),
 [dynamic content](../topics/dynamic-content.md),
 [component contract](../implementation/component-contract.md), and
 [test boundaries](../verification/testing.md).
+
+## Positive/negative scenario set
+
+These generalized historical examples supply concrete acceptance assertions,
+not results. Pick the destination from the actual interaction contract rather
+than treating the examples as universal focus order.
+
+| Initial state and exact operation | Positive expected destination/behavior | Negative case |
+|---|---|---|
+| Open from a row action, then cancel | Named modal enters focus appropriately; close restores the still-mounted row action and does not delete data | Cancel mutates selection or restores an unrelated control |
+| Confirm deletion with a following row | After committed deletion/close, the documented next-row action is active and visible | Focus points at the removed trigger, `body`, or an arbitrary wrapper |
+| Confirm deletion of the last row | Chosen previous-row action or persistent empty-list control becomes active after mounting | Restoration races ahead of empty-state rendering; a fixed timeout merely hides the race |
+| Delete fails and the dialog stays open | Error conveyed once; Retry remains keyboard reachable; focus follows the still-open dialog contract | Failure closes the surface unexpectedly or duplicates the error announcement |
+| Retry succeeds and its action disappears | One owner restores the semantic replacement or persistent next step | Competing close/completion effects send focus to different targets |
+| Dialog closes by supported Escape/dismiss/unmount path | The same documented restoration/fallback contract holds, including animation completion | Only clicking Close was covered; keyboard or abrupt unmount loses focus |
+| User cancels while deletion/loading is pending | Late completion cannot reopen the dialog or steal focus from the user's new location | An old completion callback focuses a stale trigger in another view |
+
+The focus owner must know whether the trigger still exists, whether its semantic
+replacement has mounted and who supplies the fallback. Tests should assert the
+post-operation active element, not just the presence of the next row. Pair the
+dialog case with [selection and toast/action lifecycles](../topics/keyboard-focus.md)
+instead of applying modal containment/restoration to every transient surface.
+
+Historical draft basis: [dynamic focus lifecycle and restoration ownership](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L314-L399).
+No current framework API, reviewer approval or observed success is asserted.

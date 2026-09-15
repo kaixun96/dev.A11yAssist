@@ -3,18 +3,19 @@
 English | [简体中文](TECH-DESIGN.zh-CN.md)
 
 Source coverage: [AgentOW migration audit](AGENTOW-MIGRATION-AUDIT.md).
-Preserved archives are not equivalent to completed migration into the new KB.
+The audited reusable accessibility rules from AgentOW commit
+`7896845e51d75b0b9d632a2fd61876bc2f556ea5` are migrated into the authored KB.
 
 This document is for content contributors, component/product experts, KB reviewers, and service maintainers.
-It describes the implementation and extension constraints of the current schema v1 and standalone service 0.1.0,
+It describes schema v1, content packages 0.1.1 and standalone service 0.1.0,
 without presenting planned capabilities as delivered features. For installation and host registration, see the
 [service README](README.md); for content review policy, see the
 [contribution guidelines](../accessibility-kb/governance/contribution.md).
 
 **Target architecture addendum: one KB endpoint provides both local knowledge and authoritative MAS rules.**
 Sections 1–10 describe the implemented local snapshot service; section 11 defines MAS integration for colleagues
-to implement later. This change updates the design only: it adds no MAS connection, tools, configuration parsing,
-or runtime gates.
+to implement later. The MAS addendum is design-only: MAS connections, tools, configuration parsing and runtime
+gates are not implemented.
 
 ## 1. Goals and Boundaries
 
@@ -35,8 +36,10 @@ automatically executable workflow.
 
 **Not currently provided:** automatic synchronization of official sources, web crawling, semantic/vector retrieval,
 automatic task-based package selection, automatic content approval, automatic plugin integration, or quantified
-guarantees of agent effectiveness. All 32 initial entries are draft; Common 20, Fluent 4, and SharePoint 8 form
-the current seed set, not a long-term count limit or a completeness commitment.
+guarantees of agent effectiveness. The current 35 entries (Common 20, Fluent 4, SharePoint 11) include concrete
+migrated rules, API ownership, exceptions and positive/negative examples. They remain draft: pinned historical
+provenance is not official approval or current installed-version qualification. Migration scope is the audited
+reusable rules, not every word, executable or external authority referenced by the old repository.
 
 **Future goal:** ship the MAS MCP client/adapter with the standalone KB service so that hosts register only one
 KB MCP, rather than each host orchestrating KB and MAS separately. The KB service manages MAS connections
@@ -108,7 +111,7 @@ flowchart TD
 
 Arrows mean “depends on.” `common` must not depend on any product package; do not pull an entire product
 package back into Common just to cite a product case. Fluent should not contain SharePoint-specific business
-assumptions. Dependencies use exact versions such as `0.1.0`; `^0.1.0`, `latest`, and version ranges are unsupported.
+assumptions. Dependencies use exact versions such as `0.1.1`; `^0.1.1`, `latest`, and version ranges are unsupported.
 
 ### 3.1 Content Placement Quick Reference
 
@@ -135,20 +138,23 @@ the host/wrapper utilities cover.” Connect them through `relations` instead of
 When sources conflict, record context gaps and have an authorized domain reviewer determine the applicable clauses;
 the service must not automatically assume that one source overrides another.
 
-### 3.2 Highest-Priority Gaps to Address
+### 3.2 Extend the Migrated Rules
 
-| Work item | Primary location | Completion criteria |
+Start from the existing body rather than creating a parallel checklist. The audit maps B01–B16 to exact IDs;
+each package overview provides the reading route and the descriptors bind historical source records.
+
+| Area / starting point | Implemented coverage to preserve | Useful next contribution |
 |---|---|---|
-| Confirm the authorized access interface, versions, and caching permissions for company requirements | Common `sources.mas` and requirements entries | Reviewable clauses and authorization; no placeholder text presented as MAS |
-| Review actual HTML/ARIA/WCAG/APG clauses | Common sources and corresponding topics/contracts | Map each claim to its applicable version; APG examples are not the sole mandatory implementation |
-| Add actual Fluent V8/V9 component contracts and negative examples | Fluent sources, `v8/`, `v9/`, `selection/` | Confirm APIs, versions, and responsibility boundaries instead of extrapolating from another version |
-| Add SPDS, announcement/focus utilities, and host behavior | SharePoint sources, `spds/`, `utilities/` | Authorized documentation and reviewed versions available; no guessed API signatures |
-| Connect the official product support inventory | SharePoint `profiles/` | Official basis for each product version, rule, and exception |
-| Assign owners/reviewers and evaluate knowledge effectiveness | Each entry's `owner`/`review` and the evaluations rubric | Traceable review and representative positive/negative cases, not merely passing the schema |
+| [Common overview](../accessibility-kb/packages/common/README.md) | Rendered semantics; complete async visible/programmatic/focus outcomes; disappearing-control focus; localized messages; scoped scan and replacement cases | Add a missing interaction or counterexample at its owning topic, then relate verification and procedures |
+| [Fluent selection](../accessibility-kb/packages/fluent/selection/components-and-utilities.md), [V8](../accessibility-kb/packages/fluent/v8/component-contract.md), [V9](../accessibility-kb/packages/fluent/v9/component-contract.md) | Component-to-document map; V8 `delayedRender`/`Announced`; V9 intent/`AriaLiveAnnouncer`/`useAnnounce`; restoration and shim boundaries | Verify the installed version's export, provider and override behavior; retain one announcement/focus owner |
+| [SharePoint overview](../accessibility-kb/packages/sharepoint/README.md) | Table/DataGrid and stable/LazyComponents fit; SPDS composition; shared alerts and focus; neutral providers and replacement checks | Extend a concrete host scenario, preserving product scope and caller obligations |
+| [RTE](../accessibility-kb/packages/sharepoint/utilities/rich-text-accessibility.md), [drag/reorder](../accessibility-kb/packages/sharepoint/utilities/drag-and-drop.md), [formatting](../accessibility-kb/packages/sharepoint/utilities/localization-and-formatting.md) | Registered N01–N03: checker capabilities, move-state protocol, complete count/ReactNode resources and RTL exceptions | Add version-backed signatures or edge cases where the pinned source supplies only names/behavior; do not guess missing API details |
+| Common requirements and SharePoint profiles | Source/applicability policy and separate support/verification dimensions | Acquire official clauses/support statements, assign reviewers and record review evidence; MAS implementation remains section 11 |
 
-This is a collaborative backlog, not a claim that these materials have already been obtained. Original private
-materials, run evidence, account details, and environment information remain in authorized external systems;
-the repository contains only distributable summaries and references to supporting material accessible with authorization.
+For a contribution, record source clause → target ID → scoped rule/exception → positive/negative verification
+case. Keep historical records for provenance and add independently reviewed current sources for qualification.
+Private materials, credentials and run evidence stay in authorized external systems. Follow sections 4–7 for
+registration and section 9 for coordinated versions and publication.
 
 ## 4. Data Model and Reference Contract
 
@@ -293,8 +299,8 @@ a package for every topic. Consider the example package `product-example`, which
 {
   "schemaVersion": 1,
   "id": "product-example",
-  "version": "0.1.0",
-  "dependencies": {"common": "0.1.0"},
+  "version": "0.1.1",
+  "dependencies": {"common": "0.1.1"},
   "sources": [],
   "entries": [
     {
@@ -311,7 +317,7 @@ a package for every topic. Consider the example package `product-example`, which
 }
 ```
 
-3. `dependencies` must match the actual package versions in the current KB. The example's `0.1.0` is not a
+3. `dependencies` must match the actual package versions in the current KB. The example's `0.1.1` is not a
    permanently valid default. If using Fluent contracts, depend on Fluent explicitly; do not add a product dependency
    to Common to bypass validation.
 4. Add bodies, sources, and relationships entry by entry as described in section 5. An ordinary new package does not require a schema change.
@@ -405,6 +411,10 @@ consider major for incompatible semantic/ID contract changes. Current code check
 format, not the business semantics of SemVer; PR review must enforce those. Changing content at the same version
 also changes its pin and does not establish compatibility or waive version review.
 
+The current content release coordinates Common, Fluent and SharePoint at `0.1.1`: Fluent depends on
+Common `0.1.1`, and SharePoint depends on both Common and Fluent `0.1.1`. The service implementation remains
+`0.1.0`; its version is independent of this content migration.
+
 After upgrading Common, update every exact version dependency that directly references it; if Fluent itself also
 upgrades, update SharePoint's Fluent dependency too. Review which downstream approved conclusions are affected
 by dependency changes.
@@ -469,7 +479,8 @@ do not merely update the number of passing tests.
 | Distribution/publication | [Standalone tests](tests/standalone.test.mjs): old-reference cold starts, artifact retention, interruption recovery, and unchanged existing files |
 | Whether knowledge improves judgment | [Effectiveness evaluation rubric](../accessibility-kb/evaluations/README.md): separately authorized real evaluations, not replaceable by unit tests |
 
-Initial tests include assertions for 32/20 entries and fixed example IDs. When adding content, update justified
+The current expected entry sets are 35 for the full closure and 20 for Common alone (Fluent adds 4;
+SharePoint adds 11). Check exact IDs as well as counts. When adding content, update justified
 counts and expected sets while retaining negative assertions: Common must not leak product knowledge,
 unselected packages must not be readable, and missing sources must not yield approved entries. Evaluations must
 include at least one genuine-risk sample, one clean counterexample, one missing-context scenario, and one

@@ -50,3 +50,56 @@ available and be dismissed; do not assume pointer-only discovery is sufficient.
 Reference the applicable [WCAG 2.2 criterion](https://www.w3.org/TR/WCAG22/)
 when needed. Report concrete source risks and exceptions, not guessed pixel
 measurements, a visual PASS or a fabricated contrast ratio.
+
+## Rendered style and replacement verification cases
+
+These draft cases apply when a style/token/element change can affect readability,
+semantics, clipping, focus, targets, state distinction or operation. A proven
+decorative-only radius/shadow/spacing change is not automatically an accessibility
+defect; a raw spacing literal needs an actual impact, not a blanket token rule.
+
+| Change or condition | Positive expected verification | Negative example / risk |
+|---|---|---|
+| Token/state override | Default, hover, selected, focus, disabled where applicable, theme and forced-colors states retain required cues | A familiar token name is treated as a contrast measurement, or selection is color-only |
+| Element/component replacement | Reused selectors/classes still give the new element suitable display, sizing, overflow, hit target, focus and disabled/selected styling | Styles written for an anchor or generic wrapper hide a replacement button's outline or shrink its target |
+| Reflow | At 400% zoom from a 1280 CSS-pixel-wide baseline (equivalent 320 CSS-pixel width), ordinary vertical content retains text/actions without two-dimensional scrolling | An action is clipped by a fixed-width footer, or a dialog title overlaps Close |
+| Two-dimensional content | A data table/map/diagram that requires two-dimensional layout retains its criterion exception while surrounding controls still reflow | The exception is extended to the entire page or used to hide a toolbar action |
+| Truncated value | Full meaningful text is available through the documented keyboard, touch and screen-reader pattern | Hover-only Tooltip or `title` is the sole way to obtain the value |
+| Full accessible value already supplied | The full name/value remains available without a duplicate hidden copy | A second description repeats the full label and makes speech unnecessarily verbose |
+| User text settings/localization growth | Text resize, spacing and longer translations retain content, target separation and operation | A fixed-height row clips instructions or an error message |
+
+Preserve the applicable contrast criterion's exceptions. Do not convert the
+historical reference's broad “all boundaries/states/focus indicators at 3:1”
+wording into a universal rule. Inactive controls, incidental decoration,
+unmodified user-agent presentation and other criterion-specific exceptions need
+their own applicability assessment. Test relevant disabled-state usability and
+distinction without asserting that every disabled label must meet normal-text
+contrast. Focus visibility, contrast and obscuration are related but separate
+checks; no single ratio certifies them all.
+
+## Bidirectional layout and localized presentation
+
+Inspect physical-direction CSS across stylesheets, CSS-in-JS and inline styles.
+Use logical properties or the owning framework's supported RTL-aware path where
+the meaning is direction-relative. Do not mechanically flag a physical property
+when the actual styling pipeline already flips it, and do not double-flip it.
+Conversely, an inline/raw-CSS override outside that pipeline is not protected by
+an auto-flipping claim. Confirm the installed framework contract; version-specific
+behavior routes through `fluent.v8.component-contract` or
+`fluent.v9.component-contract`.
+
+Positive verification: in both LTR and RTL, a longer localized label, focus ring,
+icon/text spacing, error and trailing action remain visible and in meaningful
+reading/tab order; a mixed-direction data value retains its meaning. Negative:
+physical left offsets bypass the styling path, a second manual reversal undoes
+framework flipping, or CSS reversal changes appearance but leaves an incoherent
+DOM reading order. Not every image or directional concept should mirror: retain
+physical/spatial meaning where intentional, and record the scoped reason.
+Pair this with the [complete-message rules](forms-and-content.md), not an
+English-only visual snapshot.
+
+Historical draft basis: [rendered checks and exceptions](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L1-L111),
+[custom UI checks](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/accessibility.md#L445-L465),
+and [localization and directional CSS](https://github.com/kaixun96/dev.AgentOW/blob/7896845e51d75b0b9d632a2fd61876bc2f556ea5/copilot/skills/ow-review/references/localization-and-formatting.md#L1-L19).
+Current standards mapping and rendered observations remain pending; these cases
+are acceptance examples, not measured results.

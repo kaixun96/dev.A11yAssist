@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { loadKnowledgeBase, exportKnowledgeBase } from '../tools/knowledge-base.mjs';
 import { createKnowledgeReference, resolveKnowledgeReference, validateKnowledgeReference } from '../tools/knowledge-reference.mjs';
 import { createCommonReferenceFixture } from './helpers/common-reference.mjs';
+import { assertCurrentEntries } from './helpers/current-packages.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const kbRoot = fileURLToPath(new URL('../../accessibility-kb', import.meta.url));
@@ -50,7 +51,7 @@ test('repository development resolution ignores cwd and returns only declared en
   const resolved = await resolveKnowledgeReference(root, { env: {} });
   assert.equal(resolved.kbRoot, await realpath(kbRoot));
   assert.deepEqual(Object.keys(resolved.packages), ['common', 'fluent', 'sharepoint']);
-  assert.equal(resolved.entries.length, 32);
+  assertCurrentEntries(resolved.entries);
   assert(resolved.entries.some(entry => entry.id === 'sharepoint.profile.support-policy'));
   assert(resolved.entries.every(entry => /^[a-f0-9]{64}$/.test(entry.sha256)));
   assert.equal(resolved.contentApprovalVerified, false);
@@ -71,7 +72,7 @@ test('installed standalone server resolves an external project root through expl
     assert.deepEqual(environment, option);
     assert.equal(option.kbRoot, await realpath(external));
     assert.deepEqual(Object.keys(option.packages), ['common', 'fluent', 'sharepoint']);
-    assert.equal(option.entries.length, 32);
+    assertCurrentEntries(option.entries);
     for (const entry of option.entries) await readFile(entry.path);
     // The explicit setting takes precedence; it is not silently replaced.
     const priority = await resolveKnowledgeReference(server, { kbRoot: external, env: { A11Y_ASSIST_KB_ROOT: 'invalid-env' } });
@@ -90,7 +91,7 @@ test('synthetic Common reference resolves a portable Common-only root that canno
     assert.equal(option.kbRoot, await realpath(external));
     assert.equal(option.manifestSha256, reference.manifestSha256);
     assert.deepEqual(Object.keys(option.packages), ['common']);
-    assert.equal(option.entries.length, 20);
+    assertCurrentEntries(option.entries, ['common']);
     assert(option.entries.every(entry => entry.id.startsWith('common.')));
     for (const entry of option.entries) await readFile(entry.path);
     const priority = await resolveKnowledgeReference(consumer, { kbRoot: external, env: { A11Y_ASSIST_KB_ROOT: 'invalid-env' } });
@@ -135,7 +136,7 @@ test('selection pins do not include unrelated package content', async () => {
     await writeFile(path, await readFile(path, 'utf8') + '\nSynthetic unselected content change.\n');
     await refreshManifest(shared);
     const resolved = await resolveKnowledgeReference(consumer, { kbRoot: shared, env: {} });
-    assert.equal(resolved.entries.length, 20);
+    assertCurrentEntries(resolved.entries, ['common']);
     assert(resolved.entries.every(entry => entry.id.startsWith('common.')));
     await assert.rejects(resolveKnowledgeReference(server, { kbRoot: shared, env: {} }), /KB reference content mismatch/);
   });

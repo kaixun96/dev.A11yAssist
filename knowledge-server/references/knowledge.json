@@ -4,13 +4,13 @@
   "rootEnv": "A11Y_ASSIST_KB_ROOT",
   "developmentRoot": "../accessibility-kb",
   "packages": {
-    "common": "0.1.0",
-    "fluent": "0.1.0",
-    "sharepoint": "0.1.0"
+    "common": "0.1.1",
+    "fluent": "0.1.1",
+    "sharepoint": "0.1.1"
   },
-  "manifestSha256": "3ffdfda8c2bd81db6954516061fc9cabf092fe303308b598b033232c4fc17c92",
+  "manifestSha256": "9a244b4320ea9f352195a8cebd3c783667ea7ccac07fb53a0ebecff33c3a0024",
   "distribution": {
-    "url": "https://raw.githubusercontent.com/kaixun96/dev.A11yAssist/main/knowledge-distribution/3ffdfda8c2bd81db6954516061fc9cabf092fe303308b598b033232c4fc17c92.json",
-    "sha256": "3818085a203606c63c05656f82f7174fc587c207d940c9e590b2bd09cbf19056"
+    "url": "https://raw.githubusercontent.com/kaixun96/dev.A11yAssist/main/knowledge-distribution/9a244b4320ea9f352195a8cebd3c783667ea7ccac07fb53a0ebecff33c3a0024.json",
+    "sha256": "060f555fa584862684a754f736ab207adefdf785f0a6ac8735c6db759a2db62a"
   }
 }

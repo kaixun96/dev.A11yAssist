@@ -98,17 +98,47 @@ test('audit source appendix exactly accounts for pinned candidate paths and hash
   }
 });
 
-test('both audits map all registered target IDs and the same incomplete-migration backlog', async () => {
-  const entries = (await Promise.all(packageIds.map(id =>
-    json(resolve(repository, `accessibility-kb/packages/${id}/package.json`))))).flatMap(pkg => pkg.entries);
+test('both audits map completed B01-B16 and registered N01-N03 to actual entry files', async () => {
+  const packages = await Promise.all(packageIds.map(id =>
+    json(resolve(repository, `accessibility-kb/packages/${id}/package.json`))));
+  const entries = packages.flatMap(pkg => pkg.entries);
+  const targets = new Map(packages.flatMap(pkg => pkg.entries.map(entry =>
+    [entry.id, `../accessibility-kb/packages/${pkg.id}/${entry.path}`])));
+  const newIds = ['rich-text-accessibility', 'drag-and-drop', 'localization-and-formatting']
+    .map(name => `sharepoint.utilities.${name}`);
+  const mappings = [];
   for (const name of audits) {
     const text = await read(name);
-    const ids = [...text.matchAll(/^\| `((?:common|fluent|sharepoint)\.[a-z0-9.-]+)` \|/gm)].map(m => m[1]);
+    const rows = [...text.matchAll(/^\| `((?:common|fluent|sharepoint)\.[a-z0-9.-]+)` \|(.+)$/gm)];
+    const ids = rows.map(m => m[1]);
     assert.deepEqual(ids.sort(), entries.map(entry => entry.id).sort());
-    const backlog = [...text.matchAll(/^\| (B\d+) ·/gm)].map(m => m[1]);
-    assert.deepEqual(backlog, Array.from({ length: 16 }, (_, i) => `B${String(i + 1).padStart(2, '0')}`));
-    assert.equal([...text.matchAll(/^\| N\d+ ·/gm)].length, 3);
+    const links = row => [...row.matchAll(/\]\(([^)\s]+)\)/g)].map(m => m[1]);
+    for (const [, id, row] of rows) {
+      assert(links(row).includes(targets.get(id)), `${name}: ${id} must link to its declared file`);
+    }
+    const completed = [...text.matchAll(/^\| (B\d+) ·(.+)$/gm)];
+    assert.deepEqual(completed.map(m => m[1]), Array.from({ length: 16 }, (_, i) => `B${String(i + 1).padStart(2, '0')}`));
+    assert.match(text, /## 3\. (?:Source-to-KB implemented coverage|源到 KB 的已实现覆盖)/);
+    const mapped = [];
+    for (const [, id, row] of completed) {
+      assert.doesNotMatch(row, /partially covered|missing contract|部分覆盖|缺少具体契约/i);
+      const destinations = [...row.matchAll(/`((?:common|fluent|sharepoint)\.[a-z0-9.-]+)`/g)]
+        .map(match => {
+          assert(targets.has(match[1]), `${name}: ${id} has unregistered target ${match[1]}`);
+          return targets.get(match[1]);
+        }).sort();
+      assert(destinations.length > 0, `${name}: ${id} needs a registered target with a verified index link`);
+      mapped.push([id, destinations]);
+    }
+    const added = [...text.matchAll(/^\| (N\d+) ·(.+)$/gm)];
+    assert.deepEqual(added.map(m => m[1]), ['N01', 'N02', 'N03']);
+    for (const [i, [, id, row]] of added.entries()) {
+      assert(targets.has(newIds[i]), `${id} must be registered, not proposed`);
+      assert(row.includes(newIds[i]), `${name}: ${id} needs its actual ID`);
+      assert(links(row).includes(targets.get(newIds[i])), `${name}: ${id} needs its actual file link`);
+    }
+    mappings.push(mapped);
+    assert.doesNotMatch(text, /semantic migration incomplete|语义迁移未完成/);
   }
-  assert.match(await read(audits[0]), /semantic migration incomplete/);
-  assert.match(await read(audits[1]), /语义迁移未完成/);
+  assert.deepEqual(mappings[0], mappings[1], 'Bilingual completion rows must map to the same implementations');
 });

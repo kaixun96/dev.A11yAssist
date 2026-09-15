@@ -13,8 +13,23 @@ content placement, entry/package examples, source review, schemas, tests and rel
 
 The [AgentOW migration audit](AGENTOW-MIGRATION-AUDIT.md) /
 [迁移审查（简体中文）](AGENTOW-MIGRATION-AUDIT.zh-CN.md) maps the pinned upstream
-references to current entries and the remaining backlog. Historical preservation
-is verified; the new KB does **not** yet preserve all concrete accessibility contracts.
+references to implemented Common, Fluent and SharePoint rules: B01–B16 coverage,
+three added utility entries, and an exact 35-entry index. Migration of the audited
+reusable accessibility rules from AgentOW commit
+`7896845e51d75b0b9d632a2fd61876bc2f556ea5` is complete in the authored packages.
+
+| Contribute to | Current content at version 0.1.1 |
+|---|---|
+| [Common](../accessibility-kb/packages/common/README.md) — 20 entries | Semantics, async outcome/focus matrices, localization, root-cause and verification cases |
+| [Fluent](../accessibility-kb/packages/fluent/README.md) — 4 entries | V8/V9 MessageBar, announcement/focus ownership, component documentation and composition |
+| [SharePoint](../accessibility-kb/packages/sharepoint/README.md) — 11 entries | SPDS fit/imports, announcement/focus utilities, RTE, drag/reorder, formatting, themes and host checks |
+
+Extend the owning body, bind the source in its package descriptor, add a scoped
+positive/negative example, and update navigation, relations and exact dependencies.
+The design's sections 3–7 explain placement and authoring; sections 9–10 cover release
+and acceptance. All 35 entries remain draft: pinned historical provenance establishes
+the migrated basis, not official approval, current installed-version validity or
+observed conformance. Official MAS and product-support acquisition are separate work.
 
 **Planned, not implemented:** section 11 of that design specifies one KB MCP
 entrypoint for both local knowledge and authoritative MAS rules, with a MAS MCP
@@ -73,10 +88,9 @@ KB root for evaluation. Do not advertise cold-install readiness until the exact
 URL and raw SHA-256 have been verified after publication. Automated transport
 tests are synthetic; real Copilot tool discovery remains a separate host check.
 
-All 32 entries are draft (Common 20, Fluent 4, SharePoint 8). Missing company,
-component and support sources remain explicit gaps, not inferred rules. A hash
-pin proves content identity, not approval, accessibility conformance, or parity
-with existing plugin knowledge.
+Content package versions are coordinated at `0.1.1`; the standalone service's
+implementation version is `0.1.0`. Authored coverage and published snapshot identity
+are separate: consumers read only the versions and hashes in their generated reference.
 
 ## Development and release
 

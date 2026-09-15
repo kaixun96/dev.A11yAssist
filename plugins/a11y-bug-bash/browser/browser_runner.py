@@ -298,6 +298,7 @@ def run(request, output, policy):
                     raise RuntimeError("Actual browser identity is unavailable")
                 report["connectionMode"] = policy.get("connection", {}).get("mode", "ephemeral")
                 blocked_requests = []
+                failed_responses = []
                 critical_failures = [0]
                 authenticating = [report["connectionMode"] == "persistent"]
                 read_only_pending = []
@@ -309,6 +310,7 @@ def run(request, output, policy):
                         rule = policy_module.request_rule(policy, route.request)
                         if (route.request.method not in {"GET", "HEAD"} and
                                 (rule and "readOnly" in rule or not (
+                                    rule and rule.get("authentication") or
                                     authenticating[0] and policy_module.authentication_request(policy, route.request)))):
                             if len(report["transactions"]) >= 100:
                                 critical_failures[0] += 1
@@ -326,11 +328,14 @@ def run(request, output, policy):
                             save(state_path, report)
                         route.continue_()
                     else:
-                        if route.request.resource_type in {"script", "document", "stylesheet", "fetch", "xhr"}:
+                        telemetry = policy_module.telemetry_block(policy, route.request)
+                        if not telemetry and route.request.resource_type in {"script", "document", "stylesheet", "fetch", "xhr"}:
                             critical_failures[0] += 1
                         if len(blocked_requests) < 200:
                             blocked_requests.append({"url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
-                                                     "type": route.request.resource_type})
+                                                     "type": route.request.resource_type,
+                                                     "method": route.request.method,
+                                                     "expectedTelemetryDenial": telemetry is not None})
                         route.abort()
 
                 context.route("**/*", route_request)
@@ -356,6 +361,11 @@ def run(request, output, policy):
                 def failed_response(response):
                     if response.status >= 400 and response.request.resource_type in {"script", "document", "stylesheet", "fetch", "xhr"}:
                         critical_failures[0] += 1
+                        if len(failed_responses) < 100:
+                            parsed = urlsplit(response.url)
+                            failed_responses.append({"url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+                                                     "status": response.status,
+                                                     "type": response.request.resource_type})
 
                 def finished_request(request):
                     transaction = take_pending(request)
@@ -408,6 +418,9 @@ def run(request, output, policy):
                             raise RuntimeError("Page startup has an unresolved server request; reconcile it before triggering the scenario")
                         if not response or response.status >= 400 or page.url != request["target"]:
                             raise RuntimeError("Expected authorized page did not load")
+                        row["pageErrors"] = [str(error) for error in errors[:20]]
+                        row["unexpectedDialogs"] = dialogs[:20]
+                        row["criticalRequestFailures"] = critical_failures[0] - failure_start
                         row["capturePreflight"] = capture_health(
                             page, request, not errors and not dialogs and critical_failures[0] == failure_start)
                         row["scenarioPreflight"] = row["capturePreflight"]
@@ -479,6 +492,9 @@ def run(request, output, policy):
                                             encoding="utf-8")
                             row["evidence"] = [{"path": file.name, "sha256": sha256(file)} for file in (screenshot, tree)]
                     finally:
+                        row["pageErrors"] = [str(error) for error in errors[:20]]
+                        row["unexpectedDialogs"] = dialogs[:20]
+                        row["criticalRequestFailures"] = critical_failures[0] - failure_start
                         row["capturePostcheck"] = capture_health(
                             page, request, not errors and not dialogs and critical_failures[0] == failure_start)
                         if not row["capturePostcheck"]["verified"]:
@@ -490,6 +506,7 @@ def run(request, output, policy):
                         save(state_path, report)
                         page.remove_listener("pageerror", on_error)
                 report["blockedRequests"] = blocked_requests
+                report["failedResponses"] = failed_responses
                 report["state"] = "completed"
             finally:
                 try:

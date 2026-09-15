@@ -128,18 +128,26 @@ import ast,importlib.util,pathlib,sys
 from types import SimpleNamespace as NS
 spec=importlib.util.spec_from_file_location("runner",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 calls=[]
-context=NS(set_offline=lambda value:calls.append(value))
+session=NS(send=lambda *args:calls.append(args))
+context=NS(set_offline=lambda value:calls.append(value),new_cdp_session=lambda page:session)
 for url in ("https://example.org/previous","chrome://newtab/","about:blank#unexpected"):
     try:m.policy_module.enable_guarded_network(context,NS(url=url))
     except RuntimeError:pass
     else:raise AssertionError("Restored document allowed online")
 assert calls==[]
-m.policy_module.enable_guarded_network(context,NS(url="about:blank"))
-assert calls==[False]
+assert m.policy_module.enable_guarded_network(context,NS(url="about:blank")) is session
+assert calls==[("Network.enable",),("Network.setBypassServiceWorker",{"bypass":True}),False]
 def fail(value):raise OSError("synthetic transport failure")
-try:m.policy_module.enable_guarded_network(NS(set_offline=fail),NS(url="about:blank"))
+try:m.policy_module.enable_guarded_network(NS(set_offline=fail,new_cdp_session=lambda page:session),NS(url="about:blank"))
 except OSError:pass
 else:raise AssertionError("Offline transition failure was swallowed")
+def reject(*args):raise RuntimeError("synthetic unsupported CDP guard")
+calls=[]
+try:m.policy_module.enable_guarded_network(NS(set_offline=lambda value:calls.append(value),
+    new_cdp_session=lambda page:NS(send=reject)),NS(url="about:blank"))
+except RuntimeError:pass
+else:raise AssertionError("Missing service-worker isolation accepted")
+assert calls==[]
 tree=ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 run=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=="run")
 calls=[n for n in ast.walk(run) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute)]
@@ -372,6 +380,7 @@ class Context:
     def __init__(self, page): self.pages = [page]; page.context = self
     def route(self, *args): pass
     def route_web_socket(self, *args): pass
+    def new_cdp_session(self, page): return types.SimpleNamespace(send=lambda *args:None,on=lambda *args:None)
     def set_offline(self, value): assert value is False and self.pages[0].url == "about:blank"
     def close(self): self.closed = True
 page = Page(); context = Context(page); browser = Browser()
@@ -501,6 +510,7 @@ class Context:
     def __init__(self, page): self.pages = [page]; page.context = self
     def route(self, *args): pass
     def route_web_socket(self, *args): pass
+    def new_cdp_session(self, page): return types.SimpleNamespace(send=lambda *args:None,on=lambda *args:None)
     def set_offline(self, value): assert value is False and self.pages[0].url == "about:blank"
     def close(self): self.closed = True
 page = Page(); context = Context(page); browser = Browser()

@@ -551,9 +551,12 @@ def run(request, output, policy):
                 dialogs = []
                 page.on("dialog", lambda dialog: (dialogs.append(dialog.type), dialog.dismiss()))
                 install_exception_diagnostics(context, page, report, PlaywrightError)
-                policy_module.enable_guarded_network(context, page)
+                # Retain the page CDP session until the owned context closes.
+                network_guard_session = policy_module.enable_guarded_network(context, page)
                 report["networkStartup"] = {"offlineUntilRoutingInstalled": True,
-                                            "initialPage": "about:blank", "state": "guarded"}
+                                            "initialPage": "about:blank", "state": "guarded",
+                                            "existingServiceWorkersBypassed": True,
+                                            "serviceWorkerBypassScope": "page-CDP-target"}
                 save(state_path, report)
                 for definition, row in zip(request["rows"], report["rows"]):
                     row_request = {**request, "target": definition.get("expectedUrl", request["target"])}

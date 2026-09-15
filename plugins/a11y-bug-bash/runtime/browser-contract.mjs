@@ -17,8 +17,15 @@ function locator(value) {
 }
 export function validateBrowserParameters(value) {
   const inspection = value && Object.hasOwn(value, 'inspection');
-  exact(value, ['steps', 'assertions', ...(inspection ? ['inspection'] : [])]);
+  const expectedUrl = value && Object.hasOwn(value, 'expectedUrl');
+  exact(value, ['steps', 'assertions', ...(inspection ? ['inspection'] : []), ...(expectedUrl ? ['expectedUrl'] : [])]);
   if (inspection) demand(value.inspection === true, 'Document inspection must be explicitly true');
+  if (expectedUrl) {
+    demand(typeof value.expectedUrl === 'string' && value.expectedUrl.length <= 2048, 'Invalid expected URL');
+    const url = new URL(value.expectedUrl);
+    demand(url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash,
+      'Expected URL must be credential-free HTTPS without query or fragment');
+  }
   demand(Array.isArray(value.steps) && value.steps.length <= 30 &&
     Array.isArray(value.assertions) && value.assertions.length >= (inspection ? 0 : 1) &&
     value.assertions.length <= 20, 'Invalid browser scenario budget');
@@ -55,9 +62,19 @@ export function validateBrowserParameters(value) {
     else throw new Error('Unsupported browser assertion');
   }
 }
+function expectedTarget(parameters, initialTarget) {
+  if (!Object.hasOwn(parameters, 'expectedUrl')) return initialTarget;
+  demand(typeof initialTarget === 'string' && initialTarget.includes('?') &&
+    parameters.expectedUrl === initialTarget.split('?')[0],
+  'Expected URL may only declare consumption of the initial query on the same exact path');
+  return parameters.expectedUrl;
+}
 export function browserRequest(input, budgetSeconds = 180, viewport = { width: 1280, height: 720 }) {
   demand(input.rows.length <= 30 && input.rows.every(row => row.track === 'page' && row.capability === 'browser'), 'Browser batches contain at most thirty page rows');
-  input.rows.forEach(row => validateBrowserParameters(row.parameters));
+  input.rows.forEach(row => {
+    validateBrowserParameters(row.parameters);
+    expectedTarget(row.parameters, input.target);
+  });
   return { schemaVersion: 1, taskId: input.taskId, target: input.target, budgetSeconds, viewport,
     rows: input.rows.map(row => ({ id: row.id, ...row.parameters })) };
 }
@@ -71,12 +88,13 @@ export function verifyBrowserObservations(report, expectedRequest) {
     const expected = expectedRequest.rows.find(item => item.id === row.id);
     demand(expected && ['finding', 'observed-no-issue', 'blocked', 'not-run', 'inconclusive'].includes(row.status) &&
       typeof row.attempted === 'boolean', 'Browser coverage identity/attempt accounting differs');
+    const expectedUrl = expectedTarget(expected, expectedRequest.target);
     if (Object.hasOwn(row, 'documentInspection')) demand(expected.inspection === true, 'Document inspection was not requested');
     if (expected.inspection && row.documentInspection) {
       const value = row.documentInspection;
       demand(row.attempted && discoveryHash(row.inspectionSteps) === discoveryHash(expected.steps) &&
         value.schemaVersion === 1 && value.scope === 'raw-document-inspection' &&
-        value.url === expectedRequest.target &&
+        value.url === expectedUrl &&
         discoveryHash(value.viewport) === discoveryHash(expectedRequest.viewport) &&
         value.traversal === 'light-dom-only' && value.textAndInputValuesOmitted === true &&
         value.frameContentsIncluded === false && Number.isInteger(value.frameElements) && value.frameElements >= 0 &&
@@ -110,7 +128,7 @@ export function verifyBrowserObservations(report, expectedRequest) {
         return value.met;
       });
       demand(row.capturePreflight?.verified === true && row.capturePostcheck?.verified === true &&
-        [row.capturePreflight, row.capturePostcheck].every(health => health.url === expectedRequest.target &&
+        [row.capturePreflight, row.capturePostcheck].every(health => health.url === expectedUrl &&
           health.visible === true && health.documentFocused === true && health.singlePage === true &&
           health.noUnexpectedPageState === true && discoveryHash(health.viewport) === discoveryHash(expectedRequest.viewport)),
       'Fresh per-row capture preflight/postcheck is required');

@@ -80,6 +80,11 @@ def validate_request(value):
     ids = set()
     for row in rows:
         fields = {"id", "steps", "assertions"}
+        if isinstance(row, dict) and "expectedUrl" in row:
+            fields.add("expectedUrl")
+            if ("?" not in value["target"] or not isinstance(row["expectedUrl"], str) or
+                    row["expectedUrl"] != value["target"].split("?", 1)[0]):
+                raise ValueError("Expected URL may only declare consumption of the initial query on the same exact path")
         if isinstance(row, dict) and "inspection" in row:
             fields.add("inspection")
             if row["inspection"] is not True:
@@ -292,7 +297,8 @@ def run(request, output, policy):
     validate_policy(policy)
     if sys.platform != "win32" or os.environ.get("CODESPACES") == "true" or os.environ.get("CODESPACE_NAME"):
         raise RuntimeError("Browser execution requires the owned Windows evaluator")
-    if request["target"] not in policy["allowedTargets"]:
+    if (request["target"] not in policy["allowedTargets"] or
+            any(row.get("expectedUrl", request["target"]) not in policy["allowedTargets"] for row in request["rows"])):
         raise ValueError("Target is not in the protected operator policy")
     output = Path(output).resolve()
     if output == ROOT or ROOT in output.parents:
@@ -423,6 +429,7 @@ def run(request, output, policy):
                 dialogs = []
                 page.on("dialog", lambda dialog: (dialogs.append(dialog.type), dialog.dismiss()))
                 for definition, row in zip(request["rows"], report["rows"]):
+                    row_request = {**request, "target": definition.get("expectedUrl", request["target"])}
                     if report.get("unresolvedTransaction"):
                         row.update(status="not-run", attempted=False, reason="Earlier transaction effects require reconciliation")
                         save(state_path, report)
@@ -442,7 +449,7 @@ def run(request, output, policy):
                     try:
                         response = page.goto(request["target"], wait_until="load")
                         if authenticating[0]:
-                            policy_module.wait_authenticated(page, request, policy, deadline, time.monotonic)
+                            policy_module.wait_authenticated(page, row_request, policy, deadline, time.monotonic)
                             authenticating[0] = False
                         while any(item["state"] == "read-only-pending" for item in report["transactions"][transaction_start:]):
                             if time.monotonic() >= deadline:
@@ -450,13 +457,13 @@ def run(request, output, policy):
                             page.wait_for_timeout(25)
                         if unresolved_transactions(report, transaction_start):
                             raise RuntimeError("Page startup has an unresolved server request; reconcile it before triggering the scenario")
-                        if not response or response.status >= 400 or page.url != request["target"]:
+                        if not response or response.status >= 400 or page.url != row_request["target"]:
                             raise RuntimeError("Expected authorized page did not load")
                         row["pageErrors"] = [str(error) for error in errors[:20]]
                         row["unexpectedDialogs"] = dialogs[:20]
                         row["criticalRequestFailures"] = critical_failures[0] - failure_start
                         row["capturePreflight"] = capture_health(
-                            page, request, not errors and not dialogs and critical_failures[0] == failure_start)
+                            page, row_request, not errors and not dialogs and critical_failures[0] == failure_start)
                         row["scenarioPreflight"] = row["capturePreflight"]
                         save(state_path, report)
                         if not row["capturePreflight"]["verified"]:
@@ -535,7 +542,7 @@ def run(request, output, policy):
                     try:
                         if row.get("capturePreflight", {}).get("verified"):
                             row["capturePreflight"] = capture_health(
-                                page, request, not errors and not dialogs and critical_failures[0] == failure_start)
+                                page, row_request, not errors and not dialogs and critical_failures[0] == failure_start)
                             save(state_path, report)
                             if not row["capturePreflight"]["verified"]:
                                 row.update(status="blocked", reason="Environment changed before capture; scenario evidence not accepted")
@@ -554,7 +561,7 @@ def run(request, output, policy):
                                 remaining_ms = int((deadline - time.monotonic()) * 1000)
                                 if remaining_ms <= 0 or page.is_closed():
                                     raise TimeoutError("Original budget or page unavailable for failure diagnostics")
-                                if authenticating[0] or page.url != request["target"]:
+                                if authenticating[0] or page.url != row_request["target"]:
                                     raise RuntimeError("Failure diagnostics are restricted to the original target")
                                 if credential_inputs_present(page):
                                     raise RuntimeError("Credential-entry pages are excluded from failure diagnostics")
@@ -567,7 +574,7 @@ def run(request, output, policy):
                                 tree_text = page.locator(":root").aria_snapshot(timeout=min(5000, remaining_ms))
                                 if time.monotonic() >= deadline:
                                     raise TimeoutError("Failure diagnostics exceeded the original budget")
-                                if (page.url != request["target"] or
+                                if (page.url != row_request["target"] or
                                         credential_inputs_present(page)):
                                     raise RuntimeError("Page changed into an unqualified diagnostic state")
                                 if len(image_bytes) + len(tree_text.encode("utf-8")) > 4 * 1024 * 1024:
@@ -583,7 +590,7 @@ def run(request, output, policy):
                         row["unexpectedDialogs"] = dialogs[:20]
                         row["criticalRequestFailures"] = critical_failures[0] - failure_start
                         row["capturePostcheck"] = capture_health(
-                            page, request, not errors and not dialogs and critical_failures[0] == failure_start)
+                            page, row_request, not errors and not dialogs and critical_failures[0] == failure_start)
                         if not row["capturePostcheck"]["verified"]:
                             row.update(status="inconclusive", reason="Capture postcheck found an unexpected page/environment state")
                             row["evidencePurpose"] = "environment-diagnostic"

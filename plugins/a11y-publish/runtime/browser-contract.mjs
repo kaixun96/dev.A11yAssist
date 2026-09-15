@@ -30,6 +30,10 @@ export function validateBrowserParameters(value) {
     } else if (step.action === 'fill') {
       exact(step, ['action', 'target', 'value']); locator(step.target);
       demand(typeof step.value === 'string' && step.value.length <= 256, 'Invalid bounded browser fill');
+    } else if (step.action === 'observe') {
+      exact(step, ['action', 'milliseconds']);
+      demand(Number.isInteger(step.milliseconds) && step.milliseconds >= 1 &&
+        step.milliseconds <= 30000, 'Observation dwell must be 1-30000 milliseconds');
     } else throw new Error('Unsupported browser action; arbitrary scripts are forbidden');
   }
   for (const assertion of value.assertions) {

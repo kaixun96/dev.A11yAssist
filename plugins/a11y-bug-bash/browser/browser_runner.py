@@ -104,6 +104,9 @@ def validate_request(value):
                 locator_spec(step["target"])
                 if not isinstance(step["value"], str) or len(step["value"]) > 256:
                     raise ValueError("Fill input is too large")
+            elif action == "observe" and set(step) == {"action", "milliseconds"}:
+                if type(step["milliseconds"]) is not int or not 1 <= step["milliseconds"] <= 30000:
+                    raise ValueError("Observation dwell must be 1-30000 milliseconds")
             else:
                 raise ValueError("Unsupported browser action; no scripts or shell commands")
         minimum_assertions = 0 if row.get("inspection") else 1
@@ -458,11 +461,25 @@ def run(request, output, policy):
                         save(state_path, report)
                         if not row["capturePreflight"]["verified"]:
                             raise RuntimeError("Scenario-scoped capture preflight failed; no trigger or accepted capture")
-                        for step in definition["steps"]:
+                        for step_index, step in enumerate(definition["steps"]):
                             if time.monotonic() >= deadline:
                                 raise TimeoutError("Browser scenario budget exhausted")
                             if step["action"] == "press":
                                 page.keyboard.press(step["key"])
+                            elif step["action"] == "observe":
+                                if step["milliseconds"] > int((deadline - time.monotonic()) * 1000):
+                                    raise TimeoutError("Observation dwell exceeds the remaining original budget")
+                                started = time.monotonic()
+                                observation = {"step": step_index, "requestedMilliseconds": step["milliseconds"],
+                                               "state": "observing", "startedAt": stamp()}
+                                row.setdefault("dwellObservations", []).append(observation)
+                                save(state_path, report)
+                                page.wait_for_timeout(step["milliseconds"])
+                                observation.update(state="completed", finishedAt=stamp(),
+                                                   elapsedMilliseconds=round((time.monotonic() - started) * 1000))
+                                save(state_path, report)
+                                if time.monotonic() >= deadline:
+                                    raise TimeoutError("Observation dwell exceeded the original budget")
                             else:
                                 target = locate(page, step["target"])
                                 remaining_ms = int((deadline - time.monotonic()) * 1000)

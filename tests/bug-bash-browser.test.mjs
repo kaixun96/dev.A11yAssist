@@ -5,6 +5,15 @@ import { fileURLToPath } from 'node:url';
 import { Script } from 'node:vm';
 import { verifyBrowserObservations, validateBrowserParameters, browserRequest } from '../src/runtime/browser-contract.mjs';
 
+test('observation dwell is explicit and bounded, not a script or an automatic AT claim', () => {
+  const value = { steps: [{ action: 'observe', milliseconds: 1000 }], assertions: [], inspection: true };
+  validateBrowserParameters(value);
+  for (const milliseconds of [0, -1, 30001, 1.5, true, '1000', null]) {
+    assert.throws(() => validateBrowserParameters({ ...value, steps: [{ action: 'observe', milliseconds }] }));
+  }
+  assert.throws(() => validateBrowserParameters({ ...value, steps: [{ action: 'observe', milliseconds: 1, script: 'x' }] }));
+});
+
 test('generic browser schema is bounded, denies scripts/OS keys and needs no browser for validation', () => {
   const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
   const script = `
@@ -43,6 +52,8 @@ changed(lambda v:v["rows"][0]["steps"][1].update(key="Alt+F4"))
 changed(lambda v:v["rows"][0]["steps"][0].update(target={"css":"body input"}))
 changed(lambda v:v["rows"][0]["assertions"][0].update(expected="true"))
 changed(lambda v:v["rows"][0].update(assertions=[]))
+for duration in (0, -1, 30001, 1.5, True, "1000", None):
+    changed(lambda v,duration=duration:v["rows"][0]["steps"].append({"action":"observe","milliseconds":duration}))
 for value in cases:
     try:m.validate_request(value)
     except ValueError:pass
@@ -367,7 +378,7 @@ class BootstrapContext(Context):
     def route(self, pattern, handler): self.router = handler
 for mode in ("good","bad-response","unknown","pending","request-failed",
              "telemetry","telemetry-page-error","telemetry-http-error","unexpected-network",
-             "action-wait","action-ambiguous","password"):
+             "action-wait","action-ambiguous","password","observe","observe-over-budget"):
     page = BootstrapPage(mode); context = BootstrapContext(page); browser = Browser()
     permission = {"url":"https://example.org/bootstrap","methods":["POST"],"resourceTypes":["fetch"]}
     if mode != "unknown":
@@ -384,6 +395,9 @@ for mode in ("good","bad-response","unknown","pending","request-failed",
         scenario["rows"][0]["steps"] = [{"action":"click","target":{"role":"button","name":"Async"}}]
     if mode == "password":
         scenario["rows"][0]["steps"] = [{"action":"fill","target":{"role":"textbox","name":"Async"},"value":"unit"}]
+    if mode in ("observe","observe-over-budget"):
+        scenario["rows"][0]["steps"] = [{"action":"observe","milliseconds":50 if mode == "observe" else 30000}]
+        if mode == "observe-over-budget": scenario["budgetSeconds"] = 1
     if mode == "pending": scenario["budgetSeconds"] = 1
     with tempfile.TemporaryDirectory() as output, \\
          patch.dict(sys.modules, {"playwright":types.ModuleType("playwright"),"playwright.sync_api":api}), \\
@@ -393,6 +407,16 @@ for mode in ("good","bad-response","unknown","pending","request-failed",
          patch.object(m.policy_module, "open_context", return_value=(browser,context)):
         report = m.run(scenario, output, policy)
     assert report["ownedBrowserClosed"] and page.removed
+    if mode in ("observe","observe-over-budget"):
+        row = report["rows"][0]
+        if mode == "observe":
+            assert row["status"] == "observed-no-issue"
+            assert row["dwellObservations"][0]["state"] == "completed"
+            assert row["dwellObservations"][0]["elapsedMilliseconds"] >= 40
+        else:
+            assert row["status"] == "blocked"
+            assert not row.get("dwellObservations")
+        continue
     if mode in ("action-wait","action-ambiguous","password"):
         assert page.actionPerformed == (mode == "action-wait")
         assert report["rows"][0]["status"] == ("observed-no-issue" if mode == "action-wait" else "blocked")

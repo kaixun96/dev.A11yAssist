@@ -52,7 +52,7 @@
     }
   ],
   "hashes": {
-    "src/runtime/browser-contract.mjs": "7404e7e4c71e7625e5a8f6a631ca2e8a553d6ef681fe7edf3ec168e48b43950e",
+    "src/runtime/browser-contract.mjs": "33085f90de4cbafca4b7b9986edc748fe92a1b19c247851126773737f45dcc5e",
     "src/runtime/bug-bash-cli.mjs": "601766442be1bf40f1e7c45603a674f509e43fc670d8be8c515c187a39d819bd",
     "src/runtime/bug-bash.mjs": "b1057862a53b376d9eb0c1cc29d0097a1ecc7f83badfd0872df033b04841c4f3",
     "src/runtime/builtin-ado.mjs": "2373e51d61072a4b8184ee87611dab4b533456c9fcad63c81371d26bbba493aa",

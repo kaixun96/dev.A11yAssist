@@ -128,6 +128,21 @@ export function verifyBrowserObservations(report, expectedRequest) {
         Number.isInteger(value.totalElements) && value.totalElements >= 1 &&
         Array.isArray(value.nodes) && value.nodes.length === Math.min(value.totalElements, 1000) &&
         value.truncated === (value.totalElements > 1000), 'Invalid bounded document inspection');
+      for (const node of value.nodes) {
+        if (!Object.hasOwn(node, 'inlineTextSpacing') || node.inlineTextSpacing === null) continue;
+        const properties = ['line-height', 'letter-spacing', 'word-spacing'];
+        exact(node.inlineTextSpacing, properties);
+        demand(node.styles && typeof node.styles === 'object' && !Array.isArray(node.styles),
+          'Missing computed text-spacing styles');
+        for (const name of properties) {
+          const declaration = node.inlineTextSpacing[name];
+          exact(declaration, ['hasValue', 'important']);
+          demand(typeof declaration.hasValue === 'boolean' && typeof declaration.important === 'boolean' &&
+            (!declaration.important || declaration.hasValue) &&
+            typeof node.styles[name] === 'string' && node.styles[name].length <= 128,
+          'Invalid inline or computed text-spacing observation');
+        }
+      }
     }
     if (expected.inspection && expected.assertions.length === 0) {
       demand(['blocked', 'not-run', 'inconclusive'].includes(row.status),

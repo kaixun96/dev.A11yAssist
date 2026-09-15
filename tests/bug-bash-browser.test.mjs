@@ -43,12 +43,16 @@ assert "url(" not in css and "@import" not in css
   assert.equal(result.status, 0, result.stderr);
 });
 
-test('document inspection reads effective media without changing OS or browser settings', () => {
+function documentInspectionExpression() {
   const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
   const python = 'import ast,json,sys; tree=ast.parse(open(sys.argv[1],encoding="utf-8").read()); f=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=="inspect_document"); print(json.dumps(f.body[0].value.args[0].value))';
   const result = spawnSync('python', ['-I', '-B', '-c', python, path], { encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
-  const expression = JSON.parse(result.stdout);
+  return JSON.parse(result.stdout);
+}
+
+test('document inspection reads effective media without changing OS or browser settings', () => {
+  const expression = documentInspectionExpression();
   const element = { localName: 'html', namespaceURI: 'http://www.w3.org/1999/xhtml',
     parentElement: null, tabIndex: -1, shadowRoot: null, getAttribute: () => null,
     getAttributeNS: () => null, getAttributeNames: () => [],
@@ -68,7 +72,48 @@ test('document inspection reads effective media without changing OS or browser s
       prefersReducedMotion: enabled, prefersDarkScheme: enabled
     });
     assert.equal(value.nodes[0].styles['forced-color-adjust'], 'auto');
+    assert.equal(value.nodes[0].inlineTextSpacing, null);
   }
+});
+
+test('text-spacing inspection reads bounded computed values and inline flags without raw style contents', () => {
+  const expression = documentInspectionExpression();
+  const values = { 'line-height': '1.5', 'letter-spacing': '', 'word-spacing': 'var(--PRIVATE_INLINE)' };
+  const computed = { 'line-height': '24px', 'letter-spacing': 'normal', 'word-spacing': '3.2px' };
+  const reads = [];
+  const element = { localName: 'p', namespaceURI: 'http://www.w3.org/1999/xhtml',
+    parentElement: null, tabIndex: -1, shadowRoot: null, getAttribute: () => 'PRIVATE_ATTRIBUTE',
+    getAttributeNS: () => null, getAttributeNames: () => ['style', 'value'],
+    getBoundingClientRect: () => ({ x: 8, y: 8, width: 100, height: 24 }),
+    style: {
+      getPropertyValue: name => { reads.push(name); return values[name]; },
+      getPropertyPriority: name => name === 'line-height' ? 'important' : ''
+    } };
+  const collect = () => new Script(`(${expression})()`).runInNewContext({
+    document: { contentType: 'text/html', documentElement: { getAttribute: () => 'en' },
+      activeElement: null, getElementsByTagName: () => [element], querySelectorAll: () => [] },
+    location: { href: 'https://example.org/fixture' }, innerWidth: 1280, innerHeight: 720,
+    devicePixelRatio: 1, matchMedia: () => ({ matches: false }),
+    getComputedStyle: () => ({ getPropertyValue: name => computed[name] ?? 'auto' })
+  });
+  const value = collect();
+  assert.deepEqual(reads, ['line-height', 'letter-spacing', 'word-spacing']);
+  assert.deepEqual(JSON.parse(JSON.stringify(value.nodes[0].inlineTextSpacing)), {
+    'line-height': { hasValue: true, important: true },
+    'letter-spacing': { hasValue: false, important: false },
+    'word-spacing': { hasValue: true, important: false }
+  });
+  assert.equal(value.nodes[0].styles['word-spacing'], '3.2px');
+  assert.equal(value.nodes[0].styles['letter-spacing'], 'normal');
+  assert(!JSON.stringify(value).includes('PRIVATE'));
+  computed['word-spacing'] = 'x'.repeat(129);
+  const truncated = collect().nodes[0];
+  assert.equal(truncated.styles['word-spacing'].length, 128);
+  assert(truncated.truncatedStyles.includes('word-spacing'));
+  element.style.getPropertyPriority = () => 'unexpected';
+  assert.throws(collect, /Invalid inline text-spacing declaration/);
+  delete element.style;
+  assert.equal(collect().nodes[0].inlineTextSpacing, null);
 });
 
 test('exception-origin diagnostics retain undefined locations without values, queries or pausing', () => {
@@ -338,6 +383,31 @@ test('document inspection is explicit and does not authorize empty ordinary asse
   const report = { request, rows: [{ id: 'inspect', attempted: true, status: 'inconclusive',
     reason: 'Raw inspection requires caller assessment', inspectionSteps: [], documentInspection }] };
   verifyBrowserObservations(report, request);
+  const spacing = structuredClone(report);
+  spacing.rows[0].documentInspection.nodes[0] = {
+    index: 0, styles: { 'line-height': '24px', 'letter-spacing': 'normal', 'word-spacing': '3.2px' },
+    inlineTextSpacing: {
+      'line-height': { hasValue: true, important: true },
+      'letter-spacing': { hasValue: false, important: false },
+      'word-spacing': { hasValue: true, important: false }
+    }
+  };
+  verifyBrowserObservations(spacing, request);
+  for (const mutate of [
+    node => { node.inlineTextSpacing = []; },
+    node => { delete node.inlineTextSpacing['word-spacing']; },
+    node => { node.inlineTextSpacing['line-height'].rawValue = 'private'; },
+    node => { node.inlineTextSpacing['line-height'].hasValue = 'true'; },
+    node => { node.inlineTextSpacing['line-height'].hasValue = false; },
+    node => { node.styles['word-spacing'] = 'x'.repeat(129); },
+    node => { delete node.styles['letter-spacing']; }
+  ]) {
+    const altered = structuredClone(spacing);
+    mutate(altered.rows[0].documentInspection.nodes[0]);
+    assert.throws(() => verifyBrowserObservations(altered, request));
+  }
+  spacing.rows[0].documentInspection.nodes[0].inlineTextSpacing = null;
+  verifyBrowserObservations(spacing, request);
   const consumed = structuredClone(report);
   consumed.request.target += '?setup=1';
   consumed.request.rows[0].expectedUrl = request.target;

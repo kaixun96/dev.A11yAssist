@@ -63,6 +63,12 @@ remaining-budget guards apply before and after this wait. The report labels it
 Page-error diagnostics preserve available stack URL paths and line/column numbers
 without query values, fragments, credentials, function arguments or raw stacks.
 Missing locations remain unknown; they never justify ignoring the error.
+Bounded Chromium exception diagnostics additionally collect available main-target
+exception locations and async stack locations, including thrown `undefined`.
+They never request remote-object properties, evaluate paused frames, pause the
+page, or record exception values/descriptions. URLs omit query values and
+credentials. Separate iframe targets and truncated/unavailable traces remain
+explicit gaps; no error or verdict gate is relaxed.
 
 `{"action":"observe","milliseconds":1000}` provides an explicit observation
 dwell from 1 to 30,000 milliseconds for animation, asynchronous UI or a separately

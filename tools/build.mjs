@@ -204,6 +204,8 @@ await emit(`${bugBashBase}/plugin.json`, json({
 await emit(`${bugBashBase}/LICENSE`, await text(join(root, 'LICENSE')));
 await emit(`${bugBashBase}/AGENTS.md`, '# Feature accessibility bug bash\n\nRead skills/a11y-bug-bash/SKILL.md and docs/BUG-BASH.md. Reuse internal knowledge/setup modules; setup establishes original DevBox authority before host preparation. Install a11y-test-categories separately and configure its exact plugin root for the full matrix; no procedures or matrix implementation are bundled here. After validation, explicitly approved filing uses a11y-file-bug; final reporting uses a11y-report. No automatic product changes or filing. Live work requires actual authorized tools and owned resources.\n');
 await emit(`${bugBashBase}/skills/${bugBashName}/SKILL.md`, await text(join(source, 'skills', bugBashName, 'SKILL.md')));
+await emit(`${bugBashBase}/agents/a11y-source-review.agent.md`,
+  await text(join(source, 'agents/a11y-source-review.agent.md')));
 for (const file of await readdir(join(source, 'bug-bash'))) {
   await emit(`${bugBashBase}/bug-bash/${file}`, await text(join(source, 'bug-bash', file)));
 }

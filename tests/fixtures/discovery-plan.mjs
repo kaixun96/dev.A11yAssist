@@ -5,7 +5,7 @@ export function row(id = 'dialog-entry', track = 'page', parameters = {}) {
     expected: 'Focus reaches the Name field', reset: 'Reload the disposable fixture', parameters };
 }
 export function plan(taskId = 'fixture-test', rows = [row()]) {
-  return { schemaVersion: 1, taskId, feature: 'Disposable contact editor', mode: 'both',
+  return { schemaVersion: 1, taskId, feature: 'Disposable contact editor', mode: 'both', parallelSource: false,
     authorizationReference: 'Unit-test-only authority; never a live evaluator',
     profile: 'fixture-browser', target: 'fixture:dialog-form-v1', evaluator: 'unit-evaluator',
     sourceRoots: [], sourceRevision: null, budgetSeconds: 600, maxRows: 30, rows };

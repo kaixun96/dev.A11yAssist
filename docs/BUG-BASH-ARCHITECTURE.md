@@ -78,6 +78,14 @@ Copilot uses the bundled [durable CLI](BUG-BASH-RUNTIME.md) to execute accepted
 plans through explicitly configured providers. `run` continues safe deterministic
 steps; it yields for source analysis, pending callbacks or a bounded limit.
 
+For new `both` tasks, source/page parallelism is now the default. The parent
+dispatches the bundled read-only `a11y-source-review` through Copilot's native
+background subagent tool and immediately continues page/AT work. Each lane has
+its own context and pending identity; only bounded, source-version/file-hash-bound
+results are joined. No new provider or plugin is introduced. Missing native
+subagent capability is an explicit source gap, not an implicit serial fallback.
+Existing runs retain their original versions and recorded execution mode.
+
 Before page work, the separately installed test-categories plugin expands every in-scope
 target/state into all ten categories and their numbered steps. Every applicable
 step must run; not-applicable steps need target-specific reasons. No representative
@@ -101,7 +109,7 @@ flowchart TD
     S["2b. a11y-setup<br/>Only then check / prepare authorized page and AT tools"]
     C["3. a11y-test-categories (separate plugin)<br/>Call versioned matrix API: ten categories, 61 steps per target"]
     E["5. a11y-bug-bash run / advance<br/>a11y-capture discovery-observe<br/>Shared a11y-browser module or configured named-AT adapter"]
-    K["a11y-knowledge (bundled, independent source track)<br/>Read-only review → source risks / confirmation scenarios"]
+    K["a11y-source-review (native background subagent)<br/>Isolated read-only a11y-knowledge review<br/>Frozen source packet → source risks / confirmation scenarios"]
     V["6. a11y-validate discovery<br/>Original receipts + artifact hashes + complete row accounting<br/>Independent behavior assessment remains explicit"]
     G["7. a11y-test-categories (separate plugin)<br/>matrix check: reject missing steps, retain unfinished coverage"]
     A["8. a11y-bug-bash<br/>Assess expectations, deduplicate; separate source risks from page findings"]

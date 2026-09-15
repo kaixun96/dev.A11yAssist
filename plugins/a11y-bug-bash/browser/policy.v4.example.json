@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 4,
+  "allowedTargets": [],
+  "assetHosts": [],
+  "connection": {"mode": "ephemeral"},
+  "requests": [],
+  "telemetryBlocks": [],
+  "scanner": null
+}

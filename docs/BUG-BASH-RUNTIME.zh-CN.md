@@ -2,7 +2,7 @@
 
 [English](BUG-BASH-RUNTIME.md) | **简体中文**
 
-包 v0.22 / 执行契约 v0.11。源码实现、部署和现场验收分别记录；本版本不恢复任何旧任务。
+包 v0.23 / 执行契约 v0.11。源码实现、部署和现场验收分别记录；本版本不恢复任何旧任务。
 
 显式浏览器参数 `inspection: true` 可采集有界的文档属性、计算样式、矩形以及
 HTML/SVG/XML 文档根节点的 AX 和截图证据，无需编造目标 ID。仅此模式允许空断言；
@@ -77,6 +77,85 @@ node "$pluginRoot\runtime\bug-bash-cli.mjs" status feature-round
 `reconcile` 继续。返回下一步不等于任务完成。
 
 ## 源码分析、追加与不适用
+
+### 原生源码 subagent 与页面并行线
+
+新建 `mode:"both"` 任务默认 `parallelSource:true`；只有明确要求串行的新任务才
+设置为 `false`。旧任务继续使用原运行时与已记录计划，不迁移；其他模式不变。
+这改变的是调度方式，不放宽真实 AT 或页面证据要求。
+
+Bug Bash 包内包含 `agents/a11y-source-review.agent.md`，`model: inherit`，
+工具仅有 `view`、`grep`、`glob`。主 skill 使用调用方的**原生后台 Task/subagent
+工具**直接调它，不新增 source provider、MCP、独立插件或模型循环。Node CLI
+负责准备、绑定、回收结果，不能自己调用模型工具。真正并行要求父任务启动后台
+源码 agent 后立即继续页面线，不能先同步等待源码结果。宿主不提供工具／agent 时，
+明确保留源码缺口，不伪造或静默退回串行。
+
+每个源码行在 `parameters.sourceFiles` 中提供 1–50 个授权根目录内的绝对路径，
+计划提供固定 `sourceRevision`。根据真实原生工具清单，向 `source-prepare` 传入
+`{"subagentAvailable":true}` 或 `false`。缺少原生能力、版本或文件时，只记录源码
+缺口，独立就绪的页面行继续。
+
+```powershell
+node "$pluginRoot\runtime\bug-bash-cli.mjs" source-prepare my-task C:\private\source-availability.json
+```
+
+返回 `sourcePending`：唯一 work ID、packet hash，以及最小上下文包，包含任务／
+计划／行标识、声明源码版本、精确文件哈希、期限和只读边界。不包含父对话、
+凭据、浏览器连接、评测机 token、页面结果或源码修改权限。单文件最多 2 MiB，
+总文件集最多 10 MiB；声明版本不能代替文件哈希检查或不可变 checkout。
+
+先持久化准备身份，再只把 packet 传给后台 `a11y-source-review`。拿到实际
+原生任务／session ID 和完成回调后，用 `source-start` 记录：
+
+```json
+{
+  "workId": "<sourcePending.id>",
+  "packetHash": "<sourcePending.packetHash>",
+  "workerSessionId": "<原生 Task 返回的真实任务/session 标识>",
+  "callbackReference": "<真实完成回调引用>"
+}
+```
+
+不得编造 ID。启动回执丢失时，`prepared` 可能已有实际子任务；按原 work ID
+核对原生调用，不能重启第二个 agent。只有同一 worker／callback 的 `source-start`
+才幂等。随后父任务用 `run`、`advance` 或已授权页面工具执行；同一任务同时最多
+一个源码 subagent 和一个页面／AT 操作。
+
+原生完成回调返回后，用现有 `source` 命令提交：
+
+```json
+{
+  "workId": "<原始源码 work ID>",
+  "packetHash": "<原始 packet hash>",
+  "workerSessionId": "<已绑定的原生 worker ID>",
+  "review": {
+    "rowId": "<源码行>",
+    "status": "observed-no-issue",
+    "actual": "<仅源码观察>",
+    "files": [{"path": "<packet 文件>", "sha256": "<packet 哈希>", "startLine": 1, "endLine": 10}],
+    "risks": []
+  }
+}
+```
+
+只合并有界 schema：最多 64 KiB、50 项风险。重新核对全部 packet 文件字节；
+引用只能来自原 packet；源码结果不能改写页面行，始终 `runtimeVerified:false`。
+即使源码先完成，原页面 operation ID 也不变。长时间模型执行不持有任务写锁；
+竞争写入沿用现有锁并明确失败，不覆盖状态。
+
+失败、取消或超时的 subagent 通过 `source-end` 回收，必须给出相同身份、
+`outcome`、精确 `reason` 和原生宿主的 `terminationReference`。若原生工具证明
+启动在创建 worker 前就被拒绝，可用 `outcome:"not-started"`、
+`workerSessionId:null`；超时或回执未知不能冒充未启动。
+
+调用方负责验证原生回执；JSON 声明本身不是 OS 沙箱，也不能证明 agent 真的运行。
+声称上下文隔离前，须确认宿主只读工具策略和完成回调真实有效。取消或过期保留
+两条线的原身份；通过原生宿主停止／核对源码任务后再 `source-end`，不能终止共享
+进程。页面／AT 每次清理照常立即执行，但汇总清理、最终校验／报告和计划修改等待
+源码回收。不会自动释放租约或迁移当前运行任务。
+
+### 显式串行与 source-only
 
 源码分析使用内置 `a11y-knowledge` 的只读流程，不在分析步骤内运行 shell、
 测试或浏览器。分析后通过 `source` 记录 `{rowId, status, actual, files, risks}`；

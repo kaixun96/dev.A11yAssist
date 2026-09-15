@@ -154,6 +154,41 @@ assert enable<next(n.lineno for n in calls if n.func.attr=="goto")
   assert.equal(result.status, 0, result.stderr);
 });
 
+test('forwarding never follows or relays redirects and disposes exact origin responses', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_policy.py', import.meta.url));
+  const script = `
+import importlib.util,json,sys
+from types import SimpleNamespace as NS
+spec=importlib.util.spec_from_file_location("policy",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+for status in (200,304,301,302,303,307,308):
+    calls=[]
+    response=NS(status=status,headers={"location":"/unapproved?token=private"},
+                dispose=lambda:calls.append(("dispose",)))
+    def fetch(**kwargs):
+        calls.append(("fetch",kwargs));return response
+    route=NS(request=NS(url="https://example.org/allowed?secret=private"),fetch=fetch,
+             abort=lambda:calls.append(("abort",)),fulfill=lambda **kwargs:calls.append(("fulfill",kwargs)))
+    value=m.forward_without_redirects(route,500)
+    assert calls[0]==("fetch",{"max_redirects":0,"timeout":500})
+    assert calls[-1]==("dispose",) and len(calls)==3
+    if status in (200,304):
+        assert calls[1]==("fulfill",{"response":response}) and value["state"]=="forwarded"
+    else:
+        assert calls[1]==("abort",) and value["state"]=="redirect-rejected"
+        assert value["destination"]=="https://example.org/unapproved"
+        assert "private" not in json.dumps(value)
+calls=[]
+def fail(**kwargs):raise RuntimeError("synthetic fulfillment failure")
+response=NS(status=200,headers={},dispose=lambda:calls.append("disposed"))
+try:m.forward_without_redirects(NS(fetch=lambda **kwargs:response,fulfill=fail),500)
+except RuntimeError:pass
+else:raise AssertionError("Fulfillment failure swallowed")
+assert calls==["disposed"]
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test('observation dwell is explicit and bounded, not a script or an automatic AT claim', () => {
   const value = { steps: [{ action: 'observe', milliseconds: 1000 }], assertions: [], inspection: true };
   validateBrowserParameters(value);
@@ -566,7 +601,11 @@ class BootstrapPage(Page):
                            "https://example.org/bootstrap")
         response = types.SimpleNamespace(request=incoming,status=200,
             headers={"content-type":"application/json"},
+            dispose=lambda:None,
             body=lambda:json.dumps({"wrong":{}} if self.mode == "bad-response" else {"navigation":{}}).encode())
+        if self.mode == "redirect":
+            response.status = 307
+            response.headers["location"] = "/unapproved?secret=private"
         incoming.response = lambda: response
         def send():
             if self.mode == "request-failed":
@@ -575,8 +614,14 @@ class BootstrapPage(Page):
                 self.listeners["response"](response)
                 self.listeners["requestfinished"](incoming)
         self.aborted = False
-        route = types.SimpleNamespace(request=incoming,continue_=send,
-                                      abort=lambda:setattr(self,"aborted",True))
+        def fetch(**kwargs):
+            assert kwargs["max_redirects"] == 0 and 0 < kwargs["timeout"] <= 15000
+            if self.mode == "transport-error": raise api.Error("private transport details")
+            return response
+        def abort():
+            self.aborted = True
+            self.listeners["requestfailed"](incoming)
+        route = types.SimpleNamespace(request=incoming,fetch=fetch,fulfill=lambda **kwargs:send(),abort=abort)
         self.context.router(route)
         if self.mode == "telemetry-page-error":
             self.listeners["pageerror"]("unit unhandled error")
@@ -604,7 +649,7 @@ class BootstrapPage(Page):
     def wait_for_timeout(self, milliseconds): time.sleep(milliseconds / 1000)
 class BootstrapContext(Context):
     def route(self, pattern, handler): self.router = handler
-for mode in ("good","bad-response","unknown","pending","request-failed",
+for mode in ("good","bad-response","unknown","pending","request-failed","redirect","transport-error",
              "telemetry","telemetry-page-error","telemetry-http-error","unexpected-network",
              "action-wait","action-ambiguous","password","observe","observe-over-budget"):
     page = BootstrapPage(mode); context = BootstrapContext(page); browser = Browser()
@@ -660,6 +705,13 @@ for mode in ("good","bad-response","unknown","pending","request-failed",
             assert report["failedResponses"][0]["url"] == "https://example.org/required"
         continue
     transaction = report["transactions"][0]
+    if mode == "redirect":
+        assert report["rejectedRedirectCount"] == 1 and page.aborted
+        assert report["rejectedRedirects"][0]["destination"] == "https://example.org/unapproved"
+        assert "private" not in json.dumps(report)
+    if mode == "transport-error":
+        assert report["authorizedTransportFailureCount"] == 1 and page.aborted
+        assert "private transport details" not in json.dumps(report)
     if mode == "good":
         assert transaction["state"] == "read-only-confirmed"
         assert report["rows"][0]["status"] == "observed-no-issue"

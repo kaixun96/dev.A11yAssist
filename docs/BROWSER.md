@@ -21,6 +21,17 @@ without the guard. `networkStartup` records this boundary, not evidence that old
 runs had no unobserved traffic. This context-level guard is not an OS firewall or
 a claim to intercept the approved authentication extension's own transport.
 
+Permitted requests are forwarded once with `route.fetch(max_redirects=0)`, then
+the unmodified origin response is delivered to the browser. Redirect responses
+(3xx other than 304) are aborted, never relayed or followed: browser redirect hops
+can bypass the route callback, including a method-preserving POST redirect.
+This also applies to authentication and static-asset redirects; complete a
+separately authorized authentication/setup flow or qualify the actual canonical
+resource rather than silently allowing a redirect chain. The report retains a
+bounded count and query-free destination paths, with no response bodies or
+credentials. A denied redirect invalidates the affected scenario; it is not a
+simulated successful response, a product finding, or permission to replay a write.
+
 ## Inputs
 
 Select a `browser-scenarios` profile in the optional discovery CLI. The operator

@@ -4,7 +4,7 @@ import base64
 import hashlib
 import json
 import re
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, urljoin, urlsplit
 
 WINDOWS_ACCOUNTS_EXTENSION_ID = "ppnbnpeolgkicgegkbkbjmhlideopiji"
 
@@ -481,6 +481,25 @@ def enable_guarded_network(context, page):
     if page.url != "about:blank":
         raise RuntimeError("Browser startup restored a nonblank page; retain profile state and reconcile before navigation")
     context.set_offline(False)
+
+
+def forward_without_redirects(route, timeout_ms):
+    # Browser redirect hops are not guaranteed to re-enter Playwright routing.
+    response = route.fetch(max_redirects=0, timeout=timeout_ms)
+    try:
+        if 300 <= response.status < 400 and response.status != 304:
+            result = {"state": "redirect-rejected", "status": response.status}
+            location = response.headers.get("location")
+            if isinstance(location, str) and len(location) <= 2048:
+                parsed = urlsplit(urljoin(route.request.url, location))
+                if parsed.scheme == "https" and parsed.hostname and not parsed.username and not parsed.password:
+                    result["destination"] = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+            route.abort()
+            return result
+        route.fulfill(response=response)
+        return {"state": "forwarded", "status": response.status}
+    finally:
+        response.dispose()
 
 
 def json_document_ready(page, keys):

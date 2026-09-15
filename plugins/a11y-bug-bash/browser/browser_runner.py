@@ -456,7 +456,28 @@ def run(request, output, policy):
                                 read_only_pending.append((route.request, transaction))
                             report["transactions"].append(transaction)
                             save(state_path, report)
-                        route.continue_()
+                        remaining_ms = int((deadline - time.monotonic()) * 1000)
+                        if remaining_ms <= 0:
+                            critical_failures[0] += 1
+                            route.abort()
+                            return
+                        try:
+                            forwarded = policy_module.forward_without_redirects(route, min(15000, remaining_ms))
+                        except PlaywrightError:
+                            critical_failures[0] += 1
+                            report["authorizedTransportFailureCount"] = report.get("authorizedTransportFailureCount", 0) + 1
+                            route.abort()
+                            save(state_path, report)
+                            return
+                        if forwarded["state"] == "redirect-rejected":
+                            critical_failures[0] += 1
+                            report["rejectedRedirectCount"] = report.get("rejectedRedirectCount", 0) + 1
+                            redirects = report.setdefault("rejectedRedirects", [])
+                            if len(redirects) < 100:
+                                redirects.append({**forwarded, "url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+                                                  "method": route.request.method,
+                                                  "type": route.request.resource_type})
+                            save(state_path, report)
                     else:
                         blocked_request_count[0] += 1
                         telemetry = policy_module.telemetry_block(policy, route.request)

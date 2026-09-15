@@ -96,6 +96,16 @@ It grants no execution ownership, foreground control, recording or AT verdict.
 Use it to populate a separately authorized observation request, never to adopt an
 unrelated process or bypass the original lease and protected policy.
 
+Narrator ETW identity comes from native `ControlTrace` metadata, not a localized
+or absent `logman` Logger Id text field. The driver binds the immutable logger
+identity to its unique name, expected ETL path and Narrator provider, rechecks
+that identity and stops by identity rather than by name. An incomplete creation
+intent can be recovered only through those same bindings; a changed or unbound
+session is not stopped. An already-absent session is recorded without inventing
+an identity, and missing trace continuity cannot become an accepted observation.
+These cleanup checks do not turn startup audio or activity markers into speech
+evidence.
+
 The policy's selected `atExecutables` map accepts `nvda`, `narrator` and
 `voice-access`, each with its installed absolute `path` and actual `sha256`.
 NVDA additionally uses `nvdaSpeechViewerTitle`. Narrator/Voice Access add pinned

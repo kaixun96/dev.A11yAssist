@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { validateAtInput, assessAtReport, validateAtPolicy } from '../src/runtime/builtin-windows-at.mjs';
 import { validateCapabilityReceipt, operationDefinition } from '../src/runtime/capability.mjs';
 
@@ -130,4 +131,19 @@ test('read-only process identity queries the caller session without policy, UI o
         '-PolicyPath', 'not-a-policy', '-RequestPath', 'not-a-request', '-OutputDirectory', 'not-created'],
       { encoding: 'utf8', timeout: 15000, windowsHide: true });
     assert.notEqual(mixed.status, 0);
+  });
+
+test('ETW identity uses native query and pointer-correct metadata, never CLI logger-id text',
+  { skip: process.platform !== 'win32' }, () => {
+    const path = fileURLToPath(new URL('../src/native/windows-at.ps1', import.meta.url));
+    const source = readFileSync(path, 'utf8');
+    assert.doesNotMatch(source, /Logger Id:/);
+    assert.doesNotMatch(source, /logman\.exe"\s+stop/);
+    assert.match(source, /ControlTraceW\(loggerId, null, buffer, 1\)/);
+    assert.match(source, /recoveredCreationIntent = \$true/);
+    const command = `$ErrorActionPreference='Stop'; $e=$null; $t=$null; $ast=[System.Management.Automation.Language.Parser]::ParseFile('${path.replaceAll("'", "''")}',[ref]$t,[ref]$e); if ($e.Count) { throw 'Invalid driver' }; $definition=@($ast.FindAll({param($n) $n -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $n.Value.Contains('public static class A11yNativeEtwControl')},$true)); if ($definition.Count -ne 1) { throw 'Native ETW definition missing' }; Add-Type -TypeDefinition $definition[0].Value; $offset=[Runtime.InteropServices.Marshal]::OffsetOf([type][A11yNativeEtwControl+Properties],'LogFileNameOffset').ToInt32(); if ($offset -ne $(if ([IntPtr]::Size -eq 8) {112} else {108})) { throw 'EVENT_TRACE_PROPERTIES pointer layout mismatch' }; $name='A11yAssist-UnitMissing-'+[guid]::NewGuid().ToString('N'); $query=[A11yNativeEtwControl]::Query($name); if ($query.Status -ne 4201 -or $query.LoggerId -ne 0) { throw 'Absent query invented an identity' }; $rejected=$false; try { [A11yNativeEtwControl]::Stop(0) | Out-Null } catch { $rejected=$true }; if (-not $rejected) { throw 'Zero identity stop accepted' }; Write-Output 'No trace created, stopped, or AT launched'`;
+    const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command],
+      { encoding: 'utf8', timeout: 15000, windowsHide: true });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /No trace created/);
   });

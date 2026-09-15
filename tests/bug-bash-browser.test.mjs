@@ -95,6 +95,7 @@ with tempfile.TemporaryDirectory() as folder:
         m.open_context(playwright,{"viewport":{"width":1280,"height":720}},policy,provenance)
         assert len(calls)==1 and calls[0][1]["headless"] is False
         assert calls[0][1]["service_workers"]=="block"
+        assert calls[0][1]["offline"] is True
         assert calls[0][1]["ignore_default_args"]==["--disable-extensions"]
         assert calls[0][1]["args"]==["--disable-extensions-except="+str(extension.resolve()),"--load-extension="+str(extension.resolve())]
         assert provenance["windowsAccountsExtension"]["verifiedBeforeLaunch"] is True
@@ -115,6 +116,39 @@ with tempfile.TemporaryDirectory() as folder:
         try:m.validate(bad)
         except ValueError:pass
         else:raise AssertionError("Unqualified extension configuration accepted")
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('startup networking rejects restored pages and enables only after route and listener installation', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const script = `
+import ast,importlib.util,pathlib,sys
+from types import SimpleNamespace as NS
+spec=importlib.util.spec_from_file_location("runner",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+calls=[]
+context=NS(set_offline=lambda value:calls.append(value))
+for url in ("https://example.org/previous","chrome://newtab/","about:blank#unexpected"):
+    try:m.policy_module.enable_guarded_network(context,NS(url=url))
+    except RuntimeError:pass
+    else:raise AssertionError("Restored document allowed online")
+assert calls==[]
+m.policy_module.enable_guarded_network(context,NS(url="about:blank"))
+assert calls==[False]
+def fail(value):raise OSError("synthetic transport failure")
+try:m.policy_module.enable_guarded_network(NS(set_offline=fail),NS(url="about:blank"))
+except OSError:pass
+else:raise AssertionError("Offline transition failure was swallowed")
+tree=ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+run=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=="run")
+calls=[n for n in ast.walk(run) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute)]
+enable=next(n.lineno for n in calls if n.func.attr=="enable_guarded_network")
+for name in ("route","route_web_socket"):
+    assert next(n.lineno for n in calls if n.func.attr==name)<enable
+assert all(n.lineno<enable for n in calls if n.func.attr=="on" and n.args and
+           isinstance(n.args[0],ast.Constant) and n.args[0].value in ("response","requestfailed","requestfinished"))
+assert enable<next(n.lineno for n in calls if n.func.attr=="goto")
 `;
   const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
@@ -266,7 +300,7 @@ class Browser:
     def is_connected(self): return self.connected
     def close(self): self.connected = False
 class Page:
-    url = request["target"]
+    url = "about:blank"
     viewport_size = request["viewport"]
     def __init__(self): self.listeners = {}; self.root_snapshots = 0; self.expiry_clock = None
     def on(self, event, handler):
@@ -278,6 +312,7 @@ class Page:
     def set_default_timeout(self, timeout): pass
     def set_default_navigation_timeout(self, timeout): pass
     def goto(self, url, **kwargs):
+        self.url = url
         if self.expiry_clock is not None: self.expiry_clock[0] = 100
         return types.SimpleNamespace(status=200)
     def is_closed(self): return False
@@ -302,6 +337,7 @@ class Context:
     def __init__(self, page): self.pages = [page]; page.context = self
     def route(self, *args): pass
     def route_web_socket(self, *args): pass
+    def set_offline(self, value): assert value is False and self.pages[0].url == "about:blank"
     def close(self): self.closed = True
 page = Page(); context = Context(page); browser = Browser()
 api = types.ModuleType("playwright.sync_api")
@@ -396,7 +432,7 @@ class Browser:
     def is_connected(self): return self.connected
     def close(self): self.connected = False
 class Page:
-    url = request["target"]
+    url = "about:blank"
     viewport_size = request["viewport"]
     def __init__(self): self.listeners = {}; self.removed = False
     def on(self, event, handler):
@@ -410,6 +446,7 @@ class Page:
     def set_default_timeout(self, timeout): pass
     def set_default_navigation_timeout(self, timeout): pass
     def goto(self, url, **kwargs):
+        self.url = url
         self.listeners["pageerror"]("unit page-script error")
         return types.SimpleNamespace(status=200)
     def is_closed(self): return False
@@ -429,6 +466,7 @@ class Context:
     def __init__(self, page): self.pages = [page]; page.context = self
     def route(self, *args): pass
     def route_web_socket(self, *args): pass
+    def set_offline(self, value): assert value is False and self.pages[0].url == "about:blank"
     def close(self): self.closed = True
 page = Page(); context = Context(page); browser = Browser()
 api = types.ModuleType("playwright.sync_api")
@@ -522,6 +560,7 @@ class Target:
 class BootstrapPage(Page):
     def __init__(self, mode): super().__init__(); self.mode = mode
     def goto(self, url, **kwargs):
+        self.url = url
         incoming = Request("https://telemetry.example.org/collect" if self.mode.startswith("telemetry") else
                            "https://example.org/required" if self.mode == "unexpected-network" else
                            "https://example.org/bootstrap")
@@ -633,6 +672,7 @@ for mode in ("good","bad-response","unknown","pending","request-failed",
         assert report["rows"][0]["evidencePurpose"] == "environment-diagnostic"
 class DeniedPage(Page):
     def goto(self, url, **kwargs):
+        self.url = url
         incoming = Request("https://example.org/blocked?token=private-query")
         incoming.post_data_buffer = b"private-request-body"
         self.context.router(types.SimpleNamespace(request=incoming,

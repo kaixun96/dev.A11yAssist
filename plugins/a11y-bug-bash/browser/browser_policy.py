@@ -448,7 +448,7 @@ def verify_windows_accounts_extension(extension):
 def open_context(playwright, request, policy, provenance=None):
     options = dict(viewport=request["viewport"], device_scale_factor=1,
                    locale="en-US", reduced_motion="reduce", service_workers="block",
-                   accept_downloads=False)
+                   accept_downloads=False, offline=True)
     connection = policy.get("connection", {"mode": "ephemeral"})
     if connection["mode"] == "persistent":
         profile = Path(connection["userDataDirectory"]).resolve(strict=True)
@@ -474,6 +474,13 @@ def open_context(playwright, request, policy, provenance=None):
     finally:
         if context is None:
             browser.close()
+
+
+def enable_guarded_network(context, page):
+    # A restored document must not run before request routing has been installed.
+    if page.url != "about:blank":
+        raise RuntimeError("Browser startup restored a nonblank page; retain profile state and reconcile before navigation")
+    context.set_offline(False)
 
 
 def json_document_ready(page, keys):

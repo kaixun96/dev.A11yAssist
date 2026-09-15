@@ -434,13 +434,19 @@ def run(request, output, policy):
                                 page.keyboard.press(step["key"])
                             else:
                                 target = locate(page, step["target"])
-                                if target.count() != 1:
-                                    raise RuntimeError("Action target is missing or ambiguous")
+                                remaining_ms = int((deadline - time.monotonic()) * 1000)
+                                if remaining_ms <= 0:
+                                    raise TimeoutError("Original browser action budget exhausted")
+                                page.set_default_timeout(min(5000, remaining_ms))
                                 if step["action"] == "click":
                                     target.click()
                                 else:
                                     if target.get_attribute("type") == "password":
                                         raise RuntimeError("Password entry is not authorized by discovery")
+                                    remaining_ms = int((deadline - time.monotonic()) * 1000)
+                                    if remaining_ms <= 0:
+                                        raise TimeoutError("Original browser action budget exhausted")
+                                    page.set_default_timeout(min(5000, remaining_ms))
                                     target.fill(step["value"])
                         row["pageErrors"] = [str(error) for error in errors[:20]]
                         row["unexpectedDialogs"] = dialogs[:20]

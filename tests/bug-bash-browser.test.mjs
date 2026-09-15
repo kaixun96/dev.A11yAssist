@@ -462,6 +462,7 @@ assert report["rows"][0]["status"] == "inconclusive"
 assert report["rows"][0]["evidencePurpose"] == "environment-diagnostic"
 assert report["blockedRequests"] == [{"url":"https://example.org/blocked","type":"fetch",
     "method":"POST","hasQuery":True,"bodyBytes":len(b"private-request-body"),
+    "queryKeys":["token"],"queryKeysComplete":True,"duplicateQueryKeys":False,
     "expectedTelemetryDenial":False}]
 assert "private-query" not in json.dumps(report) and "private-request-body" not in json.dumps(report)
 class DiagnosticFailurePage(Page):
@@ -556,6 +557,28 @@ print("Mocked event mapping only; no browser or AT execution")
   const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /no browser or AT execution/);
+});
+
+test('denied request query diagnostics expose bounded names, never values or malformed keys', () => {
+  const path = fileURLToPath(new URL('../src/browser/browser_runner.py', import.meta.url));
+  const script = `
+import importlib.util, json, sys
+spec = importlib.util.spec_from_file_location("browser_runner", sys.argv[1])
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+assert m.query_shape("") == {"queryKeys":[],"queryKeysComplete":True,"duplicateQueryKeys":False}
+shape = m.query_shape("Locale=en-us&$expand=private-value&token=private-token&empty=")
+assert shape == {"queryKeys":["$expand","Locale","empty","token"],
+                 "queryKeysComplete":True,"duplicateQueryKeys":False}
+assert "private" not in json.dumps(shape)
+assert m.query_shape("v=1&v=2")["duplicateQueryKeys"] is True
+assert m.query_shape("%76=1&v=2")["duplicateQueryKeys"] is True
+for query in ("x="+"a"*8192, "&".join("x=1" for _ in range(41)),
+              "bad%20name=value", "a"*65+"=value", "%FF=value"):
+    assert m.query_shape(query) == {"queryKeys":[],"queryKeysComplete":False,"duplicateQueryKeys":None}
+assert "playwright" not in sys.modules
+`;
+  const result = spawnSync('python', ['-I', '-B', '-', path], { input: script, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr);
 });
 
 test('v4 query/frame/auth scopes stay bounded and telemetry denials never grant network access', () => {

@@ -65,7 +65,7 @@ def validate(policy):
             raise ValueError("Authentication readiness must be one exact protected element ID")
     if not isinstance(policy["requests"], list) or len(policy["requests"]) > 100:
         raise ValueError("Invalid transaction route budget")
-    signatures = set()
+    signatures = {}
     for rule in policy["requests"]:
         fields = {"url", "methods", "resourceTypes"}
         if version >= 3 and isinstance(rule, dict) and "readOnly" in rule:
@@ -128,9 +128,12 @@ def validate(policy):
             for method in rule["methods"]:
                 for kind in rule["resourceTypes"]:
                     signature = (rule["url"], method, kind)
+                    body_hash = rule.get("readOnly", {}).get("bodySha256")
                     if signature in signatures:
-                        raise ValueError("Overlapping request permissions are ambiguous")
-                    signatures.add(signature)
+                        prior = signatures[signature]
+                        if version < 5 or body_hash is None or None in prior or body_hash in prior:
+                            raise ValueError("Overlapping request permissions are ambiguous")
+                    signatures.setdefault(signature, set()).add(body_hash)
     if version >= 4:
         blocks = policy["telemetryBlocks"]
         if not isinstance(blocks, list) or len(blocks) > 20:
@@ -228,6 +231,8 @@ def request_rule(policy, request):
                 continue
         elif request.url != rule["url"]:
             continue
+        if policy.get("schemaVersion", 1) >= 5 and "readOnly" in rule and not read_only_body_matches(rule, request):
+            continue
         return rule
     return None
 
@@ -278,6 +283,11 @@ def permits(policy, target, request, authenticating=False):
                       and request.method in candidate["methods"] and request.resource_type in candidate["resourceTypes"]
                       for candidate in policy.get("requests", []))
     if constrained and rule is None:
+        return False
+    if rule is None and any(
+            "readOnly" in candidate and candidate["url"] == request.url and
+            request.method in candidate["methods"] and request.resource_type in candidate["resourceTypes"]
+            for candidate in policy.get("requests", [])):
         return False
     if rule and rule.get("frame") and getattr(request, "frame", None) is None:
         return False

@@ -750,6 +750,33 @@ request = SimpleNamespace(url=rule["url"],method="POST",resource_type="fetch",
 assert m.policy_module.permits(policy, policy["allowedTargets"][0], request)
 request.headers["content-length"] = str(len(body))
 assert m.policy_module.permits(policy, policy["allowedTargets"][0], request)
+second_body = b'{"keys":["second"],"create":false}'
+second_rule = copy.deepcopy(rule)
+second_rule["readOnly"].update(bodySha256=hashlib.sha256(second_body).hexdigest(),
+                              bodyBytes=len(second_body),responseKeys=["items"])
+variants = copy.deepcopy(policy)
+variants["requests"].append(second_rule)
+m.validate_policy(variants)
+request.headers = {"content-type":"application/json"}
+request.post_data_buffer = second_body
+assert m.policy_module.request_rule(variants, request) == second_rule
+assert m.policy_module.permits(variants, variants["allowedTargets"][0], request)
+request.post_data_buffer = body
+assert m.policy_module.request_rule(variants, request) == rule
+for order in ([copy.deepcopy(rule),{"url":rule["url"],"methods":["POST"],"resourceTypes":["fetch"]}],
+              [{"url":rule["url"],"methods":["POST"],"resourceTypes":["fetch"]},copy.deepcopy(rule)]):
+    mixed = copy.deepcopy(policy); mixed["requests"] = order
+    try: m.validate_policy(mixed)
+    except ValueError: pass
+    else: raise AssertionError("Ordinary mutation fallback overlapped a qualified read")
+auth = copy.deepcopy(variants)
+auth["connection"] = {"mode":"persistent","userDataDirectory":str(m.ROOT),
+                     "authenticationOrigins":["https://example.org"],"timeoutSeconds":30,"ready":{"css":"#main"}}
+m.validate_policy(auth)
+request.post_data_buffer = b'{"keys":["unlisted"],"create":true}'
+assert m.policy_module.request_rule(auth, request) is None
+assert not m.policy_module.permits(auth, auth["allowedTargets"][0], request, authenticating=True)
+request.post_data_buffer = body
 for altered in (body.replace(b"false",b"true"), body+b" ", b""):
     request.post_data_buffer = altered
     assert not m.policy_module.permits(policy, policy["allowedTargets"][0], request)

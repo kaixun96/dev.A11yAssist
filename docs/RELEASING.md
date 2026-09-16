@@ -8,6 +8,9 @@ separate repositories before independent release requirements exist.
 2. Bump package.json for a release. Change `src/contracts/workflow.json`'s
    protocol version only for a workflow protocol change; a catalog/layout release
    must not unnecessarily invalidate existing run/provider contracts.
+   Do not copy the current package version into long-lived architecture or runtime
+   documentation. Point readers to generated `plugin.json` or `release.json`;
+   label older version references explicitly as historical baselines or incidents.
 3. Run build, tests and generated-package check.
 4. Review for embedded credentials, personal identifiers, machine roster,
    evidence and absolute private paths. Test fixtures must be synthetic.

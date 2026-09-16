@@ -2,8 +2,10 @@
 
 **English** | [简体中文](BUG-BASH-RUNTIME.zh-CN.md)
 
-Package v0.23 / execution contract v0.11. Source implementation is separate from
-deployment and live qualification. This release never resumes an old task.
+Execution contract v0.11. Read the installed package release from `plugin.json`;
+do not infer task compatibility from a version copied into this document. Source
+implementation is separate from deployment and live qualification. A newer
+release never resumes an old task.
 
 The optional package-local CLI turns an accepted coverage plan into a durable
 discovery task. The public `/a11y-bug-bash` skill still owns reasoning, applicability

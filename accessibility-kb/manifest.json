@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "packages": {
-    "common": "0.1.1",
-    "fluent": "0.1.1",
-    "sharepoint": "0.1.1"
+    "common": "0.1.2",
+    "fluent": "0.1.2",
+    "sharepoint": "0.1.2"
   },
   "hashes": {
     "catalog.json": "5c22154edd04cb856ed8df02de07559efa0723be3c56b1524453bbc16941ef75",
@@ -12,13 +12,16 @@
     "packages/common/analysis/root-cause.md": "f72c5abe15ad951dbb16ca0189a0820fcae28c2b5779e73dcd655dc9bd28bd60",
     "packages/common/cases/dialog-focus.md": "7d3998120556f84e65aaa09c84ba2f3071103cf645218124a0a60319e3ab5049",
     "packages/common/implementation/component-contract.md": "e0178bc4c13087bb7552d4ce9b69ec4a76def59cdcfa7abf73ce134b5ac1151c",
-    "packages/common/package.json": "956060366ca78d95f549ef442384485f864bc875a917c6fdad69ac01e0d1ea0d",
+    "packages/common/mas/MasStandards.json": "f499d3fd723c7f0d73a2143d62f28d670c6388a13720a7f7adae897227a123d4",
+    "packages/common/mas/README.md": "dfc0ee25fd6afbc6efcc100cf77b0611831fa03cd12fe43891b25f8e6e00a52e",
+    "packages/common/mas/reconciliation.md": "4a4089bcd3bec0327c853e137820fa96f85a43710e0333eb2960e976fa38ffdf",
+    "packages/common/package.json": "13477626cddf04fc62506017d46a1446366a6a1bc117670e1ec52d3f83f23be3",
     "packages/common/procedures/add-tests.md": "0b07f43053d9af25e40d504e3c6fd306c652344b9c5b9f46affa705bfa8eef98",
     "packages/common/procedures/find.md": "5a8364902812d2ace8b8c3efc7b9edd87e8a43c4dee3cbfbc8c0aaa7c9fe9e06",
     "packages/common/procedures/fix.md": "ba69fc2274e1f984f6d5bf86036798ceb23f7f59ee83cadfae798748f8eb8407",
     "packages/common/procedures/prevent.md": "bf584337f6719a6840c0a1f2ee6f4efc70eee708356ba6444db64396567bb8d6",
     "packages/common/procedures/review-design.md": "848465155b89f8e35d1e14d9b2f5393268f2378ebcea5e3ffe70a8594735b620",
-    "packages/common/README.md": "c9e4b2d520de8c36a7ebaf384f2cde5b9eaa2f1560f8b2f13d0a9cadf8082501",
+    "packages/common/README.md": "9714881be08a2ab766f89b9af0b69049a63b6596ca31bcd00f07d3b9b42429d6",
     "packages/common/requirements/authority-and-applicability.md": "00fd211530afe2a7c812f23c6bec7a449c3538bbb90cd7ae65b669335b0538bc",
     "packages/common/topics/component-accessibility.md": "6d250af4d7082986bc166fc4359f30c2ca6237a65d47030991fb6371659a873e",
     "packages/common/topics/dynamic-content.md": "c8632642eaf4b42cb77a513b9455d81aba03609e39b55f0da55b98ecf86aa905",
@@ -30,13 +33,13 @@
     "packages/common/verification/dynamic.md": "e824f83a320789763f2e3eb8479d1534e84364fe289922a06ed6a1fdc1b5d53a",
     "packages/common/verification/static.md": "585b247f5ed94306bd5f2f3bb7f02d2ff9a05ac0ecee96d2d19434c9cd82d9d1",
     "packages/common/verification/testing.md": "fb5f1e972509d64005f22c38541878e7c75cca2a38ccd4068e88cd2b1c077e49",
-    "packages/fluent/package.json": "fa15c43f098a7289bcf4d44d6a60e339660ec4fe96ab9dc9f29975ff47c8a606",
+    "packages/fluent/package.json": "047ff63d05da044663c828b966a95309cdc46502f7467f5b82c19a495a42de82",
     "packages/fluent/README.md": "9b386f37ddd0cad993a2bd01db0d9b71ebd4c0993fd018cdc763eefcb2de6d46",
     "packages/fluent/selection/components-and-utilities.md": "5c24ce9cb934b64285ab0e12c9e5c98340f3ec4c8d8576882f512a98c78dd34c",
     "packages/fluent/v8/component-contract.md": "24b2e66c43b7d0611dd928f4a9f32fc971d1356e686ff5c2d92ba8cbd3f23358",
     "packages/fluent/v9/component-contract.md": "763e993402164d6fe50b73c5b801e5d3693c125d192c2d4d9b5b4dad4e3bf58c",
     "packages/sharepoint/cases/duplicate-announcement.md": "8ea38152e30159674a2cb4edeeb3d1c5ba4d516eb1e499ffcce70c65b45c45d4",
-    "packages/sharepoint/package.json": "4105979cf14a64b1cf446351a9a358b3b3380eb137208c23053e25b156a2033d",
+    "packages/sharepoint/package.json": "04b870fe43ba40279f12252740a78f22f713d2af1be39f7261b47d14c86bc0d4",
     "packages/sharepoint/profiles/support-matrix.json": "a320cb182f503c08b585771bf66af171cbbcb02a7b623d37943fb7f138e835b6",
     "packages/sharepoint/profiles/support-policy.md": "87b9ce65d2ad7aa32c55ebfca1af0e83be9aedfe7d453b17846f0a44130ad2c3",
     "packages/sharepoint/README.md": "9a8097910077081263d21c84ec9ee20c6a8f6ccd9e42d8655fa0d39b138d96a2",
@@ -48,7 +51,7 @@
     "packages/sharepoint/utilities/rich-text-accessibility.md": "bff472848e62d65cf017e7f7e50ebfe66f5b6ba98818b616b1508c2a966d1c13",
     "packages/sharepoint/verification/themes-and-host.md": "c2b3de8da308658fa75882ef4996dc777c197d37eecf21bcdac1ef0aa4a110c2",
     "README.md": "98df44e676965567d6f3a0897e42adc2b8b44835706ed3d7adfcc56d002d4d18",
-    "schemas/package.schema.json": "013fe36d6538381a3179f9ea4fc91ba25fe41ed89b18a121ec86f96a78742044",
+    "schemas/package.schema.json": "a58fa6ae280321aa1ab343aacf96cb1d9eb49ab64c0bbcd3e2f459951cb22667",
     "schemas/support-matrix.schema.json": "98cfc558582654b9a9f5c665bbac89e4336819ac35224e32d4898fa068a820ad"
   }
 }

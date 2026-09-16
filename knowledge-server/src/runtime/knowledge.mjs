@@ -7,6 +7,7 @@ import { lstat, mkdir, open, opendir, link, unlink } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, parse, posix, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
 import { createHash, randomUUID } from 'node:crypto';
+import { validateMasStandards } from './mas.mjs';
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const MAX_FILES = 1000;
@@ -300,7 +301,9 @@ function validateEntry(entry, pkg, sources) {
   }
   if (entry.status === 'deprecated') assert(entry.deprecatedBy, `Missing KB replacement: ${entry.id}`);
   if (entry.path.endsWith('.json')) {
-    assert(entry.kind === 'product-profile' && entry.dataSchema === 'support-matrix', `Missing structured KB entry schema: ${entry.id}`);
+    assert((entry.kind === 'product-profile' && entry.dataSchema === 'support-matrix') ||
+      (entry.kind === 'requirement-guidance' && entry.dataSchema === 'mas-standards' && entry.sourceIds.includes('mas')),
+    `Missing structured KB entry schema: ${entry.id}`);
   } else assert(!own(entry, 'dataSchema'), `Data schema on Markdown KB entry: ${entry.id}`);
 }
 
@@ -411,7 +414,11 @@ function selectedContents(files, reference) {
       assert(!declared.has(path), `Duplicate KB entry path: ${path}`);
       assert(files.has(path), `Missing declared KB entry file: ${path}`);
       declared.add(path);
-      if (entry.path.endsWith('.json')) validateSupportMatrix(parseJson(files.get(path), path), entry, sourceMap);
+      if (entry.path.endsWith('.json')) {
+        const data = parseJson(files.get(path), path);
+        if (entry.dataSchema === 'mas-standards') validateMasStandards(data);
+        else validateSupportMatrix(data, entry, sourceMap);
+      }
       entries.set(entry.id, { ...entry, path });
     }
     packages.set(pkg.id, pkg);

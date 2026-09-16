@@ -53,7 +53,7 @@ test('isolated standalone CLI exposes exactly three lazy read-only knowledge too
     assert.deepEqual(await readdir(dir), ['knowledge-server']);
     const manifest = await load(join(server, 'package.json'));
     assert.equal(manifest.name, '@a11y-assist/knowledge-server');
-    assert.deepEqual((await readdir(join(server, 'src/runtime'))).sort(), ['knowledge-mcp.mjs', 'knowledge.mjs']);
+    assert.deepEqual((await readdir(join(server, 'src/runtime'))).sort(), ['knowledge-mcp.mjs', 'knowledge.mjs', 'mas.mjs']);
     const replies = run([rpc('initialize'), { jsonrpc: '2.0', method: 'notifications/initialized' }, rpc('tools/list', undefined, 2)]);
     assert.equal(replies.length, 2);
     assert.equal(replies[0].result.serverInfo.version, manifest.version);
@@ -103,7 +103,7 @@ test('standalone server cold-bootstraps all declared entries then reads Common a
     assert.equal(listed.contentApprovalVerified, false);
     assert.equal(listed.independentBehaviorVerified, false);
     assert.doesNotMatch(JSON.stringify(listed), /agentow|7896845e51d75b0b9d632a2fd61876bc2f556ea5/i);
-    assert(listed.sources.common.some(source => source.status === 'connection-pending'));
+    assert(listed.sources.common.some(source => source.id === 'mas' && source.status === 'review-pending'));
     const replies = run([call(name, 'search', { query: 'focus' }), call(name, 'read', { id: 'common.analysis.root-cause' }),
       call(name, 'read', { id: 'common.topic.foundations' }),
       call(name, 'search', { query: 'sharepoint.utilities.announcements-and-focus' }),
@@ -196,7 +196,7 @@ test('discovery lists standards, curated patterns and cases on independent exact
   const handler = createKnowledgeHandler(root, serverName, { env: { A11Y_ASSIST_KB_ROOT: kbRoot } });
   const list = async args => content(await handler(call(serverName, 'list', args)));
   const all = await list({});
-  assert.equal(all.totalMatches, 35);
+  assert.equal(all.totalMatches, currentPackages.reduce((count, pkg) => count + pkg.entries.length, 0));
   assert.deepEqual(Object.fromEntries(all.entries.filter(entry => entry.discoveryTags).map(entry => [entry.id, entry.discoveryTags])), {
     'common.topic.dynamic-content': ['pattern', 'example'],
     'common.case.dialog-focus': ['pattern', 'fix', 'example'],

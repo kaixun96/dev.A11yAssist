@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "id": "fluent",
-  "version": "0.1.1",
-  "dependencies": {"common":"0.1.1"},
+  "version": "0.1.2",
+  "dependencies": {"common":"0.1.2"},
   "sources": [
     {"id":"fluent-docs","authority":"component-contract","status":"review-pending","locator":"https://react.fluentui.dev/","revision":null,"note":"V9 official-documentation connection target only, not evidence for the historical-derived entries. Resolve installed versions and review exact component documentation before qualification; the official V8 source location remains to be confirmed."}
   ],

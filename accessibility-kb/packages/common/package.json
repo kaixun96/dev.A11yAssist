@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "common",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "dependencies": {},
   "sources": [
-    {"id": "mas", "authority": "company-requirements", "status": "connection-pending", "locator": null, "revision": null, "note": "Confirm the authorized CLEA MCP interface, source revision, exact rule IDs and caching permission. No MAS text or mapping is supplied."},
+    {"id": "mas", "authority": "company-requirements", "status": "review-pending", "locator": "https://liquid.microsoft.com/", "revision": "2026-09-16; per-record revisions in mas/MasStandards.json", "note": "Frozen MAS Requirements read through Liquid MCP, reconciled against the pinned ADO agency source. Read common.mas.overview and common.mas.reconciliation for coverage and source-only records. Publication permission is not content approval; applicability and current revisions still require review."},
     {"id": "wcag", "authority": "normative-standard", "status": "review-pending", "locator": "https://www.w3.org/TR/WCAG22/", "revision": null, "note": "Public reference; confirm the applicable company baseline and pin the reviewed revision before approving a mapping."},
     {"id": "aria", "authority": "normative-standard", "status": "review-pending", "locator": "https://www.w3.org/TR/wai-aria-1.2/", "revision": null, "note": "Role, state and property definitions; review exact applicable provisions."},
     {"id": "html", "authority": "normative-standard", "status": "review-pending", "locator": "https://html.spec.whatwg.org/", "revision": null, "note": "Native semantics; living source must be revision-bound for qualification."},
@@ -12,7 +12,10 @@
     {"id": "wcag-understanding", "authority": "informative-guidance", "status": "review-pending", "locator": "https://www.w3.org/WAI/WCAG22/Understanding/", "revision": null, "note": "Explanation and technique selection, not a mandatory single implementation."}
   ],
   "entries": [
-    {"id":"common.overview","path":"README.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":[]},
+    {"id":"common.overview","path":"README.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":[],"relations":["common.mas.overview"]},
+    {"id":"common.mas.overview","path":"mas/README.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["microsoft-products"],"sourceIds":["mas"],"relations":["common.mas.standards","common.mas.reconciliation"]},
+    {"id":"common.mas.standards","path":"mas/MasStandards.json","kind":"requirement-guidance","dataSchema":"mas-standards","status":"draft","owner":"unassigned","appliesTo":["microsoft-products"],"sourceIds":["mas"],"relations":["common.mas.overview","common.mas.reconciliation"]},
+    {"id":"common.mas.reconciliation","path":"mas/reconciliation.md","kind":"analysis","status":"draft","owner":"unassigned","appliesTo":["microsoft-products"],"sourceIds":["mas"],"relations":["common.mas.standards"]},
     {"id":"common.topic.foundations","path":"topics/foundations.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["cross-product"],"sourceIds":["wcag","apg"],"relations":[]},
     {"id":"common.topic.component-accessibility","path":"topics/component-accessibility.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["html","aria"],"relations":[]},
     {"id":"common.topic.keyboard-focus","path":"topics/keyboard-focus.md","kind":"topic","status":"draft","owner":"unassigned","appliesTo":["web"],"sourceIds":["wcag","apg"],"relations":[]},

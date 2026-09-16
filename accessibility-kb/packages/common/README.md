@@ -13,7 +13,9 @@ neither an example nor a checklist certifies conformance. See
 The [package descriptor](package.json) records entry ownership, active source
 status and entry source bindings. Owners are unassigned; an empty `sourceIds`
 array means no active source is cited, not approval. Public-standard connections
-remain review-pending, and MAS content/authority is not supplied.
+remain review-pending. A frozen [MAS import](mas/README.md) is available with
+per-record Liquid revision tracking and separately labeled source-only guidance;
+its inclusion does not confer content approval or universal applicability.
 
 Reading these documents permits only analysis, plans, and recommendations within
 the caller's permitted scope. Actual source edits, test execution, application

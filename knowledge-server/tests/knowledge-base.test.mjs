@@ -66,9 +66,9 @@ test('standalone KB permits inert provenance but has no archive payloads or runt
 test('pending authority sources and product support gaps are not populated with invented facts', async () => {
   const kb = await loadKnowledgeBase(kbRoot);
   const mas = kb.packages.get('common').sources.find(source => source.id === 'mas');
-  assert.equal(mas.status, 'connection-pending');
-  assert.equal(mas.locator, null);
-  assert.equal(mas.revision, null);
+  assert.equal(mas.status, 'review-pending');
+  assert.equal(mas.locator, 'https://liquid.microsoft.com/');
+  assert.match(mas.revision, /2026-09-16; per-record revisions/);
   const fluent = kb.packages.get('fluent');
   assert.deepEqual(fluent.sources.filter(source => source.status !== 'historical').map(source => source.id), ['fluent-docs']);
   assert.equal(fluent.sources[0].authority, 'component-contract');
@@ -125,7 +125,7 @@ test('invalid metadata, duplicates, missing sources, relations and approvals fai
     Object.assign(pkg.entries[0], { status: 'approved', owner: 'synthetic-owner',
       review: { reviewer: 'synthetic-reviewer', date: '2026-09-11', evidence: 'synthetic-review' }, sourceIds: [] });
   }, /Missing approval source/);
-  await rejectedMutation(pkg => { pkg.sources[0].status = 'reviewed'; }, /Unpinned reviewed source/);
+  await rejectedMutation(pkg => { pkg.sources[0].status = 'reviewed'; pkg.sources[0].revision = null; }, /Unpinned reviewed source/);
   await rejectedMutation(pkg => { pkg.entries[0].status = 'deprecated'; }, /Missing replacement/);
   await rejectedMutation(pkg => { pkg.entries[0].path = '../outside.md'; }, /Unsafe knowledge path/);
 });

@@ -40,7 +40,7 @@
           "sourceIds":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}},
           "relations":{"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}},
           "deprecatedBy":{"type":"string","minLength":1},
-          "dataSchema":{"enum":["support-matrix"]},
+          "dataSchema":{"enum":["support-matrix","mas-standards"]},
           "review":{
             "type":"object","additionalProperties":false,"required":["reviewer","date","evidence"],
             "properties":{

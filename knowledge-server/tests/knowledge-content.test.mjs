@@ -56,7 +56,10 @@ test('standalone entries reference existing current sources without invented app
     for (const source of pkg.sources) {
       assert(['connection-pending', 'review-pending'].includes(source.status), `${pkg.id}.${source.id}: no claimed source approval`);
       assert.notEqual(source.authority, 'historical-reference');
-      assert.equal(source.revision, null, `${pkg.id}.${source.id}: no invented reviewed revision`);
+      if (pkg.id === 'common' && source.id === 'mas') {
+        assert.equal(source.status, 'review-pending');
+        assert.match(source.revision, /2026-09-16; per-record revisions/);
+      } else assert.equal(source.revision, null, `${pkg.id}.${source.id}: no invented reviewed revision`);
       if (source.status === 'connection-pending') assert.equal(source.locator, null);
       else assert.match(source.locator, /^https:\/\//);
     }

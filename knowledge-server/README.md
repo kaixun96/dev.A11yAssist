@@ -20,9 +20,9 @@ For contributors and maintainers, see the
 [technical design and extension guide](TECH-DESIGN.md) / [简体中文](TECH-DESIGN.zh-CN.md): architecture,
 content placement, entry/package examples, source review, schemas, tests and releases.
 
-| Contribute to | Current authored content at version 0.1.1 |
+| Contribute to | Current content at version 0.1.2 |
 |---|---|
-| [Common](../accessibility-kb/packages/common/README.md) — 20 entries | Semantics, async outcome/focus matrices, localization, root-cause and verification cases |
+| [Common](../accessibility-kb/packages/common/README.md) — 23 entries | Semantics, async outcome/focus matrices, localization, root-cause and verification cases; frozen MAS data, reading guide and reconciliation |
 | [Fluent](../accessibility-kb/packages/fluent/README.md) — 4 entries | V8/V9 MessageBar, announcement/focus ownership, component documentation and composition |
 | [SharePoint](../accessibility-kb/packages/sharepoint/README.md) — 11 entries | SPDS fit/imports, announcement/focus utilities, RTE, drag/reorder, formatting, themes and host checks |
 
@@ -37,10 +37,12 @@ positive/negative example, and update navigation, relations and exact dependenci
 Bodies focus on usable rules, applicability and responsibilities, with current source
 citations supporting their claims. Historical attribution is not an active source binding.
 The design's sections 3–7 explain placement and authoring; sections 9–10 cover release
-and acceptance. All 35 entries remain draft: source provenance does not establish
+and acceptance. All 38 entries remain draft: source provenance does not establish
 official approval, current installed-version validity or observed conformance.
 Many entries have empty `sourceIds`; do not fill those gaps with pending connection
-targets or inferred approval. Official MAS and product-support acquisition are separate work.
+targets or inferred approval. A [frozen MAS import](../accessibility-kb/packages/common/mas/README.md)
+now supplies revision-bound Liquid data and separately labeled source-only guidance.
+This is not a live MAS adapter; current-source and product-support acquisition remain separate work.
 
 **Planned, not implemented:** section 11 of that design specifies one KB MCP
 entrypoint for both local knowledge and authoritative MAS rules, with a MAS MCP
@@ -161,8 +163,11 @@ KB root for evaluation. Do not advertise cold-install readiness until the exact
 URL and raw SHA-256 have been verified after publication. Automated transport
 tests are synthetic; real Copilot tool discovery remains a separate host check.
 
-Common, Fluent and SharePoint are at `0.1.1`, with exact dependencies. The
-independently versioned standalone service is at `0.1.0`.
+Common, Fluent and SharePoint are at `0.1.2`, with exact dependencies. The
+independently versioned standalone service is at `0.1.1`.
+This runtime adds validation of `dataSchema: mas-standards`; use its matching
+reference, because older runtimes reject that new data schema. Existing
+support-matrix entries and older untagged/tagged snapshots remain supported.
 Content changes, including discovery metadata, require regenerated
 hashes, manifests, artifacts, index and service reference. Consumers read only the
 snapshot identified by their reference; building it does not publish its URL or

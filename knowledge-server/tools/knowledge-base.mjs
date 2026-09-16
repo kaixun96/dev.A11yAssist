@@ -3,6 +3,7 @@ import { readFile, readdir, lstat } from 'node:fs/promises';
 import { join, posix } from 'node:path';
 import { createHash } from 'node:crypto';
 import Ajv from 'ajv';
+import { validateMasStandards } from '../src/runtime/mas.mjs';
 
 const commonFiles = ['README.md', 'schemas/package.schema.json', 'schemas/support-matrix.schema.json',
   'governance/contribution.md', 'evaluations/README.md'];
@@ -101,7 +102,10 @@ export async function loadKnowledgeBase(root, { verifyManifest = false } = {}) {
       }
       if (entry.status === 'deprecated') assert(entry.deprecatedBy, `Missing replacement: ${entry.id}`);
       const body = await read(root, path);
-      if (entry.path.endsWith('.json')) {
+      if (entry.path.endsWith('.json') && entry.dataSchema === 'mas-standards') {
+        assert(entry.kind === 'requirement-guidance' && entry.sourceIds.includes('mas'), `Invalid MAS entry: ${entry.id}`);
+        validateMasStandards(JSON.parse(body));
+      } else if (entry.path.endsWith('.json')) {
         assert(entry.kind === 'product-profile' && entry.dataSchema === 'support-matrix', `Missing structured entry schema: ${entry.id}`);
         const matrix = JSON.parse(body);
         assert(validateSupport(matrix), `Invalid support matrix: ${JSON.stringify(validateSupport.errors)}`);

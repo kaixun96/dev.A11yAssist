@@ -225,3 +225,16 @@ test('entrypoint and templates retain track isolation, evidence distinctions, sc
   assert.match(report, /total applicable rows/);
   assert.match(report, /no automatic ticket\/PR\/public upload/);
 });
+
+test('Bug Bash docs distinguish release authority from historical baselines', async () => {
+  const runtime = await text(join(root, 'docs/BUG-BASH-RUNTIME.md'));
+  const runtimeZh = await text(join(root, 'docs/BUG-BASH-RUNTIME.zh-CN.md'));
+  const architecture = await text(join(root, 'docs/BUG-BASH-ARCHITECTURE.md'));
+  const architectureZh = await text(join(root, 'docs/BUG-BASH-ARCHITECTURE.zh-CN.md'));
+  assert.match(runtime, /installed package release from `plugin\.json`/);
+  assert.match(runtimeZh, /已安装包的发布版本以 `plugin\.json` 为准/);
+  assert.doesNotMatch(runtime, /Package v\d/);
+  assert.doesNotMatch(runtimeZh, /包 v\d/);
+  assert.match(architecture, /historical baseline[\s\S]*current package version/);
+  assert.match(architectureZh, /历史基线当作当前包版本/);
+});

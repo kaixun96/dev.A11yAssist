@@ -5,9 +5,12 @@
 Maintain both language versions together. This document describes what the plugin
 does, its child capabilities, how they work together, and the user-facing input
 and output. Current behavior and proposed extensions are marked separately.
-Baseline: version 0.20.0, 2026-09-14. The source orchestration chain is implemented;
-deployment and live qualification are separate. Supported adapters, not a generic
-promise about every browser/AT combination, define executable coverage.
+The architecture baseline was introduced in v0.20.0 on 2026-09-14; this document
+is maintained for current behavior. Read the installed release from `plugin.json`
+rather than treating that historical baseline as the current package version.
+The source orchestration chain is implemented; deployment and live qualification
+are separate. Supported adapters, not a generic promise about every browser/AT
+combination, define executable coverage.
 
 ## 1. What is Bug Bash?
 

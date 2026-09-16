@@ -5,5 +5,18 @@
   "author": {
     "name": "kaixun96"
   },
-  "license": "Microsoft Internal"
+  "license": "Microsoft Internal",
+  "mcpServers": {
+    "liquid": {
+      "type": "http",
+      "url": "https://mcp.liquid.microsoft.com",
+      "headers": {},
+      "tools": [
+        "liquid_search",
+        "get_liquid_resource_spec",
+        "describe_liquid_resource",
+        "read_liquid_resource"
+      ]
+    }
+  }
 }

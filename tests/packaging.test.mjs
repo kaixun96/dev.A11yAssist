@@ -69,7 +69,7 @@ test('Copilot marketplace and all active entrypoints use neutral packaging', asy
     }
     for (const path of entry.name === 'a11y-test-categories' ? ['docs/TEST-CATEGORIES.md', 'procedures/README.md', 'tools/matrix.mjs']
       : entry.name === 'a11y-setup' ? ['docs/SETUP.md', 'native/windows-host.ps1'] : ['knowledge/README.md',
-      ...(manifest.mcpServers ? ['docs/CAPABILITIES.md'] : []),
+      ...(Object.hasOwn(plugins, entry.name) ? ['docs/CAPABILITIES.md'] : []),
       ...(entry.name !== 'a11y-knowledge' ? ['integrations/agentow/knowledge/README.md'] : [])]) {
       const contentRoot = entry.name === 'a11y-bug-bash' ? join(dir, 'modules/a11y-knowledge') : dir;
       await access(join(contentRoot, path));

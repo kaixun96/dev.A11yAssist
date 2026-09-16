@@ -29,12 +29,13 @@ Replace placeholders with your actual authorized inputs. Examples are prompts, n
 
 ## Limitations
 
-The sole plugin owner of test procedures and matrix tools. Bug Bash calls its versioned API through an explicitly configured installed root; no embedded copies. No browser/AT backend or MCP server. Matrix accounting is not evidence authenticity or WCAG conformance; unavailable checks remain gaps.
+The sole plugin owner of test procedures and matrix tools. Bug Bash calls its versioned API through an explicitly configured installed root; no embedded copies. Declares Liquid HTTP MCP for read-only standards lookup; user authentication required. No browser/AT backend. Matrix accounting is not evidence authenticity or WCAG conformance; unavailable checks remain gaps.
 
 ## Reference
 
 - [All-target test procedures and accounting](docs/TEST-CATEGORIES.md)
 - [Test categories (Chinese)](docs/TEST-CATEGORIES.zh-CN.md)
+- [Liquid MCP connection and MAS/WCAG retrieval](docs/LIQUID-STANDARDS.md)
 - [Ten-category procedure index](procedures/README.md)
 
 [Back to the plugin catalog](https://github.com/kaixun96/dev.A11yAssist)

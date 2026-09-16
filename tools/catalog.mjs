@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 const repository = 'https://github.com/kaixun96/dev.A11yAssist';
 const referenceTitles = {
+  'docs/LIQUID-STANDARDS.md': { en: 'Liquid MCP connection and MAS/WCAG retrieval', zh: 'Liquid MCP 连接与 MAS/WCAG 检索' },
   'docs/EXECUTION-ADAPTERS.md': { en: 'Built-in execution adapters and supported scope', zh: '内置执行适配器与支持范围' },
   'docs/FILE-BUG.md': { en: 'Bug descriptions, creation and evidence attachments', zh: 'Bug 描述、创建与证据附件' },
   'docs/REPORT.md': { en: 'Aggregate reports and verified delivery', zh: '整体报告与核实交付' },

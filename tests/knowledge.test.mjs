@@ -67,14 +67,16 @@ test('every independently copied plugin retains a complete offline knowledge sna
       assert.match(await text(join(dir, 'skills', name, 'SKILL.md')), /integrations\/agentow\/knowledge\/README\.md/);
       if (name === 'a11y-knowledge' || name === 'a11y-knowledge-odsp') {
         const plugin = await load(join(dir, 'plugin.json'));
-        assert.equal(plugin.mcpServers, undefined);
-        await assert.rejects(access(join(dir, '.mcp.json')), { code: 'ENOENT' });
+        const config = await load(join(root, 'src/standards/liquid.mcp.json'));
+        assert.deepEqual(plugin.mcpServers, config.mcpServers);
+        assert.deepEqual(await load(join(dir, '.mcp.json')), config);
         await assert.rejects(access(join(dir, 'runtime')), { code: 'ENOENT' });
         for (const forbidden of ['native', 'adapters', 'config', 'contracts', 'integrations/agentow/runtime']) {
           await assert.rejects(access(join(dir, forbidden)), { code: 'ENOENT' });
         }
         const expected = [
           'plugin.json', 'AGENTS.md', 'LICENSE', 'README.md', 'README.zh-CN.md',
+          'docs/LIQUID-STANDARDS.md', '.mcp.json',
           'skills/a11y-knowledge-odsp/SKILL.md',
           ...(name === 'a11y-knowledge' ? ['skills/a11y-knowledge/SKILL.md'] : []),
           'knowledge/manifest.json', ...Object.keys(manifest.hashes).map(file => `knowledge/${file}`),

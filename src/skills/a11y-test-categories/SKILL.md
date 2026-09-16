@@ -7,6 +7,11 @@ Resolve paths from the plugin root, two directories above this SKILL.md.
 When bundled, use the internal module as that root.
 Read `docs/TEST-CATEGORIES.md` and `procedures/README.md`, then all ten procedures.
 This is a reusable test-procedure plugin, not a browser/AT provider or a new agent.
+Before deriving MAS/WCAG thresholds, exceptions or mappings for a check, read
+`docs/LIQUID-STANDARDS.md` and retrieve the relevant items through the caller's
+authenticated Liquid MCP when available. Missing access is a source gap, not
+an invented requirement or evidence of completed testing. Source retrieval
+requires no page interaction and does not bypass source-only/plan-only limits.
 
 ## Input and inventory
 

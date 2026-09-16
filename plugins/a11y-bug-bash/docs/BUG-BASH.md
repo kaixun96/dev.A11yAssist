@@ -80,7 +80,9 @@ authorize installation. Source-only and plan-only never run host setup scripts.
 No extra setup plugin installation is required, and missing optional audio/AT
 must not block unrelated browser checks.
 
-The guided framework has no MCP server and needs no `A11Y_ASSIST_CONFIG`.
+The root plugin declares Liquid HTTP MCP for read-only standards lookup,
+with user authentication and a four-tool allowlist; bundled modules reuse it.
+It supplies no page/AT MCP server and needs no `A11Y_ASSIST_CONFIG`.
 It uses tools already available to the calling Copilot session. Static review
 needs only read-only source access. Live page/AT execution supports the repository's
 Windows DevBox deployments and needs actual authorized, qualified connections

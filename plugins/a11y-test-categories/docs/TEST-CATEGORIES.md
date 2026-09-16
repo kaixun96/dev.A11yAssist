@@ -7,6 +7,9 @@ what to check, the ordered steps and required evidence for each target/state.
 It includes ten categories: keyboard/focus, screen reader, structure/semantics,
 orientation/input purpose, visual/color, timing/motion, dynamic content,
 touch/pointer, authentication/forms, and Voice Access.
+For MAS/WCAG text, exceptions and mappings, use the optional authenticated
+[Liquid MCP lookup](LIQUID-STANDARDS.md). A retrieved rule is not execution
+evidence, and unavailable official sources remain explicit gaps.
 
 ## Composition
 

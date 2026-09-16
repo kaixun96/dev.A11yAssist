@@ -19,18 +19,18 @@
   {
     "name": "a11y-test-categories",
     "group": "discovery",
-    "docs": ["docs/TEST-CATEGORIES.md", "docs/TEST-CATEGORIES.zh-CN.md", "procedures/README.md"],
+    "docs": ["docs/TEST-CATEGORIES.md", "docs/TEST-CATEGORIES.zh-CN.md", "docs/LIQUID-STANDARDS.md", "procedures/README.md"],
     "en": {
       "purpose": "Apply all ten accessibility test categories, step by step, to every in-scope target and reachable state",
       "requires": "Feature scope and target/state inventory; Node.js 22+ for local accounting; authorized browser/AT tools and ownership for live checks",
       "example": "/a11y-test-categories Check every element/state of <feature> using all ten categories; save the full step matrix, evidence and gaps to <private directory>. Do not sample, fix or file.",
-      "limits": "The sole plugin owner of test procedures and matrix tools. Bug Bash calls its versioned API through an explicitly configured installed root; no embedded copies. No browser/AT backend or MCP server. Matrix accounting is not evidence authenticity or WCAG conformance; unavailable checks remain gaps."
+      "limits": "The sole plugin owner of test procedures and matrix tools. Bug Bash calls its versioned API through an explicitly configured installed root; no embedded copies. Declares Liquid HTTP MCP for read-only standards lookup; user authentication required. No browser/AT backend. Matrix accounting is not evidence authenticity or WCAG conformance; unavailable checks remain gaps."
     },
     "zh": {
       "purpose": "对范围内每个对象和可达状态，逐项执行全部十类无障碍测试规程",
       "requires": "Feature 范围和对象/状态清单；本地覆盖核对需要 Node.js 22+；现场检查需要获授权的浏览器/AT 工具及资源归属",
       "example": "/a11y-test-categories 按全部十类检查 <feature> 的每个元素/状态，将逐步骤矩阵、证据及缺口保存到 <私有目录>。不抽查、不修复、不提单。",
-      "limits": "测试规程和矩阵工具唯一所属插件。Bug Bash 通过明确配置的已安装路径调用版本化 API，不再内嵌副本。不提供浏览器/AT 后端或 MCP server；矩阵核对不证明证据真实或符合 WCAG，无法执行的检查保留缺口。"
+      "limits": "测试规程和矩阵工具唯一所属插件。Bug Bash 通过明确配置的已安装路径调用版本化 API，不再内嵌副本。声明 Liquid HTTP MCP 用于只读标准检索，仍需用户认证；不提供浏览器/AT 后端。矩阵核对不证明证据真实或符合 WCAG，无法执行的检查保留缺口。"
     }
   },
   {
@@ -53,16 +53,16 @@
   {
     "name": "a11y-knowledge",
     "group": "knowledge",
-    "docs": ["knowledge/README.md", "skills/a11y-knowledge-odsp/SKILL.md", "integrations/agentow/knowledge/README.md", "integrations/agentow/knowledge/fluent-spds.md", "integrations/agentow/knowledge/sharepoint.md", "integrations/agentow/knowledge/complete-source-guide.md"],
+    "docs": ["knowledge/README.md", "docs/LIQUID-STANDARDS.md", "skills/a11y-knowledge-odsp/SKILL.md", "integrations/agentow/knowledge/README.md", "integrations/agentow/knowledge/fluent-spds.md", "integrations/agentow/knowledge/sharepoint.md", "integrations/agentow/knowledge/complete-source-guide.md"],
     "en": {
       "purpose": "Accessibility guidance and static review, with general foundations and a built-in ODSP submodule (SPDS, Fluent V8/V9, SharePoint)",
-      "requires": "Copilot CLI and the code or question to review; no execution configuration",
+      "requires": "Copilot CLI and the code or question to review; Liquid user authentication for online standards lookup, no execution configuration for offline review",
       "example": "/a11y-knowledge Review this Fluent V9 dialog for keyboard, focus restoration and announcements using the built-in component knowledge.",
       "limits": "One installation includes general topics and the complete ODSP references; no extra plugin is needed. Select project guidance only for the matching stack/version; unrelated projects use general topics only. Read-only, no scanners or real AT. Archived commands are inert reference data, not execution authority."
     },
     "zh": {
       "purpose": "无障碍知识与静态审查，内置通用基础及 ODSP 子模块（SPDS、Fluent V8/V9、SharePoint）",
-      "requires": "Copilot CLI，以及待审代码或问题；不需要执行环境配置",
+      "requires": "Copilot CLI，以及待审代码或问题；在线标准检索需要 Liquid 用户认证，离线审查无需执行环境配置",
       "example": "/a11y-knowledge 使用内置组件知识，审查这个 Fluent V9 对话框的键盘、焦点恢复和播报。",
       "limits": "一次安装包含通用主题和完整 ODSP 参考资料，无需另装插件。按实际技术栈和版本读取；其他项目只使用通用知识，不套用 ODSP 约定。只读，不运行扫描器或真实辅助技术；归档命令只是参考资料，不是执行授权。"
     }

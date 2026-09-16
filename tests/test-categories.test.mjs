@@ -114,7 +114,9 @@ test('only the category plugin distributes procedures and matrix tools, with an 
   }
   const manifest = JSON.parse(await text(join(base, 'plugin.json')));
   assert.equal(manifest.name, 'a11y-test-categories');
-  assert.equal(manifest.mcpServers, undefined);
+  const config = JSON.parse(await text(join(root, 'src/standards/liquid.mcp.json')));
+  assert.deepEqual(manifest.mcpServers, config.mcpServers);
+  assert.deepEqual(JSON.parse(await text(join(base, '.mcp.json'))), config);
   assert.deepEqual(await readdir(join(base, 'skills')), ['a11y-test-categories']);
   const coverage = JSON.parse(await text(join(root, 'src/bug-bash/coverage.json')));
   assert.deepEqual(statuses, coverage.rowStatuses);

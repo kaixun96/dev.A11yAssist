@@ -8,7 +8,7 @@
 
 ## 使用前提
 
-Copilot CLI，以及待审代码或问题；不需要执行环境配置。
+Copilot CLI，以及待审代码或问题；在线标准检索需要 Liquid 用户认证，离线审查无需执行环境配置。
 
 ## 安装你选中的插件
 
@@ -34,6 +34,7 @@ copilot plugin install a11y-knowledge@a11y-assist
 ## 参考资料
 
 - [通用无障碍知识](knowledge/README.md)
+- [Liquid MCP 连接与 MAS/WCAG 检索](docs/LIQUID-STANDARDS.md)
 - [内置 ODSP 子模块](skills/a11y-knowledge-odsp/SKILL.md)
 - [项目知识索引](integrations/agentow/knowledge/README.md)
 - [SPDS 和 Fluent V8/V9](integrations/agentow/knowledge/fluent-spds.md)

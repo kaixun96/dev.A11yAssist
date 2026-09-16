@@ -86,7 +86,10 @@ and versioned API, and binds the actual tool/procedure content into task history
 Missing or changed dependencies fail closed; no implicit repository/sibling fallback.
 Bug Bash requires every target/state's full ten-category step matrix and checks
 accounting before completion. This does not implement a live browser/AT backend.
-It has no MCP/configuration server; live checks use the caller's already
+Its root declares the Liquid HTTP MCP for standards lookup; internal modules
+reuse that connection. `src/standards/liquid.mcp.json` owns the declaration shared
+by knowledge, the compatibility knowledge plugin, test categories and Bug Bash.
+It supplies no live-execution MCP server; live checks use the caller's already
 authorized tools. Read [the discovery contract](BUG-BASH.md) before extending it.
 
 `bundleSetup` packages the same setup skill, profiles, shared native host script
